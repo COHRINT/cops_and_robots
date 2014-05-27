@@ -1,5 +1,5 @@
-import math, numpy, MapObj
-import serial, create_driver
+import math, numpy, logging, serial
+import MapObj, create_driver
 
 ser = serial.Serial('/dev/ttyUSB0',57600,timeout=1)
 
@@ -22,13 +22,20 @@ OPCODE = {
 
 
 class Robot(MapObj):
-	"""docstring for Robot"""
+	"""Base class for iRobot Create"""
 
 	#Constants
-	ROBOT_DIAMETER = 30 #[cm] <>TODO: VERIFY!
-	RESOLUTION = 1000
+	ROBOT_DIAMETER 	= 30 #[cm] <>TODO: VERIFY!
+	RESOLUTION 		= 1000 	
+	MAX_SPEED  		= 500 	#[mm/s]
+	MAX_RADIUS 		= 2000 	#[mm]
+
 	
 	def __init__(self, name):
+		"""Robot constructor
+
+		:param name: string for the robot name
+		"""		
 		#Superclass attributes
 		a = numpy.linspace(0,2*math.pi,RESOLUTION)
 		circ_x 	 = [(ROBOT_DIAMETER / 2 * math.sin(b)) for b in a]
@@ -43,16 +50,23 @@ class Robot(MapObj):
 		self.battery = 0
 		self.bump 	 = False
 		self.map 	 = Map()
+		self.speed 	 = 0
+		self.radius  = 0
 
 	def moveToTarget(self,target):
+		"""Move directly to a target pose using A* for pathfinding
+
+		:param target: desired pose
+		"""
 		pass
 		#return result
 
 	def move(self,speed,radius):
-		#Constants
-		MAX_SPEED  = 500 	#[mm/s]
-		MAX_RADIUS = 2000 	#[mm]
+		"""Move directly to a target pose using A*
 
+		:param speed: velocity in mm/s (max of 500mm/s)
+		:param radius: turn radius in mm (max of 2000 mm)
+		"""
 		#Saturate Input
 		if speed > MAX_SPEED:
 			speed = MAX_SPEED
@@ -95,12 +109,86 @@ class Robot(MapObj):
 		return result
 
 	def randomTarget(self):
+		"""Generate a random target pose on the map 
+
+		:returns: pose (x,y,theta)
+		"""
 		pass
 		#return result
 
 	def checkBattery(self):
+		"""Check the current battery status of the robot
+
+		:returns: battery level from 0 to 1
+		"""
 		pass
 		#return result
 
 	def serialCommand(self,cmd):
+		"""Send a serial command to the iRobot base
+
+		:param cmd: character string accepted by the iRobot seraial interface
+		"""
 		pass
+
+	def faster(self,step=10):
+		"""Increase iRobot create speed
+
+		:param: speed step size increase (default 10)
+		"""
+		logging.info('Faster!')
+		if self.speed + step <= MAX_SPEED:
+			self.speed = self.speed + step
+		else:
+			self.speed = MAX_SPEED
+
+	def slower(self,step=10):
+		"""Decrease iRobot create speed
+
+		:param: speed step size increase (default 10)
+		"""		
+		logging.info('Slower...')
+		if self.speed - step > 0:
+			self.speed = self.speed - step
+		else:
+			self.speed = 0
+
+	def forward(self):
+		"""Move iRobot create forward at current speed
+		"""
+		logging.info('Forward!')
+		self.radius = 0
+		self.speed = self.speed		
+
+	def backward(self):
+		"""Move iRobot create forward at current speed
+		"""
+		logging.info('Backward!')
+		self.radius = 0
+		self.speed = -self.speed		
+
+	def left(self,step=10):
+		"""Turn left
+		"""
+		logging.info('Left!')
+		if self.radius + step < MAX_RADIUS:
+			self.radius = self.radius + step
+		else:
+			self.radius = MAX_RADIUS
+		self.speed = self.speed	
+
+	def right(self,step):
+		"""Turn right
+		"""
+		logging.info('Right!')
+		if self.radius - step > -MAX_RADIUS:
+				self.radius = self.radius - step
+		else:
+			self.radius = -MAX_RADIUS
+		self.speed = self.speed
+
+	def stop(self):
+		"""Stop the robot
+		"""
+		logging.info('STOP!')	
+		self.speed = 0

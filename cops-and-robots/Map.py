@@ -10,6 +10,10 @@ class Map(object):
 		self.walls = []
 
 	def addWall(self,wall):
+		"""Append a wall to the Map
+
+		:param wall: Wall object
+		"""
 		self.walls.append(wall)
 
 		
