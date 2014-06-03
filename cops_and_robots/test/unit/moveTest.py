@@ -1,7 +1,7 @@
 import sys, time, logging, getch
-from cops_and_robots import Cop
+from cops_and_robots.Cop import Cop
 
-logger = logging.getlogger('moveTest')
+logger = logging.getLogger('moveTest')
 logger.setLevel(logging.DEBUG)
 
 cop = Cop('Deckard')
