@@ -2,7 +2,7 @@ import sys, time, logging, getch
 from cops_and_robots.Cop import Cop
 
 logger = logging.getLogger('moveTest')
-logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 cop = Cop('Deckard')
 OPCODE = cop.OPCODE
@@ -26,7 +26,7 @@ tstep = 0.5
 
 while x != 'z':
 	x = getch.getch()
-	logging.info('char:',x)
+	logging.info('char: %s',x)
 
 	cmd = cop.move()
 	cop.ser.write(cmd)
