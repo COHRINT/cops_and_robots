@@ -4,7 +4,16 @@ from cops_and_robots.MapObj import MapObj
 ser = serial.Serial('/dev/ttyUSB0',57600,timeout=1)
 
 
-OPCODE = {
+class Robot(MapObj):
+	"""Base class for iRobot Create"""
+
+	#Constants
+	DIAMETER 	= 30 #[cm] <>TODO: VERIFY!
+	RESOLUTION 		= 1000 	
+	MAX_SPEED  		= 500 	#[mm/s]
+	MAX_RADIUS 		= 2000 	#[mm]
+
+	OPCODE = {
     # Getting Started
     'start': 128, 			#[128]
     'baud': 129,			#[129][Baud Code]
@@ -20,16 +29,6 @@ OPCODE = {
     'LEDs': 139,			#[139][LED][Color][Intensity]
     }
 
-
-class Robot(MapObj):
-	"""Base class for iRobot Create"""
-
-	#Constants
-	ROBOT_DIAMETER 	= 30 #[cm] <>TODO: VERIFY!
-	RESOLUTION 		= 1000 	
-	MAX_SPEED  		= 500 	#[mm/s]
-	MAX_RADIUS 		= 2000 	#[mm]
-
 	
 	def __init__(self, name):
 		"""Robot constructor
@@ -37,9 +36,9 @@ class Robot(MapObj):
 		:param name: string for the robot name
 		"""		
 		#Superclass attributes
-		a 		 = numpy.linspace(0,2 * math.pi, RESOLUTION)
-		circ_x 	 = [(ROBOT_DIAMETER / 2 * math.sin(b)) for b in a]
-		circ_y 	 = [(ROBOT_DIAMETER / 2 * math.cos(b)) for b in a]
+		a 		 = numpy.linspace(0,2 * math.pi, Robot.RESOLUTION)
+		circ_x 	 = [(Robot.DIAMETER / 2 * math.sin(b)) for b in a]
+		circ_y 	 = [(Robot.DIAMETER / 2 * math.cos(b)) for b in a]
 		shape 	 = zip(circ_x,circ_y) 			#draw a circle with radius ROBOT_DIAMETER/2 around centroid
 		centroid = {'x':0,'y':0,'theta':0} 		#Start at origin
 		pose 	 = {'x':0,'y':0,'theta':0}		#Start at origin
@@ -66,7 +65,7 @@ class Robot(MapObj):
 		"""
 		
 		#Translate speed to upper and lower bytes
-		v = abs(self.speed) * (2**16 - 1)/ MAX_SPEED
+		v = abs(self.speed) * (2**16 - 1)/ Robot.MAX_SPEED
 		if self.speed > 0:
 			v = "0x%04x" % v
 		else:
@@ -76,7 +75,7 @@ class Robot(MapObj):
 		v_l = int(v[4:6],16)
 
 		#Translate radius to upper and lower bytes
-		r = abs(self.radius) * (2**16 - 1)/ MAX_RADIUS
+		r = abs(self.radius) * (2**16 - 1)/ Robot.MAX_RADIUS
 		if self.radius >= 0:
 			r = "0x%04x" % r
 		else:
@@ -88,7 +87,7 @@ class Robot(MapObj):
 
 		#Generate serial drive command
 		drive_params = [v_h,v_l,r_h,r_l]
-		cmd = chr(OPCODE['drive'])
+		cmd = chr(Robot.OPCODE['drive'])
 		print drive_params
 
 		for i in drive_params:
@@ -125,10 +124,10 @@ class Robot(MapObj):
 		:param: speed step size increase (default 10)
 		"""
 		logging.info('Faster!')
-		if self.speed + step <= MAX_SPEED:
+		if self.speed + step <= Robot.MAX_SPEED:
 			self.speed = self.speed + step
 		else:
-			self.speed = MAX_SPEED
+			self.speed = Robot.MAX_SPEED
 
 	def slower(self,step=10):
 		"""Decrease iRobot create speed
@@ -159,20 +158,20 @@ class Robot(MapObj):
 		"""Turn left
 		"""
 		logging.info('Left!')
-		if self.radius + step < MAX_RADIUS:
+		if self.radius + step < Robot.MAX_RADIUS:
 			self.radius = self.radius + step
 		else:
-			self.radius = MAX_RADIUS
+			self.radius = Robot.MAX_RADIUS
 		self.speed = self.speed	
 
 	def right(self,step):
 		"""Turn right
 		"""
 		logging.info('Right!')
-		if self.radius - step > -MAX_RADIUS:
+		if self.radius - step > -Robot.MAX_RADIUS:
 				self.radius = self.radius - step
 		else:
-			self.radius = -MAX_RADIUS
+			self.radius = -Robot.MAX_RADIUS
 		self.speed = self.speed
 
 	def stop(self):
