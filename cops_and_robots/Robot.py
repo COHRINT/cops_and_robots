@@ -1,5 +1,5 @@
 import math, numpy, logging, serial
-import MapObj, create_driver
+from cops_and_robots import MapObj
 
 ser = serial.Serial('/dev/ttyUSB0',57600,timeout=1)
 
@@ -37,7 +37,7 @@ class Robot(MapObj):
 		:param name: string for the robot name
 		"""		
 		#Superclass attributes
-		a = numpy.linspace(0,2*math.pi,RESOLUTION)
+		a 		 = numpy.linspace(0,2 * math.pi, RESOLUTION)
 		circ_x 	 = [(ROBOT_DIAMETER / 2 * math.sin(b)) for b in a]
 		circ_y 	 = [(ROBOT_DIAMETER / 2 * math.cos(b)) for b in a]
 		shape 	 = zip(circ_x,circ_y) 			#draw a circle with radius ROBOT_DIAMETER/2 around centroid
@@ -61,25 +61,13 @@ class Robot(MapObj):
 		pass
 		#return result
 
-	def move(self,speed,radius):
-		"""Move directly to a target pose using A*
-
-		:param speed: velocity in mm/s (max of 500mm/s)
-		:param radius: turn radius in mm (max of 2000 mm)
+	def move(self):
+		"""Move based on robot's speed and radius
 		"""
-		#Saturate Input
-		if speed > MAX_SPEED:
-			speed = MAX_SPEED
-		elif speed < -MAX_SPEED:
-			speed = -MAX_SPEED
-		if radius > MAX_RADIUS:
-			radius = MAX_RADIUS
-		elif radius < -MAX_RADIUS:
-			radius = -MAX_RADIUS
 		
 		#Translate speed to upper and lower bytes
-		v = abs(speed) * (2**16 - 1)/ MAX_SPEED
-		if speed > 0:
+		v = abs(self.speed) * (2**16 - 1)/ MAX_SPEED
+		if self.speed > 0:
 			v = "0x%04x" % v
 		else:
 			v = ((v ^ 0xffff) + 1) & 0xffff
@@ -88,8 +76,8 @@ class Robot(MapObj):
 		v_l = int(v[4:6],16)
 
 		#Translate radius to upper and lower bytes
-		r = abs(radius) * (2**16 - 1)/ MAX_RADIUS
-		if radius >= 0:
+		r = abs(self.radius) * (2**16 - 1)/ MAX_RADIUS
+		if self.radius >= 0:
 			r = "0x%04x" % r
 		else:
 			r = ((r ^ 0xffff) + 1) & 0xffff

@@ -1,10 +1,10 @@
-import sys, time, logging
-import getch, Robot
+import sys, time, logging, getch
+from cops_and_robots import Cop
 
 logger = logging.getlogger('moveTest')
 logger.setLevel(logging.DEBUG)
 
-robot = Robot('Deckard')
+cop = Cop('Deckard')
 
 ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
 
@@ -13,19 +13,22 @@ self.speed = 0
 self.radius = 0
 x = 'a'
 
-keymap = {  '.' : robot.faster,
-			',' : robot.slower,
-			'w' : robot.forward,
-			's' : robot.backward,
-			'a' : robot.left,
-			'd' : robot.right,
-			' ' : robot.stop }
+keymap = {  '.' : cop.faster,
+			',' : cop.slower,
+			'w' : cop.forward,
+			's' : cop.backward,
+			'a' : cop.left,
+			'd' : cop.right,
+			' ' : cop.stop }
 
+tstep = 0.5
 
 while x != 'z':
-	x = getch()
+	x = getch.getch()
 	logging.info('char:',x)
-	ser.write(robot.move(self.speed,self.radius))
-	time.sleep(1)
+
+	cmd = cop.move()
+	ser.write(cmd)
+	time.sleep(tstep)
 
 ser.close()

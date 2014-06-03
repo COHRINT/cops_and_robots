@@ -6,7 +6,7 @@ import codecs
 import os
 import sys
 
-import sandman
+import cops_and_robots
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -19,7 +19,7 @@ def read(*filenames, **kwargs):
             buf.append(f.read())
     return sep.join(buf)
 
-long_description = read('README.txt', 'CHANGES.txt')
+long_description = read('README.txt')
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -33,34 +33,21 @@ class PyTest(TestCommand):
         sys.exit(errcode)
 
 setup(
-    name='cops-and-robots',
-    version=cops-and-robots.__version__,
+    name='cops_and_robots',
+    version=0.1,#cops-and-robots.__version__,
     url='http://github.com/COHRINT/cops-and-robots/',
     license='Apache Software License',
     author='Nick Sweet',
-    tests_require=['pytest'],
-    install_requires=['Flask>=0.10.1',
-                    'Flask-SQLAlchemy>=1.0',
-                    'SQLAlchemy==0.8.2',
-                    ],
-    cmdclass={'test': PyTest},
     author_email='nick.sweet@colorado.edu',
     description='Dynamic target-tracking using iRobot Creates',
     long_description=long_description,
-    packages=['cops-and-robots'],
+    packages=find_packages(exclude="test"),
     include_package_data=True,
     platforms='any',
-    test_suite='cops-and-robots.test.test_cops-and-robots',
-    classifiers = [
-        'Programming Language :: Python',
-        'Development Status :: 4 - Beta',
-        'Natural Language :: English',
-        'Environment :: Web Environment',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache Software License',
-        'Operating System :: OS Independent',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        ],
+    tests_require=['pytest'],
+    install_requires=['getch>=1.0'],
+    # cmdclass={'test': PyTest},
+    # test_suite='cops_and_robots.test.test_cops-and-robots',
     extras_require={
         'testing': ['pytest'],
     }
