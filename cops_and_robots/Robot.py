@@ -1,5 +1,5 @@
 import math, numpy, logging, serial
-from cops_and_robots import MapObj
+from cops_and_robots.MapObj import MapObj
 
 ser = serial.Serial('/dev/ttyUSB0',57600,timeout=1)
 
