@@ -10,8 +10,8 @@ OPCODE = cop.OPCODE
 cop.ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
 
 step = 100
-self.speed = 0
-self.radius = 0
+cop.speed = 0
+cop.radius = 0
 x = 'a'
 
 keymap = {  '.' : cop.faster,
@@ -29,7 +29,7 @@ while x != 'z':
 	logging.info('char:',x)
 
 	cmd = cop.move()
-	ser.write(cmd)
+	cop.ser.write(cmd)
 	time.sleep(tstep)
 
 ser.close()
