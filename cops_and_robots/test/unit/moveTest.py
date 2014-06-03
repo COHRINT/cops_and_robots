@@ -5,8 +5,9 @@ logger = logging.getLogger('moveTest')
 logger.setLevel(logging.DEBUG)
 
 cop = Cop('Deckard')
+OPCODE = cop.OPCODE
 
-ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
+cop.ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
 
 step = 100
 self.speed = 0

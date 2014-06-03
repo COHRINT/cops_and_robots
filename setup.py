@@ -48,7 +48,7 @@ setup(
     install_requires=['getch>=1.0'],
     # cmdclass={'test': PyTest},
     # test_suite='cops_and_robots.test.test_cops-and-robots',
-    extras_require={
-        'testing': ['pytest'],
-    }
+    # extras_require={
+    #     'testing': ['pytest'],
+    # }
 )
