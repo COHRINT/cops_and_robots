@@ -16,6 +16,7 @@ class Robot(MapObj):
     'start': 128,           #[128]
     'baud': 129,            #[129][Baud Code]
     'safe': 131,            #[130]
+    'full': 132,            #[132]
     #Demo Commdands
     'spot': 134,            #[128]
     'cover': 135,           #[135]
