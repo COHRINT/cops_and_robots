@@ -2,9 +2,6 @@ import math, numpy, logging, serial
 from cops_and_robots.MapObj import MapObj
 from cops_and_robots.Map import Map
 
-ser = serial.Serial('/dev/ttyUSB0',57600,timeout=1)
-
-
 class Robot(MapObj):
 	"""Base class for iRobot Create"""
 
@@ -30,6 +27,7 @@ class Robot(MapObj):
     'LEDs': 139,			#[139][LED][Color][Intensity]
     }
 
+    ser = serial.Serial('/dev/ttyUSB0',57600,timeout=1)
 	
 	def __init__(self, name):
 		"""Robot constructor
