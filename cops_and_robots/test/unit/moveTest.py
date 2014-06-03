@@ -27,6 +27,8 @@ tstep = 0.5
 while x != 'z':
 	x = getch.getch()
 	logging.info('char: %s',x)
+	logging.info('speed: %d mm/s',cop.speed)
+	logging.info('radius: %d mm/s',cop.radius)
 
 	cmd = cop.move()
 	cop.ser.write(cmd)
