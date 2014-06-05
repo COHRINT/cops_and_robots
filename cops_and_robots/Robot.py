@@ -37,6 +37,9 @@ class Robot(MapObj):
         print "Failed to connect to %s" % portstr
         # raise e
     
+    #Add logger
+    logger = logging.getLogger('moveTest')
+    logging.basicConfig(level=logging.DEBUG)
     
     def __init__(self, name):
         """Robot constructor
