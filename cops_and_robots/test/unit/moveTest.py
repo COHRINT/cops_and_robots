@@ -33,7 +33,6 @@ while x != 'z':
         keymap[x]( (step) if (x == '.' or x == ',') else ())
     except Exception, e:
         logging.error('%s is not a viable command',x)
-        raise e
     
     
     logging.info('char: %s',x)
