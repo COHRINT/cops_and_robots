@@ -20,8 +20,8 @@ keymap = {  '.' : lambda: cop.faster(step),
             ',' : lambda: cop.slower(step),
             'w' : lambda: cop.forward(),
             's' : lambda: cop.backward(),
-            'a' : lambda: cop.left(),
-            'd' : lambda: cop.right(),
+            'a' : lambda: cop.left(step*10),
+            'd' : lambda: cop.right(step*10),
             ' ' : lambda: cop.stop() }
 
 tstep = 0.5
