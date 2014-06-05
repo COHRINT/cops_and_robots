@@ -13,7 +13,7 @@ ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
 
 step = 100
 cop.speed = 0
-cop.radius = 0
+cop.radius = cop.MAX_RADIUS
 x = 'a'
 
 keymap = {  '.' : cop.faster,

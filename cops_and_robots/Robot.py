@@ -75,35 +75,39 @@ class Robot(MapObj):
         pass
         #return result
 
+    def int2ascii(self,integer):
+        """Takes a 16-bit signed integer and converts it to two ascii characters
+
+        :param integer: integer value no larger than ±2^15
+        :returns: high and low ascii characters
+        """
+        
+        if integer < 0:
+            low_byte    = integer & (pow(2,8)-1)
+            high_byte   = integer>>8 & (pow(2,8)-1)
+        else:
+            low_byte    = integer | ~(pow(2,8)-1)
+            high_byte   = integer>>8 | ~(pow(2,8)-1)
+
+        low_char    = chr(low_byte)
+        high_char   = chr(high_byte)
+
+        return (high_char, low_char)
+
     def move(self):
         """Move based on robot's speed and radius
         """
         
         #Translate speed to upper and lower bytes
-        v = abs(self.speed) * (2**16 - 1)/ Robot.MAX_SPEED
-        if self.speed > 0:
-            v = "0x%04x" % v
-        else:
-            v = ((v ^ 0xffff) + 1) & 0xffff
-            v = "0x%04x" % v
-        v_h = int(v[2:4],16)
-        v_l = int(v[4:6],16)
+        (s_h, s_l) = int2ascii(self.speed)
 
         #Translate radius to upper and lower bytes
-        r = abs(self.radius) * (2**16 - 1)/ Robot.MAX_RADIUS
-        if self.radius >= 0:
-            r = "0x%04x" % r
-        else:
-            r = ((r ^ 0xffff) + 1) & 0xffff
-            r = "0x%04x" % r
-        r_h = int(r[2:4],16)
-        r_l = int(r[4:6],16)
-
+        (r_h, r_l) = int2ascii(self.radius)
 
         #Generate serial drive command
-        drive_params = [v_h,v_l,r_h,r_l]
+        drive_params = [s_h,s_l,r_h,r_l]
         cmd = chr(Robot.OPCODE['drive'])
-        print drive_params
+        logging.info(drive_params)
 
         for i in drive_params:
             cmd = cmd + chr(i)
