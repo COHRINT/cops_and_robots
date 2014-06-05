@@ -96,6 +96,8 @@ class Robot(MapObj):
 
     def move(self):
         """Move based on robot's speed and radius
+
+        :returns: string of hex characters
         """
         
         #Translate speed to upper and lower bytes
@@ -109,7 +111,7 @@ class Robot(MapObj):
         drive_params.insert(0,chr(Robot.OPCODE['drive']))
         logging.info(drive_params)
 
-        result = drive_params
+        result = ''.join(drive_params) #Convert to a str
         return result
 
     def randomTarget(self):
