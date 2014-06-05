@@ -99,10 +99,10 @@ class Robot(MapObj):
         """
         
         #Translate speed to upper and lower bytes
-        (s_h, s_l) = int2ascii(self.speed)
+        (s_h, s_l) = self.int2ascii(self.speed)
 
         #Translate radius to upper and lower bytes
-        (r_h, r_l) = int2ascii(self.radius)
+        (r_h, r_l) = self.int2ascii(self.radius)
 
         #Generate serial drive command
         drive_params = [s_h,s_l,r_h,r_l]
