@@ -28,21 +28,22 @@ class Robot(MapObj):
     'LEDs': 139,            #[139][LED][Color][Intensity]
     }
 
-    #Connect to the serial port
-    portstr = '/dev/ttyUSB0'
-    try:
-        ser = serial.Serial(portstr,57600,timeout=1)
-    except Exception, e:
-        ser = "fail"
-        print "Failed to connect to %s" % portstr
-        # raise e
-    
     #Add logger
     logger = logging.getLogger('moveTest')
     logger.setLevel(logging.DEBUG)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
     logger.addHandler(console_handler)
+
+    #Connect to the serial port
+    portstr = '/dev/ttyUSB1'
+    try:
+        ser = serial.Serial(portstr,57600,timeout=1)
+    except Exception, e:
+        ser = "fail"
+        logging.error("Failed to connect to %s" % portstr)
+        # raise e
+    
     
     def __init__(self, name):
         """Robot constructor
