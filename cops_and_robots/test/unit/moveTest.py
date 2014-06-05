@@ -7,8 +7,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 cop = Cop('Deckard')
 OPCODE = cop.OPCODE
+ser = cop.ser
 
-cop.ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
+ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
 
 step = 100
 cop.speed = 0
@@ -33,7 +34,7 @@ while x != 'z':
 	logging.info('radius: %d mm/s',cop.radius)
 
 	cmd = cop.move()
-	cop.ser.write(cmd)
+	ser.write(cmd)
 	time.sleep(tstep)
 
 ser.close()
