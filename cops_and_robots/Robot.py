@@ -83,11 +83,11 @@ class Robot(MapObj):
         """
         
         if integer < 0:
-            low_byte    = integer & (pow(2,8)-1)
-            high_byte   = integer>>8 & (pow(2,8)-1)
-        else:
             low_byte    = integer | ~(pow(2,8)-1)
             high_byte   = integer>>8 | ~(pow(2,8)-1)
+        else:
+            low_byte    = integer & (pow(2,8)-1)
+            high_byte   = integer>>8 & (pow(2,8)-1)            
 
         low_char    = chr(low_byte)
         high_char   = chr(high_byte)
