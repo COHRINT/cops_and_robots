@@ -17,24 +17,31 @@ cop.radius = cop.MAX_RADIUS
 x = 'a'
 
 keymap = {  '.' : cop.faster,
-			',' : cop.slower,
-			'w' : cop.forward,
-			's' : cop.backward,
-			'a' : cop.left,
-			'd' : cop.right,
-			' ' : cop.stop }
+            ',' : cop.slower,
+            'w' : cop.forward,
+            's' : cop.backward,
+            'a' : cop.left,
+            'd' : cop.right,
+            ' ' : cop.stop }
 
 tstep = 0.5
 
 while x != 'z':
-	x = getch.getch()
-	keymap[x]( (step) if (x == '.' or x == ',') else ())
-	logging.info('char: %s',x)
-	logging.info('speed: %d mm/s',cop.speed)
-	logging.info('radius: %d mm/s',cop.radius)
+    x = getch.getch()
 
-	cmd = cop.move()
-	ser.write(cmd)
-	time.sleep(tstep)
+    try:
+        keymap[x]( (step) if (x == '.' or x == ',') else ())
+    except Exception, e:
+        logging.error('%s is not a viable command',x)
+        raise e
+    
+    
+    logging.info('char: %s',x)
+    logging.info('speed: %d mm/s',cop.speed)
+    logging.info('radius: %d mm/s',cop.radius)
+
+    cmd = cop.move()
+    ser.write(cmd)
+    time.sleep(tstep)
 
 ser.close()
