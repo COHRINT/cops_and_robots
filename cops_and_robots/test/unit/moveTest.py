@@ -2,6 +2,7 @@ import sys, time, logging, getch
 from cops_and_robots.Cop import Cop
 
 logger = logging.getLogger('moveTest')
+logger.addHandler(logging.StreamHandler()) #output to console
 logging.basicConfig(level=logging.DEBUG)
 
 cop = Cop('Deckard')
