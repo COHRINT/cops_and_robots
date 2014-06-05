@@ -83,8 +83,8 @@ class Robot(MapObj):
         """
         
         if integer < 0:
-            low_byte    = abs(abs(integer) | ~(pow(2,8)+1))
-            high_byte   = abs(abs(integer) | ~(pow(2,8)+1))
+            low_byte    = abs(abs(integer) | ~pow(2,8)+1)
+            high_byte   = abs(abs(integer>>8) | ~pow(2,8)+1)
         else:
             low_byte    = integer & (pow(2,8)-1)
             high_byte   = integer>>8 & (pow(2,8)-1)            
