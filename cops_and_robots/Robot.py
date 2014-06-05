@@ -39,7 +39,10 @@ class Robot(MapObj):
     
     #Add logger
     logger = logging.getLogger('moveTest')
-    logging.basicConfig(level=logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    logger.addHandler(console_handler)
     
     def __init__(self, name):
         """Robot constructor
