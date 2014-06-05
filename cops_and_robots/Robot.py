@@ -184,7 +184,7 @@ class Robot(MapObj):
             self.radius = 1
         self.speed = self.speed 
 
-    def right(self,step):
+    def right(self,step=10):
         """Turn right
         """
         logging.info('Right!')
