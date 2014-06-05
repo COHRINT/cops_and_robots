@@ -78,7 +78,7 @@ class Robot(MapObj):
     def int2ascii(self,integer):
         """Takes a 16-bit signed integer and converts it to two ascii characters
 
-        :param integer: integer value no larger than ±2^15
+        :param integer: integer value no larger than (+/-)2^15
         :returns: high and low ascii characters
         """
         
@@ -164,14 +164,14 @@ class Robot(MapObj):
         """Move iRobot create forward at current speed
         """
         logging.info('Forward!')
-        self.radius = 0
+        self.radius = Robot.MAX_RADIUS
         self.speed = self.speed     
 
     def backward(self):
         """Move iRobot create forward at current speed
         """
         logging.info('Backward!')
-        self.radius = 0
+        self.radius = Robot.MAX_RADIUS
         self.speed = -self.speed        
 
     def left(self,step=10):
@@ -181,7 +181,7 @@ class Robot(MapObj):
         if self.radius + step < Robot.MAX_RADIUS:
             self.radius = self.radius + step
         else:
-            self.radius = Robot.MAX_RADIUS
+            self.radius = 0.1
         self.speed = self.speed 
 
     def right(self,step):
@@ -191,7 +191,7 @@ class Robot(MapObj):
         if self.radius - step > -Robot.MAX_RADIUS:
                 self.radius = self.radius - step
         else:
-            self.radius = -Robot.MAX_RADIUS
+            self.radius = -0.1
         self.speed = self.speed
 
     def stop(self):

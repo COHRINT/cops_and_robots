@@ -16,13 +16,13 @@ cop.speed = 0
 cop.radius = cop.MAX_RADIUS
 x = 'a'
 
-keymap = {  '.' : cop.faster,
-            ',' : cop.slower,
-            'w' : cop.forward,
-            's' : cop.backward,
-            'a' : cop.left,
-            'd' : cop.right,
-            ' ' : cop.stop }
+keymap = {  '.' : lambda: cop.faster(step),
+            ',' : lambda: cop.slower(step),
+            'w' : lambda: cop.forward(),
+            's' : lambda: cop.backward(),
+            'a' : lambda: cop.left(),
+            'd' : lambda: cop.right(),
+            ' ' : lambda: cop.stop() }
 
 tstep = 0.5
 
@@ -30,7 +30,7 @@ while x != 'z':
     x = getch.getch()
 
     try:
-        keymap[x]( (step) if (x == '.' or x == ',') else ())
+        keymap[x]()
     except Exception, e:
         logging.error('%s is not a viable command',x)
     
