@@ -83,8 +83,8 @@ class Robot(MapObj):
         """
         
         if integer < 0:
-            low_byte    = integer | ~(pow(2,8)-1)
-            high_byte   = integer>>8 | ~(pow(2,8)-1)
+            low_byte    = abs(abs(integer) | ~(pow(2,8)+1))
+            high_byte   = abs(abs(integer) | ~(pow(2,8)+1))
         else:
             low_byte    = integer & (pow(2,8)-1)
             high_byte   = integer>>8 & (pow(2,8)-1)            
@@ -181,7 +181,7 @@ class Robot(MapObj):
         if self.radius + step < Robot.MAX_RADIUS:
             self.radius = self.radius + step
         else:
-            self.radius = 0.1
+            self.radius = 1
         self.speed = self.speed 
 
     def right(self,step):
@@ -191,7 +191,7 @@ class Robot(MapObj):
         if self.radius - step > -Robot.MAX_RADIUS:
                 self.radius = self.radius - step
         else:
-            self.radius = -0.1
+            self.radius = -1
         self.speed = self.speed
 
     def stop(self):
