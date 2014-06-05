@@ -65,7 +65,7 @@ class Robot(MapObj):
         self.bump    = False
         self.map     = Map()
         self.speed   = 0
-        self.radius  = 0
+        self.radius  = Robot.MAX_RADIUS
 
     def moveToTarget(self,target):
         """Move directly to a target pose using A* for pathfinding
