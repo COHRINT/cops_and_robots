@@ -106,12 +106,10 @@ class Robot(MapObj):
 
         #Generate serial drive command
         drive_params = [s_h,s_l,r_h,r_l]
-        cmd = chr(Robot.OPCODE['drive'])
+        drive_params.insert(0,chr(Robot.OPCODE['drive']))
         logging.info(drive_params)
 
-        for i in drive_params:
-            cmd = cmd + chr(i)
-        result = cmd
+        result = drive_params
         return result
 
     def randomTarget(self):
