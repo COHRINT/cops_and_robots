@@ -137,6 +137,7 @@ class Robot(MapObj):
 
         :param: speed step size increase (default 10)
         """
+        print 'test'
         logging.info('Faster!')
         if self.speed + step <= Robot.MAX_SPEED:
             self.speed = self.speed + step
