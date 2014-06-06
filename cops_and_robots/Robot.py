@@ -41,7 +41,7 @@ class Robot(MapObj):
     logger.addHandler(console_handler)
 
     #Connect to the serial port
-    portstr = '/dev/ttyUSB1'
+    portstr = '/dev/ttyUSB0'
     try:
         ser = serial.Serial(portstr,57600,timeout=1)
     except Exception, e:
