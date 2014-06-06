@@ -11,17 +11,18 @@ ser = cop.ser
 
 ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
 
-step = 100
 cop.speed = 0
 cop.radius = cop.MAX_RADIUS
 x = 'a'
 
-keymap = {  '.' : lambda: cop.faster(step),
-            ',' : lambda: cop.slower(step),
+keymap = {  '.' : lambda: cop.faster(),
+            ',' : lambda: cop.slower(),
             'w' : lambda: cop.forward(),
             's' : lambda: cop.backward(),
-            'a' : lambda: cop.left(step*10),
-            'd' : lambda: cop.right(step*10),
+            'a' : lambda: cop.rotateCCW(),
+            'd' : lambda: cop.rotateCW(),
+            'q' : lambda: cop.turn(2000),
+            'e' : lambda: cop.turn(-2000),
             ' ' : lambda: cop.stop() }
 
 tstep = 0.5

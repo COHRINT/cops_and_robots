@@ -11,6 +11,11 @@ class Robot(MapObj):
     MAX_SPEED       = 500   #[mm/s]
     MAX_RADIUS      = 2000  #[mm]
 
+    #Special movement radii
+    RAD_STRAIGHT    = 2**15 - 1
+    RAD_CW          = 2**16 - 1
+    RAD_CCW         = 1
+
     OPCODE = {
     # Getting Started
     'start': 128,           #[128]
@@ -133,14 +138,14 @@ class Robot(MapObj):
     def serialCommand(self,cmd):
         """Send a serial command to the iRobot base
 
-        :param cmd: character string accepted by the iRobot seraial interface
+        :param cmd: character string accepted by the iRobot serial interface
         """
         pass
 
-    def faster(self,step=10):
+    def faster(self,step=100):
         """Increase iRobot create speed
 
-        :param: speed step size increase (default 10)
+        :param: speed step size increase (default 100)
         """
         print 'test'
         logging.info('Faster!')
@@ -149,10 +154,10 @@ class Robot(MapObj):
         else:
             self.speed = Robot.MAX_SPEED
 
-    def slower(self,step=10):
+    def slower(self,step=100):
         """Decrease iRobot create speed
 
-        :param: speed step size increase (default 10)
+        :param: speed step size increase (default 100)
         """     
         logging.info('Slower...')
         if self.speed - step > 0:
@@ -164,34 +169,39 @@ class Robot(MapObj):
         """Move iRobot create forward at current speed
         """
         logging.info('Forward!')
-        self.radius = Robot.MAX_RADIUS
+        self.radius = Robot.RAD_STRAIGHT
         self.speed = self.speed     
 
     def backward(self):
         """Move iRobot create forward at current speed
         """
         logging.info('Backward!')
-        self.radius = Robot.MAX_RADIUS
+        self.radius = Robot.RAD_STRAIGHT
         self.speed = -self.speed        
 
-    def left(self,step=10):
-        """Turn left
+    def turn(self,radius):
+        """Move in a circle
+
+        :param radius: The longer radii make Create drive straighter, while the shorter radii make Create turn more. The radius is measured from the center of the turning circle to the center of Create. A Drive command with a positive velocity and a positive radius makes Create drive forward while turning toward the left. A negative radius makes Create turn toward the right.
         """
-        logging.info('Left!')
-        if self.radius + step < Robot.MAX_RADIUS:
-            self.radius = self.radius + step
-        else:
-            self.radius = 1
+        logging.info('Turning!')
+        if abs(radius) > Robot.MAX_RADIUS:
+                radius  = int(math.copysign(Robot.MAX_RADIUS,radius))
+        self.radius     = radius
+        self.speed      = self.speed
+
+    def rotateCCW(self):
+        """Rotate in place counterclockwise
+        """
+        logging.info('Rotate Left!')
+        self.radius = Robot.RAD_CCW
         self.speed = self.speed 
 
-    def right(self,step=10):
-        """Turn right
+    def rotateCW(self):
+        """Rotate in place clockwise
         """
-        logging.info('Right!')
-        if self.radius - step > -Robot.MAX_RADIUS:
-                self.radius = self.radius - step
-        else:
-            self.radius = -1
+        logging.info('RotateRight!')
+        self.radius = Robot.RAD_CW
         self.speed = self.speed
 
     def stop(self):
