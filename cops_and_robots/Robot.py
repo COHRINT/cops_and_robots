@@ -170,14 +170,14 @@ class Robot(MapObj):
         """
         logging.info('Forward!')
         self.radius = Robot.RAD_STRAIGHT
-        self.speed = self.speed     
+        self.speed = abs(self.speed)     
 
     def backward(self):
         """Move iRobot create forward at current speed
         """
         logging.info('Backward!')
         self.radius = Robot.RAD_STRAIGHT
-        self.speed = -self.speed        
+        self.speed = -abs(self.speed)        
 
     def turn(self,radius):
         """Move in a circle

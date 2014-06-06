@@ -21,8 +21,8 @@ keymap = {  '.' : lambda: cop.faster(),
             's' : lambda: cop.backward(),
             'a' : lambda: cop.rotateCCW(),
             'd' : lambda: cop.rotateCW(),
-            'q' : lambda: cop.turn(2000),
-            'e' : lambda: cop.turn(-2000),
+            'q' : lambda: cop.turn(1000),
+            'e' : lambda: cop.turn(-1000),
             ' ' : lambda: cop.stop() }
 
 tstep = 0.5
