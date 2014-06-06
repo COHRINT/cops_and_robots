@@ -1,6 +1,18 @@
 import sys, time, logging, getch
 from cops_and_robots.Cop import Cop
 
+print """ \n\n Welcome to the iRobot Move Test!
+CONTROLS
+    spacebar -> stop
+    .        -> speed up
+    ,        -> slow down
+    q        -> turn left
+    w        -> move forward
+    e        -> turn right
+    a        -> rotate counterclockwise
+    s        -> move backward
+    d        -> rotate clockwise"""
+
 logger = logging.getLogger('moveTest')
 logger.addHandler(logging.StreamHandler()) #output to console
 logging.basicConfig(level=logging.DEBUG)
