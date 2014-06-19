@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package>
+  <name>cops_and_robots</name>
+  <version>0.1.0</version>
+  <description>Robotic cops and robbers project for dynamic target-tracking on the iRobot Create platform</description>
+
+  <maintainer email="nick.sweet@colorado.edu">Nick Sweet</maintainer>
+  <license>Apache</license>
+  <url type="website">https://github.com/COHRINT/Cops-and-Robots</url>
+  <author email="nick.sweet@colorado.edu">Nick Sweet</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+
+</package>
