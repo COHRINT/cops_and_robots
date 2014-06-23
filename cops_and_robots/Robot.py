@@ -135,7 +135,8 @@ class Robot(MapObj):
         #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
 
         while(True):
-            logging.DEBUG('Entered sensor stream loop')
+            logging.DEBUG("Entered sensor stream loop")
+            
             #Start the sensor stream from the iRobot create
             num_packets = 5
             expected_response_length = 15 
