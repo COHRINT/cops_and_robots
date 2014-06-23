@@ -1,9 +1,10 @@
-import math, numpy, logging, serial
+import math, numpy, logging, serial, socket
 from cops_and_robots.MapObj import MapObj
 from cops_and_robots.Map import Map
 
 class Robot(MapObj):
-    """Base class for iRobot Create"""
+    """Class for controlling iRobot Create. Will generate a 'base' thread to maintain
+    serial communication with the iRobot base."""
 
     #Constants
     DIAMETER        = 30 #[cm] <>TODO: VERIFY!
@@ -34,7 +35,7 @@ class Robot(MapObj):
     }
 
     #Add logger
-    logger = logging.getLogger('moveTest')
+    logger = logging.getLogger('robot')
     logger.setLevel(logging.DEBUG)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
@@ -50,10 +51,8 @@ class Robot(MapObj):
         # raise e
     
     
-    def __init__(self, name):
+    def __init__(self):
         """Robot constructor
-
-        :param name: string for the robot name
         """     
         #Superclass attributes
         a        = numpy.linspace(0,2 * math.pi, Robot.RESOLUTION)
@@ -62,6 +61,7 @@ class Robot(MapObj):
         shape    = zip(circ_x,circ_y)           #draw a circle with radius ROBOT_DIAMETER/2 around centroid
         centroid = {'x':0,'y':0,'theta':0}      #Start at origin
         pose     = {'x':0,'y':0,'theta':0}      #Start at origin
+        name     = socket.gethostname()
         MapObj.__init__(self,name,shape,centroid,pose)
 
         #Class attributes
