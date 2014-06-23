@@ -131,7 +131,7 @@ class Robot(MapObj):
             # raise e
 
         #Enable commanding of the robot
-        ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
+        ser.write(chr(Robot.OPCODE['start']) + chr(Robot.OPCODE['full']))
         #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
 
         while(True):
