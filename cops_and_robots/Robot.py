@@ -135,8 +135,6 @@ class Robot(MapObj):
         #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
 
         while(True):
-            logging.debug("Entered sensor stream loop")
-
             #Start the sensor stream from the iRobot create
             num_packets = 5
             expected_response_length = 15 
@@ -151,7 +149,7 @@ class Robot(MapObj):
                 TX_packet = TX_packet + chr(sensor)
                           
             ser.write(TX_packet)
-            logging.debug("Transmitted packet: {}".format(TX_packet))
+            # logging.debug("Transmitted packet: {}".format(TX_packet))
             
             try:
                 response = ser.read(expected_response_length)
@@ -202,7 +200,7 @@ class Robot(MapObj):
             #Update battery characteristics
             self.battery_capacity = capacity_bytes[0]*256 + capacity_bytes[1]
             self.battery_charge   = charge_bytes[0]*256 + charge_bytes[1]
-            logging.debug("Capacity: {} \n Charge: {}".format(self.battery_capacity, self.battery_charge))
+            logging.debug("Capacity: {} \t Charge: {}".format(self.battery_capacity, self.battery_charge))
 
             #Update bump sensor readings
             self.bump_right = bump_byte & 1
