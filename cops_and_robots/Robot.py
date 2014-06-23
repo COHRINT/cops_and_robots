@@ -151,7 +151,7 @@ class Robot(MapObj):
                 TX_packet = TX_packet + chr(sensor)
                           
             ser.write(TX_packet)
-            logging.debug("Transmitted packet: {}{}".format(TX_packet))
+            logging.debug("Transmitted packet: {}".format(TX_packet))
             
             try:
                 response = ser.read(expected_response_length)
