@@ -1,4 +1,4 @@
-import math, numpy, logging, serial, socket
+import math, numpy, logging, serial, socket, threading
 from cops_and_robots.MapObj import MapObj
 from cops_and_robots.Map import Map
 
@@ -23,7 +23,7 @@ class Robot(MapObj):
     'baud': 129,            #[129][Baud Code]
     'safe': 131,            #[130]
     'full': 132,            #[132]
-    #Demo Commdands
+    # Demo Commands
     'spot': 134,            #[128]
     'cover': 135,           #[135]
     'demo': 136,            #[136][Which-Demo]
@@ -32,6 +32,51 @@ class Robot(MapObj):
     'drive': 137,           #[137][Vel-high-byte][Vel-low-byte][Rad-high-byte][Rad-low-byte]
     'drive-direct': 145,    #[145][Right-vel-high-byte][Right-vel-low-byte][Left-vel-high-byte][Left-vel-low-byte]
     'LEDs': 139,            #[139][LED][Color][Intensity]
+    # Sensor Commands
+    'stream': 148,          #[148][Num-packets][Pack-id-1][Pack-id-2]...
+    }
+
+    SENSOR_PKT = {
+    'bump-wheel-drop': 7,   #[4] caster; [3] wheel left; [2] wheel right; [1] bump left; [0] bump right
+    'wall': 8,              #[0]
+    'cliff-left': 9,        #[0]
+    'cliff-front-left': 10, #[0]
+    'cliff-front-right': 11,#[0]
+    'cliff-right': 12,      #[0]
+    'virtual-wall': 13,     #[0]
+    'overcurrent': 14,      #[4] left wheel; [3] right wheel; [2] LDO2; [1] LDO0 [0] LDO1
+    'IR': 17,               #[7-0] see Create Open Interface
+    'buttons': 18,          #[2] Advance; [0] Play
+    'distance': 19,         #[15-0] mm since last requested
+    'angle': 20,            #[15-0] degrees since last requested
+    'charging': 21,         #[5] fault; [4] waiting; [3] trickle; [2] full; [1] reconditioning; [0] none        
+    'voltage': 22,          #[15-0] battery voltage in mV
+    'current': 23,          #[15-0] battery current in mA (+ for charging)
+    'temperature': 24,      #[7-0] battery temperature in degrees Celsius
+    'charge':25,            #[15-0] battery charge in mAh
+    'capacity':26,          #[15-0] battery capacity in mAh
+    'wall-signal':27,       #[11-0] sensor signal strength
+    'cliff-left-signal':28, #[11-0] sensor signal strength
+    'cliff-front-left-signal':29, #[11-0] sensor signal strength
+    'cliff-front-right-signal':30,#[11-0] sensor signal strength
+    'cliff-right-signal':31,#[11-0] sensor signal strength
+    'OI-mode':35            #[0] off; [1] passive; [2] safe; [3] full
+    }
+
+    CHARGING_MODE = {
+    'none': 0,
+    'reconditioning': 1,
+    'full': 2,
+    'trickle': 3,
+    'waiting': 4,
+    'fault': 5
+    }
+
+    OI_MODE = {
+    'off': 0,
+    'passive': 1,
+    'safe': 2,
+    'full': 3
     }
 
     #Add logger
@@ -40,17 +85,7 @@ class Robot(MapObj):
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
     logger.addHandler(console_handler)
-
-    #Connect to the serial port
-    portstr = '/dev/ttyUSB0'
-    try:
-        ser = serial.Serial(portstr,57600,timeout=1)
-    except Exception, e:
-        ser = "fail"
-        logging.error("Failed to connect to %s" % portstr)
-        # raise e
-    
-    
+        
     def __init__(self):
         """Robot constructor
         """     
@@ -65,12 +100,111 @@ class Robot(MapObj):
         MapObj.__init__(self,name,shape,centroid,pose)
 
         #Class attributes
-        self.target  = {'x':0,'y':0,'theta':0}  #Start at origin
-        self.battery = 0
-        self.bump    = False
-        self.map     = Map()
-        self.speed   = 0
-        self.radius  = Robot.MAX_RADIUS
+        self.target         = {'x':0,'y':0,'theta':0}  #Start at origin
+        self.charging_mode  = Robot.CHARGING_MODE['none']
+        self.battery_charge = 0
+        self.battery_capacity = 0
+        self.bump_left      = False
+        self.bump_right     = False
+        self.map            = Map('fleming_no_walls')
+        self.speed          = 0
+        self.radius         = Robot.MAX_RADIUS
+        self.OI_mode        = Robot.OI_MODE['off'] 
+
+        #Spawn base thread
+        t = threading.Thread(target=self.base)
+        t.start()
+        self._stop = threading.Event()
+
+
+    def base(self):
+        """Seperate thread taking care of serial communication with the iRobot base
+        """
+        #Connect to the serial port
+        portstr = '/dev/ttyUSB0'
+        try:
+            ser = serial.Serial(portstr,57600,timeout=1)
+        except Exception, e:
+            ser = "fail"
+            logging.error("Failed to connect to %s" % portstr)
+            return ser
+            # raise e
+
+        #Enable commanding of the robot
+        ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
+        #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
+
+        while(True):
+            #Start the sensor stream from the iRobot create
+            num_packets = 5
+            expected_response_length = 15 
+            ser.write(  chr(OPCODE['stream']) + num_packets +
+                        chr(SENSOR_PKT['OI-mode']) + 
+                        chr(SENSOR_PKT['charging']) + 
+                        chr(SENSOR_PKT['charge']) + 
+                        chr(SENSOR_PKT['capacity']) + 
+                        chr(SENSOR_PKT['bump-wheel-drop']) )
+            
+            try:
+                response = ser.read()
+            except Exception, e:
+                response = ''
+                logging.error("Failed to read from %s" % portstr)
+
+
+            if len(response) < expected_response_length:
+                logging.error("Unexpected response length (%i instead of %i)" 
+                              % len(response),expected_response_length)
+
+            #Break up returned bytes
+            logging.debug(response)
+            OI_mode_byte    = ord(response[3])
+            charging_byte   = ord(response[5])
+            charge_bytes    = ord(response[7:9])
+            capacity_bytes  = ord(response[10:12])
+            bump_byte       = ord(response[13])
+
+            #Update OI mode
+            if OI_mode_byte & 1:
+                self.OI_mode = Robot.OI_MODE['off']
+            elif OI_mode_byte & 2:
+                self.OI_mode = Robot.OI_MODE['passive']
+            elif OI_mode_byte & 4:
+                self.OI_mode = Robot.OI_MODE['safe']
+            elif OI_mode_byte & 8:
+                self.OI_mode = Robot.OI_MODE['full']
+            else:
+                logging.error('Incorrect OI mode returned!')
+
+            #Update charging mode
+            if charging_byte & 1:
+                self.charging_mode = Robot.CHARGING_MODE['none']
+            elif charging_byte & 2:
+                self.charging_mode = Robot.CHARGING_MODE['reconditioning']
+            elif charging_byte & 2:
+                self.charging_mode = Robot.CHARGING_MODE['full']
+            elif charging_byte & 2:
+                self.charging_mode = Robot.CHARGING_MODE['trickle']
+            elif charging_byte & 2:
+                self.charging_mode = Robot.CHARGING_MODE['waiting']
+            elif charging_byte & 2:
+                self.charging_mode = Robot.CHARGING_MODE['fault']
+            else:
+                logging.error('Incorrect Charging mode returned!')                                                                
+
+            #Update battery characteristics
+            self.battery_capacity = capacity_bytes
+            self.battery_charge   = charge_bytes
+            logging.debug("Capacity: %i \n Charge: %i" % self.battery_capacity, self.battery_charge)
+
+            #Update bump sensor readings
+            self.bump_right = bump_byte & 1
+            self.bump_left  = bump_byte & 2
+
+            #Start the sensor stream from the Vicon system
+            #self.pose
+
+            #Loop through messages in the command queue
 
     def moveToTarget(self,target):
         """Move directly to a target pose using A* for pathfinding

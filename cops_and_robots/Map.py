@@ -5,7 +5,8 @@ class Map(object):
 	BOUNDS_10M = [[y * 10 for y in x] for x in BOUNDS_1M] #[cm] 10 meter square
 
 
-	def __init__(self):
+	def __init__(self,mapname="fleming_no_walls"):
+		self.mapname = mapname
 		self.bounds = Map.BOUNDS_10M
 		self.walls = []
 
