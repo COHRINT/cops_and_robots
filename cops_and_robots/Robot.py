@@ -167,8 +167,8 @@ class Robot(MapObj):
             #Break up returned bytes
             OI_mode_byte    = ord(response[3])
             charging_byte   = ord(response[5])
-            charge_bytes    = [ord(response[7),ord(response[8])
-            capacity_bytes  = [ord(response[10),ord(response[11])
+            charge_bytes    = [ord(response[7]),ord(response[8])]
+            capacity_bytes  = [ord(response[10]),ord(response[11])]
             bump_byte       = ord(response[13])
 
             #Update OI mode
