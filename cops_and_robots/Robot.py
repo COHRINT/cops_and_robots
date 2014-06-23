@@ -80,7 +80,7 @@ class Robot(MapObj):
     }
 
     #Add logger
-    logger = logging.getLogger('robot')
+    logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
@@ -120,6 +120,8 @@ class Robot(MapObj):
     def base(self):
         """Seperate thread taking care of serial communication with the iRobot base
         """
+        logger = Robot.logger
+
         #Connect to the serial port
         portstr = '/dev/ttyUSB0'
         try:
