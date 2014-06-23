@@ -6,8 +6,6 @@ import codecs
 import os
 import sys
 
-import cops_and_robots
-
 here = os.path.abspath(os.path.dirname(__file__))
 
 def read(*filenames, **kwargs):
@@ -34,8 +32,8 @@ class PyTest(TestCommand):
 
 setup(
     name='cops_and_robots',
-    version=0.1,#cops-and-robots.__version__,
-    url='http://github.com/COHRINT/cops-and-robots/',
+    version=0.1,#cops_and_robots.__version__,
+    url='http://github.com/COHRINT/cops_and_robots/',
     license='Apache Software License',
     author='Nick Sweet',
     author_email='nick.sweet@colorado.edu',
