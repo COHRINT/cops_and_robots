@@ -153,8 +153,7 @@ class Robot(MapObj):
 
 
             if len(response) < expected_response_length:
-                logging.error("Unexpected response length (%i instead of %i)" 
-                              % len(response),expected_response_length)
+                logging.error("Unexpected response length (%i instead of %i)" % len(response),expected_response_length)
 
             #Break up returned bytes
             logging.debug(response)
