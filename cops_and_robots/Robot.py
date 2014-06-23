@@ -147,10 +147,11 @@ class Robot(MapObj):
                           chr(Robot.SENSOR_PKT['capacity']) + 
                           chr(Robot.SENSOR_PKT['bump-wheel-drop']) )
             ser.write(TX_packet)
-            logging.debug(TX_packet)
+            logging.debug("Transmitted packet: {}".format(TX_packet))
             
             try:
                 response = ser.read()
+                logging.debug("Received packet: {}".format(response))
             except Exception, e:
                 response = ''
                 logging.error("Failed to read from {}".format(portstr))
@@ -160,7 +161,6 @@ class Robot(MapObj):
                 logging.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
 
             #Break up returned bytes
-            logging.debug(response)
             OI_mode_byte    = ord(response[3])
             charging_byte   = ord(response[5])
             charge_bytes    = ord(response[7:9])
