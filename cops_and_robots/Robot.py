@@ -200,8 +200,8 @@ class Robot(MapObj):
                 logging.error('Incorrect Charging mode returned!')                                                                
 
             #Update battery characteristics
-            self.battery_capacity = capacity_bytes
-            self.battery_charge   = charge_bytes
+            self.battery_capacity = capacity_bytes[0]*256 + capacity_bytes[1]
+            self.battery_charge   = charge_bytes[0]*256 + charge_bytes[1]
             logging.debug("Capacity: {} \n Charge: {}".format(self.battery_capacity, self.battery_charge))
 
             #Update bump sensor readings
