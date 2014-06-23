@@ -126,7 +126,7 @@ class Robot(MapObj):
             ser = serial.Serial(portstr,57600,timeout=1)
         except Exception, e:
             ser = "fail"
-            logging.error("Failed to connect to {}".format(portstr))
+            logger.error("Failed to connect to {}".format(portstr))
             return ser
             # raise e
 
@@ -135,7 +135,7 @@ class Robot(MapObj):
         #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
 
         while(True):
-            logging.debug("Entered sensor stream loop")
+            logger.debug("Entered sensor stream loop")
 
             #Start the sensor stream from the iRobot create
             num_packets = 5
@@ -151,14 +151,14 @@ class Robot(MapObj):
                 response = ser.read()
             except Exception, e:
                 response = ''
-                logging.error("Failed to read from {}".format(portstr))
+                logger.error("Failed to read from {}".format(portstr))
 
 
             if len(response) < expected_response_length:
-                logging.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
+                logger.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
 
             #Break up returned bytes
-            logging.debug(response)
+            logger.debug(response)
             OI_mode_byte    = ord(response[3])
             charging_byte   = ord(response[5])
             charge_bytes    = ord(response[7:9])
@@ -175,7 +175,7 @@ class Robot(MapObj):
             elif OI_mode_byte & 8:
                 self.OI_mode = Robot.OI_MODE['full']
             else:
-                logging.error('Incorrect OI mode returned!')
+                logger.error('Incorrect OI mode returned!')
 
             #Update charging mode
             if charging_byte & 1:
@@ -191,12 +191,12 @@ class Robot(MapObj):
             elif charging_byte & 2:
                 self.charging_mode = Robot.CHARGING_MODE['fault']
             else:
-                logging.error('Incorrect Charging mode returned!')                                                                
+                logger.error('Incorrect Charging mode returned!')                                                                
 
             #Update battery characteristics
             self.battery_capacity = capacity_bytes
             self.battery_charge   = charge_bytes
-            logging.debug("Capacity: {} \n Charge: {}".format(self.battery_capacity, self.battery_charge))
+            logger.debug("Capacity: {} \n Charge: {}".format(self.battery_capacity, self.battery_charge))
 
             #Update bump sensor readings
             self.bump_right = bump_byte & 1
