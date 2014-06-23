@@ -126,7 +126,7 @@ class Robot(MapObj):
             ser = serial.Serial(portstr,57600,timeout=1)
         except Exception, e:
             ser = "fail"
-            logging.error("Failed to connect to %s" % portstr)
+            logging.error("Failed to connect to {}".format(portstr))
             return ser
             # raise e
 
@@ -149,11 +149,11 @@ class Robot(MapObj):
                 response = ser.read()
             except Exception, e:
                 response = ''
-                logging.error("Failed to read from %s" % portstr)
+                logging.error("Failed to read from {}".format(portstr))
 
 
             if len(response) < expected_response_length:
-                logging.error("Unexpected response length (%i instead of %i)" % len(response),expected_response_length)
+                logging.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
 
             #Break up returned bytes
             logging.debug(response)
@@ -194,7 +194,7 @@ class Robot(MapObj):
             #Update battery characteristics
             self.battery_capacity = capacity_bytes
             self.battery_charge   = charge_bytes
-            logging.debug("Capacity: %i \n Charge: %i" % self.battery_capacity, self.battery_charge)
+            logging.debug("Capacity: {} \n Charge: {}".format(self.battery_capacity, self.battery_charge))
 
             #Update bump sensor readings
             self.bump_right = bump_byte & 1
