@@ -120,15 +120,13 @@ class Robot(MapObj):
     def base(self):
         """Seperate thread taking care of serial communication with the iRobot base
         """
-        logger = Robot.logger
-
         #Connect to the serial port
         portstr = '/dev/ttyUSB0'
         try:
             ser = serial.Serial(portstr,57600,timeout=1)
         except Exception, e:
             ser = "fail"
-            logger.error("Failed to connect to {}".format(portstr))
+            logging.error("Failed to connect to {}".format(portstr))
             return ser
             # raise e
 
@@ -137,7 +135,7 @@ class Robot(MapObj):
         #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
 
         while(True):
-            logger.debug("Entered sensor stream loop")
+            logging.debug("Entered sensor stream loop")
 
             #Start the sensor stream from the iRobot create
             num_packets = 5
@@ -153,14 +151,14 @@ class Robot(MapObj):
                 response = ser.read()
             except Exception, e:
                 response = ''
-                logger.error("Failed to read from {}".format(portstr))
+                logging.error("Failed to read from {}".format(portstr))
 
 
             if len(response) < expected_response_length:
-                logger.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
+                logging.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
 
             #Break up returned bytes
-            logger.debug(response)
+            logging.debug(response)
             OI_mode_byte    = ord(response[3])
             charging_byte   = ord(response[5])
             charge_bytes    = ord(response[7:9])
@@ -177,7 +175,7 @@ class Robot(MapObj):
             elif OI_mode_byte & 8:
                 self.OI_mode = Robot.OI_MODE['full']
             else:
-                logger.error('Incorrect OI mode returned!')
+                logging.error('Incorrect OI mode returned!')
 
             #Update charging mode
             if charging_byte & 1:
@@ -193,12 +191,12 @@ class Robot(MapObj):
             elif charging_byte & 2:
                 self.charging_mode = Robot.CHARGING_MODE['fault']
             else:
-                logger.error('Incorrect Charging mode returned!')                                                                
+                logging.error('Incorrect Charging mode returned!')                                                                
 
             #Update battery characteristics
             self.battery_capacity = capacity_bytes
             self.battery_charge   = charge_bytes
-            logger.debug("Capacity: {} \n Charge: {}".format(self.battery_capacity, self.battery_charge))
+            logging.debug("Capacity: {} \n Charge: {}".format(self.battery_capacity, self.battery_charge))
 
             #Update bump sensor readings
             self.bump_right = bump_byte & 1
