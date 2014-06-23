@@ -140,14 +140,18 @@ class Robot(MapObj):
             #Start the sensor stream from the iRobot create
             num_packets = 5
             expected_response_length = 15 
-            TX_packet = ( chr(Robot.OPCODE['stream']) + chr(num_packets) +
-                          chr(Robot.SENSOR_PKT['OI-mode']) + 
-                          chr(Robot.SENSOR_PKT['charging']) + 
-                          chr(Robot.SENSOR_PKT['charge']) + 
-                          chr(Robot.SENSOR_PKT['capacity']) + 
-                          chr(Robot.SENSOR_PKT['bump-wheel-drop']) )
+            sensors = [ Robot.SENSOR_PKT['OI-mode'], 
+                        Robot.SENSOR_PKT['charging'], 
+                        Robot.SENSOR_PKT['charge'],
+                        Robot.SENSOR_PKT['capacity'],
+                        Robot.SENSOR_PKT['bump-wheel-drop'] ]
+
+            TX_packet = chr(Robot.OPCODE['stream']) + chr(num_packets)
+            for sensor in sensors:
+                TX_packet = TX_packet + chr(sensors)
+                          
             ser.write(TX_packet)
-            logging.debug("Transmitted packet: {}".format(TX_packet))
+            logging.debug("Transmitted packet: {}{}".format(TX_packet))
             
             try:
                 response = ser.read()
