@@ -81,9 +81,9 @@ class Robot(MapObj):
 
     #Add logger
     logger = logging.getLogger('robot')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.debug)
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.debug)
     logger.addHandler(console_handler)
         
     def __init__(self):
@@ -135,8 +135,8 @@ class Robot(MapObj):
         #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
 
         while(True):
-            logging.DEBUG("Entered sensor stream loop")
-            
+            logging.debug("Entered sensor stream loop")
+
             #Start the sensor stream from the iRobot create
             num_packets = 5
             expected_response_length = 15 
