@@ -177,7 +177,7 @@ class Robot(MapObj):
 
             #Check checksum
             expected_checksum = sum(map(ord,response[1:end-1]))
-            if not checksum = expected_checksum
+            if not checksum == expected_checksum
                 logging.error("Checksums differ! ({} instead of {})".format(checksum,expected_checksum))
 
             #Update OI mode
