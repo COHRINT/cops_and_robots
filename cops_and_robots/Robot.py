@@ -34,6 +34,7 @@ class Robot(MapObj):
     'LEDs': 139,            #[139][LED][Color][Intensity]
     # Sensor Commands
     'stream': 148,          #[148][Num-packets][Pack-id-1][Pack-id-2]...
+    'stream_toggle': 150    #[150][0 or 1] to [stop or resume] the stream
     }
 
     SENSOR_PKT = {
@@ -114,8 +115,11 @@ class Robot(MapObj):
         #Spawn base thread
         t = threading.Thread(target=self.base)
         t.start()
-        self._stop = threading.Event()
-
+        self.thread_stop = threading.Event() #used for graceful killing of threads
+        try:
+            time.sleep(10)
+        except (KeyboardInterrupt, SystemExit):
+            self.thread_stop.set()
 
     def base(self):
         """Seperate thread taking care of serial communication with the iRobot base
@@ -134,7 +138,7 @@ class Robot(MapObj):
         ser.write(chr(Robot.OPCODE['start']) + chr(Robot.OPCODE['full']))
         #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
 
-        while(True):
+        while not self.thread_stop.is_set():
             #Start the sensor stream from the iRobot create
             num_packets = 5
             expected_response_length = 15 
@@ -211,6 +215,10 @@ class Robot(MapObj):
             #self.pose
 
             #Loop through messages in the command queue
+
+        #Stop the stream
+        ser.write(chr(Robot.OPCODE['stream_toggle']) + chr(0))
+        logging.debug("Exiting gracefully!")
 
     def moveToTarget(self,target):
         """Move directly to a target pose using A* for pathfinding
