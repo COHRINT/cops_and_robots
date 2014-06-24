@@ -173,6 +173,12 @@ class Robot(MapObj):
             charge_bytes    = [ord(response[7]),ord(response[8])]
             capacity_bytes  = [ord(response[10]),ord(response[11])]
             bump_byte       = ord(response[13])
+            checksum        = ord(response[14])
+
+            #Check checksum
+            expected_checksum = sum(map(ord,response[1:end-1]))
+            if not checksum = expected_checksum
+                logging.error("Checksums differ! ({} instead of {})".format(checksum,expected_checksum))
 
             #Update OI mode
             if OI_mode_byte & 1:
