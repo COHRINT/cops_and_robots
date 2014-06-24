@@ -116,11 +116,13 @@ class Robot(MapObj):
         t = threading.Thread(target=self.base)
         self.thread_stop = threading.Event() #used for graceful killing of threads
         t.start()
-    
-        try:
-            t.join()
-        except (KeyboardInterrupt, SystemExit):
-            self.thread_stop.set()
+        
+        while True:    
+            try:
+                t.join(1)
+            except (KeyboardInterrupt, SystemExit):
+                self.thread_stop.set()
+                break
 
     def base(self):
         """Seperate thread taking care of serial communication with the iRobot base
