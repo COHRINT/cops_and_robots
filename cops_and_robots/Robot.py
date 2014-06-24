@@ -167,6 +167,7 @@ class Robot(MapObj):
 
             if len(response) < expected_response_length:
                 logging.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
+                ser.close()
 
             #Break up returned bytes
             OI_mode_byte    = ord(response[3])
