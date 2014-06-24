@@ -207,13 +207,13 @@ class Robot(MapObj):
                 self.charging_mode = Robot.CHARGING_MODE['none']
             elif charging_byte & 2:
                 self.charging_mode = Robot.CHARGING_MODE['reconditioning']
-            elif charging_byte & 2:
+            elif charging_byte & 4:
                 self.charging_mode = Robot.CHARGING_MODE['full']
-            elif charging_byte & 2:
+            elif charging_byte & 8:
                 self.charging_mode = Robot.CHARGING_MODE['trickle']
-            elif charging_byte & 2:
+            elif charging_byte & 16:
                 self.charging_mode = Robot.CHARGING_MODE['waiting']
-            elif charging_byte & 2:
+            elif charging_byte & 32:
                 self.charging_mode = Robot.CHARGING_MODE['fault']
             else:
                 logging.error('Incorrect charging mode returned!')                                                                
