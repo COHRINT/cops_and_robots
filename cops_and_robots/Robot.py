@@ -116,10 +116,10 @@ class Robot(MapObj):
         t = threading.Thread(target=self.base)
         t.start()
         self.thread_stop = threading.Event() #used for graceful killing of threads
-        try:
-            time.sleep(10)
-        except (KeyboardInterrupt, SystemExit):
-            self.thread_stop.set()
+        # try:
+        #     time.sleep(10)
+        # except (KeyboardInterrupt, SystemExit):
+        #     self.thread_stop.set()
 
     def base(self):
         """Seperate thread taking care of serial communication with the iRobot base
@@ -132,7 +132,6 @@ class Robot(MapObj):
             ser = "fail"
             logging.error("Failed to connect to {}".format(portstr))
             return ser
-            # raise e
 
         #Enable commanding of the robot
         ser.write(chr(Robot.OPCODE['start']) + chr(Robot.OPCODE['full']))
@@ -156,13 +155,14 @@ class Robot(MapObj):
             # logging.debug("Transmitted packet: {}".format(TX_packet))
             
             try:
+                ser.flushOutput()
+                ser.flushInput()
                 response = ser.read(size=expected_response_length)
                 logging_resp = [('0x' + x.encode('hex')) for x in response]
                 logging.debug("Received packet: {}".format(logging_resp))
             except Exception, e:
                 response = ''
                 logging.error("Failed to read from {}".format(portstr))
-
 
             if len(response) < expected_response_length:
                 logging.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
@@ -200,7 +200,7 @@ class Robot(MapObj):
             elif charging_byte & 2:
                 self.charging_mode = Robot.CHARGING_MODE['fault']
             else:
-                logging.error('Incorrect Charging mode returned!')                                                                
+                logging.error('Incorrect charging mode returned!')                                                                
 
             #Update battery characteristics
             self.battery_capacity = capacity_bytes[0]*256 + capacity_bytes[1]
@@ -216,9 +216,10 @@ class Robot(MapObj):
 
             #Loop through messages in the command queue
 
-        #Stop the stream
+        #Stop the stream <>TODO: actually fix this
         ser.write(chr(Robot.OPCODE['stream_toggle']) + chr(0))
         logging.debug("Exiting gracefully!")
+        ser.close()
 
     def moveToTarget(self,target):
         """Move directly to a target pose using A* for pathfinding
