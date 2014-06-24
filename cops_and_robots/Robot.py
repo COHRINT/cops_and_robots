@@ -148,7 +148,7 @@ class Robot(MapObj):
             for sensor in sensors:
                 TX_packet = TX_packet + chr(sensor)
                           
-            ser.write(TX_packet)
+            # ser.write(TX_packet)
             # logging.debug("Transmitted packet: {}".format(TX_packet))
             
             try:
