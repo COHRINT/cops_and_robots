@@ -151,7 +151,7 @@ class Robot(MapObj):
             for sensor in sensors:
                 TX_packet = TX_packet + chr(sensor)
                           
-            # ser.write(TX_packet)
+            ser.write(TX_packet)
             # logging.debug("Transmitted packet: {}".format(TX_packet))
             
             try:
@@ -160,7 +160,7 @@ class Robot(MapObj):
                 response = ser.read(size=expected_response_length)
                 logging_resp = [('0x' + x.encode('hex')) for x in response]
                 logging.debug("Received packet: {}".format(logging_resp))
-            except Exception, e:
+            except:
                 response = ''
                 logging.error("Failed to read from {}".format(portstr))
 
