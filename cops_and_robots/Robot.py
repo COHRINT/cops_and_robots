@@ -191,30 +191,30 @@ class Robot(MapObj):
             #     logging.error("Checksums differ! ({} instead of {})".format(checksum,expected_checksum))
 
             #Update OI mode
-            if OI_mode_byte & 1:
-                self.OI_mode = Robot.OI_MODE['off']
-            elif OI_mode_byte & 2:
-                self.OI_mode = Robot.OI_MODE['passive']
+            if OI_mode_byte & 8:
+                self.OI_mode = Robot.OI_MODE['full']
             elif OI_mode_byte & 4:
                 self.OI_mode = Robot.OI_MODE['safe']
-            elif OI_mode_byte & 8:
-                self.OI_mode = Robot.OI_MODE['full']
+            elif OI_mode_byte & 2:
+                self.OI_mode = Robot.OI_MODE['passive']
+            elif not OI_mode_byte = 1:
+                self.OI_mode = Robot.OI_MODE['off']
             else:
                 logging.error('Incorrect OI mode returned!')
 
             #Update charging mode
-            if charging_byte & 1:
-                self.charging_mode = Robot.CHARGING_MODE['none']
-            elif charging_byte & 2:
-                self.charging_mode = Robot.CHARGING_MODE['reconditioning']
-            elif charging_byte & 4:
-                self.charging_mode = Robot.CHARGING_MODE['full']
-            elif charging_byte & 8:
-                self.charging_mode = Robot.CHARGING_MODE['trickle']
+            if charging_byte & 32:
+                self.charging_mode = Robot.CHARGING_MODE['fault']
             elif charging_byte & 16:
                 self.charging_mode = Robot.CHARGING_MODE['waiting']
-            elif charging_byte & 32:
-                self.charging_mode = Robot.CHARGING_MODE['fault']
+            elif charging_byte & 8:
+                self.charging_mode = Robot.CHARGING_MODE['trickle']                
+            elif charging_byte & 4:
+                self.charging_mode = Robot.CHARGING_MODE['full']
+            elif charging_byte & 2:
+                self.charging_mode = Robot.CHARGING_MODE['reconditioning']
+            elif not charging_byte == 1:
+                self.charging_mode = Robot.CHARGING_MODE['none']
             else:
                 logging.error('Incorrect charging mode returned!')                                                                
 
