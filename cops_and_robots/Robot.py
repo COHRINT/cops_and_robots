@@ -147,7 +147,7 @@ class Robot(MapObj):
         while not self.thread_stop.is_set():
             #Start the sensor stream from the iRobot create
             num_packets = 5
-            expected_response_length = 15 
+            expected_response_length = 27#15 
             sensors = [ Robot.SENSOR_PKT['OI-mode'], 
                         Robot.SENSOR_PKT['charging'], 
                         Robot.SENSOR_PKT['charge'],
