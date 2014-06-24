@@ -235,9 +235,9 @@ class Robot(MapObj):
             #self.pose
 
             #Loop through messages in the command queue
-            while not cmd_queue.empty():
-                cmd = cmd_queue.get()
-                ser.write(cmd_queue)
+            while not self.cmd_queue.empty():
+                cmd = self.cmd_queue.get()
+                ser.write(cmd)
 
         #Stop the stream
         ser.write(chr(Robot.OPCODE['stream_toggle']) + chr(0))
