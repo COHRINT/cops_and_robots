@@ -152,13 +152,12 @@ class Robot(MapObj):
                 TX_packet = TX_packet + chr(sensor)
                           
             #Stop stream if it had already started, then start the stream
-            ser.write(chr(Robot.OPCODE['stream_toggle']) + chr(0))                                      
+            ser.flushOutput()
+            ser.flushInput()
             ser.write(TX_packet)
             logging.debug("Transmitted packet: {}".format(TX_packet))
             
             try:
-                ser.flushOutput()
-                #ser.flushInput()
                 response = ser.read(size=expected_response_length)
                 logging_resp = [('0x' + x.encode('hex')) for x in response]
                 logging.debug("Received packet: {}".format(logging_resp))
