@@ -125,7 +125,6 @@ class Robot(MapObj):
                 self.thread_stop.set()
                 break
 
-        print "OTHER THINGS!OTHER THINGS!OTHER THINGS!OTHER THINGS!OTHER THINGS!OTHER THINGS!OTHER THINGS!"
 
     def base(self):
         """Seperate thread taking care of serial communication with the iRobot base
