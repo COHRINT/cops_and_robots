@@ -222,7 +222,7 @@ class Robot(MapObj):
             #Update battery characteristics
             self.battery_capacity = capacity_bytes[0]*256 + capacity_bytes[1]
             self.battery_charge   = charge_bytes[0]*256 + charge_bytes[1]
-            if self.battery_charge > self.battery_capacity
+            if self.battery_charge > self.battery_capacity:
                 self.battery_charge = 0
                 logging.warn("Battery charge reported as greater than capacity.")
             logging.debug("Capacity: {} \t Charge: {}".format(self.battery_capacity, self.battery_charge))
