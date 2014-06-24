@@ -197,7 +197,7 @@ class Robot(MapObj):
                 self.OI_mode = Robot.OI_MODE['safe']
             elif OI_mode_byte & 2:
                 self.OI_mode = Robot.OI_MODE['passive']
-            elif not OI_mode_byte = 1:
+            elif not OI_mode_byte == 1:
                 self.OI_mode = Robot.OI_MODE['off']
             else:
                 logging.error('Incorrect OI mode returned!')
