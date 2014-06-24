@@ -225,7 +225,7 @@ class Robot(MapObj):
 
             #Loop through messages in the command queue
 
-        #Stop the stream <>TODO: actually fix this
+        #Stop the stream
         ser.write(chr(Robot.OPCODE['stream_toggle']) + chr(0))
         logging.debug("Exiting gracefully!")
         ser.close()
