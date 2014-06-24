@@ -83,10 +83,10 @@ class Robot(MapObj):
     }
 
     #Add logger
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.INFO)
     logger.addHandler(console_handler)
         
     def __init__(self):
@@ -117,7 +117,7 @@ class Robot(MapObj):
         #Spawn base thread
         self.t = threading.Thread(target=self.base)
         self.thread_stop = threading.Event() #used for graceful killing of threads
-        self.t.start()
+        # self.t.start()
 
         #Remember to clean up the thread later with the following code!
         #allowing ctrl-c to close thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
