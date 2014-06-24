@@ -151,6 +151,8 @@ class Robot(MapObj):
             for sensor in sensors:
                 TX_packet = TX_packet + chr(sensor)
                           
+            #Stop stream if it had already started, then start the stream
+            ser.write(chr(Robot.OPCODE['stream_toggle']) + chr(0))                                      
             ser.write(TX_packet)
             logging.debug("Transmitted packet: {}".format(TX_packet))
             
