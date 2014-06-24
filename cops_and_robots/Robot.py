@@ -152,7 +152,7 @@ class Robot(MapObj):
             # logging.debug("Transmitted packet: {}".format(TX_packet))
             
             try:
-                response = ser.read(expected_response_length)
+                response = ser.read(size=expected_response_length)
                 logging_resp = [('0x' + x.encode('hex')) for x in response]
                 logging.debug("Received packet: {}".format(logging_resp))
             except Exception, e:
