@@ -1,4 +1,4 @@
-import math, numpy, logging, serial, socket, threading
+import math, numpy, logging, serial, socket, threading, Queue
 from cops_and_robots.MapObj import MapObj
 from cops_and_robots.Map import Map
 
@@ -113,11 +113,12 @@ class Robot(MapObj):
         self.speed          = 0
         self.radius         = Robot.MAX_RADIUS
         self.OI_mode        = Robot.OI_MODE['off'] 
+        self.cmd_queue      = Queue.Queue()
 
         #Spawn base thread
-        self.t = threading.Thread(target=self.base)
-        self.thread_stop = threading.Event() #used for graceful killing of threads
-        # self.t.start()
+        self.base_t = threading.Thread(target=self.base)
+        self.base_t_stop = threading.Event() #used for graceful killing of threads
+        self.base_t.start()
 
         #Remember to clean up the thread later with the following code!
         #allowing ctrl-c to close thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
@@ -143,9 +144,8 @@ class Robot(MapObj):
 
         #Enable commanding of the robot
         ser.write(chr(Robot.OPCODE['start']) + chr(Robot.OPCODE['full']))
-        #ser.write(chr(OPCODE['start']) + chr(OPCODE['safe']))
 
-        while not self.thread_stop.is_set():
+        while not self.base_t_stop.is_set():
             #Start the sensor stream from the iRobot create
             num_packets = 5
             expected_response_length = 7#15 
@@ -235,13 +235,16 @@ class Robot(MapObj):
             #self.pose
 
             #Loop through messages in the command queue
+            while not cmd_queue.empty():
+                cmd = cmd_queue.get()
+                ser.write(cmd_queue)
 
         #Stop the stream
         ser.write(chr(Robot.OPCODE['stream_toggle']) + chr(0))
         logging.debug("Exiting gracefully!")
         ser.close()
 
-    def moveToTarget(self,target):
+    def move_to_target(self,target):
         """Move directly to a target pose using A* for pathfinding
 
         :param target: desired pose
@@ -288,7 +291,7 @@ class Robot(MapObj):
         result = ''.join(drive_params) #Convert to a str
         return result
 
-    def randomTarget(self):
+    def random_target(self):
         """Generate a random target pose on the map 
 
         :returns: pose (x,y,theta)
@@ -296,27 +299,11 @@ class Robot(MapObj):
         pass
         #return result
 
-    def checkBattery(self):
-        """Check the current battery status of the robot
-
-        :returns: battery level from 0 to 1
-        """
-        pass
-        #return result
-
-    def serialCommand(self,cmd):
-        """Send a serial command to the iRobot base
-
-        :param cmd: character string accepted by the iRobot serial interface
-        """
-        pass
-
     def faster(self,step=100):
         """Increase iRobot create speed
 
         :param: speed step size increase (default 100)
         """
-        print 'test'
         logging.info('Faster!')
         if self.speed + step <= Robot.MAX_SPEED:
             self.speed = self.speed + step
