@@ -114,8 +114,10 @@ class Robot(MapObj):
 
         #Spawn base thread
         t = threading.Thread(target=self.base)
-        t.start()
         self.thread_stop = threading.Event() #used for graceful killing of threads
+        t.start()
+        t.join(1)
+        
         try:
             time.sleep(10)
         except (KeyboardInterrupt, SystemExit):
