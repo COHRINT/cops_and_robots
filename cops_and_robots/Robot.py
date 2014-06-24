@@ -118,7 +118,7 @@ class Robot(MapObj):
         t.start()
     
         try:
-            t.join(1)
+            t.join()
         except (KeyboardInterrupt, SystemExit):
             self.thread_stop.set()
 
