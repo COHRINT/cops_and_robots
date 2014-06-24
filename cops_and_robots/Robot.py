@@ -158,7 +158,7 @@ class Robot(MapObj):
             
             try:
                 # ser.flushOutput()
-                # ser.flushInput()
+                ser.flushInput()
                 response = ser.read(size=expected_response_length)
                 logging_resp = [('0x' + x.encode('hex')) for x in response]
                 logging.debug("Received packet: {}".format(logging_resp))
