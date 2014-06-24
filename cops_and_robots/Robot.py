@@ -166,7 +166,8 @@ class Robot(MapObj):
             
             try:
                 response = ser.read(size=expected_response_length)
-                logging_resp = [('0x' + x.encode('hex')) for x in response]
+                # logging_resp = [('0x' + x.encode('hex')) for x in response]
+                logging_resp = [(ord(x)) for x in response]
                 logging.debug("Received packet: {}".format(logging_resp))
             except:
                 response = ''
