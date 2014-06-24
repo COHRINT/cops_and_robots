@@ -178,17 +178,17 @@ class Robot(MapObj):
                 ser.close()
 
             #Break up returned bytes
-            OI_mode_byte    = ord(response[3])
-            charging_byte   = ord(response[5])
-            charge_bytes    = [ord(response[7]),ord(response[8])]
-            capacity_bytes  = [ord(response[10]),ord(response[11])]
-            bump_byte       = ord(response[13])
-            checksum        = ord(response[14])
+            OI_mode_byte    = ord(response[0])
+            charging_byte   = ord(response[1])
+            charge_bytes    = [ord(response[2]),ord(response[3])]
+            capacity_bytes  = [ord(response[4]),ord(response[5])]
+            bump_byte       = ord(response[6])
+            # checksum        = ord(response[7])
 
-            #Check checksum
-            expected_checksum = sum(map(ord,response[1:-2])) & 255
-            if not checksum == expected_checksum:
-                logging.error("Checksums differ! ({} instead of {})".format(checksum,expected_checksum))
+            # #Check checksum
+            # expected_checksum = sum(map(ord,response[1:-2])) & 255
+            # if not checksum == expected_checksum:
+            #     logging.error("Checksums differ! ({} instead of {})".format(checksum,expected_checksum))
 
             #Update OI mode
             if OI_mode_byte & 1:
