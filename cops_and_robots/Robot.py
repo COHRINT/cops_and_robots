@@ -33,7 +33,9 @@ class Robot(MapObj):
     'drive-direct': 145,    #[145][Right-vel-high-byte][Right-vel-low-byte][Left-vel-high-byte][Left-vel-low-byte]
     'LEDs': 139,            #[139][LED][Color][Intensity]
     # Sensor Commands
+    'sensors':142,          #[142][Packet Id]
     'stream': 148,          #[148][Num-packets][Pack-id-1][Pack-id-2]...
+    'query-list':149,       #[149][Pack-id-1][Pack-id-2]...    
     'stream_toggle': 150    #[150][0 or 1] to [stop or resume] the stream
     }
 
@@ -152,7 +154,7 @@ class Robot(MapObj):
                         Robot.SENSOR_PKT['capacity'],
                         Robot.SENSOR_PKT['bump-wheel-drop'] ]
 
-            TX_packet = chr(Robot.OPCODE['stream']) + chr(num_packets)
+            TX_packet = chr(Robot.OPCODE['query-list']) + chr(num_packets)
             for sensor in sensors:
                 TX_packet = TX_packet + chr(sensor)
                           
