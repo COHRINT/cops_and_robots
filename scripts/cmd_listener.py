@@ -30,20 +30,13 @@ def listener():
     rospy.spin()
 
 if __name__ == '__main__':
-    logger = logging.getLogger('moveTest')
+    #Create Logger for console-level debugging
+    logger = logging.getLogger('iRobot_interface')
     logger.addHandler(logging.StreamHandler()) #output to console
     logging.basicConfig(level=logging.DEBUG)
 
-    cop = Cop('Deckard')
-    OPCODE = cop.OPCODE
-    ser = cop.ser
-
-    ser.write(chr(OPCODE['start']) + chr(OPCODE['full']))
-
-    cop.speed = 0
-    cop.radius = cop.MAX_RADIUS
-    x = 'a'
-
+    cop = Cop()
+    
     keymap = {  '.' : lambda: cop.faster(),
                 ',' : lambda: cop.slower(),
                 'w' : lambda: cop.forward(),
@@ -55,3 +48,11 @@ if __name__ == '__main__':
                 ' ' : lambda: cop.stop() }
 
     listener()
+
+    #allowing ctrl-c to close Cop thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
+    while True:    
+        try:
+            cop.t.join(1)           
+        except (KeyboardInterrupt, SystemExit):
+            cop.thread_stop.set()
+            break

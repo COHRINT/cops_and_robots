@@ -115,17 +115,18 @@ class Robot(MapObj):
         self.OI_mode        = Robot.OI_MODE['off'] 
 
         #Spawn base thread
-        t = threading.Thread(target=self.base)
+        self.t = threading.Thread(target=self.base)
         self.thread_stop = threading.Event() #used for graceful killing of threads
-        t.start()
-        
+        self.t.start()
+
+        #Remember to clean up the thread later with the following code!
         #allowing ctrl-c to close thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
-        while True:    
-            try:
-                t.join(1)           
-            except (KeyboardInterrupt, SystemExit):
-                self.thread_stop.set()
-                break
+        # while True:    
+        #     try:
+        #         self.t.join(1)           
+        #     except (KeyboardInterrupt, SystemExit):
+        #         self.thread_stop.set()
+        #         break
 
 
     def base(self):
@@ -221,6 +222,9 @@ class Robot(MapObj):
             #Update battery characteristics
             self.battery_capacity = capacity_bytes[0]*256 + capacity_bytes[1]
             self.battery_charge   = charge_bytes[0]*256 + charge_bytes[1]
+            if self.battery_charge > self.battery_capacity
+                self.battery_charge = 0
+                logging.warn("Battery charge reported as greater than capacity.")
             logging.debug("Capacity: {} \t Charge: {}".format(self.battery_capacity, self.battery_charge))
 
             #Update bump sensor readings
