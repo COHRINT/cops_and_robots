@@ -153,7 +153,8 @@ class Robot(MapObj):
             
             try:
                 response = ser.read(expected_response_length)
-                logging.debug("Received packet: {}".format(response))
+                logging_resp = [('0x' + x.encode('hex')) for x in response]
+                logging.debug("Received packet: {}".format(logging_resp))
             except Exception, e:
                 response = ''
                 logging.error("Failed to read from {}".format(portstr))
