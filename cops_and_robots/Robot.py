@@ -159,7 +159,7 @@ class Robot(MapObj):
                 TX_packet = TX_packet + chr(sensor)
                           
             #Stop stream if it had already started, then start the stream
-            # ser.flushOutput()
+            ser.flushOutput()
             ser.flushInput()
             ser.write(TX_packet)
             logging.debug("Transmitted packet: {}".format(TX_packet))
