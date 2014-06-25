@@ -67,7 +67,7 @@ if __name__ == '__main__':
     #allowing ctrl-c to close Cop thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
     while True:    
         try:
-            cop.base_t.join(1)           
+            cop.base_t.join(10)           
         except (KeyboardInterrupt, SystemExit):
             cop.thread_stop.set()
             break
