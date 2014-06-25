@@ -60,8 +60,9 @@ if __name__ == '__main__':
                 'e' : lambda: cop.turn(-800),
                 ' ' : lambda: cop.stop() }
 
-    listener()
     talker()
+    listener()
+    
 
     #allowing ctrl-c to close Cop thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
     while True:    
