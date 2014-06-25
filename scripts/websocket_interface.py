@@ -34,6 +34,8 @@ def talker():
     rospy.init_node('talker', anonymous=True)
     r = rospy.Rate(1) #1Hz
     while not rospy.is_shutdown():
+        print cop.battery_charge
+        print cop.battery_capacity
         if cop.battery_capacity > 0:
             pct = cop.battery_charge/cop.battery_capacity
         else:
@@ -50,10 +52,6 @@ if __name__ == '__main__':
 
 
     cop = Cop()
-
-    while True:
-        print cop.battery_charge
-        print cop.battery_capacity
     
     keymap = {  '.' : lambda: cop.faster(),
                 ',' : lambda: cop.slower(),
