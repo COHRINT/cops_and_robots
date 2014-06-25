@@ -49,9 +49,9 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
 
-    print sys._current_frame()
+    print sys._current_frames()
     cop = Cop()
-    print sys._current_frame()
+    print sys._current_frames()
     
     keymap = {  '.' : lambda: cop.faster(),
                 ',' : lambda: cop.slower(),
@@ -64,9 +64,9 @@ if __name__ == '__main__':
                 ' ' : lambda: cop.stop() }
 
     talker()
-    print sys._current_frame()
+    print sys._current_frames()
     listener()
-    print sys._current_frame()
+    print sys._current_frames()
     
 
     #allowing ctrl-c to close Cop thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
