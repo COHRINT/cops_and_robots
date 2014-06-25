@@ -30,7 +30,7 @@ def listener():
     rospy.spin()
 
 def talker():
-    pub = rospy.Publisher('battery',Int8,queue_size=10)
+    pub = rospy.Publisher("battery",Int8,queue_size=10)
     rospy.init_node('talker', anonymous=True)
     r = rospy.Rate(1) #1Hz
     while not rospy.is_shutdown():

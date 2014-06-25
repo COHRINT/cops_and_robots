@@ -83,10 +83,10 @@ class Robot(MapObj):
     }
 
     #Add logger
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     logger.addHandler(console_handler)
         
     def __init__(self):
