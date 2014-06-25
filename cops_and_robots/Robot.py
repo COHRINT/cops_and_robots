@@ -1,7 +1,7 @@
 import math, numpy, logging, serial, socket, threading, Queue
 from cops_and_robots.MapObj import MapObj
 from cops_and_robots.Map import Map
-from cops_and_robots.msg import battery
+from msg import battery
 
 class Robot(MapObj):
     """Class for controlling iRobot Create. Will generate a 'base' thread to maintain
