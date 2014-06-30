@@ -126,9 +126,9 @@ class Robot(MapObj):
         #allowing ctrl-c to close thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
         while True:    
             try:
-                self.t.join(1)           
+                self.base_t.join(1)           
             except (KeyboardInterrupt, SystemExit):
-                self.thread_stop.set()
+                self.base_t_stop.set()
                 break
 
 
