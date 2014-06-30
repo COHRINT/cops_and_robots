@@ -3,7 +3,7 @@ import rospy
 import sys, time, logging, getch
 from cops_and_robots.Cop import Cop
 from std_msgs.msg import String,Int8
-# from .. import battery
+from cops_and_robots.msg import battery
 
 
 def callback(data):
