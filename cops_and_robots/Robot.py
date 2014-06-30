@@ -181,54 +181,53 @@ class Robot(MapObj):
             #Evaluate the response
             if len(response) < expected_response_length:
                 logging.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
-                ser.close()
-
-            #Break up returned bytes
-            OI_mode_byte    = ord(response[0])
-            charging_byte   = ord(response[1])
-            charge_bytes    = [ord(response[2]),ord(response[3])]
-            capacity_bytes  = [ord(response[4]),ord(response[5])]
-            bump_byte       = ord(response[6])
-            
-            #Update OI mode
-            if OI_mode_byte & 8:
-                self.OI_mode = Robot.OI_MODE['full']
-            elif OI_mode_byte & 4:
-                self.OI_mode = Robot.OI_MODE['safe']
-            elif OI_mode_byte & 2:
-                self.OI_mode = Robot.OI_MODE['passive']
-            elif not OI_mode_byte == 1:
-                self.OI_mode = Robot.OI_MODE['off']
             else:
-                logging.error('Incorrect OI mode returned!')
+                #Break up returned bytes
+                OI_mode_byte    = ord(response[0])
+                charging_byte   = ord(response[1])
+                charge_bytes    = [ord(response[2]),ord(response[3])]
+                capacity_bytes  = [ord(response[4]),ord(response[5])]
+                bump_byte       = ord(response[6])
+                
+                #Update OI mode
+                if OI_mode_byte & 8:
+                    self.OI_mode = Robot.OI_MODE['full']
+                elif OI_mode_byte & 4:
+                    self.OI_mode = Robot.OI_MODE['safe']
+                elif OI_mode_byte & 2:
+                    self.OI_mode = Robot.OI_MODE['passive']
+                elif not OI_mode_byte == 1:
+                    self.OI_mode = Robot.OI_MODE['off']
+                else:
+                    logging.error('Incorrect OI mode returned!')
 
-            #Update charging mode
-            if charging_byte & 32:
-                self.charging_mode = Robot.CHARGING_MODE['fault']
-            elif charging_byte & 16:
-                self.charging_mode = Robot.CHARGING_MODE['waiting']
-            elif charging_byte & 8:
-                self.charging_mode = Robot.CHARGING_MODE['trickle']                
-            elif charging_byte & 4:
-                self.charging_mode = Robot.CHARGING_MODE['full']
-            elif charging_byte & 2:
-                self.charging_mode = Robot.CHARGING_MODE['reconditioning']
-            elif not charging_byte == 1:
-                self.charging_mode = Robot.CHARGING_MODE['none']
-            else:
-                logging.error('Incorrect charging mode returned!')                                                                
+                #Update charging mode
+                if charging_byte & 32:
+                    self.charging_mode = Robot.CHARGING_MODE['fault']
+                elif charging_byte & 16:
+                    self.charging_mode = Robot.CHARGING_MODE['waiting']
+                elif charging_byte & 8:
+                    self.charging_mode = Robot.CHARGING_MODE['trickle']                
+                elif charging_byte & 4:
+                    self.charging_mode = Robot.CHARGING_MODE['full']
+                elif charging_byte & 2:
+                    self.charging_mode = Robot.CHARGING_MODE['reconditioning']
+                elif not charging_byte == 1:
+                    self.charging_mode = Robot.CHARGING_MODE['none']
+                else:
+                    logging.error('Incorrect charging mode returned!')                                                                
 
-            #Update battery characteristics
-            self.battery_capacity = capacity_bytes[0]*256 + capacity_bytes[1]
-            self.battery_charge   = charge_bytes[0]*256 + charge_bytes[1]
-            if self.battery_charge > self.battery_capacity:
-                self.battery_charge = 0
-                logging.warn("Battery charge reported as greater than capacity.")
-            logging.debug("Capacity: {} \t Charge: {}".format(self.battery_capacity, self.battery_charge))
+                #Update battery characteristics
+                self.battery_capacity = capacity_bytes[0]*256 + capacity_bytes[1]
+                self.battery_charge   = charge_bytes[0]*256 + charge_bytes[1]
+                if self.battery_charge > self.battery_capacity:
+                    self.battery_charge = 0
+                    logging.warn("Battery charge reported as greater than capacity.")
+                logging.debug("Capacity: {} \t Charge: {}".format(self.battery_capacity, self.battery_charge))
 
-            #Update bump sensor readings
-            self.bump_right = bump_byte & 1
-            self.bump_left  = bump_byte & 2
+                #Update bump sensor readings
+                self.bump_right = bump_byte & 1
+                self.bump_left  = bump_byte & 2
 
             #Start the sensor stream from the Vicon system
             #self.pose
