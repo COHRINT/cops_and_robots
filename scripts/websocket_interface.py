@@ -52,6 +52,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     cop = Cop()
+    cop.start_base_cx()
     
     keymap = {  '.' : lambda: cop.faster(),
                 ',' : lambda: cop.slower(),
@@ -66,10 +67,4 @@ if __name__ == '__main__':
     chatter()
     
 
-    #allowing ctrl-c to close Cop thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
-    while True:    
-        try:
-            cop.base_t.join(10)           
-        except (KeyboardInterrupt, SystemExit):
-            cop.thread_stop.set()
-            break
+    cop.stop_base_cx()
