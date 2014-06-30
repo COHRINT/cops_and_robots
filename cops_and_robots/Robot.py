@@ -164,7 +164,7 @@ class Robot(MapObj):
                 TX_packet = TX_packet + chr(sensor)
                           
             #Flush the stream and request data packets
-            ser.flushOutput()
+            # ser.flushOutput()
             ser.flushInput()
             ser.write(TX_packet)
             logging.debug("Transmitted packet: {}".format(TX_packet))
