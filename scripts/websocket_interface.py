@@ -52,7 +52,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     cop = Cop()
-    cop.start_base_cx()
+    # cop.start_base_cx()
     
     keymap = {  '.' : lambda: cop.faster(),
                 ',' : lambda: cop.slower(),
@@ -69,4 +69,4 @@ if __name__ == '__main__':
     print 'test'
     
 
-    cop.stop_base_cx()
+    # cop.stop_base_cx()
