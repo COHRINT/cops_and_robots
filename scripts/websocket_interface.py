@@ -10,7 +10,6 @@ def callback(data):
     rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
     x = data.data
 
-    print x 
     try:
         keymap[x]()
     except Exception, e:
@@ -53,7 +52,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     cop = Cop()
-    # cop.start_base_cx()
+    cop.start_base_cx()
     
     keymap = {  '.' : lambda: cop.faster(),
                 ',' : lambda: cop.slower(),
@@ -66,8 +65,6 @@ if __name__ == '__main__':
                 ' ' : lambda: cop.stop() }
 
     chatter()
-
-    print 'test'
     
 
-    # cop.stop_base_cx()
+    cop.stop_base_cx()
