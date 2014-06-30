@@ -116,19 +116,21 @@ class Robot(MapObj):
         self.OI_mode        = Robot.OI_MODE['off'] 
         self.cmd_queue      = Queue.Queue()
 
+    def start_base_cx(self):
         #Spawn base thread
         self.base_t = threading.Thread(target=self.base)
         self.base_t_stop = threading.Event() #used for graceful killing of threads
         self.base_t.start()
 
-        #Remember to clean up the thread later with the following code!
+    def stop_base_cx(self):
+        
         #allowing ctrl-c to close thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
-        # while True:    
-        #     try:
-        #         self.t.join(1)           
-        #     except (KeyboardInterrupt, SystemExit):
-        #         self.thread_stop.set()
-        #         break
+        while True:    
+            try:
+                self.t.join(1)           
+            except (KeyboardInterrupt, SystemExit):
+                self.thread_stop.set()
+                break
 
 
     def base(self):
@@ -146,35 +148,38 @@ class Robot(MapObj):
         #Enable commanding of the robot
         ser.write(chr(Robot.OPCODE['start']) + chr(Robot.OPCODE['full']))
 
+        #Loop to poll sensors and command the base
         while not self.base_t_stop.is_set():
-            #Start the sensor stream from the iRobot create
+            #Define sensors to be polled
             num_packets = 5
-            expected_response_length = 7#15 
+            expected_response_length = 7 #Number of data bytes returned
             sensors = [ Robot.SENSOR_PKT['OI-mode'], 
                         Robot.SENSOR_PKT['charging'], 
                         Robot.SENSOR_PKT['charge'],
                         Robot.SENSOR_PKT['capacity'],
                         Robot.SENSOR_PKT['bump-wheel-drop'] ]
 
+            #Create the packet to be transmitted to the base
             TX_packet = chr(Robot.OPCODE['query-list']) + chr(num_packets)
             for sensor in sensors:
                 TX_packet = TX_packet + chr(sensor)
                           
-            #Stop stream if it had already started, then start the stream
+            #Flush the stream and request data packets
             ser.flushOutput()
             ser.flushInput()
             ser.write(TX_packet)
             logging.debug("Transmitted packet: {}".format(TX_packet))
             
+            #Read the response
             try:
                 response = ser.read(size=expected_response_length)
-                # logging_resp = [('0x' + x.encode('hex')) for x in response]
                 logging_resp = [(ord(x)) for x in response]
                 logging.debug("Received packet: {}".format(logging_resp))
             except:
                 response = ''
                 logging.error("Failed to read from {}".format(portstr))
 
+            #Evaluate the response
             if len(response) < expected_response_length:
                 logging.error("Unexpected response length ({} instead of {})".format(len(response),expected_response_length) )
                 ser.close()
@@ -185,13 +190,7 @@ class Robot(MapObj):
             charge_bytes    = [ord(response[2]),ord(response[3])]
             capacity_bytes  = [ord(response[4]),ord(response[5])]
             bump_byte       = ord(response[6])
-            # checksum        = ord(response[7])
-
-            # #Check checksum
-            # expected_checksum = sum(map(ord,response[1:-2])) & 255
-            # if not checksum == expected_checksum:
-            #     logging.error("Checksums differ! ({} instead of {})".format(checksum,expected_checksum))
-
+            
             #Update OI mode
             if OI_mode_byte & 8:
                 self.OI_mode = Robot.OI_MODE['full']
@@ -245,14 +244,6 @@ class Robot(MapObj):
         logging.debug("Exiting gracefully!")
         ser.close()
 
-    def move_to_target(self,target):
-        """Move directly to a target pose using A* for pathfinding
-
-        :param target: desired pose
-        """
-        pass
-        #return result
-
     def int2ascii(self,integer):
         """Takes a 16-bit signed integer and converts it to two ascii characters
 
@@ -292,13 +283,21 @@ class Robot(MapObj):
         result = ''.join(drive_params) #Convert to a str
         return result
 
+    def move_to_target(self,target):
+        """Move directly to a target pose using A* for pathfinding
+
+        :param target: desired pose
+        """
+        pass
+        #return result
+
     def random_target(self):
         """Generate a random target pose on the map 
 
         :returns: pose (x,y,theta)
         """
         pass
-        #return result
+        #return result        
 
     def faster(self,step=100):
         """Increase iRobot create speed

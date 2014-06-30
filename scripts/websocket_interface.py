@@ -23,19 +23,18 @@ def callback(data):
     # tstep = 0.5
     # time.sleep(tstep)
 
-    
-def listener():
-    rospy.init_node('listener', anonymous=True)
+def chatter():
+    rospy.init_node('chatter', anonymous=True)
+
+    #listener
     rospy.Subscriber("robot_command", String, callback)
     rospy.spin()
 
-def talker():
+    #talker
     pub = rospy.Publisher("battery",Int8,queue_size=10)
-    rospy.init_node('talker', anonymous=True)
     r = rospy.Rate(1) #1Hz
     while not rospy.is_shutdown():
-        print cop.battery_charge
-        print cop.battery_capacity
+        
         if cop.battery_capacity > 0:
             pct = cop.battery_charge/cop.battery_capacity
         else:
@@ -50,7 +49,6 @@ if __name__ == '__main__':
     logger.addHandler(logging.StreamHandler()) #output to console
     logging.basicConfig(level=logging.DEBUG)
 
-
     cop = Cop()
     
     keymap = {  '.' : lambda: cop.faster(),
@@ -63,8 +61,7 @@ if __name__ == '__main__':
                 'e' : lambda: cop.turn(-800),
                 ' ' : lambda: cop.stop() }
 
-    talker()
-    listener()
+    chatter()
     
 
     #allowing ctrl-c to close Cop thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
