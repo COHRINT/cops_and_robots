@@ -64,7 +64,6 @@ if __name__ == '__main__':
                 'e' : lambda: cop.turn(-800),
                 ' ' : lambda: cop.stop() }
 
-    time.sleep(20)
     chatter()
     
 
