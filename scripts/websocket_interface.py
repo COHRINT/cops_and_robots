@@ -64,8 +64,9 @@ if __name__ == '__main__':
                 'e' : lambda: cop.turn(-800),
                 ' ' : lambda: cop.stop() }
 
+    # chatter()
+
     print 'test'
-    chatter()
     
 
     cop.stop_base_cx()
