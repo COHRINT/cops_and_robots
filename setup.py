@@ -1,36 +1,7 @@
-from __future__ import print_function
-from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
-import io
-import codecs
-import os
-import sys
+from distutils.core import setup
+from catkin_pkg.python_setup import generate_distutils_setup
 
-here = os.path.abspath(os.path.dirname(__file__))
-
-def read(*filenames, **kwargs):
-    encoding = kwargs.get('encoding', 'utf-8')
-    sep = kwargs.get('sep', '\n')
-    buf = []
-    for filename in filenames:
-        with io.open(filename, encoding=encoding) as f:
-            buf.append(f.read())
-    return sep.join(buf)
-
-long_description = read('README.txt')
-
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import pytest
-        errcode = pytest.main(self.test_args)
-        sys.exit(errcode)
-
-setup(
+setup_args = generate_distutils_setup(
     name='cops_and_robots',
     version=0.1,#cops_and_robots.__version__,
     url='http://github.com/COHRINT/cops_and_robots/',
@@ -38,11 +9,11 @@ setup(
     author='Nick Sweet',
     author_email='nick.sweet@colorado.edu',
     description='Dynamic target-tracking using iRobot Creates',
-    long_description=long_description,
-    packages=find_packages(exclude="test"),
+    packages=['cops_and_robots'],
 	package_dir={'':'cops_and_robots'},    
     include_package_data=True,
     platforms='any',
+    requires=['std_msgs','rospy'],
     tests_require=['pytest'],
     install_requires=['getch>=1.0'],
     scripts=['scripts'],
@@ -52,3 +23,5 @@ setup(
     #     'testing': ['pytest'],
     # }
 )
+
+setup(**setup_args)
