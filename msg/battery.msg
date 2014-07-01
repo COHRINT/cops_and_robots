@@ -1,3 +1,3 @@
-int8 capacity
-int8 charge
+int16 capacity
+int16 charge
 bool charging
