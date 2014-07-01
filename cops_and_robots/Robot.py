@@ -122,7 +122,6 @@ class Robot(MapObj):
         self.base_t.start()
 
     def stop_base_cx(self):
-        
         #allowing ctrl-c to close thread (see http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)
         while True:    
             try:
