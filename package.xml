@@ -6,7 +6,7 @@
 
   <maintainer email="nick.sweet@colorado.edu">Nick Sweet</maintainer>
   <license>Apache</license>
-  <url type="website">https://github.com/COHRINT/Cops-and-Robots</url>
+  <url type="website">https://github.com/COHRINT/cops_and_robots</url>
   <author email="nick.sweet@colorado.edu">Nick Sweet</author>
 
   <buildtool_depend>catkin</buildtool_depend>
