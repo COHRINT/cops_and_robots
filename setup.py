@@ -13,11 +13,6 @@ setup_args = generate_distutils_setup(
     tests_require=['pytest'],
     install_requires=['getch>=1.0'],
     scripts=['scripts'],
-    # cmdclass={'test': PyTest},
-    # test_suite='cops_and_robots.test.test_cops-and-robots',
-    # extras_require={
-    #     'testing': ['pytest'],
-    # }
 )
 
 setup(**setup_args)
