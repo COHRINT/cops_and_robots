@@ -45,13 +45,9 @@ def chatter():
     r = rospy.Rate(1) #1Hz
     while not rospy.is_shutdown():
         
-        if cop.battery_capacity > 0:
-            pct = cop.battery_charge/cop.battery_capacity
-        else:
-            pct = 0
         rospy.loginfo(cop.battery_charge)
         rospy.loginfo(cop.battery_capacity)
-        pub.publish(pct)
+        pub.publish(cop.battery_capacity, cop.battery_charge, cop.charging_mode)
         r.sleep()
 
 if __name__ == '__main__':
