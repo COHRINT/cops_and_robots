@@ -49,7 +49,8 @@ def chatter():
             pct = cop.battery_charge/cop.battery_capacity
         else:
             pct = 0
-        rospy.loginfo(pct)
+        rospy.loginfo(cop.battery_charge)
+        rospy.loginfo(cop.battery_capacity)
         pub.publish(pct)
         r.sleep()
 
