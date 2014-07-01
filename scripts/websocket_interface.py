@@ -10,6 +10,8 @@ def callback(data):
     rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
     x = data.data
 
+    print "4: AT LEAST IT GETS HERE!"
+    
     try:
         keymap[x]()
     except Exception, e:
@@ -28,9 +30,15 @@ def callback(data):
 def chatter():
     rospy.init_node('chatter', anonymous=True)
 
+    print "3A: AT LEAST IT GETS HERE!"
+    
+
     #listener
     rospy.Subscriber("robot_command", String, callback)
     rospy.spin()
+
+    print "3B: AT LEAST IT GETS HERE!"
+    
 
     #talker
     pub = rospy.Publisher("battery",Int8,queue_size=10)
@@ -64,7 +72,9 @@ if __name__ == '__main__':
                 'e' : lambda: cop.turn(-800),
                 ' ' : lambda: cop.stop() }
 
+    print "1: AT LEAST IT GETS HERE!"
     chatter()
     
-
+    print "2: AT LEAST IT GETS HERE!"
+    
     cop.stop_base_cx()
