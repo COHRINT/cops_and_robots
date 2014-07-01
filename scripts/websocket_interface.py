@@ -41,10 +41,10 @@ def chatter():
     
 
     #talker
-    pub = rospy.Publisher("battery",Int8,queue_size=10)
+    pub = rospy.Publisher("battery",battery,queue_size=10)
     r = rospy.Rate(1) #1Hz
     while not rospy.is_shutdown():
-        
+
         rospy.loginfo(cop.battery_charge)
         rospy.loginfo(cop.battery_capacity)
         pub.publish(cop.battery_capacity, cop.battery_charge, cop.charging_mode)
