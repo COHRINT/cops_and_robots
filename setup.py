@@ -40,10 +40,12 @@ setup(
     description='Dynamic target-tracking using iRobot Creates',
     long_description=long_description,
     packages=find_packages(exclude="test"),
+	package_dir={'':'cops_and_robots'},    
     include_package_data=True,
     platforms='any',
     tests_require=['pytest'],
     install_requires=['getch>=1.0'],
+    scripts=['scripts'],
     # cmdclass={'test': PyTest},
     # test_suite='cops_and_robots.test.test_cops-and-robots',
     # extras_require={
