@@ -35,7 +35,7 @@ def chatter():
 
     #listener
     rospy.Subscriber("robot_command", String, callback)
-    rospy.spin()
+    # rospy.spin()
 
     print "3B: AT LEAST IT GETS HERE!"
     
