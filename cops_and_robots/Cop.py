@@ -1,4 +1,4 @@
-from cops_and_robots.Robot import Robot
+from cops_and_robots import Robot
 
 class Cop(Robot):
 	"""docstring for Cop"""

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import sys, time, logging, getch
-from cops_and_robots.Cop import Cop
+from cops_and_robots import Cop
 from std_msgs.msg import String,Int8
 from cops_and_robots.msg import battery
 
