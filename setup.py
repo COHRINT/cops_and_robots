@@ -4,7 +4,6 @@ from catkin_pkg.python_setup import generate_distutils_setup
 setup_args = generate_distutils_setup(
     name='cops_and_robots',
     version=0.1,#cops_and_robots.__version__,
-    url='http://github.com/COHRINT/cops_and_robots/',
     license='Apache',
     author='Nick Sweet',
     author_email='nick.sweet@colorado.edu',
