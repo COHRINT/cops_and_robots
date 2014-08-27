@@ -8,7 +8,7 @@ material FlemingWall/Image
     {
       texture_unit
       {
-        texture mdf.jpg
+        texture mdf.png
         filtering anistropic
         max_anisotropy 16
       }

@@ -22,8 +22,8 @@
               </geometry>
               <material>
                 <script>
-                  <uri>model://fleming_wall/materials/scripts/mdf.material</uri>                  
-                  <uri>model://fleming_wall/materials/textures/mdf.jpg</uri>
+                  <uri>model://fleming_wall/materials/scripts/</uri>
+                  <uri>model://fleming_wall/materials/textures/</uri>
                   <name>FlemingWall/Image</name>
                 </script>
               </material>
@@ -47,8 +47,8 @@
               </geometry>
               <material>
                 <script>
-                  <uri>model://fleming_wall/materials/scripts/mdf.material</uri>                  
-                  <uri>model://fleming_wall/materials/textures/mdf.jpg</uri>
+                  <uri>model://fleming_wall/materials/scripts/</uri>
+                  <uri>model://fleming_wall/materials/textures/</uri>
                   <name>FlemingWall/Image</name>
                 </script>
               </material>
@@ -72,8 +72,8 @@
               </geometry>
               <material>
                 <script>
-                  <uri>model://fleming_wall/materials/scripts/mdf.material</uri>                  
-                  <uri>model://fleming_wall/materials/textures/mdf.jpg</uri>
+                  <uri>model://fleming_wall/materials/scripts/</uri>
+                  <uri>model://fleming_wall/materials/textures/</uri>
                   <name>FlemingWall/Image</name>
                 </script>
               </material>
@@ -97,8 +97,8 @@
               </geometry>
               <material>
                 <script>
-                  <uri>model://fleming_wall/materials/scripts/mdf.material</uri>                  
-                  <uri>model://fleming_wall/materials/textures/mdf.jpg</uri>
+                  <uri>model://fleming_wall/materials/scripts/</uri>
+                  <uri>model://fleming_wall/materials/textures/</uri>
                   <name>FlemingWall/Image</name>
                 </script>
               </material>
