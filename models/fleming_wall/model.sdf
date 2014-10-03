@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <sdf version='1.4'>
   <model name="fleming_wall">
-  	<static>false</static>
+  	<static>true</static>
 
   	<link name='wall'>
             <pose>0 0 0.0254 0 0 0</pose>
@@ -104,6 +104,11 @@
               </material>
             </visual>                    
   </link>
+
+     <plugin name="ros_transform" filename="/home/cohrint/catkin_ws/devel/lib/libros_transform.so">
+      <targetLink>wall</targetLink>
+      <transformTopic>/vicon/Wall1/Wall1</transformTopic>
+    </plugin>
 
   </model>
 </sdf>

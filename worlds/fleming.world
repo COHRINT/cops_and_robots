@@ -1,6 +1,16 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
   <world name="default">
+
+    <plugin name="gazebo_ros_api_plugin" filename="libgazebo_ros_api_plugin.so" />
+
+    <gui>
+      <camera name="user_view">
+        <pose>0 0 10 0 1.570795 0</pose>
+      </camera>
+    </gui>  
+
+
     <!-- A global light source -->
     <include>
       <uri>model://sun</uri>
@@ -33,5 +43,14 @@
       <uri>model://fleming_wall</uri>
       <pose>2.4384 2.4384 0 0 0 0</pose>
     </include>
+
+    <include>
+      <name>deckard</name>
+      <uri>model://deckard</uri>
+      <pose>-1 -1 0 0 0 0</pose>
+    </include>
+
+
+
   </world>
 </sdf>
