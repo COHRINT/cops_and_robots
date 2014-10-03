@@ -45,6 +45,30 @@
     </include>
 
     <include>
+      <name>Ghost Wall 1</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 2</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>1.2192 1.2192 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 3</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>1.910 1.740 0 0 0 1.56575</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 4</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>2.4384 2.4384 0 0 0 0</pose>
+    </include>
+
+    <include>
       <name>deckard</name>
       <uri>model://deckard</uri>
       <pose>-1 -1 0 0 0 0</pose>

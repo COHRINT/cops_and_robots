@@ -1,0 +1,91 @@
+<?xml version='1.0'?>
+<sdf version='1.4'>
+  <model name="fleming_wall_ghost_ghost">
+  	<static>true</static>
+
+  	<link name='wall'>
+            <pose>0 0 0.0254 0 0 0</pose>
+
+            <collision name='base_collision'>
+              <geometry>
+                <box>
+                  <size>1.2192 0.1524 0.0508</size>
+                </box>
+              </geometry>
+            </collision>
+
+            <visual name='base_visual'>
+              <transparency>0.5</transparency>
+              <geometry>
+                <box>
+                  <size>1.2192 0.1524 0.0508</size>
+                </box>
+              </geometry>
+              <material>
+                <script>
+                  <uri>model://fleming_wall_ghost/materials/scripts</uri>
+                  <uri>model://fleming_wall_ghost/materials/textures</uri>
+                  <name>FlemingWall/Image</name>
+                </script>
+              </material>
+            </visual>
+
+         
+            <visual name='front_strut_visual'>
+              <transparency>0.5</transparency>
+              <pose>0 0.028575 0.0508 0 0 0</pose>
+              <geometry>
+                <box>
+                  <size>1.2192 0.0508 0.0508</size>
+                </box>
+              </geometry>
+              <material>
+                <script>
+                  <uri>model://fleming_wall_ghost/materials/scripts</uri>
+                  <uri>model://fleming_wall_ghost/materials/textures</uri>
+                  <name>FlemingWall/Image</name>
+                </script>
+              </material>
+            </visual>
+
+         
+
+            <visual name='back_strut_visual'>
+              <transparency>0.5</transparency>
+              <pose>0 -0.028575 0.0508 0 0 0</pose>
+              <geometry>
+                <box>
+                  <size>1.2192 0.0508 0.0508</size>
+                </box>
+              </geometry>
+              <material>
+                <script>
+                  <uri>model://fleming_wall_ghost/materials/scripts</uri>
+                  <uri>model://fleming_wall_ghost/materials/textures</uri>
+                  <name>FlemingWall/Image</name>
+                </script>
+              </material>
+            </visual> 
+
+          
+
+            <visual name='panel_visual'>
+              <transparency>0.5</transparency>
+              <pose>0 0 0.3556 0 0 0</pose>
+              <geometry>
+                <box>
+                  <size>1.2192 0.003175 0.6096 </size>
+                </box>
+              </geometry>
+              <material>
+                <script>
+                  <uri>model://fleming_wall_ghost/materials/scripts</uri>
+                  <uri>model://fleming_wall_ghost/materials/textures</uri>
+                  <name>FlemingWall/Image</name>
+                </script>
+              </material>
+            </visual>                    
+  </link>
+
+  </model>
+</sdf>
