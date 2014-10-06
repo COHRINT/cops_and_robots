@@ -1,0 +1,6 @@
+<launch>
+	<include file="$(find openni_launch)/launch/openni.launch"></include>
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>		
+	<node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" respawn="true" />
+	<node pkg="cops_and_robots" type="websocket_interface.py" name="websocket_interface" />
+</launch>
