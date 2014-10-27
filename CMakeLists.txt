@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -96,6 +97,33 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+)
+
+# Set the name to use for the executable.
+set (BINNAME1 vicon_to_odom)
+
+# Set the source files to use with the executable.
+set (SRCS1 ${SRCS1} src/vicon_to_odom.cpp)
+
+# Build the executable that will be used to run this node.
+add_executable (${BINNAME1} ${SRCS1})
+target_link_libraries(${BINNAME1} ${catkin_LIBRARIES})
+add_dependencies(${BINNAME1} ${PROJECT_NAME}_gencfg)
+
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(TARGETS ${BINNAME1}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 ## Declare a cpp library

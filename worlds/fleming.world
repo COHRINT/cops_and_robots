@@ -1,0 +1,128 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <world name="default">
+
+    <plugin name="gazebo_ros_api_plugin" filename="libgazebo_ros_api_plugin.so" />
+
+    <gui>
+      <camera name="user_view">
+        <pose>0 0 10 0 1.570795 0</pose>
+      </camera>
+    </gui>  
+
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <include>
+      <name>Wall 1</name>
+      <uri>model://fleming_wall</uri>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Wall 2</name>
+      <uri>model://fleming_wall</uri>
+      <pose>1.2192 1.2192 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Wall 3</name>
+      <uri>model://fleming_wall</uri>
+      <pose>1.910 1.740 0 0 0 1.56575</pose>
+    </include>
+
+    <include>
+      <name>Wall 4</name>
+      <uri>model://fleming_wall</uri>
+      <pose>2.4384 2.4384 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Wall 5</name>
+      <uri>model://fleming_wall</uri>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Wall 6</name>
+      <uri>model://fleming_wall</uri>
+      <pose>1.2192 1.2192 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Wall 7</name>
+      <uri>model://fleming_wall</uri>
+      <pose>1.910 1.740 0 0 0 1.56575</pose>
+    </include>
+
+    <include>
+      <name>Wall 8</name>
+      <uri>model://fleming_wall</uri>
+      <pose>2.4384 2.4384 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 1</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 2</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>1.2192 1.2192 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 3</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>1.910 1.740 0 0 0 1.56575</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 4</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>2.4384 2.4384 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 5</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>1.2192 3.6576 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 6</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>3.1292 1.740 0 0 0 1.56575</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 7</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>1.2192 0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>Ghost Wall 8</name>
+      <uri>model://fleming_wall_ghost</uri>
+      <pose>1.910 -0.546 0 0 0 1.56575</pose>
+    </include>
+
+    <include>
+      <name>deckard</name>
+      <uri>model://deckard</uri>
+      <pose>-1 -1 0 0 0 0</pose>
+    </include>
+
+
+
+  </world>
+</sdf>

@@ -9,8 +9,6 @@ from cops_and_robots.msg import battery
 def callback(data):
     rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
     x = data.data
-
-    print "4: AT LEAST IT GETS HERE!"
     
     try:
         keymap[x]()
@@ -24,21 +22,12 @@ def callback(data):
 
     cmd = cop.move()
     cop.cmd_queue.put(cmd)
-    # tstep = 0.5
-    # time.sleep(tstep)
 
 def chatter():
     rospy.init_node('chatter', anonymous=True)
 
-    print "3A: AT LEAST IT GETS HERE!"
-    
-
     #listener
-    rospy.Subscriber("robot_command", String, callback)
-    # rospy.spin()
-
-    print "3B: AT LEAST IT GETS HERE!"
-    
+    rospy.Subscriber("robot_command", String, callback)    
 
     #talker
     pub = rospy.Publisher("battery", battery, queue_size=10)
@@ -69,9 +58,6 @@ if __name__ == '__main__':
                 'e' : lambda: cop.turn(-800),
                 ' ' : lambda: cop.stop() }
 
-    print "1: AT LEAST IT GETS HERE!"
     chatter()
-    
-    print "2: AT LEAST IT GETS HERE!"
-    
+        
     cop.stop_base_cx()
