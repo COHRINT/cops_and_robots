@@ -1,6 +1,6 @@
-import math, numpy, logging, serial, socket, threading, Queue
-from cops_and_robots.MapObj import MapObj
-from cops_and_robots.Map import Map
+import math, numpy, logging, serial, socket, threading, queue
+# from cops_and_robots.Map import Map,MapObj
+from Map import Map,MapObj
 
 class Robot(MapObj):
     """Class for controlling iRobot Create. Will generate a 'base' thread to maintain
@@ -89,18 +89,16 @@ class Robot(MapObj):
     console_handler.setLevel(logging.DEBUG)
     logger.addHandler(console_handler)
         
-    def __init__(self):
+    def __init__(self,name):
         """Robot constructor
         """     
         #Superclass attributes
         a        = numpy.linspace(0,2 * math.pi, Robot.RESOLUTION)
         circ_x   = [(Robot.DIAMETER / 2 * math.sin(b)) for b in a]
         circ_y   = [(Robot.DIAMETER / 2 * math.cos(b)) for b in a]
-        shape    = zip(circ_x,circ_y)           #draw a circle with radius ROBOT_DIAMETER/2 around centroid
-        centroid = {'x':0,'y':0,'theta':0}      #Start at origin
-        pose     = {'x':0,'y':0,'theta':0}      #Start at origin
-        name     = socket.gethostname()
-        MapObj.__init__(self,name,shape,centroid,pose)
+        #shape    = zip(circ_x,circ_y)           #draw a circle with radius ROBOT_DIAMETER/2 around centroid
+        shape = [30,30,0]
+        super().__init__(name,shape)
 
         #Class attributes
         self.target         = {'x':0,'y':0,'theta':0}  #Start at origin
@@ -109,11 +107,11 @@ class Robot(MapObj):
         self.battery_capacity = 0
         self.bump_left      = False
         self.bump_right     = False
-        self.map            = Map('fleming_no_walls')
+        # self.map            = Map('fleming_no_walls',[10 10])
         self.speed          = 0
         self.radius         = Robot.MAX_RADIUS
         self.OI_mode        = Robot.OI_MODE['off'] 
-        self.cmd_queue      = Queue.Queue()
+        self.cmd_queue      = queue.Queue()
 
     def start_base_cx(self):
         #Spawn base thread
@@ -138,7 +136,7 @@ class Robot(MapObj):
         portstr = '/dev/ttyUSB0'
         try:
             ser = serial.Serial(portstr,57600,timeout=1)
-        except Exception, e:
+        except Exception:
             ser = "fail"
             logging.error("Failed to connect to {}".format(portstr))
             return ser
