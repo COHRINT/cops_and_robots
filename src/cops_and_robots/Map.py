@@ -2,6 +2,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.path import Path
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 from scipy import stats
 from pylab import *
@@ -78,9 +79,15 @@ class Map(object):
         ax.grid(b=False)    
 
         #Plot relative position polygons
-        for map_obj in self.objects:
-            if self.objects[map_obj].has_poly:
-                plt.plot(self.objects[map_obj].front_poly[:,0],self.objects[map_obj].front_poly[:,1])
+        # for map_obj in self.objects:
+        #     if self.objects[map_obj].has_poly:
+        #         plt.plot(self.objects[map_obj].front_poly[:,0],self.objects[map_obj].front_poly[:,1])
+        
+        #Plot particles
+        # plt.scatter(self.probability[target_name].particles[:,0],self.probability[target_name].particles[:,1],marker='x',color='r')
+        if len(self.probability[target_name].kept_particles) > 0:
+            plt.scatter(self.probability[target_name].kept_particles[:,0],self.probability[target_name].kept_particles[:,1],marker='x',color='w')
+
         plt.xlim([-self.outer_bounds[0]/2, self.outer_bounds[0]/2])
         plt.ylim([-self.outer_bounds[1]/2, self.outer_bounds[1]/2])
         plt.show()
@@ -191,21 +198,23 @@ class ProbabilityLayer(object):
         self.pos[:, :, 0] = self.X
         self.pos[:, :, 1] = self.Y
 
-        self.n_particles = 100
+        self.n_particles = 1000
         self.particles = []
-        self.particle_weights = []
-        uni_x = stats.uniform.pdf(self.X, loc=0, scale=self.xbound)
-        uni_y = stats.uniform.pdf(self.Y, loc=0, scale=self.ybound)
-        self.prob = np.dot(uni_x, uni_y) #uniform prior
+        self.kept_particles = [] #TEST STUB
+        self.particle_weights = np.zeros(1000)
+
+        # uni_x = stats.uniform.pdf(self.X, loc=0, scale=self.xbound)
+        # uni_y = stats.uniform.pdf(self.Y, loc=0, scale=self.ybound)
+        # self.prob = np.dot(uni_x, uni_y) #uniform prior
         # prior = 1/self.X.size * stats.uniform.pdf(np.ones(self.X.shape))
         # self.prob = prior
+        # self.prob = stats.multivariate_normal([0,0], [[100000,0], [0,1000]])
+        self.prob = stats.multivariate_normal([0,0], [[10,0], [0,10]])
+        # self.prob = self.prob.pdf(self.pos)
         
 
     def plot(self):
-        #<>FIX THIS TRAVESTY OF A TRANSFORM
-        # X,Y = (self.X/self.cell_size/6 -(self.xbound-2.2)/2, self.Y/self.cell_size/6 - (self.ybound-2.2)/2)
-        print(self.X.shape,self.Y.shape,self.prob.shape)
-        p = plt.pcolor(self.X, self.Y, self.prob, cmap=cm.jet, alpha=0.7)#, vmin=abs(prior).min(), vmax=abs(prior).max())
+        p = plt.pcolor(self.X, self.Y, self.prob.pdf(self.pos), cmap=cm.jet, alpha=0.7)#, vmin=abs(prior).min(), vmax=abs(prior).max())
         cb = plt.colorbar(p)    
 
         # ax = fig.add_subplot(1, 2, 2, projection='3d')
@@ -217,17 +226,36 @@ class ProbabilityLayer(object):
         
     def update(self,map_obj,relative_str):
         '''Updates particle filter values and generate new probabilty layer'''
-        #Test stub
-        relative_str = 'front'
 
         #generate particles
-        self.particles = self.resample()
+        self.resample()
+        kept_particles = []
+
+        #check particles within box denoted by relative string
+        if relative_str == 'front':
+            path = Path(map_obj.front_poly)
+            for i,particle in enumerate(self.particles):
+                if path.contains_point(particle):
+                    kept_particles.append(particle)
+                    self.particle_weights[i] = 1
+                else:
+                    self.particle_weights[i] = 0
+
+        self.kept_particles = np.asarray(kept_particles)
+
+        if len(kept_particles) == 0:
+            mean = [0,0]
+            var = [[10,0], [0,10]]
+        else:
+            mean = np.mean(self.kept_particles,axis=0)
+            var = np.var(self.kept_particles,axis=0)
 
         #generate gaussian from new particles
-
-        #use relative_str to determine the type of update (front, back, etc.)
-        likelihood = stats.multivariate_normal([0,0], [[10,0], [0,10]])
-        self.prob = self.prob * likelihood.pdf(self.pos)
+        #TEST STUB
+        prob_update = stats.multivariate_normal(mean,var)
+        self.prob = prob_update
+        # self.prob = self.prob * likelihood.pdf(self.pos)
+        # self.prob = np.dot(self.prob, likelihood)
 
     def resample(self):
         '''Sample distribution to generate new particles'''
@@ -235,15 +263,13 @@ class ProbabilityLayer(object):
         #generate n_particles - n_remaining_particles 
         n_new_particles = self.n_particles - sum(w > 0 for w in self.particle_weights)
 
-        # self.particles = self.prob.rvs(size=n_new_particles-1)
-            #sample distribution
+        #sample distribution
+        #<>Constrain particle limits to map limits
+        #<>recombine new particles with old particles
+        self.particles = self.prob.rvs(size=n_new_particles)
 
         #reweight particles
-        self.particle_weights = [1/self.n_particles for i in range(0,self.n_particles-1)]
-
-        #return n_particles particles
-
-        pass
+        self.particle_weights = [1/self.n_particles for i in range(0,self.n_particles)]
 
     
 def set_up_fleming():    
@@ -296,6 +322,12 @@ def set_up_fleming():
 if __name__ == "__main__":
     fleming = set_up_fleming()
 
-    fleming.probability['Roy'].update([0,0,0],'Front')
-
+    fleming.plot_map('Roy')
+    fleming.probability['Roy'].update(fleming.objects['Wall0'],'front')
+    fleming.plot_map('Roy')
+    fleming.probability['Roy'].update(fleming.objects['Wall2'],'front')
+    fleming.plot_map('Roy')
+    fleming.probability['Roy'].update(fleming.objects['Wall2'],'front')
+    fleming.plot_map('Roy')
+    fleming.probability['Roy'].update(fleming.objects['Wall2'],'front')
     fleming.plot_map('Roy')
