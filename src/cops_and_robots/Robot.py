@@ -1,6 +1,6 @@
-import math, numpy, logging, serial, socket, threading, queue
+import math, numpy, logging, serial, socket, threading, Queue
 # from cops_and_robots.Map import Map,MapObj
-from Map import Map,MapObj
+from MapObj import MapObj
 
 class Robot(MapObj):
     """Class for controlling iRobot Create. Will generate a 'base' thread to maintain
@@ -98,7 +98,7 @@ class Robot(MapObj):
         circ_y   = [(Robot.DIAMETER / 2 * math.cos(b)) for b in a]
         #shape    = zip(circ_x,circ_y)           #draw a circle with radius ROBOT_DIAMETER/2 around centroid
         shape = [30,30,0]
-        super().__init__(name,shape)
+        super(Robot,self).__init__(name,shape)
 
         #Class attributes
         self.target         = {'x':0,'y':0,'theta':0}  #Start at origin
@@ -111,7 +111,7 @@ class Robot(MapObj):
         self.speed          = 0
         self.radius         = Robot.MAX_RADIUS
         self.OI_mode        = Robot.OI_MODE['off'] 
-        self.cmd_queue      = queue.Queue()
+        self.cmd_queue      = Queue.Queue()
 
     def start_base_cx(self):
         #Spawn base thread
