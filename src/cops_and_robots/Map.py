@@ -8,7 +8,6 @@ from scipy import stats
 from pylab import *
 import Robot #Change this to robbers
 
-
 class Map(object):
     """Environment map composed of several layers, including an occupancy layer and a probability layer for each target.
 
@@ -79,9 +78,9 @@ class Map(object):
         ax.grid(b=False)    
 
         #Plot relative position polygons
-        # for map_obj in self.objects:
-        #     if self.objects[map_obj].has_poly:
-        #         plt.plot(self.objects[map_obj].front_poly[:,0],self.objects[map_obj].front_poly[:,1])
+        for map_obj in self.objects:
+            if self.objects[map_obj].has_poly:
+                plt.plot(self.objects[map_obj].front_poly[:,0],self.objects[map_obj].front_poly[:,1])
         
         #Plot particles
         # plt.scatter(self.probability[target_name].particles[:,0],self.probability[target_name].particles[:,1],marker='x',color='r')
@@ -91,6 +90,7 @@ class Map(object):
         plt.xlim([-self.outer_bounds[0]/2, self.outer_bounds[0]/2])
         plt.ylim([-self.outer_bounds[1]/2, self.outer_bounds[1]/2])
         plt.show()
+
 
 class MapObj(object):
     """Generate one or more probability and occupancy layer
@@ -131,6 +131,7 @@ class MapObj(object):
 
     def __str___(self):
         return "%s is located at (%d,%d), pointing at %d" % (self.name, self.centroid['x'],self.centroid['y'],self.centroid['theta'])
+
 
 class OccupancyLayer(object):
     """Gridded occupancy layer for the map, translating euclidean coordinates to grid cells. Each cell has a probability of occupancy from 0 to 1."""
@@ -183,6 +184,7 @@ class OccupancyLayer(object):
         X,Y = (X*self.cell_size - self.xbound/2, Y*self.cell_size - self.ybound/2)
         p = plt.pcolor(X, Y, self.grid, cmap=cm.Greys)
 
+
 class ProbabilityLayer(object):
     """Probability heatmap for expected target location."""
     def __init__(self,map_,target,cell_size=0.2):
@@ -203,6 +205,8 @@ class ProbabilityLayer(object):
         self.kept_particles = [] #TEST STUB
         self.particle_weights = np.zeros(1000)
 
+        self.ML = [0, 0] #[m] point of maximum likelihood
+
         # uni_x = stats.uniform.pdf(self.X, loc=0, scale=self.xbound)
         # uni_y = stats.uniform.pdf(self.Y, loc=0, scale=self.ybound)
         # self.prob = np.dot(uni_x, uni_y) #uniform prior
@@ -212,18 +216,11 @@ class ProbabilityLayer(object):
         self.prob = stats.multivariate_normal([0,0], [[10,0], [0,10]])
         # self.prob = self.prob.pdf(self.pos)
         
-
     def plot(self):
         p = plt.pcolor(self.X, self.Y, self.prob.pdf(self.pos), cmap=cm.jet, alpha=0.7)#, vmin=abs(prior).min(), vmax=abs(prior).max())
         cb = plt.colorbar(p)    
-
-        # ax = fig.add_subplot(1, 2, 2, projection='3d')
-        # p = ax.plot_surface(self.X, self.Y, self.prob, rstride=1, cstride=1, cmap=cm.hot,linewidth=0, antialiased=True)
-        # cb = fig.colorbar(p, ax=ax)    
-
         return p, cb
-
-        
+    
     def update(self,map_obj,relative_str):
         '''Updates particle filter values and generate new probabilty layer'''
 
@@ -257,20 +254,19 @@ class ProbabilityLayer(object):
         # self.prob = self.prob * likelihood.pdf(self.pos)
         # self.prob = np.dot(self.prob, likelihood)
 
+        self.ML = np.mean(self.kept_particles,axis=0)
+
     def resample(self):
         '''Sample distribution to generate new particles'''
 
-        #generate n_particles - n_remaining_particles 
-        n_new_particles = self.n_particles - sum(w > 0 for w in self.particle_weights)
-
         #sample distribution
         #<>Constrain particle limits to map limits
-        #<>recombine new particles with old particles
-        self.particles = self.prob.rvs(size=n_new_particles)
+        #<>Always resample self.n_particles
+        self.particles = self.prob.rvs(size=self.n_particles)
 
         #reweight particles
         self.particle_weights = [1/self.n_particles for i in range(0,self.n_particles)]
-
+        
     
 def set_up_fleming():    
     #Make vicon field space
@@ -325,7 +321,7 @@ if __name__ == "__main__":
     fleming.plot_map('Roy')
     fleming.probability['Roy'].update(fleming.objects['Wall0'],'front')
     fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall2'],'front')
+    fleming.probability['Roy'].update(fleming.objects['Wall1'],'front')
     fleming.plot_map('Roy')
     fleming.probability['Roy'].update(fleming.objects['Wall2'],'front')
     fleming.plot_map('Roy')

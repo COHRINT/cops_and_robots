@@ -1,0 +1,5 @@
+<launch>
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>		
+	<node pkg="cops_and_robots" type="websocket_interface.py" name="websocket_interface" />
+	<node pkg="cops_and_robots" type="nav_goal_generator.py" name="nav_goal_generator" />
+</launch>
