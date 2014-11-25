@@ -1,5 +1,13 @@
 <launch>
-	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>		
-	<node pkg="cops_and_robots" type="websocket_interface.py" name="websocket_interface" />
-	<node pkg="cops_and_robots" type="nav_goal_generator.py" name="nav_goal_generator" />
+	<node pkg="cops_and_robots" type="nav_goals.py" name="nav_goals" />	
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"></include>	
+	<include file="$(find cops_and_robots)/launch/fleming.launch"></include>
+
+ 	<include file="$(find turtlebot_gazebo)/launch/amcl_demo.launch">
+		<arg name="map_file" value="$(find cops_and_robots)/maps/fleming_sim.yaml" /> 
+	</include>	
+	<include file="$(find turtlebot_rviz_launchers)/launch/view_navigation.launch"></include>		
+	<node pkg="web_video_server" type="web_video_server" name="web_video_server">
+		<param name="port" value="8083" />
+	</node>
 </launch>

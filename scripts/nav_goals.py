@@ -1,65 +1,92 @@
 #!/usr/bin/env python
+import roslib; #roslib.load_manifest('cops_and_robots')
 import rospy
+import actionlib
 import sys, time, logging
 import tf
 import math
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from cops_and_robots.Map import *
 from std_msgs.msg import String
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
-fleming = set_up_fleming()
-goal = [0,0]
+class MoveBase():
+    def __init__(self):
+        print('Test2')
+        self.map_ = set_up_fleming()
+        self.goal2d = [0,0]
 
-def callback(data):
-    global goal
-    rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
-    str_ = data.data
+        print('Test3')
+        rospy.init_node('nav_goals',anonymous=True)
+        rospy.on_shutdown(self.shutdown)
+        print('Test4')
 
-    target = str_.split()[2]
-    obj = str_.split()[-2:]
-    obj = ''.join(obj)[:-1].capitalize()
+        #Start subscriber to update goal2d from MAP
+        rospy.Subscriber("/human_sensor", String, self.callback)    
+        print('Test5')
 
-    fleming.probability[target].update(fleming.objects[obj],'front')
-    goal = fleming.probability[target].ML
-    rospy.loginfo('New Goal' + str(goal))
-    return goal
+        self.move_base = actionlib.SimpleActionClient('move_base',MoveBaseAction)
+        rospy.loginfo("Waiting for move_base action server...")
+        self.move_base.wait_for_server(rospy.Duration.from_sec(5.0))
+        rospy.loginfo("Connected to move_base action server.")
+        print('Test6')
 
-def nav_goals():
-    global goal
-    rospy.init_node('nav_goals', anonymous=True)
+        # Goal state return values
+        goal_states = ['PENDING', 'ACTIVE', 'PREEMPTED', 'SUCCEEDED', 'ABORTED', 'REJECTED', 'PREEMPTING', 'RECALLING', 'RECALLED', 'LOST']
 
-    #listener
-    rospy.Subscriber("human_sensor", String, callback)    
+        self.goal = MoveBaseGoal()
+        while not rospy.is_shutdown():
+            rospy.loginfo('Pose Goal ' + str(self.goal2d))
+            try:
+                self.goal.target_pose.pose.position.x = self.goal2d[0]
+                self.goal.target_pose.pose.position.y = self.goal2d[1]
+            except:
+                self.goal2d = [0,0]
+                self.goal.target_pose.pose.position.x = 0
+                self.goal.target_pose.pose.position.y = 0
+            self.goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
+            self.goal.target_pose.header.frame_id = 'map'
+            self.goal.target_pose.header.stamp = rospy.Time.now()
+            self.move()
 
-    #talker
-    pub = rospy.Publisher("nav_goal", PoseStamped, queue_size=10)
-    ps = PoseStamped()
+    def move(self):
+        # Start the robot toward the next location
+        self.move_base.send_goal(self.goal)
 
-    r = rospy.Rate(1) #1Hz
-    while not rospy.is_shutdown():
-	rospy.loginfo('Pose Goal' + str(goal))
-        ps.header.frame_id = 'base_link'
-        ps.header.stamp = rospy.Time.now()
-        try:
-            ps.pose.position.x = goal[0]
-            ps.pose.position.y = goal[1]
-        except:
-            goal = [0,0]
-            ps.pose.position.x = 0
-            ps.pose.position.y = 0
-        ps.pose.position.z = 0    
-        orientation = tf.transformations.quaternion_from_euler(0, 0, 0)
-        ps.pose.orientation.x = orientation[0]
-        ps.pose.orientation.y = orientation[1]
-        ps.pose.orientation.z = orientation[2]
-        ps.pose.orientation.w = orientation[3]
+        # Allow 1 minute to get there
+        finished_within_time = self.move_base.wait_for_result(rospy.Duration(60)) 
 
-        pub.publish(ps)
-        r.sleep()
+        if not finished_within_time:
+            self.move_base.cancel_goal()
+            rospy.loginfo("Timed out achieving goal")
+        else:
+            state = self.move_base.get_state()
+            # if state == GoalStatus.SUCCEEDED:
+            #     rospy.loginfo("Goal succeeded!")
+
+    def shutdown(self):
+        rospy.loginfo("Stopping the robot...")
+        self.move_base.cancel_goal()
+        rospy.sleep(2)
+        # self.cmd_vel_pub.publish(Twist())
+        rospy.sleep(1)
+    
+    def callback(self,data):
+        rospy.loginfo(rospy.get_caller_id()+"I heard %s",data.data)
+        str_ = data.data
+
+        target = str_.split()[2]
+        obj = str_.split()[-2:]
+        obj = ''.join(obj)[:-1].capitalize()
+
+        self.map_.probability[target].update(self.map_.objects[obj],'front')
+        self.goal2d = self.map_.probability[target].ML
+        rospy.loginfo('New Goal ' + str(self.goal2d))
 
 if __name__ == '__main__':
+    print('Test1')
     try:
-        nav_goals()
+        MoveBase()
     except rospy.ROSInterruptException: pass
 
     
