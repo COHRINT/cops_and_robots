@@ -96,8 +96,8 @@ class Robot(MapObj):
         a        = numpy.linspace(0,2 * math.pi, Robot.RESOLUTION)
         circ_x   = [(Robot.DIAMETER / 2 * math.sin(b)) for b in a]
         circ_y   = [(Robot.DIAMETER / 2 * math.cos(b)) for b in a]
-        #shape    = zip(circ_x,circ_y)           #draw a circle with radius ROBOT_DIAMETER/2 around centroid
-        shape = [30,30,0]
+        shape    = zip(circ_x,circ_y)           #draw a circle with radius ROBOT_DIAMETER/2 around centroid
+        # shape = [30,30,0]
         super(Robot,self).__init__(name,shape)
 
         #Class attributes

@@ -7,6 +7,8 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 from scipy import stats
 from pylab import *
 import Robot #Change this to robbers
+from MapObj import MapObj
+from shapely.geometry import Polygon,Point,box
 
 class Map(object):
     """Environment map composed of several layers, including an occupancy layer and a probability layer for each target.
@@ -79,8 +81,8 @@ class Map(object):
 
         #Plot relative position polygons
         for map_obj in self.objects:
-            if self.objects[map_obj].has_poly:
-                plt.plot(self.objects[map_obj].front_poly[:,0],self.objects[map_obj].front_poly[:,1])
+            if self.objects[map_obj].has_zones:
+                self.objects[map_obj].add_to_plot(ax,include_shape=False,include_zones=True)
         
         #Plot particles
         # plt.scatter(self.probability[target_name].particles[:,0],self.probability[target_name].particles[:,1],marker='x',color='r')
@@ -92,47 +94,6 @@ class Map(object):
         plt.show()
 
 
-class MapObj(object):
-    """Generate one or more probability and occupancy layer
-
-        :param target_name: String
-        """
-    def __init__(self,name,shape,pose=[0,0,0],centroid=[0,0,0],has_poly=0):
-        self.name = name #sting identifier
-        self.shape = shape #[l,w] in [m] length and width of a rectangular object   
-        #self.shape      = shape     #nx2 array containing all (x,y) vertices for the object shape
-        self.pose = pose #[x,y,theta] in [m] coordinates of the centroid in the global frame
-        self.centroid = centroid  #(x,y,theta) [m] coordinates of the centroid in the object frame
-        self.has_poly = has_poly
-
-        #Relative polygons
-        if has_poly:
-            l,w = (shape[0], shape[1])
-            spread = [1.5, 5] #trapezoidal spread from anchor points
-            if l > w: 
-                x = [-l/2, -spread[0]*l/2, spread[0]*l/2, l/2, -l/2]
-                x = [i + pose[0] for i in x]
-                y = [w/2, spread[1]*w, spread[1]*w, w/2, w/2]
-                y = [i + pose[1] for i in y]
-            else:
-                y = [-w/2, -spread[0]*w/2, spread[0]*w/2, w/2, -w/2]
-                y = [i + pose[1] for i in y]
-                x = [l/2, spread[1]*l, spread[1]*l, l/2, l/2]
-                x = [i + pose[0] for i in x]
-            self.front_poly = np.array([list(i) for i in list(zip(x,y))])
-            self.back_poly = []
-            self.left_poly = []
-            self.right_poly = []
-        else:
-            self.front_poly = np.array([])
-            self.back_poly = []
-            self.left_poly = []
-            self.right_poly = []
-
-    def __str___(self):
-        return "%s is located at (%d,%d), pointing at %d" % (self.name, self.centroid['x'],self.centroid['y'],self.centroid['theta'])
-
-
 class OccupancyLayer(object):
     """Gridded occupancy layer for the map, translating euclidean coordinates to grid cells. Each cell has a probability of occupancy from 0 to 1."""
 
@@ -142,47 +103,39 @@ class OccupancyLayer(object):
         self.cell_size = cell_size #[m/cell]
 
         self.area = [self.xbound,self.ybound] #[m]
-        self.grid = 0.5 * np.ones((self.xbound/self.cell_size+1, self.ybound/self.cell_size+1), dtype=np.int)
-        self.n_cells = self.grid.size
+
+        self.grid = []
+        x,y = 0,0
+        c = self.cell_size
+        while x + c <= self.xbound:
+            while y + c <= self.ybound:
+                #Create cells with grid centered on (0,0)
+                cell = box(x-self.xbound/2, y-self.ybound/2, x+c-self.xbound/2, y+c-self.ybound/2)
+                self.grid.append(cell)
+                y = y+c
+            x = x+c
+            y = 0
+
+        self.n_cells = len(self.grid)
+
+        self.grid_occupancy = 0.5 * np.ones((self.n_cells,1), dtype=np.int)
         
     def add_obj(self,map_obj):
 
-        #TODO: find grid cells more than %50 occupied by object
-        
-        #Find containing box around object [x_0 y_0 len width]
-        # a = max(map_obj.w,map_obj.l) #[m] box side length
-        # self.box = [[a/2+map_obj.x, a/2+map_obj.y],[a, a]]
-
-        x,y,theta = map_obj.pose
-        w,l = map_obj.shape
-
-        min_x_cell = int((-w/2 + x)/self.cell_size) + self.grid.shape[0]//2
-        max_x_cell = int((w/2 + x)/self.cell_size ) + self.grid.shape[0]//2
-        min_y_cell = int((-l/2 + y)/self.cell_size) + self.grid.shape[1]//2
-        max_y_cell = int((l/2 + y)/self.cell_size)  + self.grid.shape[1]//2
-
-        #Horizontal flip hack
-        # tmp = max_x_cell
-        # max_x_cell = self.grid.shape[0] - min_x_cell
-        # min_x_cell = self.grid.shape[0] - tmp
-
-        self.grid[min_x_cell:max_x_cell,min_y_cell:max_y_cell] = 1
+        for i,cell in enumerate(self.grid):
+            if map_obj.shape.intersects(cell):
+                self.grid_occupancy[i] = 1
 
     def rem_obj(self,map_obj):
-        x,y,theta = map_obj.pose
-        w,l = map_obj.shape
-
-        min_x_cell = int((-w/2 + x)/self.cell_size) + self.grid.shape[0]//2
-        max_x_cell = int((w/2 + x)/self.cell_size ) + self.grid.shape[0]//2
-        min_y_cell = int((-l/2 + y)/self.cell_size) + self.grid.shape[1]//2
-        max_y_cell = int((l/2 + y)/self.cell_size)  + self.grid.shape[1]//2
-
-        self.grid[min_x_cell:max_x_cell, min_y_cell:max_y_cell] = 0
+        for i,cell in enumerate(self.grid):
+            if map_obj.shape.intersects(cell):
+                self.grid_occupancy[i] = 0
 
     def plot(self):
-        X,Y = np.mgrid[0:self.grid.shape[0]:1,0:self.grid.shape[1]:1]
+        grid = self.grid_occupancy.reshape(self.xbound/self.cell_size-1,self.ybound/self.cell_size-1)
+        X,Y = np.mgrid[0:grid.shape[0]:1,0:grid.shape[1]:1]
         X,Y = (X*self.cell_size - self.xbound/2, Y*self.cell_size - self.ybound/2)
-        p = plt.pcolor(X, Y, self.grid, cmap=cm.Greys)
+        p = plt.pcolor(X, Y, grid, cmap=cm.Greys)
 
 
 class ProbabilityLayer(object):
@@ -229,14 +182,14 @@ class ProbabilityLayer(object):
         kept_particles = []
 
         #check particles within box denoted by relative string
-        if relative_str == 'front':
-            path = Path(map_obj.front_poly)
-            for i,particle in enumerate(self.particles):
-                if path.contains_point(particle):
-                    kept_particles.append(particle)
-                    self.particle_weights[i] = 1
-                else:
-                    self.particle_weights[i] = 0
+        poly = map_obj.zones_by_label[relative_str]
+        for i,particle in enumerate(self.particles):
+            point = Point(particle)
+            if poly.contains(point):
+                kept_particles.append(particle)
+                self.particle_weights[i] = 1
+            else:
+                self.particle_weights[i] = 0
 
         self.kept_particles = np.asarray(kept_particles)
 
@@ -272,25 +225,22 @@ def set_up_fleming():
     #Make vicon field space
     net_w = 0.2 #[m] Netting width
     field_w = 10 #[m] field area
-    netting = MapObj('Netting',[field_w+net_w,field_w+net_w]) 
-    field = MapObj('Field',[field_w,field_w]) 
+    netting = MapObj('Netting',[field_w+net_w,field_w+net_w],has_zones=False) 
+    field = MapObj('Field',[field_w,field_w],has_zones=False) 
 
     #Make walls
     l = 1.2192 #[m] wall length
     w = 0.1524 #[m] wall width
+    wall_shape = [l,w]    
     x = [0, l, (l*1.5+w/2), 2*l, l,   (l*2.5+w/2), l, (l*1.5+w/2)]
     y = [0, l, (l*1.5-w/2), 2*l, 3*l, (l*1.5-w/2), 0, (-l*0.5+w/2)]
-    theta = [0, 0, math.pi/2,   0,   0,   math.pi/2,   0, math.pi/2]
+    theta = [0, 0, 90,   0,   0,   90,   0, 90]
 
     walls = []
     for i in range(0,len(x)):
-        name = 'Wall' + str(i)
-        #CHEAP HACK
-        pose = [x[i],y[i],theta[i]]
-        if theta[i] == 0:
-            wall = MapObj(name, [l,w], pose, has_poly=1)
-        else:
-            wall = MapObj(name, [w,l], pose, has_poly=1)
+        name = 'Wall_' + str(i)
+        pose = (x[i],y[i],theta[i])
+        wall = MapObj(name, wall_shape, pose)
         
         walls.append(wall)      
 
@@ -319,11 +269,14 @@ if __name__ == "__main__":
     fleming = set_up_fleming()
 
     fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall0'],'front')
+    fleming.probability['Roy'].update(fleming.objects['Wall_0'],'left')
     fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall1'],'front')
+    fleming.probability['Roy'].update(fleming.objects['Wall_1'],'front')
+    fleming.probability['Roy'].update(fleming.objects['Wall_1'],'front')
     fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall2'],'front')
+    fleming.probability['Roy'].update(fleming.objects['Wall_2'],'back')
+    fleming.probability['Roy'].update(fleming.objects['Wall_2'],'back')
     fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall2'],'front')
+    fleming.probability['Roy'].update(fleming.objects['Wall_2'],'right')
+    fleming.probability['Roy'].update(fleming.objects['Wall_2'],'right')    
     fleming.plot_map('Roy')

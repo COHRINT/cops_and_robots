@@ -77,7 +77,7 @@ class MoveBase():
 
         target = str_.split()[2]
         obj = str_.split()[-2:]
-        obj = ''.join(obj)[:-1].capitalize()
+        obj = '_'.join(obj)[:-1].capitalize()
 
         self.map_.probability[target].update(self.map_.objects[obj],'front')
         self.goal2d = self.map_.probability[target].ML
