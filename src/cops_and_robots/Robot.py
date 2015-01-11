@@ -7,7 +7,7 @@ class Robot(MapObj):
     serial communication with the iRobot base."""
 
     #Constants
-    DIAMETER        = 30 #[cm] <>TODO: VERIFY!
+    DIAMETER        = 0.30 #[m] <>TODO: VERIFY!
     RESOLUTION      = 1000  
     MAX_SPEED       = 500   #[mm/s]
     MAX_RADIUS      = 2000  #[mm]

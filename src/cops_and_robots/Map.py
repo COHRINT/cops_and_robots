@@ -60,7 +60,8 @@ class Map(object):
         del self.targets[target_name]
         #<>Update probability layer
 
-    def plot_map(self,target_name=""):
+    def plot_map(self,target_name="",plot_occ=True,plot_prob=True,
+                 plot_particles=True,plot_zones=True,plot_robot=False):
         """Generate one or more probability and occupancy layer
 
         :param target_name: String
@@ -69,29 +70,39 @@ class Map(object):
         ax = fig.add_subplot(111)
 
         #Plot occupancy layer
-        occ = self.occupancy.plot()
+        if plot_occ:
+            occ = self.occupancy.plot()
         
         #Plot probability layer
-        if target_name == "":
-            for tar_name in self.targets:
-                prob, cb = self.probability[tar_name].plot()
-        else:
-            prob, cb = self.probability[target_name].plot()
-        ax.grid(b=False)    
+        if plot_prob:
+            if target_name == "":
+                for tar_name in self.targets:
+                    prob, cb = self.probability[tar_name].plot()
+            else:
+                prob, cb = self.probability[target_name].plot()
+            ax.grid(b=False)    
 
         #Plot relative position polygons
-        for map_obj in self.objects:
-            if self.objects[map_obj].has_zones:
-                self.objects[map_obj].add_to_plot(ax,include_shape=False,include_zones=True)
+        if plot_zones:
+            for map_obj in self.objects:
+                if self.objects[map_obj].has_zones:
+                    self.objects[map_obj].add_to_plot(ax,include_shape=False,include_zones=True)
         
         #Plot particles
         # plt.scatter(self.probability[target_name].particles[:,0],self.probability[target_name].particles[:,1],marker='x',color='r')
-        if len(self.probability[target_name].kept_particles) > 0:
-            plt.scatter(self.probability[target_name].kept_particles[:,0],self.probability[target_name].kept_particles[:,1],marker='x',color='w')
+        if plot_particles:
+            if len(self.probability[target_name].kept_particles) > 0:
+                plt.scatter(self.probability[target_name].kept_particles[:,0],self.probability[target_name].kept_particles[:,1],marker='x',color='w')
+
+        #Plot robot position
+        #<>TODO
+
 
         plt.xlim([-self.outer_bounds[0]/2, self.outer_bounds[0]/2])
         plt.ylim([-self.outer_bounds[1]/2, self.outer_bounds[1]/2])
         plt.show()
+
+        return ax
 
 
 class OccupancyLayer(object):
@@ -119,9 +130,9 @@ class OccupancyLayer(object):
         self.n_cells = len(self.grid)
 
         self.grid_occupancy = 0.5 * np.ones((self.n_cells,1), dtype=np.int)
-        
+    
     def add_obj(self,map_obj):
-
+        #if a < x < b
         for i,cell in enumerate(self.grid):
             if map_obj.shape.intersects(cell):
                 self.grid_occupancy[i] = 1
@@ -153,7 +164,7 @@ class ProbabilityLayer(object):
         self.pos[:, :, 0] = self.X
         self.pos[:, :, 1] = self.Y
 
-        self.n_particles = 1000
+        self.n_particles = 3000
         self.particles = []
         self.kept_particles = [] #TEST STUB
         self.particle_weights = np.zeros(1000)
@@ -247,7 +258,7 @@ def set_up_fleming():
     #Create Fleming map
     bounds = [field_w,field_w]
     fleming = Map('Fleming',bounds)
-    fleming.occupancy = OccupancyLayer(fleming,0.05)
+    fleming.occupancy = OccupancyLayer(fleming)
 
     fleming.add_obj(netting)
     fleming.add_obj(field)
@@ -269,7 +280,7 @@ if __name__ == "__main__":
     fleming = set_up_fleming()
 
     fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall_0'],'left')
+    fleming.probability['Roy'].update(fleming.objects['Wall_4'],'back')
     fleming.plot_map('Roy')
     fleming.probability['Roy'].update(fleming.objects['Wall_1'],'front')
     fleming.probability['Roy'].update(fleming.objects['Wall_1'],'front')

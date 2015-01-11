@@ -34,19 +34,24 @@ class MapObj(object):
         self.shape = Polygon(shape) #[(x_i,y_i)] in [m] as a list of positive xy pairs 
         x,y = self.shape.centroid.x, self.shape.centroid.y
         shape = [( p[0]-x, p[1]-y ) for p in shape] #place centroid at origin
+        self.shape = Polygon(shape)
 
         #place the shape at the correct pose
-        shape = [( p[0]+pose[0], p[1]+pose[1] ) for p in shape]
-        self.shape = Polygon(shape)
+        self.move_shape(pose)
+
+    def move_shape(self,pose):
+        self.pose = pose
+        self.shape = [( p[0]+pose[0], p[1]+pose[1] ) for p in self.shape.exterior.coords]
+        self.shape = Polygon(self.shape)
         self.rotate_poly(pose[2],self.shape.centroid)
 
-        self.points = self.shape.exterior.coords
         self.sides = []
         self.zones = []
         self.zones_by_label = {}
-
+        self.points = self.shape.exterior.coords
+        
         #Define zones as areas around the polygons
-        if has_zones:
+        if self.has_zones:
             self.define_zones()
 
     def define_zones(self,zone_distance=0.5):
@@ -55,7 +60,7 @@ class MapObj(object):
         mitre = 2
         bevel = 3
 
-        self.buffer_ = self.shape.buffer(zone_distance,resolution=resolution,join_style=mitre)
+        self.buffer_ = self.shape.buffer(zone_distance,resolution=resolution,join_style=round_)
         buffer_points = self.buffer_.exterior.coords
 
         n_sides = len(self.points) - 1 
@@ -109,20 +114,69 @@ if __name__ == '__main__':
     l = 1.2192 #[m] wall length
     w = 0.1524 #[m] wall width
     shape = [(0,0),(0,w),(l,w),(l,0),(0,0)]
-    pose = (2,1,45)
+    pose = (2.5,1.5,45)
     wall1 = MapObj('wall1',shape,pose)
+    print(np.add(wall1.shape.centroid,(1,2)))
 
-    shape = [(0,0),(0,w),(l,w),(l,0),(0,0)]
-    pose = (3,0.5,60)
+    # shape = [(0,0),(0,w),(l,w),(l,0),(0,0)]
+    shape = [(0,0),(l/2,w*10),(l,0),(l/2,-w*10),(0,0)]
+    pose = (0,0,0)
     wall2 = MapObj('wall2',shape,pose)
+
+    shape = [(0,0),(l/2,w*4),(l,0),(0,0)]
+    pose = (2,-2,30)
+    wall3 = MapObj('wall3',shape,pose)
+
+    p = Point(0,0)
+    circle = p.buffer(1)
+    shape = circle.exterior.coords
+    pose = (-2.5,-2,30)
+    wall4 = MapObj('wall4',shape,pose)
+
+
+    fig = plt.figure(1,figsize=(10,6)) 
+    ax = fig.add_subplot(111)
+
+    wall1.add_to_plot(ax,include_zones=False) 
+    wall2.add_to_plot(ax,include_zones=False) 
+    wall3.add_to_plot(ax,include_zones=False) 
+    wall4.add_to_plot(ax,include_zones=False) 
+    # patch = PolygonPatch(wall2.zones_by_label['back'],facecolor=GREEN)
+    # ax.add_patch(patch)
+    
+    lim = 5
+    ax.set_xlim([-lim,lim])
+    ax.set_ylim([-lim,lim])
+    plt.show()      
+
 
     fig = plt.figure(1,figsize=(10,6)) 
     ax = fig.add_subplot(111)
 
     wall1.add_to_plot(ax,include_zones=True) 
-    patch = PolygonPatch(wall2.zones_by_label['back'],facecolor=GREEN)
-    ax.add_patch(patch)
-    lim = 10
+    wall2.add_to_plot(ax,include_zones=True) 
+    wall3.add_to_plot(ax,include_zones=True) 
+    wall4.add_to_plot(ax,include_zones=True) 
+    # patch = PolygonPatch(wall2.zones_by_label['back'],facecolor=GREEN)
+    # ax.add_patch(patch)
+    
+    lim = 5
     ax.set_xlim([-lim,lim])
     ax.set_ylim([-lim,lim])
     plt.show()      
+
+    # pose = (-3,0.5,60)
+    # wall2.move_shape(pose)
+
+    # fig = plt.figure(1,figsize=(10,6)) 
+    # ax = fig.add_subplot(111)
+
+    # wall1.add_to_plot(ax,include_zones=True) 
+    # wall2.add_to_plot(ax,include_zones=True) 
+    # # patch = PolygonPatch(wall2.zones_by_label['back'],facecolor=GREEN)
+    # # ax.add_patch(patch)
+    
+    # lim = 5
+    # ax.set_xlim([-lim,lim])
+    # ax.set_ylim([-lim,lim])
+    # plt.show()      
