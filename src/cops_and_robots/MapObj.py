@@ -11,7 +11,7 @@ RED = '#ff3333'
 GREEN = '#33ff33'
 
 class MapObj(object):
-    """Generate one or more probability and occupancy layer
+    """Generate a map object based on a geometric shape, plus 'zones'
 
         :param name: String
         :param shape: #[(x_i,y_i)] in [m] as a list of positive xy pairs
@@ -60,7 +60,7 @@ class MapObj(object):
         mitre = 2
         bevel = 3
 
-        self.buffer_ = self.shape.buffer(zone_distance,resolution=resolution,join_style=round_)
+        self.buffer_ = self.shape.buffer(zone_distance,resolution=resolution,join_style=mitre)
         buffer_points = self.buffer_.exterior.coords
 
         n_sides = len(self.points) - 1 
@@ -116,9 +116,7 @@ if __name__ == '__main__':
     shape = [(0,0),(0,w),(l,w),(l,0),(0,0)]
     pose = (2.5,1.5,45)
     wall1 = MapObj('wall1',shape,pose)
-    print(np.add(wall1.shape.centroid,(1,2)))
 
-    # shape = [(0,0),(0,w),(l,w),(l,0),(0,0)]
     shape = [(0,0),(l/2,w*10),(l,0),(l/2,-w*10),(0,0)]
     pose = (0,0,0)
     wall2 = MapObj('wall2',shape,pose)
@@ -141,14 +139,11 @@ if __name__ == '__main__':
     wall2.add_to_plot(ax,include_zones=False) 
     wall3.add_to_plot(ax,include_zones=False) 
     wall4.add_to_plot(ax,include_zones=False) 
-    # patch = PolygonPatch(wall2.zones_by_label['back'],facecolor=GREEN)
-    # ax.add_patch(patch)
     
     lim = 5
     ax.set_xlim([-lim,lim])
     ax.set_ylim([-lim,lim])
     plt.show()      
-
 
     fig = plt.figure(1,figsize=(10,6)) 
     ax = fig.add_subplot(111)
@@ -157,26 +152,8 @@ if __name__ == '__main__':
     wall2.add_to_plot(ax,include_zones=True) 
     wall3.add_to_plot(ax,include_zones=True) 
     wall4.add_to_plot(ax,include_zones=True) 
-    # patch = PolygonPatch(wall2.zones_by_label['back'],facecolor=GREEN)
-    # ax.add_patch(patch)
     
     lim = 5
     ax.set_xlim([-lim,lim])
     ax.set_ylim([-lim,lim])
     plt.show()      
-
-    # pose = (-3,0.5,60)
-    # wall2.move_shape(pose)
-
-    # fig = plt.figure(1,figsize=(10,6)) 
-    # ax = fig.add_subplot(111)
-
-    # wall1.add_to_plot(ax,include_zones=True) 
-    # wall2.add_to_plot(ax,include_zones=True) 
-    # # patch = PolygonPatch(wall2.zones_by_label['back'],facecolor=GREEN)
-    # # ax.add_patch(patch)
-    
-    # lim = 5
-    # ax.set_xlim([-lim,lim])
-    # ax.set_ylim([-lim,lim])
-    # plt.show()      

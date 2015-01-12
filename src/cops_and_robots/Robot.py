@@ -1,5 +1,4 @@
 import math, numpy, logging, serial, socket, threading, Queue
-# from cops_and_robots.Map import Map,MapObj
 from MapObj import MapObj
 
 class Robot(MapObj):
