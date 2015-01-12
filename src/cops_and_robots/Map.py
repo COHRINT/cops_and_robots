@@ -1,14 +1,11 @@
 #!/usr/bin/env/python
-import math
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.path import Path
-from mpl_toolkits.mplot3d.axes3d import Axes3D
-from scipy import stats
 from pylab import *
-import Robot #Change this to robbers
-from MapObj import MapObj
-from shapely.geometry import Polygon,Point,box
+from cops_and_robots.MapObj import *
+from cops_and_robots.Robot import *
+from cops_and_robots.OccupancyLayer import *
+from cops_and_robots.ProbabilityLayer import *
+
 
 class Map(object):
     """Environment map composed of several layers, including an occupancy layer and a probability layer for each target.
@@ -97,141 +94,12 @@ class Map(object):
         #Plot robot position
         #<>TODO
 
-
         plt.xlim([-self.outer_bounds[0]/2, self.outer_bounds[0]/2])
         plt.ylim([-self.outer_bounds[1]/2, self.outer_bounds[1]/2])
         plt.show()
 
         return ax
-
-
-class OccupancyLayer(object):
-    """Gridded occupancy layer for the map, translating euclidean coordinates to grid cells. Each cell has a probability of occupancy from 0 to 1."""
-
-    def __init__(self, map_, cell_size=0.05):
-        self.xbound = map_.outer_bounds[0] #[m]
-        self.ybound = map_.outer_bounds[1] #[m]
-        self.cell_size = cell_size #[m/cell]
-
-        self.area = [self.xbound,self.ybound] #[m]
-
-        self.grid = []
-        x,y = 0,0
-        c = self.cell_size
-        while x + c <= self.xbound:
-            while y + c <= self.ybound:
-                #Create cells with grid centered on (0,0)
-                cell = box(x-self.xbound/2, y-self.ybound/2, x+c-self.xbound/2, y+c-self.ybound/2)
-                self.grid.append(cell)
-                y = y+c
-            x = x+c
-            y = 0
-
-        self.n_cells = len(self.grid)
-
-        self.grid_occupancy = 0.5 * np.ones((self.n_cells,1), dtype=np.int)
-    
-    def add_obj(self,map_obj):
-        #if a < x < b
-        for i,cell in enumerate(self.grid):
-            if map_obj.shape.intersects(cell):
-                self.grid_occupancy[i] = 1
-
-    def rem_obj(self,map_obj):
-        for i,cell in enumerate(self.grid):
-            if map_obj.shape.intersects(cell):
-                self.grid_occupancy[i] = 0
-
-    def plot(self):
-        grid = self.grid_occupancy.reshape(self.xbound/self.cell_size-1,self.ybound/self.cell_size-1)
-        X,Y = np.mgrid[0:grid.shape[0]:1,0:grid.shape[1]:1]
-        X,Y = (X*self.cell_size - self.xbound/2, Y*self.cell_size - self.ybound/2)
-        p = plt.pcolor(X, Y, grid, cmap=cm.Greys)
-
-
-class ProbabilityLayer(object):
-    """Probability heatmap for expected target location."""
-    def __init__(self,map_,target,cell_size=0.2):
-        self.target = target #MapObj of target for specific map layer
-        self.xbound = map_.bounds[0] #[m]
-        self.ybound = map_.bounds[1] #[m]
-        self.cell_size = cell_size #in [m/cell]
-
-        xlin = np.linspace(-self.xbound/2,self.xbound/2,100)
-        ylin = np.linspace(-self.ybound/2,self.ybound/2,100)
-        self.X, self.Y = np.meshgrid(xlin,ylin)
-        self.pos = np.empty(self.X.shape + (2,))
-        self.pos[:, :, 0] = self.X
-        self.pos[:, :, 1] = self.Y
-
-        self.n_particles = 3000
-        self.particles = []
-        self.kept_particles = [] #TEST STUB
-        self.particle_weights = np.zeros(1000)
-
-        self.ML = [0, 0] #[m] point of maximum likelihood
-
-        # uni_x = stats.uniform.pdf(self.X, loc=0, scale=self.xbound)
-        # uni_y = stats.uniform.pdf(self.Y, loc=0, scale=self.ybound)
-        # self.prob = np.dot(uni_x, uni_y) #uniform prior
-        # prior = 1/self.X.size * stats.uniform.pdf(np.ones(self.X.shape))
-        # self.prob = prior
-        # self.prob = stats.multivariate_normal([0,0], [[100000,0], [0,1000]])
-        self.prob = stats.multivariate_normal([0,0], [[10,0], [0,10]])
-        # self.prob = self.prob.pdf(self.pos)
         
-    def plot(self):
-        p = plt.pcolor(self.X, self.Y, self.prob.pdf(self.pos), cmap=cm.jet, alpha=0.7)#, vmin=abs(prior).min(), vmax=abs(prior).max())
-        cb = plt.colorbar(p)    
-        return p, cb
-    
-    def update(self,map_obj,relative_str):
-        '''Updates particle filter values and generate new probabilty layer'''
-
-        #generate particles
-        self.resample()
-        kept_particles = []
-
-        #check particles within box denoted by relative string
-        poly = map_obj.zones_by_label[relative_str]
-        for i,particle in enumerate(self.particles):
-            point = Point(particle)
-            if poly.contains(point):
-                kept_particles.append(particle)
-                self.particle_weights[i] = 1
-            else:
-                self.particle_weights[i] = 0
-
-        self.kept_particles = np.asarray(kept_particles)
-
-        if len(kept_particles) == 0:
-            mean = [0,0]
-            var = [[10,0], [0,10]]
-        else:
-            mean = np.mean(self.kept_particles,axis=0)
-            var = np.var(self.kept_particles,axis=0)
-
-        #generate gaussian from new particles
-        #TEST STUB
-        prob_update = stats.multivariate_normal(mean,var)
-        self.prob = prob_update
-        # self.prob = self.prob * likelihood.pdf(self.pos)
-        # self.prob = np.dot(self.prob, likelihood)
-
-        self.ML = np.mean(self.kept_particles,axis=0)
-
-    def resample(self):
-        '''Sample distribution to generate new particles'''
-
-        #sample distribution
-        #<>Constrain particle limits to map limits
-        #<>Always resample self.n_particles
-        self.particles = self.prob.rvs(size=self.n_particles)
-
-        #reweight particles
-        self.particle_weights = [1/self.n_particles for i in range(0,self.n_particles)]
-        
-    
 def set_up_fleming():    
     #Make vicon field space
     net_w = 0.2 #[m] Netting width
@@ -271,7 +139,7 @@ def set_up_fleming():
     #Add targets to map
     tar_names = ['Leon','Pris','Roy','Zhora']
     for tar_name in tar_names:
-        tar = Robot.Robot(tar_name)
+        tar = Robot(tar_name)
         fleming.add_tar(tar)
 
     return fleming
@@ -282,12 +150,12 @@ if __name__ == "__main__":
     fleming.plot_map('Roy')
     fleming.probability['Roy'].update(fleming.objects['Wall_4'],'back')
     fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall_1'],'front')
-    fleming.probability['Roy'].update(fleming.objects['Wall_1'],'front')
-    fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall_2'],'back')
-    fleming.probability['Roy'].update(fleming.objects['Wall_2'],'back')
-    fleming.plot_map('Roy')
-    fleming.probability['Roy'].update(fleming.objects['Wall_2'],'right')
-    fleming.probability['Roy'].update(fleming.objects['Wall_2'],'right')    
-    fleming.plot_map('Roy')
+    # fleming.probability['Roy'].update(fleming.objects['Wall_1'],'front')
+    # fleming.probability['Roy'].update(fleming.objects['Wall_1'],'front')
+    # fleming.plot_map('Roy')
+    # fleming.probability['Roy'].update(fleming.objects['Wall_2'],'back')
+    # fleming.probability['Roy'].update(fleming.objects['Wall_2'],'back')
+    # fleming.plot_map('Roy')
+    # fleming.probability['Roy'].update(fleming.objects['Wall_2'],'right')
+    # fleming.probability['Roy'].update(fleming.objects['Wall_2'],'right')    
+    # fleming.plot_map('Roy')
