@@ -1,14 +1,11 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import cnames
 from matplotlib.path import Path
 from shapely.geometry import Polygon,Point,LineString
 from shapely.affinity import rotate
 from descartes.patch import PolygonPatch
-
-BLUE = '#6699cc'
-RED = '#ff3333'
-GREEN = '#33ff33'
 
 class MapObj(object):
     """Generate a map object based on a geometric shape, plus 'zones'
@@ -18,9 +15,11 @@ class MapObj(object):
         :param pose: [x,y,theta] in [m,m,deg] as the pose of the centroid
         :param shape: [(x_i,y_i)] in [m] as a list of positive xy pairs
         """
-    def __init__(self,name,shape_pts,pose=[0,0,0],has_zones=True,centroid_at_origin=True):
+    def __init__(self,name,shape_pts,pose=[0,0.5,0],has_zones=True,centroid_at_origin=True,visible=True,default_color=None):
+        self.visible = visible
         self.name = name #sting identifier
         self.has_zones = has_zones
+        self.default_color = default_color
         
         #Define pose as a position and direciton in 2d space
         self.pose = pose #[x,y,theta] in [m] coordinates of the centroid in the global frame
@@ -115,14 +114,22 @@ class MapObj(object):
             self.zones_by_label['right'] = self.zones[2]
             self.zones_by_label['back'] = self.zones[3]
 
-    def add_to_plot(self,ax,color=BLUE,include_shape=True,include_zones=False):
-        patch = PolygonPatch(self.shape, facecolor=color, alpha=0.5, zorder=2)
+    def plot(self,color=cnames['darkblue'],plot_shape=True,plot_zones=False,alpha=0.5,ax=None):
+        if not self.default_color == None:
+            color = self.default_color
+
+        if ax == None:
+            ax = plt.gca()
+            
+        patch = PolygonPatch(self.shape, facecolor=color, alpha=alpha, zorder=2)
         ax.add_patch(patch)
 
-        if include_zones:
+        if plot_zones:
             for zone in self.zones:
-                patch = PolygonPatch(zone, facecolor=GREEN, alpha=0.5, zorder=2)
-                ax.add_patch(patch)
+                zone_patch = PolygonPatch(zone, facecolor=cnames['lightgreen'], alpha=alpha, zorder=2)
+                ax.add_patch(zone_patch)
+
+        return patch
 
     def __str___(self):
         return "%s is located at (%d,%d), pointing at %d" % (self.name, self.centroid['x'],self.centroid['y'],self.centroid['theta'])
@@ -138,11 +145,11 @@ if __name__ == '__main__':
     pose = (2,-2,0)
     wall1 = MapObj('wall3',shape,pose)
 
-    wall1.add_to_plot(ax,include_zones=False) 
+    wall1.plot(plot_zones=False) 
 
     wall1.move_shape((0,0,90),wall1.shape.exterior.coords[0])
 
-    wall1.add_to_plot(ax,color=RED,include_zones=False) 
+    wall1.plot(color=cnames['darkred'],plot_zones=False) 
 
 
     # shape = [(0,0),(0,w),(l,w),(l,0),(0,0)]
@@ -167,10 +174,10 @@ if __name__ == '__main__':
     # fig = plt.figure(1,figsize=(10,6)) 
     # ax = fig.add_subplot(111)
 
-    # wall1.add_to_plot(ax,include_zones=False) 
-    # wall2.add_to_plot(ax,include_zones=False) 
-    # wall3.add_to_plot(ax,include_zones=False) 
-    # wall4.add_to_plot(ax,include_zones=False) 
+    # wall1.plot(plot_zones=False) 
+    # wall2.plot(plot_zones=False) 
+    # wall3.plot(plot_zones=False) 
+    # wall4.plot(plot_zones=False) 
     
     # lim = 5
     # ax.set_xlim([-lim,lim])
@@ -180,10 +187,10 @@ if __name__ == '__main__':
     # fig = plt.figure(1,figsize=(10,6)) 
     # ax = fig.add_subplot(111)
 
-    # wall1.add_to_plot(ax,include_zones=True) 
-    # wall2.add_to_plot(ax,include_zones=True) 
-    # wall3.add_to_plot(ax,include_zones=True) 
-    # wall4.add_to_plot(ax,include_zones=True) 
+    # wall1.plot(plot_zones=True) 
+    # wall2.plot(plot_zones=True) 
+    # wall3.plot(plot_zones=True) 
+    # wall4.plot(plot_zones=True) 
     
     lim = 5
     ax.set_xlim([-lim,lim])
