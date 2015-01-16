@@ -1,3 +1,4 @@
+#!/usr/bin/env/python
 import math, numpy, logging, serial, socket, threading, Queue
 from MapObj import MapObj
 
@@ -6,8 +7,8 @@ class Robot(MapObj):
     serial communication with the iRobot base."""
 
     #Constants
-    DIAMETER        = 0.30 #[m] <>TODO: VERIFY!
-    RESOLUTION      = 1000  
+    DIAMETER        = 0.3 #[m] <>TODO: VERIFY!
+    RESOLUTION      = 20  
     MAX_SPEED       = 500   #[mm/s]
     MAX_RADIUS      = 2000  #[mm]
 
@@ -88,16 +89,13 @@ class Robot(MapObj):
     console_handler.setLevel(logging.DEBUG)
     logger.addHandler(console_handler)
         
-    def __init__(self,name):
+    def __init__(self,name,pose=[0,0,0],default_color=None):
         """Robot constructor
         """     
         #Superclass attributes
-        a        = numpy.linspace(0,2 * math.pi, Robot.RESOLUTION)
-        circ_x   = [(Robot.DIAMETER / 2 * math.sin(b)) for b in a]
-        circ_y   = [(Robot.DIAMETER / 2 * math.cos(b)) for b in a]
-        shape    = zip(circ_x,circ_y)           #draw a circle with radius ROBOT_DIAMETER/2 around centroid
-        # shape = [30,30,0]
-        super(Robot,self).__init__(name,shape)
+        self.default_color = default_color
+        self.define_shape_pts()
+        super(Robot,self).__init__(name,self.shape_pts,pose=pose,default_color=default_color)
 
         #Class attributes
         self.target         = {'x':0,'y':0,'theta':0}  #Start at origin
@@ -127,6 +125,15 @@ class Robot(MapObj):
                 self.base_t_stop.set()
                 break
 
+    def define_shape_pts(self):
+        a = numpy.linspace(0,2 * math.pi, Robot.RESOLUTION)
+        circ_x = [(Robot.DIAMETER / 2 * math.sin(b)) for b in a]
+        circ_y = [(Robot.DIAMETER / 2 * math.cos(b)) for b in a]
+        self.shape_pts = zip(circ_x,circ_y)           #draw a circle with radius ROBOT_DIAMETER/2 around pose
+
+    def update_shape(self,pose=(0,0,0)):
+        new_obj = MapObj(self.name,self.shape_pts,pose=pose,default_color=self.default_color)
+        self.shape = new_obj.shape
 
     def base(self):
         """Seperate thread taking care of serial communication with the iRobot base

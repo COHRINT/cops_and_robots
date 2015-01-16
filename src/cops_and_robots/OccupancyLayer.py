@@ -1,30 +1,29 @@
 #!/usr/bin/env/python
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import cnames
 from pylab import *
 from shapely.geometry import box
 
 class OccupancyLayer(object):
     """Gridded occupancy layer for the map, translating euclidean coordinates to grid cells. Each cell has a probability of occupancy from 0 to 1."""
 
-    def __init__(self, map_, cell_size=0.05):
-        self.xbound = map_.outer_bounds[0] #[m]
-        self.ybound = map_.outer_bounds[1] #[m]
+    def __init__(self, bounds, cell_size=0.05,visible=True):
+        self.visible = visible
+        self.bounds = bounds #[xmin,ymin,xmax,ymax] in [m]
         self.cell_size = cell_size #[m/cell]
 
-        self.area = [self.xbound,self.ybound] #[m]
-
         self.grid = []
-        x,y = 0,0
+        x,y = bounds[0],bounds[1]
         c = self.cell_size
-        while x + c <= self.xbound:
-            while y + c <= self.ybound:
+        while x + c <= bounds[2]:
+            while y + c <= bounds[3]:
                 #Create cells with grid centered on (0,0)
-                cell = box(x-self.xbound/2, y-self.ybound/2, x+c-self.xbound/2, y+c-self.ybound/2)
+                cell = box(x, y, x+c, y+c)
                 self.grid.append(cell)
                 y = y+c
             x = x+c
-            y = 0
+            y = bounds[1]
 
         self.n_cells = len(self.grid)
 
@@ -41,9 +40,11 @@ class OccupancyLayer(object):
                 self.grid_occupancy[i] = 0
 
     def plot(self):
-        grid = self.grid_occupancy.reshape(self.xbound/self.cell_size-1,self.ybound/self.cell_size-1)
+        xsize = self.bounds[2] - self.bounds[0]
+        ysize = self.bounds[3] - self.bounds[1]
+        grid = self.grid_occupancy.reshape(xsize/self.cell_size,ysize/self.cell_size)
         X,Y = np.mgrid[0:grid.shape[0]:1,0:grid.shape[1]:1]
-        X,Y = (X*self.cell_size - self.xbound/2, Y*self.cell_size - self.ybound/2)
+        X,Y = (X*self.cell_size, Y*self.cell_size)
         p = plt.pcolor(X, Y, grid, cmap=cm.Greys)
 
 if __name__ == '__main__':
