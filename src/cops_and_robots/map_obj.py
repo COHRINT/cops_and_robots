@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+"""MODULE_DESCRIPTION"""
+
+__author__ = "Nick Sweet"
+__copyright__ = "Copyright 2015, Cohrint"
+__credits__ = ["Nick Sweet", "Nisar Ahmed"]
+__license__ = "GPL"
+__version__ = "1.0.0"
+__maintainer__ = "Nick Sweet"
+__email__ = "nick.sweet@colorado.edu"
+__status__ = "Development"
+
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +27,8 @@ class MapObj(object):
         :param pose: [x,y,theta] in [m,m,deg] as the pose of the centroid
         :param shape: [(x_i,y_i)] in [m] as a list of positive xy pairs
         """
-    def __init__(self,name,shape_pts,pose=[0,0.5,0],has_zones=True,centroid_at_origin=True,visible=True,default_color=None):
+    def __init__(self,name,shape_pts,pose=[0,0.5,0],has_zones=True,centroid_at_origin=True,
+                 visible=True,default_color=None,**kwargs):
         self.visible = visible
         self.name = name #sting identifier
         self.has_zones = has_zones

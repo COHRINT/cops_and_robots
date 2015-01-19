@@ -36,7 +36,7 @@ class Camera(MapObj):
 
         #Define simlated sensor parameters
         self.update_freq = 1 #[hz}
-        self.detection_chance = 0.9 # P(detect|x) where x is in the viewcone
+        self.detection_chance = 0.8 # P(detect|x) where x is in the viewcone
 
      
     def update(self,robot_pose,shape_layer,particle_filter,target_pose):

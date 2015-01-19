@@ -1,4 +1,15 @@
-#!/usr/bin/env/python
+#!/usr/bin/env python
+"""MODULE_DESCRIPTION"""
+
+__author__ = "Nick Sweet"
+__copyright__ = "Copyright 2015, Cohrint"
+__credits__ = ["Nick Sweet", "Nisar Ahmed"]
+__license__ = "GPL"
+__version__ = "1.0.0"
+__maintainer__ = "Nick Sweet"
+__email__ = "nick.sweet@colorado.edu"
+__status__ = "Development"
+
 from pylab import *
 import random
 import math
@@ -8,17 +19,17 @@ import matplotlib.patches as patches
 import matplotlib.transforms as tf
 from matplotlib.colors import cnames
 
-from cops_and_robots.Robot import Robot
-from cops_and_robots.Map import Map,set_up_fleming
-from cops_and_robots.ParticleFilter import ParticleFilter
-from cops_and_robots.Camera import Camera
-from cops_and_robots.Human import Human
-from cops_and_robots.MapObj import MapObj
-
 from shapely.geometry import LineString,Point
 from shapely import affinity
-
 from descartes.patch import PolygonPatch
+
+from cops_and_robots.robo_tools.robot import Robot
+from cops_and_robots.map_tools.Map import Map,set_up_fleming
+from cops_and_robots.map_tools.ParticleFilter import ParticleFilter
+from cops_and_robots.robo_tools.fusion.Camera import Camera
+from cops_and_robots.robo_tools.fusion.Human import Human
+from cops_and_robots.map_tools.MapObj import MapObj
+
 
 class Cop(Robot):
     """docstring for Cop"""
@@ -42,7 +53,7 @@ class Cop(Robot):
         self.pose_history = [] #list of [x,y,theta] in [m]
         self.pose_history.append(self.pose)
         self.check_last_n = 50 #number of poses to look at before assuming stuck
-        self.stuck_distance = 0.01 #[m] distance traveled in past self.check_last_n to assume stuck
+        self.stuck_distance = 0.1 #[m] distance traveled in past self.check_last_n to assume stuck
         self.approximate_allowance = 0.5 #[m]
         self.rotation_allowance = 5 #[deg]
         self.num_goals = None #number of goals to reach. None for infinite
@@ -51,7 +62,10 @@ class Cop(Robot):
         self.fig = plt.figure(1,figsize=(10,8)) 
         self.stream = self.animation_stream()
 
-    def translate_to_pose(self):        
+    def translate_to_pose(self):
+        """Move the robot's x,y positions to the next 
+
+        """        
         next_point = self.movement_line.interpolate(self.move_distance)
         self.pose[0:2] = (next_point.x,next_point.y)
         self.movement_line = LineString((self.pose[0:2], self.goal_pose[0:2]))
@@ -118,7 +132,7 @@ class Cop(Robot):
         #Check if stuck
         self.check_if_stuck()
         
-        if close_enough or (self.stuck and not i>2) or self.found_target['Roy']:
+        if close_enough or (self.stuck and i>10) or self.found_target['Roy']:
             if self.stuck:
                 print('Stuck!')
             self.find_goal_pose()
@@ -139,31 +153,31 @@ class Cop(Robot):
 
     def setup_plot(self):
         if len(self.map.robbers.values()) == 1:
-            self.ax_array = [self.fig.add_subplot(111)]
+            self.ax_list = [self.fig.add_subplot(111)]
         else:
-            f,ax_array = plt.subplots(len(self.map.robbers.values())/2,2,
+            f,ax_list = plt.subplots(len(self.map.robbers.values())/2,2,
                 num=1)
-            self.ax_array = [ax_list for sublist in ax_array[:] for ax_list in sublist]
+            self.ax_list = [ax_list for sublist in ax_list[:] for ax_list in sublist]
 
-        for ax in self.ax_array:
+        for ax in self.ax_list:
             lim = 5
             ax.set_xlim([-lim,lim])
             ax.set_ylim([-lim,lim])
 
         #plot static elements
         for i,robber in enumerate(self.map.robbers.values()):
-            ax = self.ax_array[i]
+            ax = self.ax_list[i]
             self.map.shapes.plot(plot_zones=False,ax=ax)
 
         #plot first round of dynamic elements
         self.animated_plots = []
-        for i,ax in enumerate(self.ax_array):
+        for i,ax in enumerate(self.ax_list):
             self.animated_plots.append({})
 
         self.sensor.alpha = 0.6
         self.alpha = 0.8
         # for i,particle_filter in enumerate(self.particle_filter.values()):
-        #     ax = self.ax_array[i]
+        #     ax = self.ax_list[i]
         #     self.animated_plots[i]['particles'] = particle_filter.plot(ax=ax)
         #     self.animated_plots[i]['sensor'] = self.sensor.plot(ax=ax,plot_zones=False,color=self.sensor.default_color,alpha=self.sensor.alpha)
         #     self.animated_plots[i]['cop'] = self.plot()
@@ -179,7 +193,7 @@ class Cop(Robot):
         self.scat.set_array(100*np.random.random(self.particle_filter['Roy'].n_particles))
 
         #Define movement path
-        self.movement_path = Line2D([0,self.pose[0]],[0,self.pose[1]],color='black',linewidth=2,alpha=0.2)
+        self.movement_path = Line2D([0,self.pose[0]],[0,self.pose[1]],color=self.default_color,linewidth=2,alpha=0.4)
         ax.add_line(self.movement_path)
 
         #Define cop patch
@@ -202,7 +216,7 @@ class Cop(Robot):
                 for i,particle in enumerate(self.particle_filter['Roy'].particles):
                     if self.particle_filter['Roy'].particle_probs[i] == 1:
                         target_particle = particle
-                self.ax_array[0].scatter(target_particle[0],target_particle[1],marker='x',s=1000,color=cnames['darkred'])
+                self.ax_list[0].scatter(target_particle[0],target_particle[1],marker='x',s=1000,color=cnames['darkred'])
 
             #Update movement path
             line_data = self.movement_path.get_data()
@@ -215,12 +229,12 @@ class Cop(Robot):
             self.cop_patch.remove()
             self.update_shape(self.pose)
             self.cop_patch = PolygonPatch(self.shape, facecolor=self.default_color, alpha=self.alpha, zorder=2)
-            self.ax_array[0].add_patch(self.cop_patch)
+            self.ax_list[0].add_patch(self.cop_patch)
 
             #Update sensor patch
             self.sensor_patch.remove()
             self.sensor_patch = PolygonPatch(self.sensor.shape, facecolor=self.sensor.default_color, alpha=self.sensor.alpha, zorder=2)
-            self.ax_array[0].add_patch(self.sensor_patch)
+            self.ax_list[0].add_patch(self.sensor_patch)
 
 
             # sensor_patch = PolygonPatch(self.sensor.shape, facecolor=self.sensor.default_color, alpha=self.sensor.alpha, zorder=2)
