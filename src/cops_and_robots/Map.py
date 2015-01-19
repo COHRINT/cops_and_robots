@@ -1,15 +1,28 @@
-#!/usr/bin/env/python
-import matplotlib.pyplot as plt
-from matplotlib.colors import cnames
+#!/usr/bin/env python
+"""MODULE_DESCRIPTION"""
+
+__author__ = "Nick Sweet"
+__copyright__ = "Copyright 2015, Cohrint"
+__credits__ = ["Nick Sweet", "Nisar Ahmed"]
+__license__ = "GPL"
+__version__ = "1.0.0"
+__maintainer__ = "Nick Sweet"
+__email__ = "nick.sweet@colorado.edu"
+__status__ = "Development"
+
 from pylab import *
-from cops_and_robots.MapObj import MapObj
-from cops_and_robots.Robot import Robot
-from cops_and_robots.ShapeLayer import ShapeLayer
-from cops_and_robots.OccupancyLayer import OccupancyLayer
-from cops_and_robots.ParticleFilter import ParticleFilter
-from cops_and_robots.ProbabilityLayer import ProbabilityLayer
-from cops_and_robots.FeasibleLayer import FeasibleLayer
+from matplotlib.colors import cnames
+
+import matplotlib.pyplot as plt
 import random
+
+from cops_and_robots.robo_tools.fusion.particle_filter import ParticleFilter
+from cops_and_robots.robo_tools.robber import Robber
+from cops_and_robots.map_tools.MapObj import MapObj
+from cops_and_robots.map_tools.ShapeLayer import ShapeLayer
+from cops_and_robots.map_tools.OccupancyLayer import OccupancyLayer
+from cops_and_robots.map_tools.ProbabilityLayer import ProbabilityLayer
+from cops_and_robots.map_tools.FeasibleLayer import FeasibleLayer
 
 
 class Map(object):
