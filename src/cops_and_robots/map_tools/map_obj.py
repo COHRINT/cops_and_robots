@@ -1,5 +1,20 @@
 #!/usr/bin/env python
-"""MODULE_DESCRIPTION"""
+"""Defines physical and non-physical objects used in the map environment.
+
+``map_obj`` extends Shapely's geometry objects (generally polygons) to 
+be used in a robotics environmnt. Map objects can be physical, 
+representing walls, or non-physical, representing camera viewcones.
+
+The visibility of an object can be toggled, and each object can have 
+*zones* which define areas around the object. For example, a 
+rectangular wall has four zones: front, back, left and right. These 
+are named zones, but arbitrary shapes can have arbitrary numbered zones 
+(such as a triangle with three numbered zones).
+
+Required Knowledge:
+    This module and its classes do not need to know about any other 
+    parts of the cops_and_robots parent module.
+"""
 
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
@@ -15,70 +30,108 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import cnames
 from matplotlib.path import Path
-from shapely.geometry import Polygon,Point,LineString
+from shapely.geometry import box,Polygon,Point,LineString
 from shapely.affinity import rotate
 from descartes.patch import PolygonPatch
 
 class MapObj(object):
-    """Generate a map object based on a geometric shape, plus 'zones'
+    """Generate an object based on a geometric shape, plus 'zones' 
+    which demarcate spatial relationships around objects.
 
-        :param name: String
-        :param shape: [(x_i,y_i)] in [m] as a list of positive xy pairs
-        :param pose: [x,y,theta] in [m,m,deg] as the pose of the centroid
-        :param shape: [(x_i,y_i)] in [m] as a list of positive xy pairs
-        """
-    def __init__(self,name,shape_pts,pose=[0,0.5,0],has_zones=True,centroid_at_origin=True,
-                 visible=True,default_color=None,**kwargs):
+    Note:
+        If only one xy pair is given as shape_pts, MapObj will assume 
+        the user wants to create a box with those two values as length
+        and width, respectively.
+
+    Note:
+        Shapes are created such that the centroid angle (the direction
+        the object is facing) is 0. To change this, use ``move_shape``.
+
+    :param name: the map object's name.
+    :type name: String.
+    :param shape_pts: a list of xy pairs as [(x_i,y_i)] in [m,m] in the 
+        global (map) frame of reference.
+    :type shape_pts: an n-element list of 2-element lists of floats.
+    :param pose: the centroid's pose as [x,y,theta] in [m,m,deg].
+    :type pose: a 3-element list of floats.
+    :param has_zones: whether or not an object has zones.
+    :type has_zones: bool.
+    :param centroid_at_origin: place centroid at the origin (instead 
+        of the minimum point given by the shape_pts).
+    :type centroid_at_origin: bool.
+    :param visible: whether or not to show the object on the map.
+    :type visible: bool.
+    :param default_color_str: string to define the object's default 
+        color.
+    :type default_color_str: String.
+    """
+
+    def __init__(self,name,shape_pts,pose=[0,0,0],has_zones=True,
+                 centroid_at_origin=True,visible=True,
+                 default_color_str='darkblue',**kwargs):
+        #Define basic MapObj properties
+        self.name = name 
         self.visible = visible
-        self.name = name #sting identifier
         self.has_zones = has_zones
-        self.default_color = default_color
-        
-        #Define pose as a position and direciton in 2d space
-        self.pose = pose #[x,y,theta] in [m] coordinates of the centroid in the global frame
+        self.default_color = cnames[default_color_str]
+        self.pose = pose
         
         #If shape has only length and width, convert to point-based poly
         if len(shape_pts) == 2:
-            shape_pts = [(0,0),(0,shape_pts[1]),(shape_pts[0],shape_pts[1]),(shape_pts[0],0),(0,0)]
+            shape_pts = [list(b) for b in 
+                         box(0,0,shape_pts[0],shape_pts[1]).exterior.coords]
 
-        #Define shape as a list of points (assume only solid polygons for now)
-        #Construct the shape such that the centroid angle (the direction the object normally faces) is 0
+        #Build the map object's polygon (shape)
         if centroid_at_origin:
-            shape = Polygon(shape_pts) #[(x_i,y_i)] in [m] as a list of positive xy pairs 
+            shape = Polygon(shape_pts) 
             x,y = shape.centroid.x, shape.centroid.y
-            shape_pts = [( p[0]-x, p[1]-y ) for p in shape_pts] #place centroid of shape at origin (instead of minimum point)
+            shape_pts = [( p[0]-x, p[1]-y ) for p in shape_pts] 
         self.shape = Polygon(shape_pts)
 
-        #place the shape at the correct pose
+        #Place the shape at the correct pose
         self.move_shape(pose)
 
-    def move_shape(self,pose,rotation_pt="centroid"):
-        """Translate and rotate the shape
+    def move_shape(self,pose,rotation_pt=None):
+        """Translate and rotate the shape.
 
-        :param pose: [x,y,theta] in [m,m,deg] as the pose of the centroid
+        The rotation is assumed to be about the object's centroid 
+        unless a rotation point is specified.
+
+        :param pose: the centroid's pose as [x,y,theta] in [m,m,deg].
+        :type pose: a 3-element list of floats.
+        :param rotation_pt: the rotation point as [x,y] in [m,m].
+        :type rotation_pt: a 2-element list of floats.
         """
-        if rotation_pt is "centroid":
-            rotation_point = self.shape.centroid
-        else:
+        if rotation_pt:
             rotation_point = rotation_pt
+        else:
+            rotation_point = self.shape.centroid
+        
+        #Rotate the polygon
         self.rotate_poly(pose[2],rotation_point)
 
+        #Translate the polygon
         self.pose = pose
-        shape_pts = [( p[0]+pose[0], p[1]+pose[1] ) for p in self.shape.exterior.coords]
+        shape_pts = [( p[0]+pose[0], p[1]+pose[1] ) 
+                     for p in self.shape.exterior.coords]
         self.shape = Polygon(shape_pts)
 
+        #Redefine sides, points and and zones
+        self.points = self.shape.exterior.coords
         self.sides = []
         self.zones = []
         self.zones_by_label = {}
-        self.points = self.shape.exterior.coords
-        
-        #Define zones as areas around the polygons
         if self.has_zones:
             self.define_zones()
 
-        return Polygon(shape_pts)
-
     def rotate_poly(self,angle,rotation_point):
+        """Rotate the shape about a rotation point.
+
+        :param pose: angle to be rotated in degrees.
+        :type pose: float.
+        :param rotation_pt: the rotation point as [x,y] in [m,m].
+        :type rotation_pt: a 2-element list of floats.
+        """
         pts = self.shape.exterior.coords
         lines = []
         for pt in pts:
@@ -91,28 +144,43 @@ class MapObj(object):
 
         self.shape = Polygon(pts)
 
-    def define_zones(self,zone_distance=0.5):
-        """Define areas near the shape ('zones') which, for a four-sided shape, demarcate front, back left and right
+    def define_zones(self,zone_distance=0.5,resolution=10,join_style='mitre'):
+        """Define the shape's zones at a given distance.
 
-        :param zone_distance: Double in [m] from the outermost edge of the shape
+        Define areas near the shape ('zones') which, for a four-sided 
+        shape, demarcate front, back left and right.
+
+        :param zone_distance: zone distance from the shape's outermost 
+            edge.
+        :type zone_distance: positive float.
+        :param resolution: the resolution of the buffered zone.
+        :type resolution: positive float.
+        :param join_style: style of the buffered zone creation, taken 
+            as one of:
+                1. round
+                2. mitre
+                3. bevel
+        :type join_style: string.
         """
+        #Create the buffer around the object
+        join_styles = ['round','mitre','bevel']
+        join_style = join_styles.index(join_style) + 1
 
-        resolution = 10
-        round_ = 1
-        mitre = 2
-        bevel = 3
-
-        self.buffer_ = self.shape.buffer(zone_distance,resolution=resolution,join_style=mitre)
+        self.buffer_ = self.shape.buffer(zone_distance,resolution=resolution,
+                                         join_style=join_style)
         buffer_points = self.buffer_.exterior.coords
 
+        #Prepare to divide the buffer
         n_sides = len(self.points) - 1 
         n_lines_buffer = len(buffer_points)  - 1
         buffer_lines_per_side = n_lines_buffer / n_sides 
         
+        #Divide the buffer into specific zones
         for i,p1 in enumerate(self.points[:-1]):
             p4 = self.points[i+1]
 
-            ps = self.buffer_.exterior.coords[i*buffer_lines_per_side:(i+1)*buffer_lines_per_side+1]
+            ps = self.buffer_.exterior.coords[i*buffer_lines_per_side:
+                                              (i+1)*buffer_lines_per_side+1]
             pts = [p1]
             pts.extend(ps[:])
             pts.extend([p4])
@@ -121,31 +189,52 @@ class MapObj(object):
             zone = Polygon(pts)
             self.zones.append(zone)
 
+        #Generate labeled zones for 4-sided shapes
         if n_sides == 4:
             self.zones_by_label['left'] = self.zones[0]
             self.zones_by_label['front'] = self.zones[1]
             self.zones_by_label['right'] = self.zones[2]
             self.zones_by_label['back'] = self.zones[3]
 
-    def plot(self,color=cnames['darkblue'],plot_shape=True,plot_zones=False,alpha=0.5,ax=None):
-        if not self.default_color == None:
-            color = self.default_color
+    def plot(self,plot_zones=False,ax=None,alpha=0.5,**kwargs):
+        """Plot the map_object as a polygon patch.
 
+        Note: 
+            The zones can be plotted without the shape if the shape's 
+            ``visible`` attribute is False, but ``plot_zones`` is True.
+
+        :param plot_zones:
+        :type plot_zones: bool.
+        :param ax: Axes to be used for plotting the shape.
+        :type ax: Axes.
+        :param alpha: Transparency of all elements of the shape.
+        :type alpha: float.
+        :returns: the polygon as a patch.
+        :rtype: PolygonPatch.
+        """
         if ax == None:
             ax = plt.gca()
             
-        patch = PolygonPatch(self.shape, facecolor=color, alpha=alpha, zorder=2)
+        patch = PolygonPatch(self.shape,facecolor=self.default_color,
+                             alpha=alpha,zorder=2,**kwargs)
         ax.add_patch(patch)
 
         if plot_zones:
             for zone in self.zones:
-                zone_patch = PolygonPatch(zone, facecolor=cnames['lightgreen'], alpha=alpha, zorder=2)
+                zone_patch = PolygonPatch(zone,facecolor=cnames['lightgreen'], 
+                                          alpha=alpha,zorder=2)
                 ax.add_patch(zone_patch)
 
         return patch
 
     def __str___(self):
-        return "%s is located at (%d,%d), pointing at %d" % (self.name, self.centroid['x'],self.centroid['y'],self.centroid['theta'])
+        str_ = "{} is located at ({},{}), pointing at {}}"
+        return str_.format(
+                           self.name,
+                           self.centroid['x'],
+                           self.centroid['y'],
+                           self.centroid['theta'],
+                           )
 
 if __name__ == '__main__':
     l = 1.2192 #[m] wall length
@@ -163,47 +252,6 @@ if __name__ == '__main__':
     wall1.move_shape((0,0,90),wall1.shape.exterior.coords[0])
 
     wall1.plot(color=cnames['darkred'],plot_zones=False) 
-
-
-    # shape = [(0,0),(0,w),(l,w),(l,0),(0,0)]
-    # pose = (2.5,1.5,45)
-    # wall1 = MapObj('wall1',shape,pose)
-
-    # shape = [(0,0),(l/2,w*10),(l,0),(l/2,-w*10),(0,0)]
-    # pose = (0,0,0)
-    # wall2 = MapObj('wall2',shape,pose)
-
-    # shape = [(0,0),(l/2,w*4),(l,0),(0,0)]
-    # pose = (2,-2,30)
-    # wall3 = MapObj('wall3',shape,pose)
-
-    # p = Point(0,0)
-    # circle = p.buffer(1)
-    # shape = circle.exterior.coords
-    # pose = (-2.5,-2,30)
-    # wall4 = MapObj('wall4',shape,pose)
-
-
-    # fig = plt.figure(1,figsize=(10,6)) 
-    # ax = fig.add_subplot(111)
-
-    # wall1.plot(plot_zones=False) 
-    # wall2.plot(plot_zones=False) 
-    # wall3.plot(plot_zones=False) 
-    # wall4.plot(plot_zones=False) 
-    
-    # lim = 5
-    # ax.set_xlim([-lim,lim])
-    # ax.set_ylim([-lim,lim])
-    # plt.show()      
-
-    # fig = plt.figure(1,figsize=(10,6)) 
-    # ax = fig.add_subplot(111)
-
-    # wall1.plot(plot_zones=True) 
-    # wall2.plot(plot_zones=True) 
-    # wall3.plot(plot_zones=True) 
-    # wall4.plot(plot_zones=True) 
     
     lim = 5
     ax.set_xlim([-lim,lim])
