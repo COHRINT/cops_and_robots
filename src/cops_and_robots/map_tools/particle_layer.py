@@ -1,5 +1,18 @@
 #!/usr/bin/env python
-"""MODULE_DESCRIPTION"""
+"""Provides a discrete particle representation of robot locations.
+
+When using the *discrete* ``fusion_engine`` type, the particle 
+layer is used to represent the distribution of a cop's expecation of
+robber locations. One particle layer exists per robot, with n particles 
+per particle layer, to estimate the collected probability of all 
+robbers' locations.
+
+Required Knowledge:
+    This module and its classes needs to know about the following 
+    other modules in the cops_and_robots parent module:
+        1. ``layer`` for generic layer parameters and functions.
+        2. ``fusion_engine`` to provide the probability distribution.
+"""
 
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
@@ -12,34 +25,54 @@ __status__ = "Development"
 
 from matplotlib.colors import cnames
 from shapely.geometry import box,Polygon
-from cops_and_robots.ShapeLayer import ShapeLayer
+from cops_and_robots.map_tools.layer import Layer
+from cops_and_robots.map_tools.shape_layer import ShapeLayer
 
-class FeasibleLayer(object):
-    """A polygon (or collection of polygons) that represent feasible regions of the map. Feasible can be defined as either feasible robot poses or unoccupied space."""
-    def __init__(self, bounds, shape_layer=None,visible=True,max_robot_radius = 0.3):
-        super(FeasibleLayer, self).__init__()
-        self.visible = visible
-        self.bounds = bounds #[xmin,ymin,xmax,ymax] in [m]
-        self.max_robot_radius = max_robot_radius #[m] conservative estimate of robot size
+class ParticleLayer(Layer):
+    """Visually represents a collection of particles.
 
-        self.feasible = None
-        self.feasible_pose = None
-        if not shape_layer:
-            shape_layer = ShapeLayer(bounds)
-        print(shape_layer.all_shapes)
-        self.define_feasible_regions(shape_layer)        
-        
+    :param particle_size: marker size of each particle.
+    :type particle_size: positive int.
+    :param alpha: marker transparency of each particle.
+    :type alpha: float between 0 and 1.
+    :param line_weight: marker border weight for each particle.
+    :type line_weight: positive float.
+    :param colorbar_visible: whether or not to show the colorbar.
+    :type colorbar_visible: bool.
+    """
+    def __init__(self,particle_size=200,alpha=0.3,line_weight=0,
+                 colorbar_visible=False,n_particles=2000,**kwargs):
+        super(ParticleLayer, self).__init__(alpha=alpha,**kwargs)
+        self.particle_size = particle_size
+        self.colorbar_visible = colorbar_visible
+        self.line_weight = line_weight
+        self.n_particles = n_particles
 
-    def define_feasible_regions(self,shape_layer):
-        feasible_space = box(*self.bounds)
-        for obj_ in shape_layer.shapes.values():
-            self.feasible = feasible_space.difference(obj_.shape)
+    def plot(self,robber_names,fusion_engine,**kwargs):
+        """Plot the particles as a scatter plot.
 
-            buffered_shape = obj_.shape.buffer(self.max_robot_radius)
-            self.feasible_pose = feasible_space.difference(buffered_shape)
-
-    def plot(self,type_="pose"):
-        if type_ is "pose":
-            self.feasible_pose.plot()
-        else:
-            self.feasible.plot()
+        :param particle_filter: a collection of particles to be shown.
+        :type particle_filter: ParticleFilter.
+        :returns: the scatter plot data.
+        :rtype: list ofPathCollection.
+        """
+        for name in robber_names:
+            if fusion_engine.type is 'discrete':
+                particle_filter = fusion_engine.filters[name]
+            else:
+                raise ValueError('Fusion engine type must be discrete.')
+            p = ax.scatter(particle_filter.particles[:,0],
+                           particle_filter.particles[:,1],
+                           c=particle_filter.particles[:,2],
+                           cmap=self.cmap,
+                           s=self.particle_size,
+                           lw=self.line_weight,
+                           alpha=self.alpha,
+                           marker='.',
+                           vmin=0,
+                           vmax=1,
+                           **kwargs
+                           )
+            if colorbar_visible:
+                cb = plt.colorbar(p)    
+        return p

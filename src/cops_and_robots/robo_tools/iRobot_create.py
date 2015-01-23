@@ -1,12 +1,19 @@
 #!/usr/bin/env python
-"""This module allows for the control of an iRobot Create base via
-    serial communication. It is a superclass of Robot, to be used only
-    when running on a physical base.
+"""This module allows for the control of an iRobot Create base.
 
-    The 'base' is considered to be simply the iRobot Create's robotic
-    chassis. Any other reference to the iRobot Create nominally
-    includes the additional aspects of the robot (i.e. computer, 
-    camera, actuators)."""
+It is expected to be run on the iRobot's computer itself, where serial 
+commands are sent to the base. It is a superclass of Robot, which 
+defines any and all hardwre aspects of the robot control.
+
+The 'base' is considered to be simply the iRobot Create's robotic
+chassis. Any other reference to the iRobot Create nominally
+includes the additional aspects of the robot (i.e. computer, 
+camera, actuators).
+
+Required Knowledge:
+    This module and its classes do not need to know about any other 
+    parts of the cops_and_robots parent module.
+"""
 
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
@@ -17,7 +24,7 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
-import math, logging, serial, threading, Queue
+import math, logging, serial, threading
 
 #Make import Python 2 or Python 3 agnostic
 try:
@@ -26,16 +33,19 @@ except ImportError:
     import Queue as queue
 
 class iRobotCreate(object):
-    """Definition and implementation of iRobot Create functionality
-    (largely movement).
+    """Definition and implementation of iRobot Create functionality.
+    
+    Largely controls movement of the robot, but also provides 
+    interfaces for the robot's bump and cliff sensors.
 
     :param name: hostname of physical robot's computer.
     :type name: String.
+    :param control_hardware: whether to begin controlling hardware or not.
+    :type control_hardware: bool.
     """
 
     #Class Constants
     DIAMETER        = 0.34 #[m] (appoximate)
-    RESOLUTION      = 20  #
     MAX_SPEED       = 500   #[mm/s] linear speed
     MAX_ROTATION_RADIUS      = 2000  #[mm] roation radius
 
@@ -109,17 +119,16 @@ class iRobotCreate(object):
         'full': 3
     }
 
-    def __init__(self, name):
-        self.name = name
-        self.charging_mode  = iRobotCreate.CHARGING_MODE['none']
+    def __init__(self):
+        self.charging_mode = iRobotCreate.CHARGING_MODE['none']
         self.battery_charge = 0
         self.battery_capacity = 0
-        self.bump_left      = False
-        self.bump_right     = False
-        self.speed          = 0
-        self.rotation_radius         = iRobotCreate.MAX_ROTATION_RADIUS
-        self.OI_mode        = iRobotCreate.OI_MODE['off'] 
-        self.cmd_queue      = queue.Queue()
+        self.bump_left = False
+        self.bump_right = False
+        self.speed = 0
+        self.rotation_radius = iRobotCreate.MAX_ROTATION_RADIUS
+        self.OI_mode = iRobotCreate.OI_MODE['off'] 
+        self.cmd_queue = queue.Queue()
 
         #Add logger
         logging.basicConfig(level=logging.DEBUG)
@@ -148,8 +157,7 @@ class iRobotCreate(object):
 
 
     def base(self):
-        """Thread function to take care of serial communication with 
-        the iRobot Create base.
+        """Thread function to implement serial communication with the base.
         """
         #Connect to the serial port
         portstr = '/dev/ttyUSB0'
@@ -161,7 +169,8 @@ class iRobotCreate(object):
             return ser
 
         #Enable commanding of the robot
-        ser.write(chr(iRobotCreate.OPCODE['start']) + chr(iRobotCreate.OPCODE['full']))
+        ser.write(chr(iRobotCreate.OPCODE['start'])\
+                  + chr(iRobotCreate.OPCODE['full']))
 
         #Loop to poll sensors and command the base
         while not self.base_t_stop.is_set():
@@ -175,7 +184,8 @@ class iRobotCreate(object):
                         iRobotCreate.SENSOR_PKT['bump-wheel-drop'] ]
 
             #Create the packet to be transmitted to the base
-            TX_packet = chr(iRobotCreate.OPCODE['query-list']) + chr(num_packets)
+            TX_packet = chr(iRobotCreate.OPCODE['query-list'])\
+                      + chr(num_packets)
             for sensor in sensors:
                 TX_packet = TX_packet + chr(sensor)
                           
