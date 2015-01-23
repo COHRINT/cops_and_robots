@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cops_and_robots.robo_tools.fusion.human &mdash; Cops and Robots 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">Cops and Robots 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cops_and_robots.robo_tools.fusion.human</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Provides a structured input interface for a human to the cop robot.</span>
+
+<span class="sd">The human can provide some information that a robot can&#39;t easily </span>
+<span class="sd">determine on its own (i.e. visual recognition of a target). Given a </span>
+<span class="sd">proper GUI, the human can send information that the fusion engine will</span>
+<span class="sd">merge with the robot&#39;s own sensors to generate a rich probability </span>
+<span class="sd">distribution.</span>
+
+<span class="sd">Currently the human uses a simple grounded, pre-defined codebook to </span>
+<span class="sd">provide information. For example, the human can say, &quot;I think Roy is </span>
+<span class="sd">behind wall 3.&quot; from a pre-defined codebook that has all robbers (i.e. </span>
+<span class="sd">Roy), spatial relationships (i.e. &#39;behind&#39;), and physical groundings </span>
+<span class="sd">(i.e. wall 3). This is the basic interface from which we will build </span>
+<span class="sd">upon.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    Only cop robots have human helpers (for now). Robbers may get </span>
+<span class="sd">    human teammate upgreades in future versions, in which case this </span>
+<span class="sd">    would be owned by the ``robot`` module instead of the ``cop`` module.</span>
+
+<span class="sd">Required Knowledge:</span>
+<span class="sd">    This module and its classes needs to know about the following </span>
+<span class="sd">    other modules in the cops_and_robots parent module:</span>
+<span class="sd">        1. ``sensor`` for generic sensor parameters and functions,</span>
+<span class="sd">           such as update rate and detection chance.</span>
+<span class="sd">        2. ``shape_layer`` to ground the human&#39;s provided information.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPL&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
+
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.sensor</span> <span class="kn">import</span> <span class="n">Sensor</span>
+
+<div class="viewcode-block" id="Human"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.human.Human">[docs]</a><span class="k">class</span> <span class="nc">Human</span><span class="p">(</span><span class="n">Sensor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;docstring for Human</span>
+<span class="sd">    :param shape_layer: the groundings for the human&#39;s updates.</span>
+<span class="sd">    :type shape_layer: ShapeLayer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Human.__init__"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.human.Human.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">map_objs</span><span class="p">,</span><span class="n">detection_chance</span><span class="o">=</span><span class="mf">0.6</span><span class="p">):</span>
+        <span class="n">update_rate</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">has_physical_dimensions</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">detection_chance</span> <span class="o">=</span> <span class="n">detection_chance</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Human</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">update_rate</span><span class="p">,</span><span class="n">has_physical_dimensions</span><span class="p">,</span>
+                                    <span class="n">detection_chance</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Human.update"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.human.Human.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">Cops and Robots 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Nick Sweet.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
