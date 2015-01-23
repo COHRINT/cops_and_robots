@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Provides a feasible region for robot locations.
+"""Provides a feasible region for robot and point locations.
 
 Two types of feasible regions are defined: point regions and pose 
 regions. Point regions are simply all points not contained within 

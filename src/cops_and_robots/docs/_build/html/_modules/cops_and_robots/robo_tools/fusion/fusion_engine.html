@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cops_and_robots.robo_tools.fusion.fusion_engine &mdash; Cops and Robots 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">Cops and Robots 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cops_and_robots.robo_tools.fusion.fusion_engine</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Provides an abstracted interface to multiple types of data fusion.</span>
+
+<span class="sd">By dictating the type of the fusion_engine, a cop using the fusion </span>
+<span class="sd">engine doesn&#39;t need to call specific functions for particle filters or</span>
+<span class="sd">Gaussian Mixture Models -- it asks the fusion engine for what it wants </span>
+<span class="sd">(generally a goal pose for the cop&#39;s planner) and lets the fusion </span>
+<span class="sd">engine call whichever type of data fusion it wants to use.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    Only cop robots have fusion engines (for now). Robbers may get </span>
+<span class="sd">    smarter in future versions, in which case this would be owned by </span>
+<span class="sd">    the ``robot`` module instead of the ``cop`` module.</span>
+
+<span class="sd">Required Knowledge:</span>
+<span class="sd">    This module and its classes needs to know about the following </span>
+<span class="sd">    other modules in the cops_and_robots parent module:</span>
+<span class="sd">        1. ``particle_filter`` as one method to represent information.</span>
+<span class="sd">        2. ``gaussian_mixture_model`` as another method.</span>
+<span class="sd">        3. ``feasible_layer`` to generate feasible particles and/or </span>
+<span class="sd">           probabilities.</span>
+<span class="sd">        4. ``shape_layer`` to ground the human sensor&#39;s output.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPL&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
+
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.particle_filter</span> <span class="kn">import</span> <span class="n">ParticleFilter</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.gaussian_mixture_model</span> <span class="kn">import</span> \
+     <span class="n">GaussianMixtureModel</span>
+
+
+<div class="viewcode-block" id="FusionEngine"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.fusion_engine.FusionEngine">[docs]</a><span class="k">class</span> <span class="nc">FusionEngine</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    The fusion engine tracks each robber, as well as a *combined* </span>
+<span class="sd">    representation of the average target estimate. </span>
+
+<span class="sd">    :param type_: &#39;discrete&#39; or &#39;continuous&#39;.</span>
+<span class="sd">    :param type_: String.</span>
+<span class="sd">    :param :</span>
+<span class="sd">    :type :</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="FusionEngine.__init__"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.fusion_engine.FusionEngine.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">type_</span><span class="p">,</span><span class="n">robber_names</span><span class="p">,</span><span class="n">feasible_layer</span><span class="p">,</span><span class="n">shape_layer</span><span class="p">,</span><span class="n">motion_model</span><span class="o">=</span><span class="s">&#39;simple&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FusionEngine</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">type_</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">GMMs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robber_names</span> <span class="o">=</span> <span class="n">robber_names</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span> <span class="o">=</span> <span class="n">shape_layer</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="s">&#39;discrete&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">robber_names</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ParticleFilter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">feasible_layer</span><span class="p">,</span><span class="n">motion_model</span><span class="o">=</span><span class="n">motion_model</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="s">&#39;continuous&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">robber_names</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">GMMs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">GaussianMixtureModel</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">feasible_layer</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;FusionEngine must be of type &#39;discrete&#39; or &quot;</span>\
+                             <span class="s">&quot;&#39;continuous&#39;.&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FusionEngine.update"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.fusion_engine.FusionEngine.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">current_pose</span><span class="p">,</span><span class="n">sensors</span><span class="p">,</span><span class="n">robbers</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update fusion_engine agnostic to fusion type.</span>
+
+<span class="sd">        :param fusion_engine: a probabalistic target tracker.</span>
+<span class="sd">        :type fusion_engine: FusionEngine.</span>
+<span class="sd">        :param feasible_layer: a map of feasible regions.</span>
+<span class="sd">        :type feasible_layer: FeasibleLayer.</span>
+<span class="sd">        :returns: goal pose as x,y,theta.</span>
+<span class="sd">        :rtype: list of floats.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c">#Update sensor values (viewcone, selected zone, etc.)</span>
+        <span class="k">for</span> <span class="n">sensor</span> <span class="ow">in</span> <span class="n">sensors</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">sensor</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">current_pose</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="p">)</span>
+
+        <span class="c">#Update probabilities (particle and/or GMM)</span>
+        <span class="k">for</span> <span class="n">robber</span> <span class="ow">in</span> <span class="n">robbers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="s">&#39;discrete&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">sensors</span><span class="p">[</span><span class="s">&#39;camera&#39;</span><span class="p">],</span><span class="n">robber</span><span class="o">.</span><span class="n">pose</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">robber</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="s">&#39;detected&#39;</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;{} detected!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">robber_detected</span><span class="p">(</span><span class="n">robber</span><span class="o">.</span><span class="n">pose</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">GMMs</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">robber</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="s">&#39;detected&#39;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">GMMs</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">robber_detected</span><span class="p">(</span><span class="n">robber</span><span class="o">.</span><span class="n">pose</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FusionEngine.update_combined"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.fusion_engine.FusionEngine.update_combined">[docs]</a>    <span class="k">def</span> <span class="nf">update_combined</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">Cops and Robots 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Nick Sweet.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
