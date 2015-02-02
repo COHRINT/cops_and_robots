@@ -12,24 +12,19 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
 class MoveBase():
     def __init__(self):
-        print('Test2')
         self.map_ = set_up_fleming()
         self.goal2d = [0,0]
 
-        print('Test3')
         rospy.init_node('nav_goals',anonymous=True)
         rospy.on_shutdown(self.shutdown)
-        print('Test4')
 
         #Start subscriber to update goal2d from MAP
         rospy.Subscriber("/human_sensor", String, self.callback)    
-        print('Test5')
 
         self.move_base = actionlib.SimpleActionClient('move_base',MoveBaseAction)
         rospy.loginfo("Waiting for move_base action server...")
         self.move_base.wait_for_server(rospy.Duration.from_sec(5.0))
         rospy.loginfo("Connected to move_base action server.")
-        print('Test6')
 
         # Goal state return values
         goal_states = ['PENDING', 'ACTIVE', 'PREEMPTED', 'SUCCEEDED', 'ABORTED', 'REJECTED', 'PREEMPTING', 'RECALLING', 'RECALLED', 'LOST']

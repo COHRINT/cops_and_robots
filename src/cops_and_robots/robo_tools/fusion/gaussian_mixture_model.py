@@ -10,6 +10,8 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
+import logging
+
 class GaussianMixtureModel(object):
     """docstring for GaussianMixtureModel"""
     def __init__(self):

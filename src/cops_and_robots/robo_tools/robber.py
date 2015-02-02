@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """Provides some common functionality for robber robots.
 
-While a robber's functionality is largely defined by the ``robot`` 
-module, this module is meant to update the robber's status (which 
-differs from cop statuses) and provide a basis for any additional 
-functionality the robbers may need (such as communication between 
+While a robber's functionality is largely defined by the ``robot``
+module, this module is meant to update the robber's status (which
+differs from cop statuses) and provide a basis for any additional
+functionality the robbers may need (such as communication between
 robbers).
 
 Required Knowledge:
-    This module and its classes needs to know about the following 
+    This module and its classes needs to know about the following
     other modules in the cops_and_robots parent module:
         1. ``robot`` for all basic functionality.
 """
@@ -22,6 +22,8 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
+import logging
+
 from matplotlib.colors import cnames
 
 from cops_and_robots.robo_tools.robot import Robot
@@ -33,7 +35,7 @@ class Robber(Robot):
     :param name: the robber's name.
     :type name: String.
     """
-    def __init__(self,name,**kwargs):
+    def __init__(self, name, **kwargs):
         super(Robber, self).__init__(name=name,
                                      role='robber',
                                      planner='simple',
@@ -51,11 +53,10 @@ class Robber(Robot):
             2. on the run
             3. detected
             4. captured
-            5. stuck 
         """
-        immobile_statuses = ('stationary','captured','stuck')
+        immobile_statuses = ('stationary', 'captured')
         if self.status not in immobile_statuses:
-            if self.status is 'detected' and self.time_since_detected < 50:
+            if self.status == 'detected' and self.time_since_detected < 50:
                 self.time_since_detected += 1
             else:
                 self.time_since_detected = 0
