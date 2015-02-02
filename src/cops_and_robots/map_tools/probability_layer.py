@@ -23,6 +23,8 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
+import logging
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats

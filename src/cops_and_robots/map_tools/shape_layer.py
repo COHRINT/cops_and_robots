@@ -22,6 +22,8 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
+import logging
+
 from matplotlib.colors import cnames
 from shapely.geometry import MultiPolygon,Polygon
 
