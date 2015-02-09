@@ -194,10 +194,10 @@ class MapObj(object):
 
         # Generate labeled zones for 4-sided shapes
         if n_sides == 4:
-            self.zones_by_label['left'] = self.zones[0]
-            self.zones_by_label['front'] = self.zones[1]
-            self.zones_by_label['right'] = self.zones[2]
-            self.zones_by_label['back'] = self.zones[3]
+            self.zones_by_label['back'] = self.zones[0]
+            self.zones_by_label['right'] = self.zones[1]
+            self.zones_by_label['front'] = self.zones[2]
+            self.zones_by_label['left'] = self.zones[3]
 
     def plot(self, plot_zones=False, ax=None, alpha=0.5, **kwargs):
         """Plot the map_object as a polygon patch.

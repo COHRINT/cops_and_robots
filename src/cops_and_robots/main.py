@@ -21,9 +21,9 @@ def main():
                         level=logging.INFO,)
 
     # Pre-test config
-    robber_model = 'clockwise'
+    robber_model = 'stationary'
     deckard = Cop(robber_model=robber_model)
-    deckard.map.combined_only = True
+    deckard.map.combined_only = False
 
     # Describe simulation
     robber_names = [name for name, role in Robot.all_robots.iteritems()

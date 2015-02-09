@@ -105,7 +105,7 @@ class FusionEngine(object):
         """
 
         # Update camera values (viewcone, selected zone, etc.)
-        for sensorname,sensor in sensors.iteritems():
+        for sensorname, sensor in sensors.iteritems():
             if sensorname == 'camera':
                 sensor.update(current_pose, self.shape_layer)
 
@@ -114,7 +114,8 @@ class FusionEngine(object):
             if self.type == 'discrete':
                 if not self.filters[robber.name].finished:
                     self.filters[robber.name].update(sensors['camera'],
-                                                     robber.pose)
+                                                     robber.pose,
+                                                     sensors['human'])
                     if robber.status == 'detected':
                         logging.info('{} detected!'.format(robber.name))
                         self.filters[robber.name].robber_detected(robber.pose)
@@ -128,9 +129,9 @@ class FusionEngine(object):
                     logging.info('{} captured!'.format(robber.name))
                     self.missing_robber_names.remove(robber.name)
 
-        self.update_combined()
+        self.update_combined(sensors)
 
-    def update_combined(self):
+    def update_combined(self,sensors):
         if self.type == 'discrete':
 
             # Remove all particles from combined filter
@@ -147,3 +148,7 @@ class FusionEngine(object):
                               axis=0)
             self.filters['combined'].n_particles = \
                 len(self.filters['combined'].particles)
+
+            # Reset the human sensor
+            sensors['human'].input_string = ''
+            sensors['human'].target = ''

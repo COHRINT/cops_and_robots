@@ -50,7 +50,7 @@ class ParticleFilter(object):
     """
     def __init__(self, target, feasible_layer, motion_model='stationary',
                  n_particles=500):
-        self.target = target  # MapObj of target for specific map layer
+        self.target = target
         self.bounds = feasible_layer.bounds
         self.n_particles = n_particles
         self.motion_model = motion_model
@@ -79,25 +79,25 @@ class ParticleFilter(object):
         self.particles = np.column_stack((pts, np.ones(self.n_particles)
                                           / self.n_particles))
 
-    def update(self, camera, target_pose):
+    def update(self, camera, target_pose, human=None):
         """Move particles (if mobile) and update probabilities.
         """
         if self.finished:
             return
 
         self.update_particle_motion()
-
         self.camera_update(camera, target_pose)
-        # self.human_update()
+        self.human_update(human)
 
         # self.resample()
 
     def camera_update(self, camera, target_pose):
         camera.detect('discrete', self.particles)
 
-    def human_update(self):
-        # <>TODO: break human out into seperate class
-        pass
+    def human_update(self, human):
+        if human.target in [self.target,'nothing','a robber']:
+            human.detect(self.particles,human.target)
+            
 
     def update_particle_motion(self, step_dist=0.05):
 
@@ -106,7 +106,7 @@ class ParticleFilter(object):
                                                         2 * step_dist,
                                                         (self.n_particles, 2),
                                                         )
-        elif self.motion_model == 'clockwise':
+        elif self.motion_model == 'counterclockwise':
             for particle in self.particles:
                 x, y = particle[0:2]
                 mag = math.sqrt(x ** 2 + y ** 2) + \
@@ -115,7 +115,7 @@ class ParticleFilter(object):
                     np.random.uniform(step_dist / 5, step_dist)
                 particle[0] = mag * math.cos(angle)
                 particle[1] = mag * math.sin(angle)
-        elif self.motion_model == 'counterclockwise':
+        elif self.motion_model == 'clockwise':
             for particle in self.particles:
                 x, y = particle[0:2]
                 mag = math.sqrt(x ** 2 + y ** 2) + \
