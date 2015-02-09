@@ -46,6 +46,7 @@ from cops_and_robots.map_tools.occupancy_layer import OccupancyLayer
 from cops_and_robots.map_tools.feasible_layer import FeasibleLayer
 from cops_and_robots.map_tools.probability_layer import ProbabilityLayer
 from cops_and_robots.map_tools.particle_layer import ParticleLayer
+from cops_and_robots.map_tools.human_interface import HumanInterface
 
 
 class Map(object):
@@ -78,6 +79,10 @@ class Map(object):
         self.feasible_layer = FeasibleLayer(bounds=bounds)
         self.particle_layer = {}  # One per robber, plus one combined
         self.probability_layer = {}  # One per robber, plus one combined
+
+    def add_human_sensor(self, human_sensor):
+        # Add human sensor for the human interface
+        self.human_sensor = human_sensor
 
     def add_obj(self, map_obj):
         """Append a static ``MapObj`` to the Map
@@ -271,6 +276,10 @@ class Map(object):
                          vmax=1
                          )
 
+        # Set up the human interface
+        if self.human_sensor:
+            HumanInterface(self.fig, self.human_sensor)
+
         return
 
     def animation_stream(self):
@@ -333,7 +342,10 @@ class Map(object):
 
                 # Update Particle Filter
                 colors = particles[:, 2] * self.particle_color_gain
+
                 self.particle_scat[robber_name].set_array(colors)
+                # colors = np.repeat([colors],3,axis=0).T
+                # self.particle_scat[robber_name].set_facecolor(colors)
                 self.particle_scat[robber_name].set_offsets(particles[:, 0:2])
 
 
@@ -361,7 +373,7 @@ def set_up_fleming():
 
     walls = []
     for i in range(0, len(poses)):
-        name = 'Wall_' + str(i)
+        name = 'Wall ' + str(i)
         pose = poses[i]
         wall = MapObj(name, wall_shape, pose)
         walls.append(wall)

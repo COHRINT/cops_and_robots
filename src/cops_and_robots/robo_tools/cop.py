@@ -94,6 +94,7 @@ class Cop(Robot):
         self.sensors['camera'] = Camera((0, 0, 0))
         self.sensors['human'] = Human(self.map.shape_layer.shapes,
                                       robber_names)
+        self.map.add_human_sensor(self.sensors['human'])
         self.update_rate = 1  # [Hz]
 
         # Animation attributes

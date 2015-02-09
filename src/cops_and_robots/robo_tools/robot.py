@@ -60,17 +60,17 @@ class Robot(iRobotCreate):
     :type pose:
     """
 
-    all_robots = {'Deckard': 'cop',
-                  'Roy': 'robber',
-                  'Leon': 'robber',
-                  'Pris': 'robber',
-                  'Zhora': 'robber',
-                  }
-
     # all_robots = {'Deckard': 'cop',
     #               'Roy': 'robber',
     #               'Leon': 'robber',
+    #               'Pris': 'robber',
+    #               'Zhora': 'robber',
     #               }
+
+    all_robots = {'Deckard': 'cop',
+                  'Roy': 'robber',
+                  'Leon': 'robber',
+                  }
 
     movement_statuses = ['stuck',
                          'at goal',
@@ -129,6 +129,7 @@ class Robot(iRobotCreate):
         self.pose_history = np.array(([0, 0, 0], self.pose))
         self.check_last_n = 50  # number of poses to look at before stuck
         self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
+        self.stuck_buffer = 20  # time steps after being stuck before checking
         self.distance_allowance = 0.1  # [m] acceptable distance to a goal
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
         self.num_goals = None  # number of goals to reach (None for infinite)
@@ -235,13 +236,22 @@ class Robot(iRobotCreate):
         existed for n time steps, it is assumed to not be stuck.
         """
 
+        # Check the buffer
+        if self.stuck_buffer > 0:
+            self.stuck_buffer += -1
+            return False
+
         if len(self.pose_history) > self.check_last_n:
             distance_travelled = 0
             last_poses = self.pose_history[-self.check_last_n:]
             for i, pose in enumerate(last_poses):
-                dist = math.sqrt((last_poses[i - 1][0] - pose[0]) ** 2 +
-                                 (last_poses[i - 1][1] - pose[1]) ** 2)
+                dist = math.sqrt((last_poses[i][0] - pose[0]) ** 2 +
+                                 (last_poses[i][1] - pose[1]) ** 2)
                 distance_travelled += dist
+
+            # Update the buffer
+            self.stuck_buffer = 20
+
             logging.debug('{} travelled {:.2f}m in last {}'
                           .format(self.name, distance_travelled,
                                   self.check_last_n))
@@ -253,8 +263,8 @@ class Robot(iRobotCreate):
         """Check if the robot received a new goal from the planner.
         """
         # <>TODO: Validate this
-        # return np.sum((self.pose_history[-1, :], -self.goal_pose[:])) > 0.1
-        return True
+        return np.sum((self.pose_history[-1, :], -self.goal_pose[:])) > 0.1
+        # return True
 
     def is_on_path(self):
         """Check if the robot is on the correct path.
@@ -314,8 +324,7 @@ class Robot(iRobotCreate):
         new_status = current_status
 
         if current_status == 'stuck':
-            if not self.is_stuck():
-                new_status = 'without a goal'
+            new_status = 'without a goal'
         elif current_status == 'without a goal':
             # if self.has_new_goal():
             new_status = 'rotating'
@@ -332,8 +341,13 @@ class Robot(iRobotCreate):
             if True:
                 new_status = 'without a goal'
 
-        logging.debug("{}'s status changed from {} to {}."
-                      .format(self.name, current_status, new_status))
+        # Always check if sttuck
+        if self.is_stuck() and new_status != 'without a goal':
+            new_status = 'stuck'
+
+        if current_status != new_status:
+            logging.debug("{}'s status changed from {} to {}."
+                          .format(self.name, current_status, new_status))
         self.status[1] = new_status
 
     def update(self, i=0):
@@ -348,8 +362,15 @@ class Robot(iRobotCreate):
             return
 
         # Generate new path and goal poses
-        if self.status[1] in ('without a goal', 'stuck'):
+        if self.status[1] in ('without a goal'):
             self.goal_pose = self.planner.find_goal_pose(self.fusion_engine)
+
+        # If stuck, find goal simply
+        if self.status[1] in ('stuck'):
+            prev_type = self.planner.type
+            self.planner.type = 'simple'
+            self.goal_pose = self.planner.find_goal_pose(self.fusion_engine)
+            self.planner.type = prev_type
 
         # Translate or rotate, depending on status
         if self.status[1] == 'rotating':
