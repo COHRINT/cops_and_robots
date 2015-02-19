@@ -11,15 +11,6 @@ Note:
     Only cop robots have fusion engines (for now). Robbers may get
     smarter in future versions, in which case this would be owned by
     the ``robot`` module instead of the ``cop`` module.
-
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``particle_filter`` as one method to represent information.
-        2. ``gaussian_mixture_model`` as another method.
-        3. ``feasible_layer`` to generate feasible particles and/or
-           probabilities.
-        4. ``shape_layer`` to ground the human sensor's output.
 """
 
 from __future__ import division
@@ -38,43 +29,59 @@ import logging
 import numpy as np
 
 from cops_and_robots.robo_tools.fusion.particle_filter import ParticleFilter
-from cops_and_robots.robo_tools.fusion.gaussian_mixture_model import \
-    GaussianMixtureModel
+from cops_and_robots.robo_tools.fusion.gauss_sum_filter import \
+    GaussSumFilter
 
 
 class FusionEngine(object):
-    """
+    """A collection of filters to estimate and fuse data about a target's pose.
 
-    The fusion engine tracks each robber, as well as a *combined*
+    The fusion engine tracks each robber, as well as a `combined`
     representation of the average target estimate.
 
-    :param type_: 'discrete' or 'continuous'.
-    :param type_: String.
-    :param :
-    :type :
+    Parameters
+    ----------
+    filter_type : {'particle','gauss sum'}
+        The type of filter to be used.
+    missing_robber_names : list of str
+        The list of all robbers, to create one filter per robber.
+    feasible_layer : FeasibleLayer
+        A layer object providing both permissible point regions for any object
+        and permissible pose regions for any robot with physical dimensions.
+    shape_layer : ShapeLayer
+        A layer object providing all the shapes in the map so that the human
+        sensor can ground its statements.
+    motion_model : {'stationary','clockwise','counterclockwise','random walk'},
+        optional
+        The motion model used to update the filter.
+    total_particles : int, optional
+        The number of particles used for a particle filter. This is the number
+        used for the `combined` model, which is distributed among all other
+        models. Default is 2000.
+
     """
     def __init__(self,
-                 type_,
+                 filter_type,
                  missing_robber_names,
                  feasible_layer,
                  shape_layer,
-                 motion_model='simple',
-                 total_particles=4000):
+                 motion_model='stationary',
+                 total_particles=2000):
         super(FusionEngine, self).__init__()
 
-        self.type = type_
+        self.filter_type = filter_type
         self.filters = {}
-        self.GMMs = {}
         self.missing_robber_names = missing_robber_names
         self.shape_layer = shape_layer
 
+        # <>TODO: rename 'filters' to 'particle filters' and test
         n = len(missing_robber_names)
         if n > 1:
             particles_per_filter = int(total_particles / (n + 1))
         else:
             particles_per_filter = total_particles
 
-        if self.type == 'discrete':
+        if self.filter_type == 'particle':
             for i, name in enumerate(missing_robber_names):
                 self.filters[name] = ParticleFilter(name,
                                                     feasible_layer,
@@ -84,55 +91,58 @@ class FusionEngine(object):
                                                       feasible_layer,
                                                       motion_model,
                                                       particles_per_filter)
-        elif self.type == 'continuous':
+        elif self.filter_type == 'gauss sum':
             for i, name in enumerate(missing_robber_names):
-                self.GMMs[name] = GaussianMixtureModel(name, feasible_layer)
-            self.GMMs['combined'] = GaussianMixtureModel('combined',
-                                                         feasible_layer)
+                self.GMMs[name] = GaussSumFilter(name, feasible_layer)
+            self.GMMs['combined'] = GaussSumFilter('combined',
+                                                   feasible_layer)
         else:
-            raise ValueError("FusionEngine must be of type 'discrete' or "
-                             "'continuous'.")
+            raise ValueError("FusionEngine must be of type 'particle' or "
+                             "'gauss sum'.")
 
-    def update(self, current_pose, sensors, robbers):
+    def update(self, robot_pose, sensors, robbers):
         """Update fusion_engine agnostic to fusion type.
 
-        :param fusion_engine: a probabalistic target tracker.
-        :type fusion_engine: FusionEngine.
-        :param feasible_layer: a map of feasible regions.
-        :type feasible_layer: FeasibleLayer.
-        :returns: goal pose as x,y,theta.
-        :rtype: list of floats.
+        Parameters
+        ----------
+        robot_pose : array_like
+            The robot's current [x, y, theta] in [m,m,degrees].
+        sensors : dict
+            A collection of all sensors to be updated.
+        robbers :
+            A collection of all robber objects.
         """
-
         # Update camera values (viewcone, selected zone, etc.)
         for sensorname, sensor in sensors.iteritems():
             if sensorname == 'camera':
-                sensor.update(current_pose, self.shape_layer)
+                sensor.update_viewcone(robot_pose, self.shape_layer)
 
         # Update probabilities (particle and/or GMM)
         for robber in robbers.values():
-            if self.type == 'discrete':
-                if not self.filters[robber.name].finished:
-                    self.filters[robber.name].update(sensors['camera'],
-                                                     robber.pose,
-                                                     sensors['human'])
-                    if robber.status == 'detected':
-                        logging.info('{} detected!'.format(robber.name))
-                        self.filters[robber.name].robber_detected(robber.pose)
-            else:
-                self.GMMs[robber.name].update()
+            if not self.filters[robber.name].finished:
+                self.filters[robber.name].update(sensors['camera'],
+                                                 robber.pose,
+                                                 sensors['human'])
                 if robber.status == 'detected':
-                    self.GMMs[robber.name].robber_detected(robber.pose)
+                    logging.info('{} detected!'.format(robber.name))
+                    self.filters[robber.name].robber_detected(robber.pose)
 
             # Chop down list of missing robber names if one was captured
             if robber.status == 'captured':
                     logging.info('{} captured!'.format(robber.name))
                     self.missing_robber_names.remove(robber.name)
 
-        self.update_combined(sensors)
+        self._update_combined(sensors)
 
-    def update_combined(self,sensors):
-        if self.type == 'discrete':
+    def _update_combined(self, sensors):
+        """Update the `combined` filter.
+
+        Parameters
+        ----------
+        sensors : dict
+            A collection of all sensors to be updated.
+        """
+        if self.filter_type == 'particle':
 
             # Remove all particles from combined filter
             self.filters['combined'].particles = \

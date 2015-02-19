@@ -12,10 +12,12 @@ __status__ = "Development"
 
 import logging
 
-class GaussianMixtureModel(object):
-    """docstring for GaussianMixtureModel"""
+class GaussSumFilter(object):
+    """docstring for GaussSumFilter
+
+    """
     def __init__(self):
-        super(GaussianMixtureModel, self).__init__()
+        super(GaussSumFilter, self).__init__()
         
 
     def update(self):

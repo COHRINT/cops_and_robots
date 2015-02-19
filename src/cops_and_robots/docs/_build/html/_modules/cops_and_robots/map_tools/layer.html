@@ -51,15 +51,11 @@
 <span class="c">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;Provides a common base class for all map layers.</span>
 
-<span class="sd">Since many layers share parameters and functions, the ``layer`` module </span>
-<span class="sd">defines these in one place, allowing all layers to use it as a </span>
+<span class="sd">Since many layers share parameters and functions, the ``layer`` module</span>
+<span class="sd">defines these in one place, allowing all layers to use it as a</span>
 <span class="sd">superclass.</span>
 
-<span class="sd">Required Knowledge:</span>
-<span class="sd">    This module and its classes do not need to know about any other </span>
-<span class="sd">    parts of the cops_and_robots parent module.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-
 <span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
 <span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
 <span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
@@ -69,34 +65,42 @@
 <span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
 <span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
 
+<span class="kn">import</span> <span class="nn">logging</span>
+
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
 
 <div class="viewcode-block" id="Layer"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.layer.Layer">[docs]</a><span class="k">class</span> <span class="nc">Layer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A collection of generic layer parameters and functions.</span>
 
-<span class="sd">    :param bounds: Map boundaries as [xmin,ymin,xmax,ymax] in [m].</span>
-<span class="sd">    :type bounds: List of floats.</span>
-<span class="sd">    :param visible: Whether or not the layer should be plotted.</span>
-<span class="sd">    :type visible: bool.</span>
-<span class="sd">    :param target: Name of the target tracked (for some layers only).</span>
-<span class="sd">    :type target: String.</span>
-<span class="sd">    :param ax: Axes to be used for plotting this layer.</span>
-<span class="sd">    :type ax: Axes.</span>
-<span class="sd">    :param alpha: Transparency of all elements of this layer.</span>
-<span class="sd">    :type alpha: float.</span>
-<span class="sd">    :param cmap_str: Name of the color map to be used.</span>
-<span class="sd">    :type cmap_str: String.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-<div class="viewcode-block" id="Layer.__init__"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.layer.Layer.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span><span class="n">visible</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">target</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span><span class="n">cmap_str</span><span class="o">=</span><span class="s">&#39;jet&#39;</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">ax</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bounds : array_like, optional</span>
+<span class="sd">        Map boundaries as [xmin,ymin,xmax,ymax] in [m]. Defaults to</span>
+<span class="sd">        [-5, -5, 5, 5].</span>
+<span class="sd">    visible : bool, optional</span>
+<span class="sd">        Whether or not the layer is shown when plotting.</span>
+<span class="sd">    target : str, optional</span>
+<span class="sd">        Name of target tracked by this layer. Defaults to `&#39;&#39;`.</span>
+<span class="sd">    ax : axes handle, optional</span>
+<span class="sd">        The axes to be used for plotting. Defaults to current axes.</span>
+<span class="sd">    alpha : float, optional</span>
+<span class="sd">        The layer&#39;s transparency, from 0 to 1. Defaults to 0.8.</span>
+<span class="sd">    cmap_str : str, optional</span>
+<span class="sd">        The colormap string for the layer. Defaults to `&#39;jet&#39;`.</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span> <span class="c">#[xmin,ymin,xmax,ymax] in [m]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">visible</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+                 <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">cmap_str</span><span class="o">=</span><span class="s">&#39;jet&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>  <span class="c"># [xmin,ymin,xmax,ymax] in [m]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="n">visible</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="c">#Name of target tracked by this layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cmap</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">cmap_str</span><span class="p">)</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmap</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">cmap_str</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

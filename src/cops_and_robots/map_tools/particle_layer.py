@@ -7,13 +7,7 @@ robber locations. One particle layer exists per robot, with n particles
 per particle layer, to estimate the collected probability of all
 robbers' locations.
 
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``layer`` for generic layer parameters and functions.
-        2. ``fusion_engine`` to provide the probability distribution.
 """
-
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Nick Sweet", "Nisar Ahmed"]
@@ -31,30 +25,46 @@ from cops_and_robots.map_tools.layer import Layer
 class ParticleLayer(Layer):
     """Visually represents a collection of particles.
 
-    :param particle_size: marker size of each particle.
-    :type particle_size: positive int.
-    :param alpha: marker transparency of each particle.
-    :type alpha: float between 0 and 1.
-    :param line_weight: marker border weight for each particle.
-    :type line_weight: positive float.
-    :param colorbar_visible: whether or not to show the colorbar.
-    :type colorbar_visible: bool.
+    Parameters
+    ----------
+    particle_size : int, optional
+        The marker size of each particle. Default is 200.
+    colorbar_visible : bool, optional
+        Whether to show the colorbar object. Default it `False`.
+    n_particles : int, optional
+        Number of particles to display. Default is 2000.
+    **kwargs
+        Keyword arguments given to the ``Layer`` superclass.
+
     """
-    def __init__(self, particle_size=200, alpha=0.3, line_weight=0,
-                 colorbar_visible=False, n_particles=2000, **kwargs):
-        super(ParticleLayer, self).__init__(alpha=alpha, **kwargs)
+    def __init__(self, particle_size=200, colorbar_visible=False,
+                 n_particles=2000, **kwargs):
+        super(ParticleLayer, self).__init__(**kwargs)
         self.particle_size = particle_size
         self.colorbar_visible = colorbar_visible
-        self.line_weight = line_weight
-        self.n_particles = n_particles
+        self.n_particles = n_particles  # <>TODO: get rid of this!
+
+        self.line_weight = 0
+        self.alpha = 0.5
+        self.color_gain = 400
 
     def plot(self, robber_names, fusion_engine, **kwargs):
         """Plot the particles as a scatter plot.
 
-        :param particle_filter: a collection of particles to be shown.
-        :type particle_filter: ParticleFilter.
-        :returns: the scatter plot data.
-        :rtype: list ofPathCollection.
+        Parameters
+        ----------
+        robber_names : list of str
+            The list of all robbers.
+        fusion_engine : FusionEngine
+            A robot's fusion engine.
+        **kwargs
+            Arguments passed to the scatter plot function.
+
+        Returns
+        -------
+        list of PathCollection
+            The scatter plot data.
+
         """
         for name in robber_names:
             if fusion_engine.type == 'discrete':

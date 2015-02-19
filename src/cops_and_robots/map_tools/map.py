@@ -9,17 +9,7 @@ visibility) represent perspectives on the map: where the map's
 elements are, what probability distributions are associated with a
 given element, etc.
 
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``map_obj`` to represent map elements (like walls).
-        2. ``shape_layer`` to collect map elements.
-        3. ``occupancy_layer`` to represent a grid of occupied space.
-        4. ``feasible_layer`` for unoccupied and reachable space.
-        5. ``probability_layer`` to represent continuous probability.
-        6. ``particle_layer`` to represent discrete probability points.
 """
-
 from __future__ import division
 
 __author__ = "Nick Sweet"
@@ -52,12 +42,17 @@ from cops_and_robots.map_tools.human_interface import HumanInterface
 class Map(object):
     """Environment map composed of multiple elements and layers.
 
-    :param mapname: the name of the map.
-    :type mapname: String.
-    :param bounds: map boundaries as [x_min,y_min,x_max,y_max].
-    :type bounds: list of floats.
-    """
+    Parameters
+    ----------
+    mapname : str
+        The name of the map.
+    bounds : array_like, optional
+        Map boundaries as [xmin,ymin,xmax,ymax] in [m].
+    combined_only : bool, optional
+        Whether to show only the combined plot (as opposed to individual plots
+        for each robber, plus one combined plot). Defaults to `True`.
 
+    """
     def __init__(self, mapname, bounds, combined_only=True):
         # Define map properties
         self.mapname = mapname
@@ -65,7 +60,6 @@ class Map(object):
         self.outer_bounds = [i * 1.1 for i in self.bounds]
         self.origin = [0, 0]  # in [m]
         self.fig = plt.figure(1, figsize=(12, 10))
-        self.particle_color_gain = 400
         self.combined_only = combined_only
 
         # Define map elements
@@ -85,9 +79,12 @@ class Map(object):
         self.human_sensor = human_sensor
 
     def add_obj(self, map_obj):
-        """Append a static ``MapObj`` to the Map
+        """Append a static ``MapObj`` to the map.
 
-        :param map_obj: MapObj object
+        Parameters
+        ----------
+        map_obj_name : MapObj
+            The object to be added.
         """
         self.objects[map_obj.name] = map_obj
         # self.occupancy_layer.add_obj(map_obj)
@@ -96,9 +93,10 @@ class Map(object):
         # <>TODO: Update probability layer
 
     def rem_obj(self, map_obj_name):
-        """Remove a ``MapObj`` from the Map by its name
+        """Remove a ``MapObj`` from the Map by its name.
 
-        :param map_obj_name: String
+        map_obj_name : str
+            Name of the map object.
         """
         self.shape_layer.rem_obj(map_obj_name)
         self.feasible_layer.define_feasible_regions(self.shape_layer)
@@ -109,46 +107,45 @@ class Map(object):
     def add_cop(self, cop_obj):
         """Add a dynamic ``Robot`` cop from the Map
 
-        :param cop_obj: Map object
-        :type cop: MapObj.
+        cop_obj : Cop
+            The full cop object.
         """
         # self.shape_layer.add_obj(cop)
         self.cops[cop_obj.name] = cop_obj
 
     def rem_cop(self, cop_name):
-        """Remove a dynamic ``Robot`` cop from the Map by its name
+        """Remove a dynamic ``Robot`` cop from the Map by its name.
 
-        :param cop_name: String
+        cop_name : str
+            Name of the cop.
         """
         # self.shape_layer.rem_obj(cop_name)
         del self.cops[cop_name]
 
     def add_robber(self, robber):
-        """Add a dynamic ``Robot`` robber from the Map
+        """Add a dynamic ``Robot`` robber from the Map.
 
-        :param robber: Robot
+        robber_obj : Robber
+            The full robber object.
         """
         self.robbers[robber.name] = robber
         self.particle_layer[robber.name] = ParticleLayer()
         # <>TODO: Update probability layer
 
     def rem_robber(self, robber_name):
-        """Remove a dynamic ``Robot`` robber from the Map by its name
+        """Remove a dynamic ``Robot`` robber from the Map by its name.
 
-        :param robber_name: String
+        robber_name : str
+            Name of the robber.
         """
         self.shape_layer.rem_obj(robber_name)
         del self.robbers[robber_name]
         del self.probability_layer[robber_name]
         # <>TODO: Update probability layer
 
-    def plot(self,
-             robber_name="combined",
-             plot_zones=True,
-             feasible_region="pose"):
-        """Generate one or more probability and occupancy layer
+    def plot(self):
+        """Plot the current state of the map.
 
-        :param robber_name: String
         """
         # <>TODO: Generate static plot
         pass
@@ -280,11 +277,12 @@ class Map(object):
         if self.human_sensor:
             HumanInterface(self.fig, self.human_sensor)
 
-        return
-
     def animation_stream(self):
-        """Generate new values for the animation plot, based on an
-        updated model of the world.
+        """Update the animated plot.
+
+        This is a generator function that takes in packets of animation
+        data and yields nothing.
+
         """
         while True:
             packet = yield
@@ -341,7 +339,8 @@ class Map(object):
                         .add_patch(self.robber_patch[robber_name])
 
                 # Update Particle Filter
-                colors = particles[:, 2] * self.particle_color_gain
+                colors = particles[:, 2]\
+                    * next(self.particle_layer.itervalues()).color_gain
 
                 self.particle_scat[robber_name].set_array(colors)
                 # colors = np.repeat([colors],3,axis=0).T
@@ -350,6 +349,9 @@ class Map(object):
 
 
 def set_up_fleming():
+    """Set up a map as the generic Fleming space configuration.
+
+    """
     # Make vicon field space object
     net_w = 0.2  # [m] Netting width
     field_w = 10  # [m] field width
@@ -393,11 +395,3 @@ def set_up_fleming():
         fleming.add_obj(wall)
 
     return fleming
-
-if __name__ == "__main__":
-    # fleming = set_up_fleming()
-
-    # fleming.plot('Roy')
-    # fleming.probability['Roy'].update(fleming.objects['Wall_4'],'back')
-    # fleming.plot('Roy')
-    pass

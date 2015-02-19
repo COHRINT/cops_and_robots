@@ -11,11 +11,7 @@ rectangular wall has four zones: front, back, left and right. These
 are named zones, but arbitrary shapes can have arbitrary numbered zones
 (such as a triangle with three numbered zones).
 
-Required Knowledge:
-    This module and its classes do not need to know about any other
-    parts of the cops_and_robots parent module.
 """
-
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Nick Sweet", "Nisar Ahmed"]
@@ -39,42 +35,43 @@ class MapObj(object):
 
     Zones demarcate spatial relationships around objects.
 
-    Note:
+    Notes
+    -----
         If only one xy pair is given as shape_pts, MapObj will assume
         the user wants to create a box with those two values as length
         and width, respectively.
 
-    Note:
         Shapes are created such that the centroid angle (the direction
         the object is facing) is 0. To change this, use ``move_shape``.
 
-    :param name: the map object's name.
-    :type name: String.
-    :param shape_pts: a list of xy pairs as [(x_i,y_i)] in [m,m] in the
-        global (map) frame of reference.
-    :type shape_pts: an n-element list of 2-element lists of floats.
-    :param pose: the centroid's pose as [x,y,theta] in [m,m,deg].
-    :type pose: a 3-element list of floats.
-    :param has_zones: whether or not an object has zones.
-    :type has_zones: bool.
-    :param centroid_at_origin: place centroid at the origin (instead
-        of the minimum point given by the shape_pts).
-    :type centroid_at_origin: bool.
-    :param visible: whether or not to show the object on the map.
-    :type visible: bool.
-    :param default_color_str: string to define the object's default
-        color.
-    :type default_color_str: String.
-    """
+    Parameters
+    ----------
+    name : str
+        The map object's name.
+    shape_pts : array_like
+        A list of xy pairs as [(x_i,y_i)] in [m,m] in the global (map)
+        coordinate frame.
+    pose : array_like, optional
+        The map object's initial [x, y, theta] in [m,m,degrees] (defaults to
+        [0, 0, 0]).
+    has_zones : bool, optional
+        Whether or not the map object has demarcating zones around it.
+    centroid_at_origin : bool, optional
+        Whether the object's centroid is placed at the map origin (as opposed
+        to placing the object's lower-left corner at the map origin). Default
+        is `True`.
+    color_str : str, optional
+        The color string for the object. Default is `'darkblue'`.
 
+    """
     def __init__(self, name, shape_pts, pose=[0, 0, 0], has_zones=True,
                  centroid_at_origin=True, visible=True,
-                 default_color_str='darkblue', **kwargs):
+                 color_str='darkblue'):
         # Define basic MapObj properties
         self.name = name
         self.visible = visible
         self.has_zones = has_zones
-        self.default_color = cnames[default_color_str]
+        self.default_color = cnames[color_str]
         self.pose = pose
 
         # If shape has only length and width, convert to point-based poly
@@ -98,10 +95,13 @@ class MapObj(object):
         The rotation is assumed to be about the object's centroid
         unless a rotation point is specified.
 
-        :param pose: the centroid's pose as [x,y,theta] in [m,m,deg].
-        :type pose: a 3-element list of floats.
-        :param rotation_pt: the rotation point as [x,y] in [m,m].
-        :type rotation_pt: a 2-element list of floats.
+        Parameters
+        ----------
+        pose : array_like, optional
+            The map object's initial [x, y, theta] in [m,m,degrees].
+        rotation_pt : array_like
+            The rotation point as [x,y] in [m,m]. Defaults to the centroid.
+
         """
         if rotation_pt:
             rotation_point = rotation_pt
@@ -128,10 +128,13 @@ class MapObj(object):
     def rotate_poly(self, angle, rotation_point):
         """Rotate the shape about a rotation point.
 
-        :param pose: angle to be rotated in degrees.
-        :type pose: float.
-        :param rotation_pt: the rotation point as [x,y] in [m,m].
-        :type rotation_pt: a 2-element list of floats.
+        Parameters
+        ----------
+        angle : float
+            The angle to be rotated in degrees.
+        rotation_pt : array_like
+            The rotation point as [x,y] in [m,m].
+
         """
         pts = self.shape.exterior.coords
         lines = []
@@ -145,24 +148,24 @@ class MapObj(object):
 
         self.shape = Polygon(pts)
 
-    def define_zones(self, zone_distance=0.5, resolution=10,
+    def define_zones(self, zone_distance=1, resolution=10,
                      join_style='mitre'):
         """Define the shape's zones at a given distance.
 
         Define areas near the shape ('zones') which, for a four-sided
         shape, demarcate front, back left and right.
 
-        :param zone_distance: zone distance from the shape's outermost
-            edge.
-        :type zone_distance: positive float.
-        :param resolution: the resolution of the buffered zone.
-        :type resolution: positive float.
-        :param join_style: style of the buffered zone creation, taken
-            as one of:
-                1. round
-                2. mitre
-                3. bevel
-        :type join_style: string.
+        Parameters
+        ----------
+        zone_distance : float, optional
+            The distance from the shape's outermost edge to the edge of the
+            zone in [m]. Defaults to 1.
+        resolution: int, optional
+            The number of points used to make the buffered zone. Defaults to
+            10.
+        join_style: {'round','mitre','bevel'}
+            Style of the buffered zone creation. Defaults to `'mitre'`.
+
         """
         # Create the buffer around the object
         join_styles = ['round', 'mitre', 'bevel']
@@ -202,18 +205,19 @@ class MapObj(object):
     def plot(self, plot_zones=False, ax=None, alpha=0.5, **kwargs):
         """Plot the map_object as a polygon patch.
 
-        Note:
+        plot_zones : bool, optional
+            Plot the map object's zones if true. Defaults to `False`.
+        ax : axes handle, optional
+            The axes to be used for plotting. Defaults to current axes.
+        alpha: float, optional
+            Transparency of all elements of the shape. Default is 0.5.
+        **kwargs
+            Arguments passed to ``PolygonPatch``.
+
+        Notes
+        -----
             The zones can be plotted without the shape if the shape's
             ``visible`` attribute is False, but ``plot_zones`` is True.
-
-        :param plot_zones:
-        :type plot_zones: bool.
-        :param ax: Axes to be used for plotting the shape.
-        :type ax: Axes.
-        :param alpha: Transparency of all elements of the shape.
-        :type alpha: float.
-        :returns: the polygon as a patch.
-        :rtype: PolygonPatch.
         """
         if not ax:
             ax = plt.gca()

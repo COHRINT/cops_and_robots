@@ -9,14 +9,7 @@ such as:
   of the environment information;
 * animation to display its understanding of the world to the human.
 
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``robot`` for all basic functionality.
-        2. ``camera`` for a visual sensor.
-        3. ``human`` for a fleshy sensor.
 """
-
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Nick Sweet", "Nisar Ahmed"]
@@ -41,31 +34,47 @@ from cops_and_robots.robo_tools.fusion.human import Human
 class Cop(Robot):
     """The Cop subclass of the generic robot type.
 
-    :param pose: the centroid's pose as [x,y,theta] in [m,m,deg].
-    :type pose: a 3-element list of floats.
-    :param fusion_engine_type: either 'discrete' or 'continuous'.
-    :type fusion_engine_type: String.
-    :param cop_model: imagined motion model for cops as one of:
-        1. 'stationary'
-        2. 'random walk'
-        3. 'clockwise'
-        4. 'counter-clockwise'
-    :type cop_model: string.
-    :param robber_model: imagined motion model for robbers as one of:
-        1. 'stationary'
-        2. 'random walk'
-        3. 'clockwise'
-        4. 'counter-clockwise'
-    :type robber_model: string.
-    """
+    Cops extend the functionality of basic robots, providing sensing (both
+    camera-based and human) and a fusion engine.
 
-    # Define possible statuses as an ordered list
-    mission_statuses = ['searching', 'investigating', 'capturing', 'done']
+    Parameters
+    ----------
+    name : str, optional
+        The cop's name (defaults to 'Deckard').
+    pose : list of float, optional
+        The cop's initial [x, y, theta] (defaults to [0, 0.5, 90]).
+    fusion_engine_type : {'discrete','continuous'}
+        For particle filters or gaussian mixture filters, respectively.
+    planner_type: {'simple', 'particle', 'MAP'}
+        The cop's own type of planner.
+    cop_model: {'stationary', 'random walk', 'clockwise', 'counterclockwise'}
+        The type of planner this cop believes other cops use.
+    robber_model: {'stationary', 'random walk', 'clockwise',
+      'counterclockwise'}
+        The type of planner this cop believes robbers use.
+
+    Attributes
+    ----------
+    fusion_engine
+    planner
+    found_robbers : dict
+        All robbers found so far.
+    sensors : dict
+        All sensors owned by the cop.
+    mission_statuses : {'searching', 'capturing', 'done'}
+        The possible mission-level statuses of any cop, where:
+            * `searching` means the cop is exploring the environment;
+            * `capturing` means the cop has detected a robber and is moving 
+                to capture it;
+            * `done` means all robbers have been captured.
+
+    """
+    mission_statuses = ['searching', 'capturing', 'done']
 
     def __init__(self,
                  name="Deckard",
                  pose=[0, 0.5, 90],
-                 fusion_engine_type='discrete',
+                 fusion_engine_type='particle',
                  planner_type='particle',
                  cop_model='simple',
                  robber_model='random walk'):
@@ -76,7 +85,7 @@ class Cop(Robot):
                                   role='cop',
                                   status=['searching', 'without a goal'],
                                   consider_others=True,
-                                  default_color=cnames['darkgreen'])
+                                  color_str='darkgreen')
 
         # Tracking attributes
         self.found_robbers = {}
@@ -92,24 +101,24 @@ class Cop(Robot):
                                           robber_model)
         self.sensors = {}
         self.sensors['camera'] = Camera((0, 0, 0))
-        self.sensors['human'] = Human(self.map.shape_layer.shapes,
+        self.sensors['human'] = Human(self.map.shape_layer,
                                       robber_names)
         self.map.add_human_sensor(self.sensors['human'])
-        self.update_rate = 1  # [Hz]
 
         # Animation attributes
+        self.update_rate = 1  # [Hz]
         self.show_animation = False
         self.stream = self.map.animation_stream()
 
     def update_mission_status(self):
-        """Update the cop's status from a priority list.
+        """Update the cop's high-level mission status.
 
         Update the cop's status from one of:
             1. done (all robots have been captured)
             2. capturing (moving to view pose to capture target)
             3. searching (moving around to gather information)
-        """
 
+        """
         detected_robber = any(self.missing_robbers.values()).status[0] \
             == 'detected'
 
@@ -134,8 +143,9 @@ class Cop(Robot):
     def animated_exploration(self):
         """Start the cop's exploration of the environment, while
         animating the world from the cop's perspective.
+
         """
-        # <>TODO FIX FRAMES (i.e. stop animation once done)
+        # <>TODO fix frames (i.e. stop animation once done)
         self.show_animation = True
         self.ani = animation.FuncAnimation(self.map.fig,
                                            self.update,
