@@ -29,7 +29,7 @@ for mod_name in MOCK_MODULES:
 
 # -- General configuration ------------------------------------------------
 
-sys.path.append(os.path.abspath('../../'))
+sys.path.insert(os.path.abspath('../../'))
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
