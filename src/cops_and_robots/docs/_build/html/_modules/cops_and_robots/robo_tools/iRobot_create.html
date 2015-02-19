@@ -51,20 +51,16 @@
 <span class="c">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;This module allows for the control of an iRobot Create base.</span>
 
-<span class="sd">It is expected to be run on the iRobot&#39;s computer itself, where serial </span>
-<span class="sd">commands are sent to the base. It is a superclass of Robot, which </span>
+<span class="sd">It is expected to be run on the iRobot&#39;s computer itself, where serial</span>
+<span class="sd">commands are sent to the base. It is a superclass of Robot, which</span>
 <span class="sd">defines any and all hardwre aspects of the robot control.</span>
 
 <span class="sd">The &#39;base&#39; is considered to be simply the iRobot Create&#39;s robotic</span>
 <span class="sd">chassis. Any other reference to the iRobot Create nominally</span>
-<span class="sd">includes the additional aspects of the robot (i.e. computer, </span>
+<span class="sd">includes the additional aspects of the robot (i.e. computer,</span>
 <span class="sd">camera, actuators).</span>
 
-<span class="sd">Required Knowledge:</span>
-<span class="sd">    This module and its classes do not need to know about any other </span>
-<span class="sd">    parts of the cops_and_robots parent module.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-
 <span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
 <span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
 <span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
@@ -74,86 +70,115 @@
 <span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
 <span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
 
-<span class="kn">import</span> <span class="nn">math</span><span class="o">,</span> <span class="nn">logging</span><span class="o">,</span> <span class="nn">serial</span><span class="o">,</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">serial</span>
+<span class="kn">import</span> <span class="nn">threading</span>
 
-<span class="c">#Make import Python 2 or Python 3 agnostic</span>
+<span class="c"># Make import Python 2 or Python 3 agnostic</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">queue</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">Queue</span> <span class="kn">as</span> <span class="nn">queue</span>
 
+
 <div class="viewcode-block" id="iRobotCreate"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate">[docs]</a><span class="k">class</span> <span class="nc">iRobotCreate</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Definition and implementation of iRobot Create functionality.</span>
-<span class="sd">    </span>
-<span class="sd">    Largely controls movement of the robot, but also provides </span>
+
+<span class="sd">    Largely controls movement of the robot, but also provides</span>
 <span class="sd">    interfaces for the robot&#39;s bump and cliff sensors.</span>
 
-<span class="sd">    :param name: hostname of physical robot&#39;s computer.</span>
-<span class="sd">    :type name: String.</span>
-<span class="sd">    :param control_hardware: whether to begin controlling hardware or not.</span>
-<span class="sd">    :type control_hardware: bool.</span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    DIAMETER : float</span>
+<span class="sd">        Diameter of the circular robot in meters.</span>
+<span class="sd">    MAX_SPEED : float</span>
+<span class="sd">        Maximum linear speed in mm/s.</span>
+<span class="sd">    MAX_TURN_RADIUS : float</span>
+<span class="sd">        Maximum radius of the turning circle in mm.</span>
+<span class="sd">    RAD_STRAIGHT : float</span>
+<span class="sd">        Special radius for linear movement.</span>
+<span class="sd">    RAD_CW : float</span>
+<span class="sd">        Special radius of a turning circle for in-place clockwise rotation.</span>
+<span class="sd">    RAD_CCW : float</span>
+<span class="sd">        Special radius of a turning circle for in-place counterclockwise</span>
+<span class="sd">        rotation.</span>
+<span class="sd">    OPCODE : dict</span>
+<span class="sd">        All opcodes required to communicate with the iRobot Create.</span>
+<span class="sd">    SENSOR_PKT : dict</span>
+<span class="sd">        Identifiers for each sensor packet to be received from the iRobot</span>
+<span class="sd">        Create.</span>
+<span class="sd">    CHARGE_MODE : dict</span>
+<span class="sd">        Identifiers for each charging mode.</span>
+<span class="sd">    OI_MODE : dict</span>
+<span class="sd">        Identifiers for each operation mode.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Class Constants</span>
+    <span class="n">DIAMETER</span> <span class="o">=</span> <span class="mf">0.34</span>  <span class="c"># [m] (appoximate)</span>
+    <span class="n">MAX_SPEED</span> <span class="o">=</span> <span class="mi">500</span>  <span class="c"># [mm/s] linear speed</span>
+    <span class="n">MAX_TURN_RADIUS</span> <span class="o">=</span> <span class="mi">2000</span>  <span class="c"># [mm] roation radius</span>
 
-    <span class="c">#Class Constants</span>
-    <span class="n">DIAMETER</span>        <span class="o">=</span> <span class="mf">0.34</span> <span class="c">#[m] (appoximate)</span>
-    <span class="n">MAX_SPEED</span>       <span class="o">=</span> <span class="mi">500</span>   <span class="c">#[mm/s] linear speed</span>
-    <span class="n">MAX_ROTATION_RADIUS</span>      <span class="o">=</span> <span class="mi">2000</span>  <span class="c">#[mm] roation radius</span>
-
-    <span class="c">#Special movement radii</span>
-    <span class="n">RAD_STRAIGHT</span>    <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">15</span> <span class="o">-</span> <span class="mi">1</span>
-    <span class="n">RAD_CW</span>          <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span>
-    <span class="n">RAD_CCW</span>         <span class="o">=</span> <span class="mi">1</span>
+    <span class="c"># Special movement radii</span>
+    <span class="n">RAD_STRAIGHT</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">15</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">RAD_CW</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">RAD_CCW</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="n">OPCODE</span> <span class="o">=</span> <span class="p">{</span>
         <span class="c"># Getting Started</span>
-        <span class="s">&#39;start&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>           <span class="c">#[128]</span>
-        <span class="s">&#39;baud&#39;</span><span class="p">:</span> <span class="mi">129</span><span class="p">,</span>            <span class="c">#[129][Baud Code]</span>
-        <span class="s">&#39;safe&#39;</span><span class="p">:</span> <span class="mi">131</span><span class="p">,</span>            <span class="c">#[130]</span>
-        <span class="s">&#39;full&#39;</span><span class="p">:</span> <span class="mi">132</span><span class="p">,</span>            <span class="c">#[132]</span>
+        <span class="s">&#39;start&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>  <span class="c"># [128]</span>
+        <span class="s">&#39;baud&#39;</span><span class="p">:</span> <span class="mi">129</span><span class="p">,</span>  <span class="c"># [129][Baud Code]</span>
+        <span class="s">&#39;safe&#39;</span><span class="p">:</span> <span class="mi">131</span><span class="p">,</span>  <span class="c"># [130]</span>
+        <span class="s">&#39;full&#39;</span><span class="p">:</span> <span class="mi">132</span><span class="p">,</span>  <span class="c"># [132]</span>
         <span class="c"># Demo Commands</span>
-        <span class="s">&#39;spot&#39;</span><span class="p">:</span> <span class="mi">134</span><span class="p">,</span>            <span class="c">#[128]</span>
-        <span class="s">&#39;cover&#39;</span><span class="p">:</span> <span class="mi">135</span><span class="p">,</span>           <span class="c">#[135]</span>
-        <span class="s">&#39;demo&#39;</span><span class="p">:</span> <span class="mi">136</span><span class="p">,</span>            <span class="c">#[136][Which-Demo]</span>
-        <span class="s">&#39;cover-and-dock&#39;</span><span class="p">:</span> <span class="mi">143</span><span class="p">,</span>  <span class="c">#[143]</span>
+        <span class="s">&#39;spot&#39;</span><span class="p">:</span> <span class="mi">134</span><span class="p">,</span>  <span class="c"># [128]</span>
+        <span class="s">&#39;cover&#39;</span><span class="p">:</span> <span class="mi">135</span><span class="p">,</span>  <span class="c"># [135]</span>
+        <span class="s">&#39;demo&#39;</span><span class="p">:</span> <span class="mi">136</span><span class="p">,</span>  <span class="c"># [136][Which-Demo]</span>
+        <span class="s">&#39;cover-and-dock&#39;</span><span class="p">:</span> <span class="mi">143</span><span class="p">,</span>  <span class="c"># [143]</span>
         <span class="c"># Actuator Commands</span>
-        <span class="s">&#39;drive&#39;</span><span class="p">:</span> <span class="mi">137</span><span class="p">,</span>           <span class="c">#[137][Vel-high-byte][Vel-low-byte][Rad-high-byte][Rad-low-byte]</span>
-        <span class="s">&#39;drive-direct&#39;</span><span class="p">:</span> <span class="mi">145</span><span class="p">,</span>    <span class="c">#[145][Right-vel-high-byte][Right-vel-low-byte][Left-vel-high-byte][Left-vel-low-byte]</span>
-        <span class="s">&#39;LEDs&#39;</span><span class="p">:</span> <span class="mi">139</span><span class="p">,</span>            <span class="c">#[139][LED][Color][Intensity]</span>
+        <span class="s">&#39;drive&#39;</span><span class="p">:</span> <span class="mi">137</span><span class="p">,</span>  <span class="c"># [137][Vel-high-byte][Vel-low-byte][Rad-high-byte]</span>
+                       <span class="c"># [Rad-low-byte]</span>
+        <span class="s">&#39;drive-direct&#39;</span><span class="p">:</span> <span class="mi">145</span><span class="p">,</span>  <span class="c"># [145][Right-vel-high-byte][Right-vel-low-byte]</span>
+                              <span class="c"># [Left-vel-high-byte][Left-vel-low-byte]</span>
+        <span class="s">&#39;LEDs&#39;</span><span class="p">:</span> <span class="mi">139</span><span class="p">,</span>  <span class="c"># [139][LED][Color][Intensity]</span>
         <span class="c"># Sensor Commands</span>
-        <span class="s">&#39;sensors&#39;</span><span class="p">:</span><span class="mi">142</span><span class="p">,</span>          <span class="c">#[142][Packet Id]</span>
-        <span class="s">&#39;stream&#39;</span><span class="p">:</span> <span class="mi">148</span><span class="p">,</span>          <span class="c">#[148][Num-packets][Pack-id-1][Pack-id-2]...</span>
-        <span class="s">&#39;query-list&#39;</span><span class="p">:</span><span class="mi">149</span><span class="p">,</span>       <span class="c">#[149][Pack-id-1][Pack-id-2]...    </span>
-        <span class="s">&#39;stream_toggle&#39;</span><span class="p">:</span> <span class="mi">150</span>    <span class="c">#[150][0 or 1] to [stop or resume] the stream</span>
+        <span class="s">&#39;sensors&#39;</span><span class="p">:</span> <span class="mi">142</span><span class="p">,</span>  <span class="c"># [142][Packet Id]</span>
+        <span class="s">&#39;stream&#39;</span><span class="p">:</span> <span class="mi">148</span><span class="p">,</span>  <span class="c"># [148][Num-packets][Pack-id-1][Pack-id-2]...</span>
+        <span class="s">&#39;query-list&#39;</span><span class="p">:</span> <span class="mi">149</span><span class="p">,</span>  <span class="c"># [149][Pack-id-1][Pack-id-2]...</span>
+        <span class="s">&#39;stream_toggle&#39;</span><span class="p">:</span> <span class="mi">150</span>  <span class="c"># [150][0 or 1] to [stop or resume] the stream</span>
     <span class="p">}</span>
 
     <span class="n">SENSOR_PKT</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s">&#39;bump-wheel-drop&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>   <span class="c">#[4] caster; [3] wheel left; [2] wheel right; [1] bump left; [0] bump right</span>
-        <span class="s">&#39;wall&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>              <span class="c">#[0]</span>
-        <span class="s">&#39;cliff-left&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>        <span class="c">#[0]</span>
-        <span class="s">&#39;cliff-front-left&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="c">#[0]</span>
-        <span class="s">&#39;cliff-front-right&#39;</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span><span class="c">#[0]</span>
-        <span class="s">&#39;cliff-right&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>      <span class="c">#[0]</span>
-        <span class="s">&#39;virtual-wall&#39;</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>     <span class="c">#[0]</span>
-        <span class="s">&#39;overcurrent&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>      <span class="c">#[4] left wheel; [3] right wheel; [2] LDO2; [1] LDO0 [0] LDO1</span>
-        <span class="s">&#39;IR&#39;</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>               <span class="c">#[7-0] see Create Open Interface</span>
-        <span class="s">&#39;buttons&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>          <span class="c">#[2] Advance; [0] Play</span>
-        <span class="s">&#39;distance&#39;</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>         <span class="c">#[15-0] mm since last requested</span>
-        <span class="s">&#39;angle&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>            <span class="c">#[15-0] degrees since last requested</span>
-        <span class="s">&#39;charging&#39;</span><span class="p">:</span> <span class="mi">21</span><span class="p">,</span>         <span class="c">#[5] fault; [4] waiting; [3] trickle; [2] full; [1] reconditioning; [0] none        </span>
-        <span class="s">&#39;voltage&#39;</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span>          <span class="c">#[15-0] battery voltage in mV</span>
-        <span class="s">&#39;current&#39;</span><span class="p">:</span> <span class="mi">23</span><span class="p">,</span>          <span class="c">#[15-0] battery current in mA (+ for charging)</span>
-        <span class="s">&#39;temperature&#39;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>      <span class="c">#[7-0] battery temperature in degrees Celsius</span>
-        <span class="s">&#39;charge&#39;</span><span class="p">:</span><span class="mi">25</span><span class="p">,</span>            <span class="c">#[15-0] battery charge in mAh</span>
-        <span class="s">&#39;capacity&#39;</span><span class="p">:</span><span class="mi">26</span><span class="p">,</span>          <span class="c">#[15-0] battery capacity in mAh</span>
-        <span class="s">&#39;wall-signal&#39;</span><span class="p">:</span><span class="mi">27</span><span class="p">,</span>       <span class="c">#[11-0] sensor signal strength</span>
-        <span class="s">&#39;cliff-left-signal&#39;</span><span class="p">:</span><span class="mi">28</span><span class="p">,</span> <span class="c">#[11-0] sensor signal strength</span>
-        <span class="s">&#39;cliff-front-left-signal&#39;</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span> <span class="c">#[11-0] sensor signal strength</span>
-        <span class="s">&#39;cliff-front-right-signal&#39;</span><span class="p">:</span><span class="mi">30</span><span class="p">,</span><span class="c">#[11-0] sensor signal strength</span>
-        <span class="s">&#39;cliff-right-signal&#39;</span><span class="p">:</span><span class="mi">31</span><span class="p">,</span><span class="c">#[11-0] sensor signal strength</span>
-        <span class="s">&#39;OI-mode&#39;</span><span class="p">:</span><span class="mi">35</span>            <span class="c">#[0] off; [1] passive; [2] safe; [3] full</span>
+        <span class="s">&#39;bump-wheel-drop&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>  <span class="c"># [4] caster; [3] wheel left; [2] wheel right;</span>
+                               <span class="c"># [1] bump left; [0] bump right</span>
+        <span class="s">&#39;wall&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>  <span class="c"># [0]</span>
+        <span class="s">&#39;cliff-left&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>  <span class="c"># [0]</span>
+        <span class="s">&#39;cliff-front-left&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>  <span class="c"># [0]</span>
+        <span class="s">&#39;cliff-front-right&#39;</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>  <span class="c"># [0]</span>
+        <span class="s">&#39;cliff-right&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>  <span class="c"># [0]</span>
+        <span class="s">&#39;virtual-wall&#39;</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>  <span class="c"># [0]</span>
+        <span class="s">&#39;overcurrent&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>  <span class="c"># [4] left wheel; [3] right wheel; [2] LDO2;</span>
+                            <span class="c"># [1] LDO0 [0] LDO1</span>
+        <span class="s">&#39;IR&#39;</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>  <span class="c"># [7-0] see Create Open Interface</span>
+        <span class="s">&#39;buttons&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>  <span class="c"># [2] Advance; [0] Play</span>
+        <span class="s">&#39;distance&#39;</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>  <span class="c"># [15-0] mm since last requested</span>
+        <span class="s">&#39;angle&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>  <span class="c"># [15-0] degrees since last requested</span>
+        <span class="s">&#39;charging&#39;</span><span class="p">:</span> <span class="mi">21</span><span class="p">,</span>  <span class="c"># [5] fault; [4] waiting; [3] trickle; [2] full;</span>
+                         <span class="c"># [1] reconditioning; [0] none</span>
+        <span class="s">&#39;voltage&#39;</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span>  <span class="c"># [15-0] battery voltage in mV</span>
+        <span class="s">&#39;current&#39;</span><span class="p">:</span> <span class="mi">23</span><span class="p">,</span>  <span class="c"># [15-0] battery current in mA (+ for charging)</span>
+        <span class="s">&#39;temperature&#39;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>  <span class="c"># [7-0] battery temperature in degrees Celsius</span>
+        <span class="s">&#39;charge&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>  <span class="c"># [15-0] battery charge in mAh</span>
+        <span class="s">&#39;capacity&#39;</span><span class="p">:</span> <span class="mi">26</span><span class="p">,</span>  <span class="c"># [15-0] battery capacity in mAh</span>
+        <span class="s">&#39;wall-signal&#39;</span><span class="p">:</span> <span class="mi">27</span><span class="p">,</span>  <span class="c"># [11-0] sensor signal strength</span>
+        <span class="s">&#39;cliff-left-signal&#39;</span><span class="p">:</span> <span class="mi">28</span><span class="p">,</span>  <span class="c"># [11-0] sensor signal strength</span>
+        <span class="s">&#39;cliff-front-left-signal&#39;</span><span class="p">:</span> <span class="mi">29</span><span class="p">,</span>  <span class="c"># [11-0] sensor signal strength</span>
+        <span class="s">&#39;cliff-front-right-signal&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>  <span class="c"># [11-0] sensor signal strength</span>
+        <span class="s">&#39;cliff-right-signal&#39;</span><span class="p">:</span> <span class="mi">31</span><span class="p">,</span>  <span class="c"># [11-0] sensor signal strength</span>
+        <span class="s">&#39;OI-mode&#39;</span><span class="p">:</span> <span class="mi">35</span>  <span class="c"># [0] off; [1] passive; [2] safe; [3] full</span>
     <span class="p">}</span>
 
-    <span class="n">CHARGING_MODE</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">CHARGE_MODE</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s">&#39;none&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
         <span class="s">&#39;reconditioning&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
         <span class="s">&#39;full&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
@@ -169,83 +194,81 @@
         <span class="s">&#39;full&#39;</span><span class="p">:</span> <span class="mi">3</span>
     <span class="p">}</span>
 
-<div class="viewcode-block" id="iRobotCreate.__init__"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">charging_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGING_MODE</span><span class="p">[</span><span class="s">&#39;none&#39;</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">charge_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGE_MODE</span><span class="p">[</span><span class="s">&#39;none&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">battery_charge</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">battery_capacity</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bump_left</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bump_right</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">MAX_ROTATION_RADIUS</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">OI_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;off&#39;</span><span class="p">]</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">MAX_TURN_RADIUS</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oi_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;off&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cmd_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
 
-        <span class="c">#Add logger</span>
+        <span class="c"># Add logger</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
         <span class="n">console_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
         <span class="n">console_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">console_handler</span><span class="p">)</span>
-</div>
+
 <div class="viewcode-block" id="iRobotCreate.start_base_cx"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.start_base_cx">[docs]</a>    <span class="k">def</span> <span class="nf">start_base_cx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Start the thread to begin communication with the iRobot Create base.&quot;&quot;&quot;</span>
-        <span class="c">#Spawn base thread</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">base_t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">base_t_stop</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span> <span class="c">#used for graceful killing of threads</span>
+        <span class="sd">&quot;&quot;&quot;Start the thread to communicate with the iRobot Create base.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_thread_f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_t_stop</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>  <span class="c"># Allow graceful killing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">base_t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="iRobotCreate.stop_base_cx"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.stop_base_cx">[docs]</a>    <span class="k">def</span> <span class="nf">stop_base_cx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Stop the thread to begin communication with the iRobot Create base.&quot;&quot;&quot;</span>
-        <span class="c">#allowing ctrl-c to close thread (see </span>
-        <span class="c">#http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>    
+        <span class="sd">&quot;&quot;&quot;Stop the thread communicating with the iRobot Create base.&quot;&quot;&quot;</span>
+        <span class="c"># allowing ctrl-c to close thread (see</span>
+        <span class="c"># http://www.regexprn.com/2010/05/killing-multithreaded-python-programs.html)</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">base_t</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>           
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_t</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">base_t_stop</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
                 <span class="k">break</span>
-
 </div>
-<div class="viewcode-block" id="iRobotCreate.base"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.base">[docs]</a>    <span class="k">def</span> <span class="nf">base</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_base_thread_f</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Thread function to implement serial communication with the base.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c">#Connect to the serial port</span>
+        <span class="c"># Connect to the serial port</span>
         <span class="n">portstr</span> <span class="o">=</span> <span class="s">&#39;/dev/ttyUSB0&#39;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">ser</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="n">portstr</span><span class="p">,</span><span class="mi">57600</span><span class="p">,</span><span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">ser</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="n">portstr</span><span class="p">,</span> <span class="mi">57600</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">ser</span> <span class="o">=</span> <span class="s">&quot;fail&quot;</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Failed to connect to {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">portstr</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">ser</span>
 
-        <span class="c">#Enable commanding of the robot</span>
-        <span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OPCODE</span><span class="p">[</span><span class="s">&#39;start&#39;</span><span class="p">])</span>\
+        <span class="c"># Enable commanding of the robot</span>
+        <span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OPCODE</span><span class="p">[</span><span class="s">&#39;start&#39;</span><span class="p">])</span>
                   <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OPCODE</span><span class="p">[</span><span class="s">&#39;full&#39;</span><span class="p">]))</span>
 
-        <span class="c">#Loop to poll sensors and command the base</span>
+        <span class="c"># Loop to poll sensors and command the base</span>
         <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_t_stop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
-            <span class="c">#Define sensors to be polled</span>
+            <span class="c"># Define sensors to be polled</span>
             <span class="n">num_packets</span> <span class="o">=</span> <span class="mi">5</span>
-            <span class="n">expected_response_length</span> <span class="o">=</span> <span class="mi">7</span> <span class="c">#Number of data bytes returned</span>
-            <span class="n">sensors</span> <span class="o">=</span> <span class="p">[</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;OI-mode&#39;</span><span class="p">],</span> 
-                        <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;charging&#39;</span><span class="p">],</span> 
-                        <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;charge&#39;</span><span class="p">],</span>
-                        <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;capacity&#39;</span><span class="p">],</span>
-                        <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;bump-wheel-drop&#39;</span><span class="p">]</span> <span class="p">]</span>
+            <span class="n">expected_response_length</span> <span class="o">=</span> <span class="mi">7</span>  <span class="c"># Number of data bytes returned</span>
+            <span class="n">sensors</span> <span class="o">=</span> <span class="p">[</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;OI-mode&#39;</span><span class="p">],</span>
+                       <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;charging&#39;</span><span class="p">],</span>
+                       <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;charge&#39;</span><span class="p">],</span>
+                       <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;capacity&#39;</span><span class="p">],</span>
+                       <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">SENSOR_PKT</span><span class="p">[</span><span class="s">&#39;bump-wheel-drop&#39;</span><span class="p">]</span>
+                       <span class="p">]</span>
 
-            <span class="c">#Create the packet to be transmitted to the base</span>
-            <span class="n">TX_packet</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OPCODE</span><span class="p">[</span><span class="s">&#39;query-list&#39;</span><span class="p">])</span>\
-                      <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">num_packets</span><span class="p">)</span>
+            <span class="c"># Create the packet to be transmitted to the base</span>
+            <span class="n">tx_packet</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OPCODE</span><span class="p">[</span><span class="s">&#39;query-list&#39;</span><span class="p">])</span>\
+                <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">num_packets</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">sensor</span> <span class="ow">in</span> <span class="n">sensors</span><span class="p">:</span>
-                <span class="n">TX_packet</span> <span class="o">=</span> <span class="n">TX_packet</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">sensor</span><span class="p">)</span>
-                          
-            <span class="c">#Flush the stream and request data packets</span>
-            <span class="c"># ser.flushOutput()</span>
+                <span class="n">tx_packet</span> <span class="o">=</span> <span class="n">tx_packet</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">sensor</span><span class="p">)</span>
+
+            <span class="c"># Flush the stream and request data packets</span>
             <span class="n">ser</span><span class="o">.</span><span class="n">flushInput</span><span class="p">()</span>
-            <span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">TX_packet</span><span class="p">)</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Transmitted packet: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">TX_packet</span><span class="p">))</span>
-            
-            <span class="c">#Read the response</span>
+            <span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tx_packet</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Transmitted packet: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tx_packet</span><span class="p">))</span>
+
+            <span class="c"># Read the response</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">response</span> <span class="o">=</span> <span class="n">ser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">expected_response_length</span><span class="p">)</span>
                 <span class="n">logging_resp</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">ord</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">response</span><span class="p">]</span>
@@ -254,111 +277,122 @@
                 <span class="n">response</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Failed to read from {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">portstr</span><span class="p">))</span>
 
-            <span class="c">#Evaluate the response</span>
+            <span class="c"># Evaluate the response</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">expected_response_length</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Unexpected response length ({} instead of {})&quot;</span> \
-                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">),</span><span class="n">expected_response_length</span><span class="p">)</span> <span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Unexpected response length ({} instead of {})&quot;</span>
+                              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">),</span> <span class="n">expected_response_length</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c">#Break up returned bytes</span>
-                <span class="n">OI_mode_byte</span>    <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                <span class="n">charging_byte</span>   <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-                <span class="n">charge_bytes</span>    <span class="o">=</span> <span class="p">[</span><span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
-                <span class="n">capacity_bytes</span>  <span class="o">=</span> <span class="p">[</span><span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">4</span><span class="p">]),</span><span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">5</span><span class="p">])]</span>
-                <span class="n">bump_byte</span>       <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span>
-                
-                <span class="c">#Update OI mode</span>
-                <span class="k">if</span> <span class="n">OI_mode_byte</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">OI_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;full&#39;</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="n">OI_mode_byte</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">OI_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;safe&#39;</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="n">OI_mode_byte</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">OI_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;passive&#39;</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="ow">not</span> <span class="n">OI_mode_byte</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">OI_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;off&#39;</span><span class="p">]</span>
+                <span class="c"># Break up returned bytes</span>
+                <span class="n">oi_mode_byte</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">charge_mode_byte</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">charge_bytes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+                <span class="n">capacity_bytes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">4</span><span class="p">]),</span> <span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">5</span><span class="p">])]</span>
+                <span class="n">bump_byte</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span>
+
+                <span class="c"># Update OI mode</span>
+                <span class="k">if</span> <span class="n">oi_mode_byte</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">oi_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;full&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">oi_mode_byte</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">oi_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;safe&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">oi_mode_byte</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">oi_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;passive&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">oi_mode_byte</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">oi_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OI_MODE</span><span class="p">[</span><span class="s">&#39;off&#39;</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Incorrect OI mode returned!&#39;</span><span class="p">)</span>
 
-                <span class="c">#Update charging mode</span>
-                <span class="k">if</span> <span class="n">charging_byte</span> <span class="o">&amp;</span> <span class="mi">32</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">charging_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGING_MODE</span><span class="p">[</span><span class="s">&#39;fault&#39;</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="n">charging_byte</span> <span class="o">&amp;</span> <span class="mi">16</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">charging_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGING_MODE</span><span class="p">[</span><span class="s">&#39;waiting&#39;</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="n">charging_byte</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">charging_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGING_MODE</span><span class="p">[</span><span class="s">&#39;trickle&#39;</span><span class="p">]</span>                
-                <span class="k">elif</span> <span class="n">charging_byte</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">charging_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGING_MODE</span><span class="p">[</span><span class="s">&#39;full&#39;</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="n">charging_byte</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">charging_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGING_MODE</span><span class="p">[</span><span class="s">&#39;reconditioning&#39;</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="ow">not</span> <span class="n">charging_byte</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">charging_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGING_MODE</span><span class="p">[</span><span class="s">&#39;none&#39;</span><span class="p">]</span>
+                <span class="c"># Update charging mode</span>
+                <span class="k">if</span> <span class="n">charge_mode_byte</span> <span class="o">&amp;</span> <span class="mi">32</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">charge_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGE_MODE</span><span class="p">[</span><span class="s">&#39;fault&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">charge_mode_byte</span> <span class="o">&amp;</span> <span class="mi">16</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">charge_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGE_MODE</span><span class="p">[</span><span class="s">&#39;waiting&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">charge_mode_byte</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">charge_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGE_MODE</span><span class="p">[</span><span class="s">&#39;trickle&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">charge_mode_byte</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">charge_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGE_MODE</span><span class="p">[</span><span class="s">&#39;full&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">charge_mode_byte</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">charge_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span> \
+                        <span class="o">.</span><span class="n">CHARGE_MODE</span><span class="p">[</span><span class="s">&#39;reconditioning&#39;</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">charge_mode_byte</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">charge_mode</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">CHARGE_MODE</span><span class="p">[</span><span class="s">&#39;none&#39;</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Incorrect charging mode returned!&#39;</span><span class="p">)</span>                                                                
+                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Incorrect charging mode returned!&#39;</span><span class="p">)</span>
 
-                <span class="c">#Update battery characteristics</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">battery_capacity</span> <span class="o">=</span> <span class="n">capacity_bytes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">256</span> <span class="o">+</span> <span class="n">capacity_bytes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">battery_charge</span>   <span class="o">=</span> <span class="n">charge_bytes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">256</span> <span class="o">+</span> <span class="n">charge_bytes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="c"># Update battery characteristics</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">battery_capacity</span> <span class="o">=</span> <span class="n">capacity_bytes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">256</span> \
+                    <span class="o">+</span> <span class="n">capacity_bytes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">battery_charge</span> <span class="o">=</span> <span class="n">charge_bytes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">256</span> <span class="o">+</span> <span class="n">charge_bytes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">battery_charge</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">battery_capacity</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">battery_charge</span> <span class="o">=</span> <span class="mi">0</span>
-                    <span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Battery charge reported as greater than capacity.&quot;</span><span class="p">)</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Capacity: {} </span><span class="se">\t</span><span class="s"> Charge: {}&quot;</span> \
-                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">battery_capacity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">battery_charge</span><span class="p">))</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Charge reported greater than capacity.&quot;</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Capacity: {} </span><span class="se">\t</span><span class="s"> Charge: {}&quot;</span>
+                              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">battery_capacity</span><span class="p">,</span>
+                                      <span class="bp">self</span><span class="o">.</span><span class="n">battery_charge</span><span class="p">))</span>
 
-                <span class="c">#Update bump sensor readings</span>
+                <span class="c"># Update bump sensor readings</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bump_right</span> <span class="o">=</span> <span class="n">bump_byte</span> <span class="o">&amp;</span> <span class="mi">1</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">bump_left</span>  <span class="o">=</span> <span class="n">bump_byte</span> <span class="o">&amp;</span> <span class="mi">2</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bump_left</span> <span class="o">=</span> <span class="n">bump_byte</span> <span class="o">&amp;</span> <span class="mi">2</span>
 
-            <span class="c">#Loop through messages in the command queue</span>
+            <span class="c"># Loop through messages in the command queue</span>
             <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmd_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
                 <span class="n">cmd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmd_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
                 <span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
 
-        <span class="c">#Stop the stream</span>
+        <span class="c"># Stop the stream</span>
         <span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OPCODE</span><span class="p">[</span><span class="s">&#39;stream_toggle&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Exiting gracefully!&quot;</span><span class="p">)</span>
         <span class="n">ser</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</div>
-<div class="viewcode-block" id="iRobotCreate.int2ascii"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.int2ascii">[docs]</a>    <span class="k">def</span> <span class="nf">int2ascii</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">integer</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_int2ascii</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">integer</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Take a 16-bit signed integer and convert it to two ascii characters.</span>
 
-<span class="sd">        :param integer: integer value no larger than (+/-)2^15.</span>
-<span class="sd">        :type integer: int.</span>
-<span class="sd">        :returns: high and low ascii characters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        
-        <span class="k">if</span> <span class="n">integer</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">low_byte</span>    <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">integer</span><span class="p">)</span> <span class="o">|</span> <span class="o">~</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">high_byte</span>   <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">integer</span><span class="o">&gt;&gt;</span><span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="o">~</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">low_byte</span>    <span class="o">=</span> <span class="n">integer</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">high_byte</span>   <span class="o">=</span> <span class="n">integer</span><span class="o">&gt;&gt;</span><span class="mi">8</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>            
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        integer : int</span>
+<span class="sd">            Integer value no larger than (+/-)2^15.</span>
 
-        <span class="n">low_char</span>    <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">low_byte</span><span class="p">)</span>
-        <span class="n">high_char</span>   <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">high_byte</span><span class="p">)</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            High and low byte ascii characters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">integer</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">low_byte</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">integer</span><span class="p">)</span> <span class="o">|</span> <span class="o">~</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">high_byte</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">integer</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="o">~</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">low_byte</span> <span class="o">=</span> <span class="n">integer</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">high_byte</span> <span class="o">=</span> <span class="n">integer</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">low_char</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">low_byte</span><span class="p">)</span>
+        <span class="n">high_char</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">high_byte</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span><span class="n">high_char</span><span class="p">,</span> <span class="n">low_char</span><span class="p">)</span>
-</div>
+
 <div class="viewcode-block" id="iRobotCreate.move"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.move">[docs]</a>    <span class="k">def</span> <span class="nf">move</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Move based on robot&#39;s speed and radius.</span>
 
-<span class="sd">        :returns: string of hex characters</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            A string of drive commands as hex characters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        
-        <span class="c">#Translate speed to upper and lower bytes</span>
-        <span class="p">(</span><span class="n">s_h</span><span class="p">,</span> <span class="n">s_l</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">int2ascii</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>
 
-        <span class="c">#Translate radius to upper and lower bytes</span>
-        <span class="p">(</span><span class="n">r_h</span><span class="p">,</span> <span class="n">r_l</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">int2ascii</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span><span class="p">)</span>
+        <span class="c"># Translate speed to upper and lower bytes</span>
+        <span class="p">(</span><span class="n">s_h</span><span class="p">,</span> <span class="n">s_l</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_int2ascii</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>
 
-        <span class="c">#Generate serial drive command</span>
-        <span class="n">drive_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">s_h</span><span class="p">,</span><span class="n">s_l</span><span class="p">,</span><span class="n">r_h</span><span class="p">,</span><span class="n">r_l</span><span class="p">]</span>
-        <span class="n">drive_params</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">chr</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OPCODE</span><span class="p">[</span><span class="s">&#39;drive&#39;</span><span class="p">]))</span>
+        <span class="c"># Translate radius to upper and lower bytes</span>
+        <span class="p">(</span><span class="n">r_h</span><span class="p">,</span> <span class="n">r_l</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_int2ascii</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span><span class="p">)</span>
+
+        <span class="c"># Generate serial drive command</span>
+        <span class="n">drive_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">s_h</span><span class="p">,</span> <span class="n">s_l</span><span class="p">,</span> <span class="n">r_h</span><span class="p">,</span> <span class="n">r_l</span><span class="p">]</span>
+        <span class="n">drive_params</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">chr</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">OPCODE</span><span class="p">[</span><span class="s">&#39;drive&#39;</span><span class="p">]))</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">drive_params</span><span class="p">)</span>
 
-        <span class="n">result</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">drive_params</span><span class="p">)</span> <span class="c">#Convert to a str</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">drive_params</span><span class="p">)</span>  <span class="c"># Convert to a str</span>
         <span class="k">return</span> <span class="n">result</span>
-
 </div>
-<div class="viewcode-block" id="iRobotCreate.faster"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.faster">[docs]</a>    <span class="k">def</span> <span class="nf">faster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">step</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<div class="viewcode-block" id="iRobotCreate.faster"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.faster">[docs]</a>    <span class="k">def</span> <span class="nf">faster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Increase iRobot create speed.</span>
 
 <span class="sd">        :param step: speed step size increase.</span>
@@ -370,12 +404,12 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">MAX_SPEED</span>
 </div>
-<div class="viewcode-block" id="iRobotCreate.slower"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.slower">[docs]</a>    <span class="k">def</span> <span class="nf">slower</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">step</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<div class="viewcode-block" id="iRobotCreate.slower"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.slower">[docs]</a>    <span class="k">def</span> <span class="nf">slower</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Decrease iRobot create speed.</span>
 
 <span class="sd">        :param step: speed step size increase.</span>
 <span class="sd">        :type step: int.</span>
-<span class="sd">        &quot;&quot;&quot;</span>     
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Slower...&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">-</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">-</span> <span class="n">step</span>
@@ -387,53 +421,53 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Forward!&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">RAD_STRAIGHT</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>     
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="iRobotCreate.backward"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.backward">[docs]</a>    <span class="k">def</span> <span class="nf">backward</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Move iRobot create forward at current speed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Backward!&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">RAD_STRAIGHT</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="iRobotCreate.turn"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.turn">[docs]</a>    <span class="k">def</span> <span class="nf">turn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">radius</span><span class="p">):</span>
+<div class="viewcode-block" id="iRobotCreate.turn"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.turn">[docs]</a>    <span class="k">def</span> <span class="nf">turn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radius</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Move in a circle.</span>
 
-<span class="sd">        :param radius: The longer radii make Create drive straighter,</span>
-<span class="sd">            while the shorter radii make Create turn more. The radius</span>
-<span class="sd">            is measured from the center of the turning circle to the </span>
-<span class="sd">            center of Create. A Drive command with a positive velocity </span>
-<span class="sd">            and a positive radius makes Create drive forward while </span>
-<span class="sd">            turning toward the left. A negative radius makes Create </span>
-<span class="sd">            turn toward the right.</span>
-<span class="sd">        :type radius: float.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        radius : float</span>
+<span class="sd">            Longer radii make Create drive straighter, while shorter radii</span>
+<span class="sd">            make the Create turn more. The radius is measured from the center</span>
+<span class="sd">            of the turning circle to the center of Create.</span>
+
+<span class="sd">            A Drive command with a positive velocity and a positive radius</span>
+<span class="sd">            makes Create drive forward while turning toward the left. A</span>
+<span class="sd">            negative radius makes Create turn toward the right.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Turning!&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">radius</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">MAX_ROTATION_RADIUS</span><span class="p">:</span>
-                <span class="n">radius</span>  <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">copysign</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">MAX_ROTATION_RADIUS</span><span class="p">,</span><span class="n">radius</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span>     <span class="o">=</span> <span class="n">radius</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>      <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">radius</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">MAX_TURN_RADIUS</span><span class="p">:</span>
+                <span class="n">radius</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">copysign</span><span class="p">(</span><span class="n">iRobotCreate</span><span class="o">.</span><span class="n">MAX_TURN_RADIUS</span><span class="p">,</span>
+                             <span class="n">radius</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span> <span class="o">=</span> <span class="n">radius</span>
 </div>
-<div class="viewcode-block" id="iRobotCreate.rotateCCW"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.rotateCCW">[docs]</a>    <span class="k">def</span> <span class="nf">rotateCCW</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="iRobotCreate.rotate_ccw"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.rotate_ccw">[docs]</a>    <span class="k">def</span> <span class="nf">rotate_ccw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Rotate in place counterclockwise.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Rotate Left!&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">RAD_CCW</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> 
 </div>
-<div class="viewcode-block" id="iRobotCreate.rotateCW"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.rotateCW">[docs]</a>    <span class="k">def</span> <span class="nf">rotateCW</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="iRobotCreate.rotate_cw"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.rotate_cw">[docs]</a>    <span class="k">def</span> <span class="nf">rotate_cw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Rotate in place clockwise.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;RotateRight!&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rotation_radius</span> <span class="o">=</span> <span class="n">iRobotCreate</span><span class="o">.</span><span class="n">RAD_CW</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>
 </div>
 <div class="viewcode-block" id="iRobotCreate.stop"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Stop the iRobotCreate base.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;STOP!&#39;</span><span class="p">)</span>   
-        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">0</span>
-        </div></div>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;STOP!&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">0</span></div></div>
 </pre></div>
 
           </div>

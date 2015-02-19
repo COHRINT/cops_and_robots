@@ -1,18 +1,7 @@
 #!/usr/bin/env python
 """Provides interface types for the human operator/sensor.
 
-TYPE ME UP
-
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``particle_filter`` as one method to represent information.
-        2. ``gaussian_mixture_model`` as another method.
-        3. ``feasible_layer`` to generate feasible particles and/or
-           probabilities.
-        4. ``shape_layer`` to ground the human sensor's output.
 """
-
 from __future__ import division
 
 __author__ = "Nick Sweet"
@@ -35,8 +24,24 @@ from matplotlib.patches import Rectangle
 
 
 class HumanInterface(object):
-    """docstring for HumanInterface"""
+    """Generate a human interface on a given figure.
 
+    Parameters
+    ----------
+    fig : figure handle
+        The figure on which to generate the human interface.
+    robber_names : list of str, optional
+        The list of all robbers. Defaults to ['Roy','Pris'].
+    cop_names : list of str, optional
+        The list of all cops. Defaults to ['Deckard'].
+    groundings : list of str
+        The list of all grounding elements for human sensor information (i.e.,
+        in the phrase 'Roy is next to wall 1', `wall 1` is the grounding).
+        Defaults to ['Wall 1', 'Wall 2', 'Wall 3', 'Wall 4'].
+    type_ : {'radio_buttons','textbox'}
+        The type of human interface to generate.
+
+    """
     types = ['radio_buttons', 'textbox']
 
     def __init__(self, fig, human_sensor=None,
@@ -61,12 +66,15 @@ class HumanInterface(object):
             self.groundings = human_sensor.groundings
             self.certainties = human_sensor.certainties
             self.relationships = human_sensor.relationships
+            self.movements = human_sensor.movements
         else:
             self.robber_names = ['nothing', 'a robber'] + robber_names
             self.groundings = groundings
             self.certainties = ['think', 'know']
-            self.relationships = ['behind', 'in front of', 'left of', 'right of']
-
+            self.relationships = ['behind', 'in front of', 'left of',
+                                  'right of']
+            self.movements = ['stopped', 'moving CCW', 'moving CW',
+                              'moving randomly']
 
         # Radio button parameters and default values
         self.radio_boxcolor = None
@@ -74,6 +82,7 @@ class HumanInterface(object):
         self.target = self.robber_names[0]
         self.relation = self.relationships[0]
         self.grounding = self.groundings[0]
+        self.movement = self.movements[0]
 
         # General button parameters
         self.button_color = 'lightgreen'
@@ -88,19 +97,25 @@ class HumanInterface(object):
             self.make_textbox()
 
     def make_radio_buttons(self):
+        """Genrate the radio button interface.
+        """
         self.fig.subplots_adjust(bottom=0.22)
 
         # Make the input a complete sentence (and pretty! ...ish)
-        self.fig.text(0.18, 0.09, 'I')
-        self.fig.text(0.45, 0.09, 'is')
+        h = 0.05
+        v = 0.155
         ax = self.fig.add_axes([0, 0, 1, 1])
         ax.patch.set_visible(False)
         ax.axis('off')
-        ax.add_patch(Rectangle((0.17, 0.02), 0.72, 0.16, fc='white',
+        ax.add_patch(Rectangle((h, 0.02), 0.88, v + 0.01, fc='white',
                                edgecolor='black', zorder=-100))
 
+        h += 0.01
+        self.fig.text(h, v, 'I')
+
         # Certainty radio buttons
-        rax = plt.axes([0.2, 0.025, 0.15, 0.15], axisbg=self.radio_boxcolor)
+        h += 0.01
+        rax = plt.axes([h, 0.065, 0.15, 0.15], axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
         self.radio['certain'] = RadioButtons(rax, self.certainties)
@@ -111,7 +126,8 @@ class HumanInterface(object):
         self.radio['certain'].on_clicked(certain_func)
 
         # Target radio buttons
-        rax = plt.axes([0.3, 0.025, 0.15, 0.15], axisbg=self.radio_boxcolor)
+        h += 0.1
+        rax = plt.axes([h, 0.045, 0.15, 0.15], axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
         self.radio['target'] = RadioButtons(rax, self.robber_names)
@@ -121,8 +137,12 @@ class HumanInterface(object):
             logging.debug(self.target)
         self.radio['target'].on_clicked(target_func)
 
+        h += 0.13
+        self.fig.text(h, v, 'is')
+
         # Relationship radio buttons
-        rax = plt.axes([0.5, 0.025, 0.15, 0.15], axisbg=self.radio_boxcolor)
+        h += 0.02
+        rax = plt.axes([h, 0.045, 0.15, 0.15], axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
         self.radio['relation'] = RadioButtons(rax, self.relationships)
@@ -133,7 +153,8 @@ class HumanInterface(object):
         self.radio['relation'].on_clicked(relation_func)
 
         # Map object radio buttons
-        rax = plt.axes([0.65, 0.025, 0.15, 0.15], axisbg=self.radio_boxcolor)
+        h += 0.125
+        rax = plt.axes([h, 0.035, 0.15, 0.15], axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
         self.radio['map_obj'] = RadioButtons(rax, self.groundings)
@@ -143,16 +164,33 @@ class HumanInterface(object):
             logging.debug(self.grounding)
         self.radio['map_obj'].on_clicked(map_obj_func)
 
+        h += 0.1
+        self.fig.text(h, v, 'and')
+
+        # Movement radio buttons
+        h += 0.03
+        rax = plt.axes([h, 0.045, 0.15, 0.15], axisbg=self.radio_boxcolor)
+        rax.patch.set_visible(False)
+        rax.axis('off')
+        self.radio['movement'] = RadioButtons(rax, self.movements)
+
+        def movement_func(label):
+            self.movement = label
+            logging.debug(self.movement)
+        self.radio['movement'].on_clicked(movement_func)
+
         # Submission button
-        rax = plt.axes([0.775, 0.07, 0.10, 0.06])
+        h += 0.2
+        rax = plt.axes([h, v / 2, 0.10, 0.06])
         self.submit_button = Button(rax, 'Submit', color=self.button_color,
                                     hovercolor=self.button_color_hover)
 
         def submit_selection(label):
             self.human_input = 'I ' + self.certainty + ' ' + self.target + \
-                ' is ' + self.relation + ' ' + self.grounding + '.'
+                ' is ' + self.relation + ' ' + self.grounding + ' and ' + \
+                self.movement + '.'
             logging.info('Human says: {}'.format(self.human_input))
-            
+
             if self.human_sensor:
                 self.human_sensor.input_string = self.human_input
                 for str_ in self.robber_names:
@@ -161,6 +199,8 @@ class HumanInterface(object):
         self.submit_button.on_clicked(submit_selection)
 
     def make_textbox(self):
+        """Generate the textbox interface.
+        """
         pass
 
 

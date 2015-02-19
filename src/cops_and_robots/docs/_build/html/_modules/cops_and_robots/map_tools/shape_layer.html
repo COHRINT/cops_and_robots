@@ -51,18 +51,11 @@
 <span class="c">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;Provides a grouping of all map objects.</span>
 
-<span class="sd">The shape layer accounts for all map objects, grouping them both as a </span>
-<span class="sd">dictionary of individual objects as well as an accumulation of all </span>
+<span class="sd">The shape layer accounts for all map objects, grouping them both as a</span>
+<span class="sd">dictionary of individual objects as well as an accumulation of all</span>
 <span class="sd">objects in one.</span>
 
-<span class="sd">Required Knowledge:</span>
-<span class="sd">    This module and its classes needs to know about the following </span>
-<span class="sd">    other modules in the cops_and_robots parent module:</span>
-<span class="sd">        1. ``layer`` for generic layer parameters and functions.</span>
-<span class="sd">        2. ``map_obj`` to represent parts of the shape layer.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-
-
 <span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
 <span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
 <span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
@@ -72,43 +65,52 @@
 <span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
 <span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
 
-<span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">cnames</span>
-<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">MultiPolygon</span><span class="p">,</span><span class="n">Polygon</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">MultiPolygon</span><span class="p">,</span> <span class="n">Polygon</span>
 
 <span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.layer</span> <span class="kn">import</span> <span class="n">Layer</span>
 
-<div class="viewcode-block" id="ShapeLayer"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer">[docs]</a><span class="k">class</span> <span class="nc">ShapeLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;docstring for ShapeLayer</span>
 
-<span class="sd">    :param alpha: transparency of all objects on this layer.</span>
-<span class="sd">    :type alpha: float from 0 to 1.</span>
+<div class="viewcode-block" id="ShapeLayer"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer">[docs]</a><span class="k">class</span> <span class="nc">ShapeLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A layer object containing all fixed map objects.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Arguments for the ``Layer`` superclass.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-<div class="viewcode-block" id="ShapeLayer.__init__"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ShapeLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">shapes</span> <span class="o">=</span> <span class="p">{}</span> <span class="c">#Dict of MapObj.name : Map object, for each shape</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ShapeLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.9</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shapes</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># Dict of MapObj.name : Map object, for each shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_shapes</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">()</span>
-</div>
-<div class="viewcode-block" id="ShapeLayer.add_obj"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer.add_obj">[docs]</a>    <span class="k">def</span> <span class="nf">add_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">map_obj</span><span class="p">,</span><span class="n">update_all_objects</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ShapeLayer.add_obj"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer.add_obj">[docs]</a>    <span class="k">def</span> <span class="nf">add_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_obj</span><span class="p">,</span> <span class="n">update_all_objects</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a map object to the shape layer.</span>
 
-<span class="sd">        :param map_obj: the object to be added to the layer.</span>
-<span class="sd">        :type map_obj: MapObj.</span>
-<span class="sd">        :param update_all_objects: whether to update the aggregation of</span>
-<span class="sd">            all objects.</span>
-<span class="sd">        :type update_all_objects: bool.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        map_obj : MapObj</span>
+<span class="sd">            The object to be added.</span>
+<span class="sd">        update_all_objects : bool, optional</span>
+<span class="sd">            `True` to update the aggregation of all objects. Default is `True`.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">shapes</span><span class="p">[</span><span class="n">map_obj</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">map_obj</span>
         <span class="k">if</span> <span class="n">update_all_objects</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_all</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="ShapeLayer.rem_obj"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer.rem_obj">[docs]</a>    <span class="k">def</span> <span class="nf">rem_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">map_obj_name</span><span class="p">,</span><span class="n">all_objects</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="ShapeLayer.rem_obj"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer.rem_obj">[docs]</a>    <span class="k">def</span> <span class="nf">rem_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_obj_name</span><span class="p">,</span> <span class="n">all_objects</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Remove a map object from the shape layer.</span>
 
-<span class="sd">        :param map_obj_name: the object name to be removed.</span>
-<span class="sd">        :type map_obj_name: String.</span>
-<span class="sd">        :param update_all_objects: whether to update the aggregation of</span>
-<span class="sd">            all objects.</span>
-<span class="sd">        :type update_all_objects: bool.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        map_obj_name : str</span>
+<span class="sd">            The name of the object to be removed.</span>
+<span class="sd">        update_all_objects : bool, optional</span>
+<span class="sd">            `True` to update the aggregation of all objects. Default is `True`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">shapes</span><span class="p">[</span><span class="n">map_obj_name</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">all_objects</span><span class="p">:</span>
@@ -116,21 +118,25 @@
 </div>
 <div class="viewcode-block" id="ShapeLayer.update_all"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Update the aggregation of all shapes into one object.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">all_shapes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">obj_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">shapes</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">all_shapes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj_</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_shapes</span> <span class="o">=</span> <span class="n">MultiPolygon</span><span class="p">(</span><span class="n">all_shapes</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="ShapeLayer.plot"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">plot_zones</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ShapeLayer.plot"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.shape_layer.ShapeLayer.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot_zones</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Plot all visible map objects (and their zones, if visible).</span>
 
-<span class="sd">        :param plot_zones: whether or not to plot map object zones.</span>
-<span class="sd">        :type plot_zones: bool.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        plot_zones : bool, optional</span>
+<span class="sd">            `True` to plot the zones of the map objects. Default is `True`.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">shapes</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">shape</span><span class="o">.</span><span class="n">visible</span><span class="p">:</span>
-                <span class="n">shape</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">plot_zones</span><span class="o">=</span><span class="n">plot_zones</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+                <span class="n">shape</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">plot_zones</span><span class="o">=</span><span class="n">plot_zones</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>

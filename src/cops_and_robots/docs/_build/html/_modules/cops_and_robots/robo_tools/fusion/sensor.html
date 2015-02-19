@@ -51,21 +51,17 @@
 <span class="c">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;Provides an base class for various sensor types.</span>
 
-<span class="sd">Since many sensors share parameters and functions, the ``sensor`` </span>
-<span class="sd">module defines these in one place, allowing all sensors to use it as </span>
+<span class="sd">Since many sensors share parameters and functions, the ``sensor``</span>
+<span class="sd">module defines these in one place, allowing all sensors to use it as</span>
 <span class="sd">a superclass.</span>
 
-<span class="sd">Note:</span>
-<span class="sd">    Only cop robots have sensors (for now). Robbers may get hardware </span>
-<span class="sd">    upgreades in future versions, in which case this would be owned by </span>
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">    Only cop robots have sensors (for now). Robbers may get hardware</span>
+<span class="sd">    upgreades in future versions, in which case this would be owned by</span>
 <span class="sd">    the ``robot`` module instead of the ``cop`` module.</span>
 
-<span class="sd">Required Knowledge:</span>
-<span class="sd">    This module and its classes needs to know about the following </span>
-<span class="sd">    other modules in the cops_and_robots parent module:</span>
-<span class="sd">        1. ``map_obj`` to represent sensors as map elements.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-
 <span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
 <span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
 <span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
@@ -75,23 +71,34 @@
 <span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
 <span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
 
-<span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.map_obj</span> <span class="kn">import</span> <span class="n">MapObj</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
 
 <div class="viewcode-block" id="Sensor"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.sensor.Sensor">[docs]</a><span class="k">class</span> <span class="nc">Sensor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;docstring for Sensor</span>
+    <span class="sd">&quot;&quot;&quot;Base class for all sensor models.</span>
 
-<span class="sd">    :param update_rate: freuquency of updates in Hz. None for </span>
-<span class="sd">        intermittant updates.</span>
-<span class="sd">    :type update_rate:float or None</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    update_rate : float</span>
+<span class="sd">        Frequency of sensor updates in Hz. `None` for intermittant updates.</span>
+
+<span class="sd">        Note: Not yet implemented.</span>
+<span class="sd">    has_physical_dimensions : bool</span>
+<span class="sd">        Whether or not the sensor can be considered a physical sensor (i.e. a</span>
+<span class="sd">        camera).</span>
+<span class="sd">    detection_chance : float</span>
+<span class="sd">        A probability value between 0 and 1 denoting P(detect|x), when x is in</span>
+<span class="sd">        view of the sensor.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-<div class="viewcode-block" id="Sensor.__init__"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.html#cops_and_robots.robo_tools.fusion.sensor.Sensor.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">update_rate</span><span class="p">,</span><span class="n">has_physical_dimensions</span><span class="p">,</span><span class="n">detection_chance</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_rate</span><span class="p">,</span> <span class="n">has_physical_dimensions</span><span class="p">,</span> <span class="n">detection_chance</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Sensor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        
-        <span class="c">#Define simlated sensor parameters</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span> <span class="o">=</span> <span class="n">detection_chance</span> <span class="c"># P(detect|x) where x is in view</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">update_rate</span> <span class="o">=</span> <span class="n">update_rate</span> <span class="c">#[hz]</span>
-</pre></div></div></div>
+        <span class="c"># Define simlated sensor parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_rate</span> <span class="o">=</span> <span class="n">update_rate</span>  <span class="c"># [hz]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_physical_dimensions</span> <span class="o">=</span> <span class="n">has_physical_dimensions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span> <span class="o">=</span> <span class="n">detection_chance</span>  <span class="c"># P(detect|x), x is in view</span></div>
+</pre></div>
 
           </div>
         </div>

@@ -10,14 +10,7 @@ position), weights (how important that particle is), and probabilities
 (how likely the estimated value is). For many cases, weights and
 probabilities are interchangable.
 
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``feasible_layer`` to generate feasible particles.
-        2. ``camera`` to update particles from sensor measurements.
-        3. ``human`` to update particles from sensor measurements.
 """
-
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Nick Sweet", "Nisar Ahmed"]
@@ -39,14 +32,20 @@ from shapely.geometry import Point
 class ParticleFilter(object):
     """Particle-based representation of target locations.
 
-    :param target:
-    :type target:
-    :param feasible_layer: a map of feasible regions.
-    :type feasible_layer: FeasibleLayer.
-    :param n_particles:
-    :type n_particles: integer.
-    :param motion_model:
-    :type motion_model:
+    Parameters
+    ----------
+    target : str
+        Name of the target tracked by the particle filter ('combined' for
+        all targets).
+    feasible_layer : FeasibleLayer
+        A layer object providing both permissible point regions for any object
+        and permissible pose regions for any robot with physical dimensions.
+    motion_model : {'stationary','clockwise','counterclockwise','random walk'},
+        optional
+        The motion model used to update each particle.
+    n_particles : int, optional
+        The number of particles this particle filter has. Default is 500.
+
     """
     def __init__(self, target, feasible_layer, motion_model='stationary',
                  n_particles=500):
@@ -81,26 +80,38 @@ class ParticleFilter(object):
 
     def update(self, camera, target_pose, human=None):
         """Move particles (if mobile) and update probabilities.
+
+        Parameters
+        ----------
+        camera : Camera
+            A camera sensor object to update the particle weights and
+            probabilities.
+        target_pose : array_like
+            The target's current [x, y, theta] in [m,m,degrees].
+        human : Human, optional
+            A human sensor object to update the particle weights and
+            probabilities. Default is `None` for no update.
+
         """
         if self.finished:
             return
 
         self.update_particle_motion()
-        self.camera_update(camera, target_pose)
-        self.human_update(human)
+        self._camera_update(camera)
+        self._human_update(human)
 
+        # <>TODO: Resample particles
         # self.resample()
 
-    def camera_update(self, camera, target_pose):
-        camera.detect('discrete', self.particles)
-
-    def human_update(self, human):
-        if human.target in [self.target,'nothing','a robber']:
-            human.detect(self.particles,human.target)
-            
-
     def update_particle_motion(self, step_dist=0.05):
+        """Update one step in the particles' motion.
 
+        Parameters
+        ----------
+        step_dist : float, optional
+            A scaling factor for how large the update to the particles'
+            positions is. Default is 0.05.
+        """
         if self.motion_model == 'random walk':
             self.particles[:, 0:2] += np.random.uniform(-2 * step_dist,
                                                         2 * step_dist,
@@ -125,9 +136,37 @@ class ParticleFilter(object):
                 particle[0] = mag * math.cos(angle)
                 particle[1] = mag * math.sin(angle)
 
-    def resample(self):
-        '''Sample or resample distribution to generate new particles'''
+    def _camera_update(self, camera):
+        """Update the particle filter's values from a camera update event.
 
+        Parameters
+        ----------
+        camera : Camera
+            A camera sensor object.
+
+        """
+        camera.detect('particle', self.particles)
+
+    def _human_update(self, human):
+        """Update the particle filter's values from a human sensor update.
+
+        Parameters
+        ----------
+        human : Human
+            A human sensor object.
+
+        """
+        if human.target in [self.target, 'nothing', 'a robber']:
+            motion_model = human.detect(self.particles)
+            if human.target in [self.target, 'a robber']:
+                self.motion_model = motion_model
+            elif motion_model == self.motion_model:
+                self.motion_model = 'stationary'
+
+    def resample(self):
+        """Sample or resample distribution to generate new particles
+
+        """
         # sample distribution
         # <>Constrain particle limits to map limits
         # <>Always resample self.n_particles
@@ -138,6 +177,8 @@ class ParticleFilter(object):
                                for i in range(0, self.n_particles)]
 
     def robber_detected(self, robber_pose):
+        """Update the particle filter for a detected robber.
+        """
 
         # <>TODO: Figure out better strategy when robber detected
 

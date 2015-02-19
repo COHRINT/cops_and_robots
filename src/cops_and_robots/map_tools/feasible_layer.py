@@ -6,23 +6,17 @@ regions. Point regions are simply all points not contained within
 solid physical objects, whereas pose regions are all locations to
 which a robot can reach without intersecting with a physical object.
 
-Note:
+Notes
+-----
     Currently, the feasible layer uses the shape layer to generate
     the ideal feasible regions. However, a more realistic approach
     would use the occupancy layer. This will likely be the approach
     taken in future versions.
 
-Note:
-    Currently, the feasible layer us the same for all robots. This is
+    The feasible layer is the same for all robots. This is
     not realistic, and will likely change in future versions.
 
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``layer`` for generic layer parameters and functions.
-        2. ``shape_layer`` to generate the feasible regions.
 """
-
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Nick Sweet", "Nisar Ahmed"]
@@ -47,8 +41,14 @@ class FeasibleLayer(Layer):
     regions of the map. Feasible can be defined as either feasible robot
     poses or unoccupied space.
 
-    :param max_robot_radius: the maximum radius in [m] of all robots.
-    :type max_robot_radius: positive float.
+    Parameters
+    ----------
+    max_robot_radius : float, optional
+        The maximum radius of a circular approximation to the robot, used
+        to determine the feasible pose regions.
+    **kwargs
+        Arguments passed to the ``Layer`` superclass.
+
     """
     def __init__(self, max_robot_radius=0.20, **kwargs):
         super(FeasibleLayer, self).__init__(**kwargs)
@@ -61,11 +61,14 @@ class FeasibleLayer(Layer):
     def define_feasible_regions(self, shape_layer=None):
         """Generate the feasible regions from a given shape layer.
 
-        :param shape_layer: the collection of shapes on the map.
-        :type shape_layer: ShapeLayer.
+        Parameters
+        ----------
+        shape_layer : ShapeLayer, optional
+            The shape layer from which to generate the feasible regions. If
+            no layer is provided, the entire map is deemed feasible.
         """
         if not shape_layer:
-            shape_layer = ShapeLayer(self.bounds)
+            shape_layer = ShapeLayer(bounds=self.bounds)
 
         feasible_space = box(*self.bounds)
         for obj_ in shape_layer.shapes.values():
@@ -77,10 +80,10 @@ class FeasibleLayer(Layer):
     def plot(self, type_="pose"):
         """Plot either the pose or point feasible regions.
 
-        :param type_: the type of feasible region to plot.
-        :type type_: String of 'pose' or 'point'.
-        :returns: <>TODO
-        :rtype:<>TODO
+        Parameters
+        ----------
+        type_ : {'pose','point'}
+            The type of feasible region to plot.
         """
         if type_ == "pose":
             p = self.pose_region.plot()

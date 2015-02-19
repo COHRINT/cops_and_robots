@@ -7,12 +7,7 @@ differs from cop statuses) and provide a basis for any additional
 functionality the robbers may need (such as communication between
 robbers).
 
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``robot`` for all basic functionality.
 """
-
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Nick Sweet", "Nisar Ahmed"]
@@ -24,35 +19,55 @@ __status__ = "Development"
 
 import logging
 
-from matplotlib.colors import cnames
-
 from cops_and_robots.robo_tools.robot import Robot
 
 
 class Robber(Robot):
     """The robber subclass of the generic Robot type.
 
-    :param name: the robber's name.
-    :type name: String.
+    Parameters
+    ----------
+    name : str
+        The robber's name.
+    **kwargs
+        Arguments passed to the ``Robber`` superclass.
+
+    Attributes
+    ----------
+    found : bool
+        Whether or not the robber knows its been found.
+
+    Attributes
+    ----------
+    mission_statuses : {'stationary', 'on the run', 'detected', 'captured'}
+        The possible mission-level statuses of any robber, where:
+            * `stationary` means the robber is holding its position;
+            * `on the run` means the robber is moving around and avoiding the
+                cop;
+            * `detected` means the robber knows it has been detected by the
+                cop;
+            * `captured` means the robber has been captured by the cop and
+                is no longer moving.
+
     """
+    mission_statuses = ['stationary', 'on the run', 'detected', 'captured']
+
     def __init__(self, name, **kwargs):
         super(Robber, self).__init__(name=name,
                                      role='robber',
-                                     planner='simple',
-                                     default_color=cnames['darkorange'],
+                                     planner_type='simple',
+                                     color_str='darkorange',
                                      **kwargs)
 
         self.found = False
 
+        # <>TODO: break out each robber as its own thread and have them move
         # while not self.found:
         #     self.update()
 
     def update_status(self):
-        """Update the robber's status from one of:
-            1. stationary
-            2. on the run
-            3. detected
-            4. captured
+        """Update the robber's status
+
         """
         immobile_statuses = ('stationary', 'captured')
         if self.status not in immobile_statuses:

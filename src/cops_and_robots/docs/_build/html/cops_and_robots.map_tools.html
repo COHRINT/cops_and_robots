@@ -63,51 +63,39 @@
 <div class="section" id="module-cops_and_robots.map_tools.feasible_layer">
 <span id="cops-and-robots-map-tools-feasible-layer-module"></span><h2>cops_and_robots.map_tools.feasible_layer module<a class="headerlink" href="#module-cops_and_robots.map_tools.feasible_layer" title="Permalink to this headline">¶</a></h2>
 <p>Provides a feasible region for robot and point locations.</p>
-<p>Two types of feasible regions are defined: point regions and pose 
-regions. Point regions are simply all points not contained within 
-solid physical objects, whereas pose regions are all locations to 
+<p>Two types of feasible regions are defined: point regions and pose
+regions. Point regions are simply all points not contained within
+solid physical objects, whereas pose regions are all locations to
 which a robot can reach without intersecting with a physical object.</p>
-<dl class="docutils">
-<dt>Note:</dt>
-<dd>Currently, the feasible layer uses the shape layer to generate
-the ideal feasible regions. However, a more realistic approach 
-would use the occupancy layer. This will likely be the approach 
-taken in future versions.</dd>
-<dt>Note:</dt>
-<dd>Currently, the feasible layer us the same for all robots. This is 
-not realistic, and will likely change in future versions.</dd>
-<dt>Required Knowledge:</dt>
-<dd><p class="first">This module and its classes needs to know about the following 
-other modules in the cops_and_robots parent module:</p>
-<blockquote class="last">
-<div><ol class="arabic simple">
-<li><tt class="docutils literal"><span class="pre">layer</span></tt> for generic layer parameters and functions.</li>
-<li><tt class="docutils literal"><span class="pre">shape_layer</span></tt> to generate the feasible regions.</li>
-</ol>
-</div></blockquote>
-</dd>
-</dl>
+<p class="rubric">Notes</p>
+<p>Currently, the feasible layer uses the shape layer to generate
+the ideal feasible regions. However, a more realistic approach
+would use the occupancy layer. This will likely be the approach
+taken in future versions.</p>
+<p>The feasible layer is the same for all robots. This is
+not realistic, and will likely change in future versions.</p>
 <dl class="class">
 <dt id="cops_and_robots.map_tools.feasible_layer.FeasibleLayer">
 <em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.feasible_layer.</tt><tt class="descname">FeasibleLayer</tt><big>(</big><em>max_robot_radius=0.2</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/feasible_layer.html#FeasibleLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.feasible_layer.FeasibleLayer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#cops_and_robots.map_tools.layer.Layer" title="cops_and_robots.map_tools.layer.Layer"><tt class="xref py py-class docutils literal"><span class="pre">cops_and_robots.map_tools.layer.Layer</span></tt></a></p>
 <p>A representation of feasible map regions.</p>
-<p>A polygon (or collection of polygons) that represent feasible 
-regions of the map. Feasible can be defined as either feasible robot 
+<p>A polygon (or collection of polygons) that represent feasible
+regions of the map. Feasible can be defined as either feasible robot
 poses or unoccupied space.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>max_robot_radius</strong> (<em>positive float.</em>) &#8211; the maximum radius in [m] of all robots.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>max_robot_radius</strong> (<em>float, optional</em>) &#8211; The maximum radius of a circular approximation to the robot, used
+to determine the feasible pose regions.</li>
+<li><strong>**kwargs</strong> &#8211; <p>Arguments passed to the <tt class="docutils literal"><span class="pre">Layer</span></tt> superclass.</p>
+</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="cops_and_robots.map_tools.feasible_layer.FeasibleLayer.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>max_robot_radius=0.2</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/feasible_layer.html#FeasibleLayer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.feasible_layer.FeasibleLayer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="cops_and_robots.map_tools.feasible_layer.FeasibleLayer.define_feasible_regions">
 <tt class="descname">define_feasible_regions</tt><big>(</big><em>shape_layer=None</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/feasible_layer.html#FeasibleLayer.define_feasible_regions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.feasible_layer.FeasibleLayer.define_feasible_regions" title="Permalink to this definition">¶</a></dt>
@@ -116,7 +104,8 @@ poses or unoccupied space.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>shape_layer</strong> (<em>ShapeLayer.</em>) &#8211; the collection of shapes on the map.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>shape_layer</strong> (<em>ShapeLayer, optional</em>) &#8211; The shape layer from which to generate the feasible regions. If
+no layer is provided, the entire map is deemed feasible.</td>
 </tr>
 </tbody>
 </table>
@@ -130,13 +119,10 @@ poses or unoccupied space.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>type</strong> (<em>String of &#8216;pose&#8217; or &#8216;point&#8217;.</em>) &#8211; the type of feasible region to plot.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">&lt;&gt;TODO</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>type</strong> (<em>{&#8216;pose&#8217;,&#8217;point&#8217;}</em>) &#8211; The type of feasible region to plot.</td>
 </tr>
 </tbody>
 </table>
-<p>:rtype:&lt;&gt;TODO</p>
 </dd></dl>
 
 </dd></dl>
@@ -145,17 +131,12 @@ poses or unoccupied space.</p>
 <div class="section" id="module-cops_and_robots.map_tools.layer">
 <span id="cops-and-robots-map-tools-layer-module"></span><h2>cops_and_robots.map_tools.layer module<a class="headerlink" href="#module-cops_and_robots.map_tools.layer" title="Permalink to this headline">¶</a></h2>
 <p>Provides a common base class for all map layers.</p>
-<p>Since many layers share parameters and functions, the <tt class="docutils literal"><span class="pre">layer</span></tt> module 
-defines these in one place, allowing all layers to use it as a 
+<p>Since many layers share parameters and functions, the <tt class="docutils literal"><span class="pre">layer</span></tt> module
+defines these in one place, allowing all layers to use it as a
 superclass.</p>
-<dl class="docutils">
-<dt>Required Knowledge:</dt>
-<dd>This module and its classes do not need to know about any other 
-parts of the cops_and_robots parent module.</dd>
-</dl>
 <dl class="class">
 <dt id="cops_and_robots.map_tools.layer.Layer">
-<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.layer.</tt><tt class="descname">Layer</tt><big>(</big><em>bounds=[-5, -5, 5, 5], visible=True, target=None, ax=None, alpha=0.8, cmap_str='jet'</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/layer.html#Layer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.layer.Layer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.layer.</tt><tt class="descname">Layer</tt><big>(</big><em>bounds=[-5, -5, 5, 5], visible=True, target='', ax=None, alpha=0.8, cmap_str='jet'</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/layer.html#Layer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.layer.Layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>A collection of generic layer parameters and functions.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -163,54 +144,34 @@ parts of the cops_and_robots parent module.</dd>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>bounds</strong> (<em>List of floats.</em>) &#8211; Map boundaries as [xmin,ymin,xmax,ymax] in [m].</li>
-<li><strong>visible</strong> (<em>bool.</em>) &#8211; Whether or not the layer should be plotted.</li>
-<li><strong>target</strong> (<em>String.</em>) &#8211; Name of the target tracked (for some layers only).</li>
-<li><strong>ax</strong> (<em>Axes.</em>) &#8211; Axes to be used for plotting this layer.</li>
-<li><strong>alpha</strong> (<em>float.</em>) &#8211; Transparency of all elements of this layer.</li>
-<li><strong>cmap_str</strong> (<em>String.</em>) &#8211; Name of the color map to be used.</li>
+<li><strong>bounds</strong> (<em>array_like, optional</em>) &#8211; Map boundaries as [xmin,ymin,xmax,ymax] in [m]. Defaults to
+[-5, -5, 5, 5].</li>
+<li><strong>visible</strong> (<em>bool, optional</em>) &#8211; Whether or not the layer is shown when plotting.</li>
+<li><strong>target</strong> (<em>str, optional</em>) &#8211; Name of target tracked by this layer. Defaults to <cite>&#8216;&#8217;</cite>.</li>
+<li><strong>ax</strong> (<em>axes handle, optional</em>) &#8211; The axes to be used for plotting. Defaults to current axes.</li>
+<li><strong>alpha</strong> (<em>float, optional</em>) &#8211; The layer&#8217;s transparency, from 0 to 1. Defaults to 0.8.</li>
+<li><strong>cmap_str</strong> (<em>str, optional</em>) &#8211; The colormap string for the layer. Defaults to <cite>&#8216;jet&#8217;</cite>.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="cops_and_robots.map_tools.layer.Layer.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>bounds=[-5, -5, 5, 5], visible=True, target=None, ax=None, alpha=0.8, cmap_str='jet'</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/layer.html#Layer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.layer.Layer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </div>
 <div class="section" id="module-cops_and_robots.map_tools.map">
 <span id="cops-and-robots-map-tools-map-module"></span><h2>cops_and_robots.map_tools.map module<a class="headerlink" href="#module-cops_and_robots.map_tools.map" title="Permalink to this headline">¶</a></h2>
 <p>Collects all the information a robot has of its environment.</p>
-<p>A map has three different parts: its properties, its elements, and its 
-layers. Properties define key intrinsics of the map (such as its 
-boundaries). Elements define the collections of physical objects on 
-the map (robots, walls, etc.). Layers (meant to be toggled for 
-visibility) represent perspectives on the map: where the map&#8217;s 
-elements are, what probability distributions are associated with a 
+<p>A map has three different parts: its properties, its elements, and its
+layers. Properties define key intrinsics of the map (such as its
+boundaries). Elements define the collections of physical objects on
+the map (robots, walls, etc.). Layers (meant to be toggled for
+visibility) represent perspectives on the map: where the map&#8217;s
+elements are, what probability distributions are associated with a
 given element, etc.</p>
-<dl class="docutils">
-<dt>Required Knowledge:</dt>
-<dd><p class="first">This module and its classes needs to know about the following 
-other modules in the cops_and_robots parent module:</p>
-<blockquote class="last">
-<div><ol class="arabic simple">
-<li><tt class="docutils literal"><span class="pre">map_obj</span></tt> to represent map elements (like walls).</li>
-<li><tt class="docutils literal"><span class="pre">shape_layer</span></tt> to collect map elements.</li>
-<li><tt class="docutils literal"><span class="pre">occupancy_layer</span></tt> to represent a grid of occupied space.</li>
-<li><tt class="docutils literal"><span class="pre">feasible_layer</span></tt> for unoccupied and reachable space.</li>
-<li><tt class="docutils literal"><span class="pre">probability_layer</span></tt> to represent continuous probability.</li>
-<li><tt class="docutils literal"><span class="pre">particle_layer</span></tt> to represent discrete probability points.</li>
-</ol>
-</div></blockquote>
-</dd>
-</dl>
 <dl class="class">
 <dt id="cops_and_robots.map_tools.map.Map">
-<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.map.</tt><tt class="descname">Map</tt><big>(</big><em>mapname</em>, <em>bounds</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.map.</tt><tt class="descname">Map</tt><big>(</big><em>mapname</em>, <em>bounds</em>, <em>combined_only=True</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Environment map composed of multiple elements and layers.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -218,41 +179,39 @@ other modules in the cops_and_robots parent module:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>mapname</strong> (<em>String.</em>) &#8211; the name of the map.</li>
-<li><strong>bounds</strong> (<em>list of floats.</em>) &#8211; map boundaries as [x_min,y_min,x_max,y_max].</li>
+<li><strong>mapname</strong> (<em>str</em>) &#8211; The name of the map.</li>
+<li><strong>bounds</strong> (<em>array_like, optional</em>) &#8211; Map boundaries as [xmin,ymin,xmax,ymax] in [m].</li>
+<li><strong>combined_only</strong> (<em>bool, optional</em>) &#8211; Whether to show only the combined plot (as opposed to individual plots
+for each robber, plus one combined plot). Defaults to <cite>True</cite>.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
-<dt id="cops_and_robots.map_tools.map.Map.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>mapname</em>, <em>bounds</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
 <dt id="cops_and_robots.map_tools.map.Map.add_cop">
 <tt class="descname">add_cop</tt><big>(</big><em>cop_obj</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.add_cop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.add_cop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a dynamic <tt class="docutils literal"><span class="pre">Robot</span></tt> cop from the Map</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cop_obj</strong> &#8211; Map object</td>
-</tr>
-</tbody>
-</table>
+<dl class="docutils">
+<dt>cop_obj <span class="classifier-delimiter">:</span> <span class="classifier">Cop</span></dt>
+<dd>The full cop object.</dd>
+</dl>
 </dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.map_tools.map.Map.add_human_sensor">
+<tt class="descname">add_human_sensor</tt><big>(</big><em>human_sensor</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.add_human_sensor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.add_human_sensor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="cops_and_robots.map_tools.map.Map.add_obj">
 <tt class="descname">add_obj</tt><big>(</big><em>map_obj</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.add_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.add_obj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append a static <tt class="docutils literal"><span class="pre">MapObj</span></tt> to the Map</p>
+<dd><p>Append a static <tt class="docutils literal"><span class="pre">MapObj</span></tt> to the map.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>map_obj</strong> &#8211; MapObj object</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>map_obj_name</strong> (<em>MapObj</em>) &#8211; The object to be added.</td>
 </tr>
 </tbody>
 </table>
@@ -260,79 +219,56 @@ other modules in the cops_and_robots parent module:</p>
 
 <dl class="method">
 <dt id="cops_and_robots.map_tools.map.Map.add_robber">
-<tt class="descname">add_robber</tt><big>(</big><em>robber</em>, <em>n_particles=2000</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.add_robber"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.add_robber" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a dynamic <tt class="docutils literal"><span class="pre">Robot</span></tt> robber from the Map</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>robber</strong> &#8211; Robot</td>
-</tr>
-</tbody>
-</table>
+<tt class="descname">add_robber</tt><big>(</big><em>robber</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.add_robber"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.add_robber" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a dynamic <tt class="docutils literal"><span class="pre">Robot</span></tt> robber from the Map.</p>
+<dl class="docutils">
+<dt>robber_obj <span class="classifier-delimiter">:</span> <span class="classifier">Robber</span></dt>
+<dd>The full robber object.</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="cops_and_robots.map_tools.map.Map.animation_stream">
 <tt class="descname">animation_stream</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.animation_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.animation_stream" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate new values for the animation plot, based on an 
-updated model of the world.</p>
+<dd><p>Update the animated plot.</p>
+<p>This is a generator function that takes in packets of animation
+data and yields nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="cops_and_robots.map_tools.map.Map.plot">
-<tt class="descname">plot</tt><big>(</big><em>robber_name='combined'</em>, <em>plot_zones=True</em>, <em>feasible_region='pose'</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.plot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate one or more probability and occupancy layer</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>robber_name</strong> &#8211; String</td>
-</tr>
-</tbody>
-</table>
+<tt class="descname">plot</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the current state of the map.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="cops_and_robots.map_tools.map.Map.rem_cop">
 <tt class="descname">rem_cop</tt><big>(</big><em>cop_name</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.rem_cop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.rem_cop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove a dynamic <tt class="docutils literal"><span class="pre">Robot</span></tt> cop from the Map by its name</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cop_name</strong> &#8211; String</td>
-</tr>
-</tbody>
-</table>
+<dd><p>Remove a dynamic <tt class="docutils literal"><span class="pre">Robot</span></tt> cop from the Map by its name.</p>
+<dl class="docutils">
+<dt>cop_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of the cop.</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="cops_and_robots.map_tools.map.Map.rem_obj">
 <tt class="descname">rem_obj</tt><big>(</big><em>map_obj_name</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.rem_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.rem_obj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove a <tt class="docutils literal"><span class="pre">MapObj</span></tt> from the Map by its name</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>map_obj_name</strong> &#8211; String</td>
-</tr>
-</tbody>
-</table>
+<dd><p>Remove a <tt class="docutils literal"><span class="pre">MapObj</span></tt> from the Map by its name.</p>
+<dl class="docutils">
+<dt>map_obj_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of the map object.</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="cops_and_robots.map_tools.map.Map.rem_robber">
 <tt class="descname">rem_robber</tt><big>(</big><em>robber_name</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#Map.rem_robber"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.Map.rem_robber" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove a dynamic <tt class="docutils literal"><span class="pre">Robot</span></tt> robber from the Map by its name</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>robber_name</strong> &#8211; String</td>
-</tr>
-</tbody>
-</table>
+<dd><p>Remove a dynamic <tt class="docutils literal"><span class="pre">Robot</span></tt> robber from the Map by its name.</p>
+<dl class="docutils">
+<dt>robber_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Name of the robber.</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -346,89 +282,69 @@ updated model of the world.</p>
 <dl class="function">
 <dt id="cops_and_robots.map_tools.map.set_up_fleming">
 <tt class="descclassname">cops_and_robots.map_tools.map.</tt><tt class="descname">set_up_fleming</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map.html#set_up_fleming"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map.set_up_fleming" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Set up a map as the generic Fleming space configuration.</p>
+</dd></dl>
 
 </div>
 <div class="section" id="module-cops_and_robots.map_tools.map_obj">
 <span id="cops-and-robots-map-tools-map-obj-module"></span><h2>cops_and_robots.map_tools.map_obj module<a class="headerlink" href="#module-cops_and_robots.map_tools.map_obj" title="Permalink to this headline">¶</a></h2>
 <p>Defines physical and non-physical objects used in the map environment.</p>
-<p><tt class="docutils literal"><span class="pre">map_obj</span></tt> extends Shapely&#8217;s geometry objects (generally polygons) to 
-be used in a robotics environmnt. Map objects can be physical, 
+<p><tt class="docutils literal"><span class="pre">map_obj</span></tt> extends Shapely&#8217;s geometry objects (generally polygons) to
+be used in a robotics environmnt. Map objects can be physical,
 representing walls, or non-physical, representing camera viewcones.</p>
-<p>The visibility of an object can be toggled, and each object can have 
-<em>zones</em> which define areas around the object. For example, a 
-rectangular wall has four zones: front, back, left and right. These 
-are named zones, but arbitrary shapes can have arbitrary numbered zones 
+<p>The visibility of an object can be toggled, and each object can have
+<em>zones</em> which define areas around the object. For example, a
+rectangular wall has four zones: front, back, left and right. These
+are named zones, but arbitrary shapes can have arbitrary numbered zones
 (such as a triangle with three numbered zones).</p>
-<dl class="docutils">
-<dt>Required Knowledge:</dt>
-<dd>This module and its classes do not need to know about any other 
-parts of the cops_and_robots parent module.</dd>
-</dl>
 <dl class="class">
 <dt id="cops_and_robots.map_tools.map_obj.MapObj">
-<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.map_obj.</tt><tt class="descname">MapObj</tt><big>(</big><em>name, shape_pts, pose=[0, 0, 0], has_zones=True, centroid_at_origin=True, visible=True, default_color_str='darkblue', **kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map_obj.html#MapObj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map_obj.MapObj" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.map_obj.</tt><tt class="descname">MapObj</tt><big>(</big><em>name, shape_pts, pose=[0, 0, 0], has_zones=True, centroid_at_origin=True, visible=True, color_str='darkblue'</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map_obj.html#MapObj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map_obj.MapObj" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>Generate an object based on a geometric shape, plus &#8216;zones&#8217; 
-which demarcate spatial relationships around objects.</p>
-<dl class="docutils">
-<dt>Note:</dt>
-<dd>If only one xy pair is given as shape_pts, MapObj will assume 
+<p>Generate an object based on a geometric shape, plus &#8216;zones&#8217;.</p>
+<p>Zones demarcate spatial relationships around objects.</p>
+<p class="rubric">Notes</p>
+<p>If only one xy pair is given as shape_pts, MapObj will assume
 the user wants to create a box with those two values as length
-and width, respectively.</dd>
-<dt>Note:</dt>
-<dd>Shapes are created such that the centroid angle (the direction
-the object is facing) is 0. To change this, use <tt class="docutils literal"><span class="pre">move_shape</span></tt>.</dd>
-</dl>
+and width, respectively.</p>
+<p>Shapes are created such that the centroid angle (the direction
+the object is facing) is 0. To change this, use <tt class="docutils literal"><span class="pre">move_shape</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> (<em>String.</em>) &#8211; the map object&#8217;s name.</li>
-<li><strong>shape_pts</strong> (<em>an n-element list of 2-element lists of floats.</em>) &#8211; a list of xy pairs as [(x_i,y_i)] in [m,m] in the 
-global (map) frame of reference.</li>
-<li><strong>pose</strong> (<em>a 3-element list of floats.</em>) &#8211; the centroid&#8217;s pose as [x,y,theta] in [m,m,deg].</li>
-<li><strong>has_zones</strong> (<em>bool.</em>) &#8211; whether or not an object has zones.</li>
-<li><strong>centroid_at_origin</strong> (<em>bool.</em>) &#8211; place centroid at the origin (instead 
-of the minimum point given by the shape_pts).</li>
-<li><strong>visible</strong> (<em>bool.</em>) &#8211; whether or not to show the object on the map.</li>
-<li><strong>default_color_str</strong> (<em>String.</em>) &#8211; string to define the object&#8217;s default 
-color.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; The map object&#8217;s name.</li>
+<li><strong>shape_pts</strong> (<em>array_like</em>) &#8211; A list of xy pairs as [(x_i,y_i)] in [m,m] in the global (map)
+coordinate frame.</li>
+<li><strong>pose</strong> (<em>array_like, optional</em>) &#8211; The map object&#8217;s initial [x, y, theta] in [m,m,degrees] (defaults to
+[0, 0, 0]).</li>
+<li><strong>has_zones</strong> (<em>bool, optional</em>) &#8211; Whether or not the map object has demarcating zones around it.</li>
+<li><strong>centroid_at_origin</strong> (<em>bool, optional</em>) &#8211; Whether the object&#8217;s centroid is placed at the map origin (as opposed
+to placing the object&#8217;s lower-left corner at the map origin). Default
+is <cite>True</cite>.</li>
+<li><strong>color_str</strong> (<em>str, optional</em>) &#8211; The color string for the object. Default is <cite>&#8216;darkblue&#8217;</cite>.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
-<dt id="cops_and_robots.map_tools.map_obj.MapObj.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>name, shape_pts, pose=[0, 0, 0], has_zones=True, centroid_at_origin=True, visible=True, default_color_str='darkblue', **kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map_obj.html#MapObj.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map_obj.MapObj.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
 <dt id="cops_and_robots.map_tools.map_obj.MapObj.define_zones">
-<tt class="descname">define_zones</tt><big>(</big><em>zone_distance=0.5</em>, <em>resolution=10</em>, <em>join_style='mitre'</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map_obj.html#MapObj.define_zones"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map_obj.MapObj.define_zones" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">define_zones</tt><big>(</big><em>zone_distance=1</em>, <em>resolution=10</em>, <em>join_style='mitre'</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map_obj.html#MapObj.define_zones"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map_obj.MapObj.define_zones" title="Permalink to this definition">¶</a></dt>
 <dd><p>Define the shape&#8217;s zones at a given distance.</p>
-<p>Define areas near the shape (&#8216;zones&#8217;) which, for a four-sided 
+<p>Define areas near the shape (&#8216;zones&#8217;) which, for a four-sided
 shape, demarcate front, back left and right.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>zone_distance</strong> (<em>positive float.</em>) &#8211; zone distance from the shape&#8217;s outermost 
-edge.</li>
-<li><strong>resolution</strong> (<em>positive float.</em>) &#8211; the resolution of the buffered zone.</li>
-<li><strong>join_style</strong> (<em>string.</em>) &#8211; <p>style of the buffered zone creation, taken 
-as one of:</p>
-<blockquote>
-<div><ol class="arabic">
-<li>round</li>
-<li>mitre</li>
-<li>bevel</li>
-</ol>
-</div></blockquote>
-</li>
+<li><strong>zone_distance</strong> (<em>float, optional</em>) &#8211; The distance from the shape&#8217;s outermost edge to the edge of the
+zone in [m]. Defaults to 1.</li>
+<li><strong>resolution</strong> (<em>int, optional</em>) &#8211; The number of points used to make the buffered zone. Defaults to
+10.</li>
+<li><strong>join_style</strong> (<em>{&#8216;round&#8217;,&#8217;mitre&#8217;,&#8217;bevel&#8217;}</em>) &#8211; Style of the buffered zone creation. Defaults to <cite>&#8216;mitre&#8217;</cite>.</li>
 </ul>
 </td>
 </tr>
@@ -440,15 +356,15 @@ as one of:</p>
 <dt id="cops_and_robots.map_tools.map_obj.MapObj.move_shape">
 <tt class="descname">move_shape</tt><big>(</big><em>pose</em>, <em>rotation_pt=None</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map_obj.html#MapObj.move_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map_obj.MapObj.move_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Translate and rotate the shape.</p>
-<p>The rotation is assumed to be about the object&#8217;s centroid 
+<p>The rotation is assumed to be about the object&#8217;s centroid
 unless a rotation point is specified.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>pose</strong> (<em>a 3-element list of floats.</em>) &#8211; the centroid&#8217;s pose as [x,y,theta] in [m,m,deg].</li>
-<li><strong>rotation_pt</strong> (<em>a 2-element list of floats.</em>) &#8211; the rotation point as [x,y] in [m,m].</li>
+<li><strong>pose</strong> (<em>array_like, optional</em>) &#8211; The map object&#8217;s initial [x, y, theta] in [m,m,degrees].</li>
+<li><strong>rotation_pt</strong> (<em>array_like</em>) &#8211; The rotation point as [x,y] in [m,m]. Defaults to the centroid.</li>
 </ul>
 </td>
 </tr>
@@ -461,29 +377,18 @@ unless a rotation point is specified.</p>
 <tt class="descname">plot</tt><big>(</big><em>plot_zones=False</em>, <em>ax=None</em>, <em>alpha=0.5</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/map_obj.html#MapObj.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.map_obj.MapObj.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the map_object as a polygon patch.</p>
 <dl class="docutils">
-<dt>Note: </dt>
-<dd>The zones can be plotted without the shape if the shape&#8217;s 
-<tt class="docutils literal"><span class="pre">visible</span></tt> attribute is False, but <tt class="docutils literal"><span class="pre">plot_zones</span></tt> is True.</dd>
+<dt>plot_zones <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Plot the map object&#8217;s zones if true. Defaults to <cite>False</cite>.</dd>
+<dt>ax <span class="classifier-delimiter">:</span> <span class="classifier">axes handle, optional</span></dt>
+<dd>The axes to be used for plotting. Defaults to current axes.</dd>
+<dt>alpha: float, optional</dt>
+<dd>Transparency of all elements of the shape. Default is 0.5.</dd>
+<dt><a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs</dt>
+<dd>Arguments passed to <tt class="docutils literal"><span class="pre">PolygonPatch</span></tt>.</dd>
 </dl>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>plot_zones</strong> (<em>bool.</em>) &#8211; </li>
-<li><strong>ax</strong> (<em>Axes.</em>) &#8211; Axes to be used for plotting the shape.</li>
-<li><strong>alpha</strong> (<em>float.</em>) &#8211; Transparency of all elements of the shape.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the polygon as a patch.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">PolygonPatch.</p>
-</td>
-</tr>
-</tbody>
-</table>
+<p class="rubric">Notes</p>
+<p>The zones can be plotted without the shape if the shape&#8217;s
+<tt class="docutils literal"><span class="pre">visible</span></tt> attribute is False, but <tt class="docutils literal"><span class="pre">plot_zones</span></tt> is True.</p>
 </dd></dl>
 
 <dl class="method">
@@ -495,8 +400,8 @@ unless a rotation point is specified.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>pose</strong> (<em>float.</em>) &#8211; angle to be rotated in degrees.</li>
-<li><strong>rotation_pt</strong> (<em>a 2-element list of floats.</em>) &#8211; the rotation point as [x,y] in [m,m].</li>
+<li><strong>angle</strong> (<em>float</em>) &#8211; The angle to be rotated in degrees.</li>
+<li><strong>rotation_pt</strong> (<em>array_like</em>) &#8211; The rotation point as [x,y] in [m,m].</li>
 </ul>
 </td>
 </tr>
@@ -510,50 +415,38 @@ unless a rotation point is specified.</p>
 <div class="section" id="module-cops_and_robots.map_tools.occupancy_layer">
 <span id="cops-and-robots-map-tools-occupancy-layer-module"></span><h2>cops_and_robots.map_tools.occupancy_layer module<a class="headerlink" href="#module-cops_and_robots.map_tools.occupancy_layer" title="Permalink to this headline">¶</a></h2>
 <p>Provides a gridded sense of which map regions are empty or not.</p>
-<p>An occupancy grid takes the map boundaries, creates a grid (with 
-arbitrary cell size) and gives each cell a value: 0 for unoccupied 
-cells, 1 for occupied cells, and None for cells that have not yet 
+<p>An occupancy grid takes the map boundaries, creates a grid (with
+arbitrary cell size) and gives each cell a value: 0 for unoccupied
+cells, 1 for occupied cells, and None for cells that have not yet
 been explored.</p>
-<dl class="docutils">
-<dt>Note:</dt>
-<dd>The Bernoulli distribution (0 or 1) per cell is ideal, and a true 
-occupancy grid would include a continuous probability per cell of 
+<p class="rubric">Notes</p>
+<p>The Bernoulli distribution (0 or 1) per cell is ideal, and a true
+occupancy grid would include a continuous probability per cell of
 its likelihood of occupancy. This will likely be added in future
-versions.</dd>
-<dt>Note:</dt>
-<dd>The occupancy grid currently considers only static objects. This 
-will also likely change in the future versions.</dd>
-<dt>Required Knowledge:</dt>
-<dd><p class="first">This module and its classes needs to know about the following 
-other modules in the cops_and_robots parent module:</p>
-<blockquote class="last">
-<div><ol class="arabic simple">
-<li><tt class="docutils literal"><span class="pre">layer</span></tt> for generic layer parameters and functions.</li>
-<li><tt class="docutils literal"><span class="pre">shape_layer</span></tt> to generate the occupied regions.</li>
-</ol>
-</div></blockquote>
-</dd>
-</dl>
+versions.</p>
+<p>The occupancy grid currently considers only static objects. This
+will also likely change in the future versions.</p>
 <dl class="class">
 <dt id="cops_and_robots.map_tools.occupancy_layer.OccupancyLayer">
 <em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.occupancy_layer.</tt><tt class="descname">OccupancyLayer</tt><big>(</big><em>cell_size=0.05</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/occupancy_layer.html#OccupancyLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.occupancy_layer.OccupancyLayer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#cops_and_robots.map_tools.layer.Layer" title="cops_and_robots.map_tools.layer.Layer"><tt class="xref py py-class docutils literal"><span class="pre">cops_and_robots.map_tools.layer.Layer</span></tt></a></p>
 <p>Generate an occupancy grid from static map objects.</p>
-<p>Gridded occupancy layer for the map, translating euclidean coordinates 
+<p>Gridded occupancy layer for the map, translating euclidean coordinates
 to grid cells. Each cell has a probability of occupancy from 0 to 1.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cell_size</strong> (<em>positive float.</em>) &#8211; the size of each cell in the occupancy grid.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cell_size</strong> (<em>float, optional</em>) &#8211; The side length for each square cell in the occupancy grid in [m].
+Defaults to 0.05.</li>
+<li><strong>**kwargs</strong> &#8211; <p>Keyword arguments given to the <tt class="docutils literal"><span class="pre">Layer</span></tt> superclass.</p>
+</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="cops_and_robots.map_tools.occupancy_layer.OccupancyLayer.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>cell_size=0.05</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/occupancy_layer.html#OccupancyLayer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.occupancy_layer.OccupancyLayer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="cops_and_robots.map_tools.occupancy_layer.OccupancyLayer.add_obj">
 <tt class="descname">add_obj</tt><big>(</big><em>map_obj</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/occupancy_layer.html#OccupancyLayer.add_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.occupancy_layer.OccupancyLayer.add_obj" title="Permalink to this definition">¶</a></dt>
@@ -562,7 +455,7 @@ to grid cells. Each cell has a probability of occupancy from 0 to 1.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>map_obj</strong> (<em>MapObj.</em>) &#8211; the map object considered.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>map_obj</strong> (<em>MapObj</em>) &#8211; The object to be added.</td>
 </tr>
 </tbody>
 </table>
@@ -576,10 +469,13 @@ to grid cells. Each cell has a probability of occupancy from 0 to 1.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>shape_layer</strong> (<em>ShapeLayer</em>) &#8211; the collection of shapes on the map.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>shape_layer</strong> (<em>ShapeLayer, optional</em>) &#8211; The shape layer from which to generate the feasible regions. If
+no layer is provided, the entire map is deemed feasible.</td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Notes</p>
+<p>Not yet implemented.</p>
 </dd></dl>
 
 <dl class="method">
@@ -590,9 +486,9 @@ to grid cells. Each cell has a probability of occupancy from 0 to 1.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the scatter pseudo colormesh data.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The scatter pseudo colormesh data.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">QuadMesh.</td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">QuadMesh</td>
 </tr>
 </tbody>
 </table>
@@ -606,7 +502,7 @@ to grid cells. Each cell has a probability of occupancy from 0 to 1.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>map_obj</strong> (<em>MapObj.</em>) &#8211; the map object considered.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>map_obj</strong> (<em>MapObj</em>) &#8211; The object to be removed.</td>
 </tr>
 </tbody>
 </table>
@@ -618,26 +514,14 @@ to grid cells. Each cell has a probability of occupancy from 0 to 1.</p>
 <div class="section" id="module-cops_and_robots.map_tools.particle_layer">
 <span id="cops-and-robots-map-tools-particle-layer-module"></span><h2>cops_and_robots.map_tools.particle_layer module<a class="headerlink" href="#module-cops_and_robots.map_tools.particle_layer" title="Permalink to this headline">¶</a></h2>
 <p>Provides a discrete particle representation of robot locations.</p>
-<p>When using the <em>discrete</em> <tt class="docutils literal"><span class="pre">fusion_engine</span></tt> type, the particle 
+<p>When using the <em>discrete</em> <tt class="docutils literal"><span class="pre">fusion_engine</span></tt> type, the particle
 layer is used to represent the distribution of a cop&#8217;s expecation of
-robber locations. One particle layer exists per robot, with n particles 
-per particle layer, to estimate the collected probability of all 
+robber locations. One particle layer exists per robot, with n particles
+per particle layer, to estimate the collected probability of all
 robbers&#8217; locations.</p>
-<dl class="docutils">
-<dt>Required Knowledge:</dt>
-<dd><p class="first">This module and its classes needs to know about the following 
-other modules in the cops_and_robots parent module:</p>
-<blockquote class="last">
-<div><ol class="arabic simple">
-<li><tt class="docutils literal"><span class="pre">layer</span></tt> for generic layer parameters and functions.</li>
-<li><tt class="docutils literal"><span class="pre">fusion_engine</span></tt> to provide the probability distribution.</li>
-</ol>
-</div></blockquote>
-</dd>
-</dl>
 <dl class="class">
 <dt id="cops_and_robots.map_tools.particle_layer.ParticleLayer">
-<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.particle_layer.</tt><tt class="descname">ParticleLayer</tt><big>(</big><em>particle_size=200</em>, <em>alpha=0.3</em>, <em>line_weight=0</em>, <em>colorbar_visible=False</em>, <em>n_particles=2000</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/particle_layer.html#ParticleLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.particle_layer.ParticleLayer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.particle_layer.</tt><tt class="descname">ParticleLayer</tt><big>(</big><em>particle_size=200</em>, <em>colorbar_visible=False</em>, <em>n_particles=2000</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/particle_layer.html#ParticleLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.particle_layer.ParticleLayer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#cops_and_robots.map_tools.layer.Layer" title="cops_and_robots.map_tools.layer.Layer"><tt class="xref py py-class docutils literal"><span class="pre">cops_and_robots.map_tools.layer.Layer</span></tt></a></p>
 <p>Visually represents a collection of particles.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -645,20 +529,16 @@ other modules in the cops_and_robots parent module:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>particle_size</strong> (<em>positive int.</em>) &#8211; marker size of each particle.</li>
-<li><strong>alpha</strong> (<em>float between 0 and 1.</em>) &#8211; marker transparency of each particle.</li>
-<li><strong>line_weight</strong> (<em>positive float.</em>) &#8211; marker border weight for each particle.</li>
-<li><strong>colorbar_visible</strong> (<em>bool.</em>) &#8211; whether or not to show the colorbar.</li>
+<li><strong>particle_size</strong> (<em>int, optional</em>) &#8211; The marker size of each particle. Default is 200.</li>
+<li><strong>colorbar_visible</strong> (<em>bool, optional</em>) &#8211; Whether to show the colorbar object. Default it <cite>False</cite>.</li>
+<li><strong>n_particles</strong> (<em>int, optional</em>) &#8211; Number of particles to display. Default is 2000.</li>
+<li><strong>**kwargs</strong> &#8211; <p>Keyword arguments given to the <tt class="docutils literal"><span class="pre">Layer</span></tt> superclass.</p>
+</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="cops_and_robots.map_tools.particle_layer.ParticleLayer.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>particle_size=200</em>, <em>alpha=0.3</em>, <em>line_weight=0</em>, <em>colorbar_visible=False</em>, <em>n_particles=2000</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/particle_layer.html#ParticleLayer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.particle_layer.ParticleLayer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="cops_and_robots.map_tools.particle_layer.ParticleLayer.plot">
 <tt class="descname">plot</tt><big>(</big><em>robber_names</em>, <em>fusion_engine</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/particle_layer.html#ParticleLayer.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.particle_layer.ParticleLayer.plot" title="Permalink to this definition">¶</a></dt>
@@ -667,11 +547,19 @@ other modules in the cops_and_robots parent module:</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>particle_filter</strong> (<em>ParticleFilter.</em>) &#8211; a collection of particles to be shown.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>robber_names</strong> (<em>list of str</em>) &#8211; The list of all robbers.</li>
+<li><strong>fusion_engine</strong> (<em>FusionEngine</em>) &#8211; A robot&#8217;s fusion engine.</li>
+<li><strong>**kwargs</strong> &#8211; <p>Arguments passed to the scatter plot function.</p>
+</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the scatter plot data.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The scatter plot data.</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list ofPathCollection.</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of PathCollection</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -683,23 +571,11 @@ other modules in the cops_and_robots parent module:</p>
 <div class="section" id="module-cops_and_robots.map_tools.probability_layer">
 <span id="cops-and-robots-map-tools-probability-layer-module"></span><h2>cops_and_robots.map_tools.probability_layer module<a class="headerlink" href="#module-cops_and_robots.map_tools.probability_layer" title="Permalink to this headline">¶</a></h2>
 <p>Provides a continuous probability representation of robot locations.</p>
-<p>When using the <em>continuous</em> <tt class="docutils literal"><span class="pre">fusion_engine</span></tt> type, the probability 
+<p>When using the <em>continuous</em> <tt class="docutils literal"><span class="pre">fusion_engine</span></tt> type, the probability
 layer is used to represent the distribution of a cop&#8217;s expecation of
-robber locations. One probability layer exists per robot, as well as 
-one additional probability layer to estimate the combined probability 
+robber locations. One probability layer exists per robot, as well as
+one additional probability layer to estimate the combined probability
 of all robbers&#8217; locations.</p>
-<dl class="docutils">
-<dt>Required Knowledge:</dt>
-<dd><p class="first">This module and its classes needs to know about the following 
-other modules in the cops_and_robots parent module:</p>
-<blockquote class="last">
-<div><ol class="arabic simple">
-<li><tt class="docutils literal"><span class="pre">layer</span></tt> for generic layer parameters and functions.</li>
-<li><tt class="docutils literal"><span class="pre">fusion_engine</span></tt> to provide the probability distribution.</li>
-</ol>
-</div></blockquote>
-</dd>
-</dl>
 <dl class="class">
 <dt id="cops_and_robots.map_tools.probability_layer.ProbabilityLayer">
 <em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.probability_layer.</tt><tt class="descname">ProbabilityLayer</tt><big>(</big><em>cell_size=0.2</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/probability_layer.html#ProbabilityLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.probability_layer.ProbabilityLayer" title="Permalink to this definition">¶</a></dt>
@@ -710,31 +586,28 @@ other modules in the cops_and_robots parent module:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>cell_size</strong> (<em>positive float.</em>) &#8211; size of the discretized probability map&#8217;s cells.</li>
-<li><strong>colorbar_visible</strong> (<em>bool.</em>) &#8211; whether or not to show the colorbar.</li>
+<li><strong>cell_size</strong> (<em>float, optional</em>) &#8211; The side length for each square cell in discretized probability map&#8217;s
+cells. Defaults to 0.2.</li>
+<li><strong>**kwargs</strong> &#8211; <p>Keyword arguments given to the <tt class="docutils literal"><span class="pre">Layer</span></tt> superclass.</p>
+</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
-<dt id="cops_and_robots.map_tools.probability_layer.ProbabilityLayer.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>cell_size=0.2</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/probability_layer.html#ProbabilityLayer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.probability_layer.ProbabilityLayer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
 <dt id="cops_and_robots.map_tools.probability_layer.ProbabilityLayer.plot">
-<tt class="descname">plot</tt><big>(</big><em>GMM</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/probability_layer.html#ProbabilityLayer.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.probability_layer.ProbabilityLayer.plot" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot</tt><big>(</big><em>gauss_sum</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/probability_layer.html#ProbabilityLayer.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.probability_layer.ProbabilityLayer.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the pseudo colormesh representation of probabilty.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>GMM</strong> (<em>GaussianMixtureModel.</em>) &#8211; gaussian mixture model as a continuous probabilty.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>gauss_sum</strong> (<em>GaussSum</em>) &#8211; A Gaussian sum distribution.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the scatter pseudo colormesh data.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The scatter pseudo colormesh data.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">QuadMesh.</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">QuadMesh</td>
 </tr>
 </tbody>
 </table>
@@ -746,39 +619,23 @@ other modules in the cops_and_robots parent module:</p>
 <div class="section" id="module-cops_and_robots.map_tools.shape_layer">
 <span id="cops-and-robots-map-tools-shape-layer-module"></span><h2>cops_and_robots.map_tools.shape_layer module<a class="headerlink" href="#module-cops_and_robots.map_tools.shape_layer" title="Permalink to this headline">¶</a></h2>
 <p>Provides a grouping of all map objects.</p>
-<p>The shape layer accounts for all map objects, grouping them both as a 
-dictionary of individual objects as well as an accumulation of all 
+<p>The shape layer accounts for all map objects, grouping them both as a
+dictionary of individual objects as well as an accumulation of all
 objects in one.</p>
-<dl class="docutils">
-<dt>Required Knowledge:</dt>
-<dd><p class="first">This module and its classes needs to know about the following 
-other modules in the cops_and_robots parent module:</p>
-<blockquote class="last">
-<div><ol class="arabic simple">
-<li><tt class="docutils literal"><span class="pre">layer</span></tt> for generic layer parameters and functions.</li>
-<li><tt class="docutils literal"><span class="pre">map_obj</span></tt> to represent parts of the shape layer.</li>
-</ol>
-</div></blockquote>
-</dd>
-</dl>
 <dl class="class">
 <dt id="cops_and_robots.map_tools.shape_layer.ShapeLayer">
-<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.shape_layer.</tt><tt class="descname">ShapeLayer</tt><big>(</big><em>alpha=0.9</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/shape_layer.html#ShapeLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.shape_layer.ShapeLayer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">cops_and_robots.map_tools.shape_layer.</tt><tt class="descname">ShapeLayer</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/shape_layer.html#ShapeLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.shape_layer.ShapeLayer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#cops_and_robots.map_tools.layer.Layer" title="cops_and_robots.map_tools.layer.Layer"><tt class="xref py py-class docutils literal"><span class="pre">cops_and_robots.map_tools.layer.Layer</span></tt></a></p>
-<p>docstring for ShapeLayer</p>
+<p>A layer object containing all fixed map objects.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>alpha</strong> (<em>float from 0 to 1.</em>) &#8211; transparency of all objects on this layer.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; <p>Arguments for the <tt class="docutils literal"><span class="pre">Layer</span></tt> superclass.</p>
+</td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="cops_and_robots.map_tools.shape_layer.ShapeLayer.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>alpha=0.9</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/shape_layer.html#ShapeLayer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.shape_layer.ShapeLayer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="cops_and_robots.map_tools.shape_layer.ShapeLayer.add_obj">
 <tt class="descname">add_obj</tt><big>(</big><em>map_obj</em>, <em>update_all_objects=True</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/map_tools/shape_layer.html#ShapeLayer.add_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.map_tools.shape_layer.ShapeLayer.add_obj" title="Permalink to this definition">¶</a></dt>
@@ -788,9 +645,8 @@ other modules in the cops_and_robots parent module:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>map_obj</strong> (<em>MapObj.</em>) &#8211; the object to be added to the layer.</li>
-<li><strong>update_all_objects</strong> (<em>bool.</em>) &#8211; whether to update the aggregation of
-all objects.</li>
+<li><strong>map_obj</strong> (<em>MapObj</em>) &#8211; The object to be added.</li>
+<li><strong>update_all_objects</strong> (<em>bool, optional</em>) &#8211; <cite>True</cite> to update the aggregation of all objects. Default is <cite>True</cite>.</li>
 </ul>
 </td>
 </tr>
@@ -806,7 +662,7 @@ all objects.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plot_zones</strong> (<em>bool.</em>) &#8211; whether or not to plot map object zones.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plot_zones</strong> (<em>bool, optional</em>) &#8211; <cite>True</cite> to plot the zones of the map objects. Default is <cite>True</cite>.</td>
 </tr>
 </tbody>
 </table>
@@ -821,9 +677,8 @@ all objects.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>map_obj_name</strong> (<em>String.</em>) &#8211; the object name to be removed.</li>
-<li><strong>update_all_objects</strong> (<em>bool.</em>) &#8211; whether to update the aggregation of
-all objects.</li>
+<li><strong>map_obj_name</strong> (<em>str</em>) &#8211; The name of the object to be removed.</li>
+<li><strong>update_all_objects</strong> (<em>bool, optional</em>) &#8211; <cite>True</cite> to update the aggregation of all objects. Default is <cite>True</cite>.</li>
 </ul>
 </td>
 </tr>

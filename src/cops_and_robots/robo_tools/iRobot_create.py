@@ -10,11 +10,7 @@ chassis. Any other reference to the iRobot Create nominally
 includes the additional aspects of the robot (i.e. computer,
 camera, actuators).
 
-Required Knowledge:
-    This module and its classes do not need to know about any other
-    parts of the cops_and_robots parent module.
 """
-
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Nick Sweet", "Nisar Ahmed"]
@@ -42,16 +38,36 @@ class iRobotCreate(object):
     Largely controls movement of the robot, but also provides
     interfaces for the robot's bump and cliff sensors.
 
-    :param name: hostname of physical robot's computer.
-    :type name: String.
-    :param control_hardware: whether to begin controlling hardware or not.
-    :type control_hardware: bool.
-    """
+    Attributes
+    ----------
+    DIAMETER : float
+        Diameter of the circular robot in meters.
+    MAX_SPEED : float
+        Maximum linear speed in mm/s.
+    MAX_TURN_RADIUS : float
+        Maximum radius of the turning circle in mm.
+    RAD_STRAIGHT : float
+        Special radius for linear movement.
+    RAD_CW : float
+        Special radius of a turning circle for in-place clockwise rotation.
+    RAD_CCW : float
+        Special radius of a turning circle for in-place counterclockwise
+        rotation.
+    OPCODE : dict
+        All opcodes required to communicate with the iRobot Create.
+    SENSOR_PKT : dict
+        Identifiers for each sensor packet to be received from the iRobot
+        Create.
+    CHARGE_MODE : dict
+        Identifiers for each charging mode.
+    OI_MODE : dict
+        Identifiers for each operation mode.
 
+    """
     # Class Constants
     DIAMETER = 0.34  # [m] (appoximate)
     MAX_SPEED = 500  # [mm/s] linear speed
-    MAX_ROTATION_RADIUS = 2000  # [mm] roation radius
+    MAX_TURN_RADIUS = 2000  # [mm] roation radius
 
     # Special movement radii
     RAD_STRAIGHT = 2 ** 15 - 1
@@ -135,7 +151,7 @@ class iRobotCreate(object):
         self.bump_left = False
         self.bump_right = False
         self.speed = 0
-        self.rotation_radius = iRobotCreate.MAX_ROTATION_RADIUS
+        self.rotation_radius = iRobotCreate.MAX_TURN_RADIUS
         self.oi_mode = iRobotCreate.OI_MODE['off']
         self.cmd_queue = queue.Queue()
 
@@ -148,8 +164,7 @@ class iRobotCreate(object):
 
     def start_base_cx(self):
         """Start the thread to communicate with the iRobot Create base."""
-        # Spawn base thread
-        self.base_t = threading.Thread(target=self.base)
+        self.base_t = threading.Thread(target=self._base_thread_f)
         self.base_t_stop = threading.Event()  # Allow graceful killing
         self.base_t.start()
 
@@ -164,7 +179,7 @@ class iRobotCreate(object):
                 self.base_t_stop.set()
                 break
 
-    def base(self):
+    def _base_thread_f(self):
         """Thread function to implement serial communication with the base.
         """
         # Connect to the serial port
@@ -246,7 +261,8 @@ class iRobotCreate(object):
                 elif charge_mode_byte & 4:
                     self.charge_mode = iRobotCreate.CHARGE_MODE['full']
                 elif charge_mode_byte & 2:
-                    self.charge_mode = iRobotCreate.CHARGE_MODE['reconditioning']
+                    self.charge_mode = iRobotCreate \
+                        .CHARGE_MODE['reconditioning']
                 elif not charge_mode_byte == 1:
                     self.charge_mode = iRobotCreate.CHARGE_MODE['none']
                 else:
@@ -277,12 +293,18 @@ class iRobotCreate(object):
         logging.debug("Exiting gracefully!")
         ser.close()
 
-    def int2ascii(self, integer):
+    def _int2ascii(self, integer):
         """Take a 16-bit signed integer and convert it to two ascii characters.
 
-        :param integer: integer value no larger than (+/-)2^15.
-        :type integer: int.
-        :returns: high and low ascii characters.
+        Parameters
+        ----------
+        integer : int
+            Integer value no larger than (+/-)2^15.
+
+        Returns
+        -------
+        tuple
+            High and low byte ascii characters.
         """
 
         if integer < 0:
@@ -300,14 +322,17 @@ class iRobotCreate(object):
     def move(self):
         """Move based on robot's speed and radius.
 
-        :returns: string of hex characters
+        Returns
+        -------
+        str
+            A string of drive commands as hex characters.
         """
 
         # Translate speed to upper and lower bytes
-        (s_h, s_l) = self.int2ascii(self.speed)
+        (s_h, s_l) = self._int2ascii(self.speed)
 
         # Translate radius to upper and lower bytes
-        (r_h, r_l) = self.int2ascii(self.rotation_radius)
+        (r_h, r_l) = self._int2ascii(self.rotation_radius)
 
         # Generate serial drive command
         drive_params = [s_h, s_l, r_h, r_l]
@@ -358,35 +383,35 @@ class iRobotCreate(object):
     def turn(self, radius):
         """Move in a circle.
 
-        :param radius: The longer radii make Create drive straighter,
-            while the shorter radii make Create turn more. The radius
-            is measured from the center of the turning circle to the
-            center of Create. A Drive command with a positive velocity
-            and a positive radius makes Create drive forward while
-            turning toward the left. A negative radius makes Create
-            turn toward the right.
-        :type radius: float.
+        Parameters
+        ----------
+        radius : float
+            Longer radii make Create drive straighter, while shorter radii
+            make the Create turn more. The radius is measured from the center
+            of the turning circle to the center of Create.
+
+            A Drive command with a positive velocity and a positive radius
+            makes Create drive forward while turning toward the left. A
+            negative radius makes Create turn toward the right.
+
         """
         logging.info('Turning!')
-        if abs(radius) > iRobotCreate.MAX_ROTATION_RADIUS:
-                radius = int(math.copysign(iRobotCreate.MAX_ROTATION_RADIUS,
+        if abs(radius) > iRobotCreate.MAX_TURN_RADIUS:
+                radius = int(math.copysign(iRobotCreate.MAX_TURN_RADIUS,
                              radius))
         self.rotation_radius = radius
-        self.speed = self.speed
 
     def rotate_ccw(self):
         """Rotate in place counterclockwise.
         """
         logging.info('Rotate Left!')
         self.rotation_radius = iRobotCreate.RAD_CCW
-        self.speed = self.speed
 
     def rotate_cw(self):
         """Rotate in place clockwise.
         """
         logging.info('RotateRight!')
         self.rotation_radius = iRobotCreate.RAD_CW
-        self.speed = self.speed
 
     def stop(self):
         """Stop the iRobotCreate base.

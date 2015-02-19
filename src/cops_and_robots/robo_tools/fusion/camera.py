@@ -10,12 +10,6 @@ Note:
     Only cop robots have cameras (for now). Robbers may get hardware
     upgreades in future versions, in which case this would be owned by
     the ``robot`` module instead of the ``cop`` module.
-
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``sensor`` for generic sensor parameters and functions,
-           such as update rate and detection chance.
 """
 
 __author__ = "Nick Sweet"
@@ -44,7 +38,22 @@ from cops_and_robots.map_tools.shape_layer import ShapeLayer
 
 
 class Camera(Sensor):
-    """docstring for Camera"""
+    """A conic sensor mounted on a robot.
+
+    The camera provides a viewcone from the point of view of the robot which
+    rescales based on its environment (e.g. if it's in front of a wall).
+
+
+    Parameters
+    ----------
+    robot_pose : array_like, optional
+        The cop's initial [x, y, theta] (defaults to [0, 0, 0]).
+    visible : bool, optional
+        Whether or not the view cone is shown. Default is True.
+    default_color : cnames
+        Default color to display all camera sensors as. Defaults to yellow.
+
+    """
     def __init__(self, robot_pose=(0, 0, 0), visible=True,
                  default_color=cnames['yellow']):
         # Define nominal viewcone
@@ -70,7 +79,7 @@ class Camera(Sensor):
         self.ideal_viewcone = MapObj('Ideal viewcone',
                                      viewcone_pts,
                                      visible=False,
-                                     default_color_str='pink',
+                                     color_str='pink',
                                      pose=robot_pose,
                                      has_zones=False,
                                      centroid_at_origin=False,
@@ -78,7 +87,7 @@ class Camera(Sensor):
         self.viewcone = MapObj('Viewcone',
                                viewcone_pts,
                                visible=True,
-                               default_color_str='lightyellow',
+                               color_str='lightyellow',
                                pose=robot_pose,
                                has_zones=False,
                                centroid_at_origin=False,
@@ -86,22 +95,30 @@ class Camera(Sensor):
         self.view_pose = (0, 0, 0)
         # <>TODO: Add in and test an offset of (-0.1,-0.1)
         self.offset = (0, 0, 0)  # [m] offset (x,y,theta) from center of robot
-        self.move_viewcone(robot_pose)
+        self._move_viewcone(robot_pose)
 
-    def update(self, robot_pose, shape_layer):
-        """Update the camera's viewcone based on the robot's position
-            in the map.
+    def update_viewcone(self, robot_pose, shape_layer):
+        """Update the camera's viewcone position and scale.
 
-        :param robot_pose:
-        :type robot_pose:
-        :param shape_layer:
-        :type shape_layer:
+        Parameters
+        ----------
+        robot_pose : array_like, optional
+            The robot's currentl [x, y, theta].
+        shape_layer : ShapeLayer
+            A layer object providing all the shapes in the map for the camera
+            to rescale its viewcone.
         """
-        self.move_viewcone(robot_pose)
-        self.rescale_viewcone(robot_pose, shape_layer)
+        self._move_viewcone(robot_pose)
+        self._rescale_viewcone(robot_pose, shape_layer)
 
-    def move_viewcone(self, robot_pose):
-        """Move the viewcone based on the robot's pose"""
+    def _move_viewcone(self, robot_pose):
+        """Move the viewcone based on the robot's pose
+
+        Parameters
+        ----------
+        robot_pose : array_like, optional
+            The robot's currentl [x, y, theta].
+        """
         pose = (robot_pose[0] + self.offset[0],
                 robot_pose[1] + self.offset[1],
                 robot_pose[2]
@@ -115,7 +132,17 @@ class Camera(Sensor):
         self.viewcone.move_shape(transform, rotation_pt=self.view_pose[0:2])
         self.view_pose = pose
 
-    def rescale_viewcone(self, robot_pose, shape_layer):
+    def _rescale_viewcone(self, robot_pose, shape_layer):
+        """Rescale the viewcone based on intersecting map objects.
+
+        Parameters
+        ----------
+        robot_pose : array_like, optional
+            The robot's currentl [x, y, theta].
+        shape_layer : ShapeLayer
+            A layer object providing all the shapes in the map for the camera
+            to rescale its viewcone.
+        """
         all_shapes = shape_layer.all_shapes.buffer(0)  # bit of a hack!
         if self.viewcone.shape.intersects(all_shapes):
 
@@ -134,18 +161,33 @@ class Camera(Sensor):
         else:
             self.viewcone.shape = self.ideal_viewcone.shape
 
-    def detect(self, fusion_engine_type, particles):
-        if fusion_engine_type == 'discrete':
-            self.detect_particles(particles)
-        else:
-            self.detect_probability()
-
     def detect_robber(self, robber):
         if self.viewcone.shape.contains(Point(robber.pose)):
             robber.status = 'detected'
 
-    def detect_particles(self, particles):
-        """ Update particles based on sensor model.
+    def detect(self, filter_type, particles=None):
+        """Update a fusion engine's probability from camera detections.
+
+        Parameters
+        ----------
+        filter_type : {'particle','gauss sum'}
+            The type of filter to update.
+        particles : array_like, optional
+            The particle list, assuming [x,y,p], where x and y are position
+            data and p is the particle's associated probability.
+
+        """
+        if filter_type == 'particle':
+            self._detect_particles(particles)
+        else:
+            self._detect_probability()
+
+    def _detect_particles(self, particles):
+        """Update particles based on sensor model.
+
+        particles : array_like
+            The particle list, assuming [x,y,p], where x and y are position
+            data and p is the particle's associated probability.
         """
         # Update particle probabilities in view cone
         for i, particle in enumerate(particles):
@@ -155,7 +197,7 @@ class Camera(Sensor):
         # Renormalize
         particles[:, 2] /= sum(particles[:, 2])
 
-    def detect_probability(self):
+    def _detect_probability(self):
         pass
 
 
@@ -193,12 +235,12 @@ if __name__ == '__main__':
     # Define Particle Filter
     # target_pose = (10,10,0)
     # particle_filter = ParticleFilter(bounds=bounds,"Roy")
-    # particle_filter.update(kinect,target_pose)
+    # particle_filter.update_viewcone(kinect,target_pose)
 
     # Move camera and update the camera
     for point in goal_points:
-        # kinect.update(point,shape_layer,particle_filter,target_pose)
-        kinect.update(point, shape_layer)
+        # kinect.update_viewcone(point,shape_layer,particle_filter,target_pose)
+        kinect.update_viewcone(point, shape_layer)
         kinect.viewcone.plot(plot_zones=False,
                              color=cnames['yellow'],
                              alpha=0.5

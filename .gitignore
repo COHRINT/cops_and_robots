@@ -45,3 +45,6 @@ docs/_build/
 
 # OS X stuff
 .DS_store
+
+# Sublime text
+*.sublime*

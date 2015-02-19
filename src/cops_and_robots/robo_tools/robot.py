@@ -19,8 +19,8 @@ Required Knowledge:
         2. ``planner`` to set goal poses and paths.
         3. ``map`` to maintain environment information.
         4. ``map_obj`` to create its own shape in the map.
-"""
 
+"""
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Nick Sweet", "Nisar Ahmed"]
@@ -46,18 +46,49 @@ from cops_and_robots.map_tools.map_obj import MapObj
 class Robot(iRobotCreate):
     """Class definition for the generic robot object.
 
-    Subclassed by either cops or robbers.
+    Parameters
+    ----------
+    name : str
+        The robot's name.
+    pose : array_like, optional
+        The robot's initial [x, y, theta] in [m,m,degrees] (defaults to
+        [0, 0.5, 0]).
+    map_name : str, optional
+        The name of the map (defaults to 'fleming').
+    role : {'robber','cop'}, optional
+        The robot's role in the cops and robbers game.
+    status : two-element list of strings, optional
+        The robot's initial mission status and movement status. Cops and
+        robbers share possible movement statuses, but their mission statuses
+         differ entirely. Defaults to ['on the run', 'without a goal'].
+    planner_type: {'simple', 'particle', 'MAP'}, optional
+        The robot's type of planner.
+    consider_others : bool, optional
+        Whether this robot generates other robot models (e.g. the primary cop
+        will imagine other robots moving around.) Defaults to false.
+    control_hardware : bool, optional
+        Whether this robot controls physical hardware. Defaults to false.
+    **kwargs
+        Arguments passed to the ``MapObj`` attribute.
 
-    :param name: the robot's name.
-    :type name: String.
-    :param pose:
-    :type pose:
-    :param control_hardware:
-    :type control_hardware:
-    :param default_color:
-    :type default_color:
-    :param pose:
-    :type pose:
+    Attributes
+    ----------
+    all_robots : dict
+        A dictionary of all robot names (as the key) and their respective roles
+        (as the value).
+    movement_statuses : {'stuck','at goal','near goal','on goal path',
+        'rotating','without a goal'}
+        The possible movement statuses of any robot, where:
+            * `stuck` means the robot hasn't moved recently;
+            * `at goal` means the robot has reached its goal pose;
+            * `near goal` means the robot has reached its goal pose in
+            cartesian distance, but has not rotated to the final pose;
+            * `on goal path` means the robot is translating along the goal
+            path;
+            * `rotating` means the robot is rotating to align itself with the
+            next path segment;
+            * `without a goal` means the robot has no movement goal.
+
     """
 
     # all_robots = {'Deckard': 'cop',
@@ -183,11 +214,11 @@ class Robot(iRobotCreate):
 
             # Add other robots to the map
             if role == 'robber':
-                new_robber = robber.Robber(name, pose=pose)
+                new_robber = robber_module.Robber(name, pose=pose)
                 self.map.add_robber(new_robber.map_obj)
                 self.missing_robbers[name] = new_robber
             else:
-                new_cop = cop.Cop(name, pose=pose)
+                new_cop = cop_module.Cop(name, pose=pose)
                 self.map.add_cop(new_cop.map_obj)
                 self.known_cops[name] = new_cop
 
@@ -196,6 +227,12 @@ class Robot(iRobotCreate):
 
         :param path: a line representing the path to the goal.
         :type path: LineString.
+
+        Parameters
+        ----------
+        path : LineString, optional
+            A movement path represented as a Shapely LineString.Defaults to
+            the robot's current path.
         """
 
         if not path:
@@ -209,8 +246,12 @@ class Robot(iRobotCreate):
     def rotate_to_pose(self, theta=None):
         """Rotate the robot about its centroid towards a goal angle.
 
-        Note:
-            All angles represented in degrees.
+        Parameters
+        ----------
+        theta : float, optional
+            The goal angle in degrees for the robot to attempt to rotate
+            towards. Defaults to the robot's current goal pose angle.
+
         """
         if not theta:
             theta = self.goal_pose[2]
@@ -261,16 +302,25 @@ class Robot(iRobotCreate):
 
     def has_new_goal(self):
         """Check if the robot received a new goal from the planner.
+
+        Returns
+        -------
+        bool
+            True if the robot has a new goal, false otherwise.
         """
         # <>TODO: Validate this
         return np.sum((self.pose_history[-1, :], -self.goal_pose[:])) > 0.1
-        # return True
 
     def is_on_path(self):
         """Check if the robot is on the correct path.
 
         The robot will first rotate to the correct angle before translating
         towards its goal.
+
+        Returns
+        -------
+        bool
+            True if the robot is pointing along the goal path, false otherwise.
         """
         if self.status[1] != 'rotating':
             raise RuntimeError("*is_on_path* should not be called while the "
@@ -284,6 +334,11 @@ class Robot(iRobotCreate):
         The robot will only rotate to its final goal pose after it no longer
         needs to translate to be close enough to its goal point. 'Close enough'
         is given by a predetermined distance allowance.
+
+        Returns
+        -------
+        bool
+            True if the robot is near its goal, false otherwise.
         """
         if self.status[1] != 'on goal path':
             raise RuntimeError("*is_near_goal* should not be called while the "
@@ -301,6 +356,11 @@ class Robot(iRobotCreate):
         Once the robot is near its goal, it rotates towards the final goal
         pose. Once it reaches this goal pose (within some predetermined
         rotation allowance), it is deemed to be at its goal.
+
+        Returns
+        -------
+        bool
+            True if the robot is at its goal, false otherwise.
         """
         if self.status[1] != 'near goal':
             raise RuntimeError("*is_at_goal* should not be called while the "
@@ -355,6 +415,17 @@ class Robot(iRobotCreate):
 
         This includes planning and movement for both cops and robbers,
         as well as sensing and map animations for cops.
+
+        Parameters
+        ----------
+        i : int, optional
+            The current animation frame. Default is 0 for non-animated robots.
+
+        Returns
+        -------
+        tuple or None
+            `None` if the robot does not generate an animation packet, or a
+            tuple of all animation parameters otherwise.
         """
 
         # If stationary or done, do absolutely nothing.
@@ -404,11 +475,24 @@ class Robot(iRobotCreate):
             if not self.map.combined_only:
                 for i, robber_name in enumerate(self.missing_robbers):
                     packet[robber_name] = \
-                        self.form_animation_packet(robber_name)
-            packet['combined'] = self.form_animation_packet('combined')
+                        self._form_animation_packet(robber_name)
+            packet['combined'] = self._form_animation_packet('combined')
             return self.stream.send(packet)
 
-    def form_animation_packet(self, robber_name):
+    def _form_animation_packet(self, robber_name):
+        """Turn all important animation data into a tuple.
+
+        Parameters
+        ----------
+        robber_name : str
+            The name of the robber (or 'combined') associated with this packet.
+
+        Returns
+        -------
+        tuple
+            All important animation parameters.
+
+        """
         # Cop-related values
         cop_shape = self.map_obj.shape
         if len(self.pose_history) < self.check_last_n:
@@ -432,5 +516,5 @@ class Robot(iRobotCreate):
         return packet
 
 # Import statements left to the bottom because of subclass circular dependency
-import cops_and_robots.robo_tools.cop as cop
-import cops_and_robots.robo_tools.robber as robber
+import cops_and_robots.robo_tools.cop as cop_module
+import cops_and_robots.robo_tools.robber as robber_module
