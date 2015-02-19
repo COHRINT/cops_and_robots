@@ -1,5 +1,5 @@
 sphinxcontrib-napoleon
-numpy
-scipy
+#numpy
+#scipy
 shapely
-matplotlib
+#matplotlib
