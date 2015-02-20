@@ -1,0 +1,7 @@
+cops_and_robots.test.robo_tools.fusion.softmax module
+=====================================================
+
+.. automodule:: cops_and_robots.test.robo_tools.fusion.softmax
+    :members:
+    :undoc-members:
+    :show-inheritance:

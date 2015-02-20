@@ -5,8 +5,8 @@ Since many sensors share parameters and functions, the ``sensor``
 module defines these in one place, allowing all sensors to use it as
 a superclass.
 
-Notes
------
+Note
+----
     Only cop robots have sensors (for now). Robbers may get hardware
     upgreades in future versions, in which case this would be owned by
     the ``robot`` module instead of the ``cop`` module.
@@ -26,6 +26,8 @@ import logging
 
 class Sensor(object):
     """Base class for all sensor models.
+
+    .. image:: img/classes_Sensor.png
 
     Parameters
     ----------

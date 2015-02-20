@@ -32,6 +32,8 @@ from shapely.geometry import Point
 class ParticleFilter(object):
     """Particle-based representation of target locations.
 
+    .. image:: img/classes_Particle_Filter.png
+
     Parameters
     ----------
     target : str

@@ -26,6 +26,8 @@ from matplotlib.patches import Rectangle
 class HumanInterface(object):
     """Generate a human interface on a given figure.
 
+    .. image:: img/classes_Human_interface.png
+
     Parameters
     ----------
     fig : figure handle

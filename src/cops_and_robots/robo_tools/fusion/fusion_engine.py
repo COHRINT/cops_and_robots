@@ -39,6 +39,8 @@ class FusionEngine(object):
     The fusion engine tracks each robber, as well as a `combined`
     representation of the average target estimate.
 
+    .. image:: img/classes_Fusion_Engine.png
+
     Parameters
     ----------
     filter_type : {'particle','gauss sum'}

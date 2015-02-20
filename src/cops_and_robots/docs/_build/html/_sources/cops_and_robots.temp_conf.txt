@@ -1,0 +1,7 @@
+cops_and_robots.temp_conf module
+================================
+
+.. automodule:: cops_and_robots.temp_conf
+    :members:
+    :undoc-members:
+    :show-inheritance:

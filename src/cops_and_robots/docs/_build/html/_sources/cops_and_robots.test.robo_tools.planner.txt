@@ -1,0 +1,7 @@
+cops_and_robots.test.robo_tools.planner module
+==============================================
+
+.. automodule:: cops_and_robots.test.robo_tools.planner
+    :members:
+    :undoc-members:
+    :show-inheritance:

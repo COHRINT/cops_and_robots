@@ -1,4 +1,4 @@
-cops_and_robots package
+Cops and Robots package
 =======================
 
 Subpackages
@@ -6,8 +6,15 @@ Subpackages
 
 .. toctree::
 
-    cops_and_robots.map_tools
-    cops_and_robots.robo_tools
+    Map Tools <cops_and_robots.map_tools>
+    Robo Tools <cops_and_robots.robo_tools>
+
+Submodules
+----------
+
+.. toctree::
+
+   Main <cops_and_robots.main>
 
 Module contents
 ---------------

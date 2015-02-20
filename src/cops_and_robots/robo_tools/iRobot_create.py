@@ -38,6 +38,8 @@ class iRobotCreate(object):
     Largely controls movement of the robot, but also provides
     interfaces for the robot's bump and cliff sensors.
 
+    .. image:: img/classes_iRobot_Create.png
+
     Attributes
     ----------
     DIAMETER : float

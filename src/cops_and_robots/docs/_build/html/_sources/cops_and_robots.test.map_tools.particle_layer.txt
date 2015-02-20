@@ -1,0 +1,7 @@
+cops_and_robots.test.map_tools.particle_layer module
+====================================================
+
+.. automodule:: cops_and_robots.test.map_tools.particle_layer
+    :members:
+    :undoc-members:
+    :show-inheritance:

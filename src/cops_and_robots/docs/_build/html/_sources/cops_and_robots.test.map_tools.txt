@@ -1,0 +1,25 @@
+cops_and_robots.test.map_tools package
+======================================
+
+Submodules
+----------
+
+.. toctree::
+
+   cops_and_robots.test.map_tools.feasible_layer
+   cops_and_robots.test.map_tools.human_interface
+   cops_and_robots.test.map_tools.layer
+   cops_and_robots.test.map_tools.map
+   cops_and_robots.test.map_tools.map_obj
+   cops_and_robots.test.map_tools.occupancy_layer
+   cops_and_robots.test.map_tools.particle_layer
+   cops_and_robots.test.map_tools.probability_layer
+   cops_and_robots.test.map_tools.shape_layer
+
+Module contents
+---------------
+
+.. automodule:: cops_and_robots.test.map_tools
+    :members:
+    :undoc-members:
+    :show-inheritance:

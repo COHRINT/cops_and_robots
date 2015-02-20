@@ -1,0 +1,23 @@
+cops_and_robots.test.robo_tools.fusion package
+==============================================
+
+Submodules
+----------
+
+.. toctree::
+
+   cops_and_robots.test.robo_tools.fusion.camera
+   cops_and_robots.test.robo_tools.fusion.fusion_engine
+   cops_and_robots.test.robo_tools.fusion.gauss_sum_filter
+   cops_and_robots.test.robo_tools.fusion.human
+   cops_and_robots.test.robo_tools.fusion.particle_filter
+   cops_and_robots.test.robo_tools.fusion.sensor
+   cops_and_robots.test.robo_tools.fusion.softmax
+
+Module contents
+---------------
+
+.. automodule:: cops_and_robots.test.robo_tools.fusion
+    :members:
+    :undoc-members:
+    :show-inheritance:

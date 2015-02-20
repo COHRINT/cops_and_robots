@@ -1,0 +1,7 @@
+cops_and_robots.test.robo_tools.fusion.gauss_sum_filter module
+==============================================================
+
+.. automodule:: cops_and_robots.test.robo_tools.fusion.gauss_sum_filter
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,7 @@
+cops_and_robots.test.robo_tools.fusion.human module
+===================================================
+
+.. automodule:: cops_and_robots.test.robo_tools.fusion.human
+    :members:
+    :undoc-members:
+    :show-inheritance:

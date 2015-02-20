@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Robber module &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="index.html"/>
+        <link rel="up" title="Robo Tools package" href="cops_and_robots.robo_tools.html"/>
+        <link rel="next" title="Robot module" href="cops_and_robots.robo_tools.robot.html"/>
+        <link rel="prev" title="Planner module" href="cops_and_robots.robo_tools.planner.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="cops_and_robots.robo_tools.html"> Robo Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.fusion.html">Fusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.cop.html">Cop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.iRobot_create.html">iRobot Create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.planner.html">Planner</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Robber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.feasible_layer.html">Feasible Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.human_interface.html">Human Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.layer.html">Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map.html">Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map_obj.html">Map Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.occupancy_layer.html">Occupancy Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.particle_layer.html">Particle Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.probability_layer.html">Probability Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.shape_layer.html">Shape Layer</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="cops_and_robots.robo_tools.html">Robo Tools package</a> &raquo;</li>
+      
+    <li>Robber module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/cops_and_robots.robo_tools.robber.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="module-cops_and_robots.robo_tools.robber">
+<span id="robber-module"></span><h1>Robber module<a class="headerlink" href="#module-cops_and_robots.robo_tools.robber" title="Permalink to this headline">¶</a></h1>
+<p>Provides some common functionality for robber robots.</p>
+<p>While a robber&#8217;s functionality is largely defined by the <tt class="docutils literal"><span class="pre">robot</span></tt>
+module, this module is meant to update the robber&#8217;s status (which
+differs from cop statuses) and provide a basis for any additional
+functionality the robbers may need (such as communication between
+robbers).</p>
+<dl class="class">
+<dt id="cops_and_robots.robo_tools.robber.Robber">
+<em class="property">class </em><tt class="descname">Robber</tt><big>(</big><em>name</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/robber.html#Robber"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.robber.Robber" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cops_and_robots.robo_tools.robot.html#cops_and_robots.robo_tools.robot.Robot" title="cops_and_robots.robo_tools.robot.Robot"><tt class="xref py py-class docutils literal"><span class="pre">cops_and_robots.robo_tools.robot.Robot</span></tt></a></p>
+<p>The robber subclass of the generic Robot type.</p>
+<img alt="_images/classes_Robber.png" src="_images/classes_Robber.png" />
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) &#8211; The robber&#8217;s name.</li>
+<li><strong>**kwargs</strong> &#8211; <p>Arguments passed to the <tt class="docutils literal"><span class="pre">Robber</span></tt> superclass.</p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="cops_and_robots.robo_tools.robber.Robber.found">
+<tt class="descname">found</tt><a class="headerlink" href="#cops_and_robots.robo_tools.robber.Robber.found" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>bool</em></p>
+<p>Whether or not the robber knows its been found.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cops_and_robots.robo_tools.robber.Robber.mission_statuses">
+<tt class="descname">mission_statuses</tt><a class="headerlink" href="#cops_and_robots.robo_tools.robber.Robber.mission_statuses" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>{&#8216;stationary&#8217;, &#8216;on the run&#8217;, &#8216;detected&#8217;, &#8216;captured&#8217;}</em></p>
+<dl class="docutils">
+<dt>The possible mission-level statuses of any robber, where:</dt>
+<dd><ul class="first last">
+<li><p class="first"><cite>stationary</cite> means the robber is holding its position;</p>
+</li>
+<li><dl class="first docutils">
+<dt><cite>on the run</cite> means the robber is moving around and avoiding the</dt>
+<dd><p class="first last">cop;</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>detected</cite> means the robber knows it has been detected by the</dt>
+<dd><p class="first last">cop;</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>captured</cite> means the robber has been captured by the cop and</dt>
+<dd><p class="first last">is no longer moving.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">mission_statuses</tt><em class="property"> = ['stationary', 'on the run', 'detected', 'captured']</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.robo_tools.robber.Robber.update_status">
+<tt class="descname">update_status</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/robber.html#Robber.update_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.robber.Robber.update_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the robber&#8217;s status</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="cops_and_robots.robo_tools.robot.html" class="btn btn-neutral float-right" title="Robot module"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="cops_and_robots.robo_tools.planner.html" class="btn btn-neutral" title="Planner module"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

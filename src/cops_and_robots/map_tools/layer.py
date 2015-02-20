@@ -23,6 +23,8 @@ import matplotlib.pyplot as plt
 class Layer(object):
     """A collection of generic layer parameters and functions.
 
+    .. image:: img/classes_Layer.png
+
     Parameters
     ----------
     bounds : array_like, optional

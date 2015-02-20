@@ -35,8 +35,10 @@ class MapObj(object):
 
     Zones demarcate spatial relationships around objects.
 
-    Notes
-    -----
+    .. image:: img/classes_Map_Object.png
+
+    Note
+    ----
         If only one xy pair is given as shape_pts, MapObj will assume
         the user wants to create a box with those two values as length
         and width, respectively.
@@ -214,8 +216,8 @@ class MapObj(object):
         **kwargs
             Arguments passed to ``PolygonPatch``.
 
-        Notes
-        -----
+        Note
+        ----
             The zones can be plotted without the shape if the shape's
             ``visible`` attribute is False, but ``plot_zones`` is True.
         """

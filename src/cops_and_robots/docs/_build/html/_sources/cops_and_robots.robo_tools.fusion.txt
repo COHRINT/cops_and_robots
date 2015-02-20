@@ -1,57 +1,20 @@
-cops_and_robots.robo_tools.fusion package
+Fusion package
 =========================================
+
+The Fusion package is a collection of modules related to sensing, data fusion and probabilistic representation of the environment.
 
 Submodules
 ----------
 
-cops_and_robots.robo_tools.fusion.camera module
------------------------------------------------
+.. toctree::
 
-.. automodule:: cops_and_robots.robo_tools.fusion.camera
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.fusion.fusion_engine module
-------------------------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.fusion.fusion_engine
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.fusion.gaussian_mixture_model module
----------------------------------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.fusion.gaussian_mixture_model
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.fusion.human module
-----------------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.fusion.human
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.fusion.particle_filter module
---------------------------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.fusion.particle_filter
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.fusion.sensor module
------------------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.fusion.sensor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   Camera <cops_and_robots.robo_tools.fusion.camera>
+   Fusion Engine <cops_and_robots.robo_tools.fusion.fusion_engine>
+   Gauss Sum Filter <cops_and_robots.robo_tools.fusion.gauss_sum_filter>
+   Human <cops_and_robots.robo_tools.fusion.human>
+   Particle Filter <cops_and_robots.robo_tools.fusion.particle_filter>
+   Sensor <cops_and_robots.robo_tools.fusion.sensor>
+   SoftMax <cops_and_robots.robo_tools.fusion.softmax>
 
 Module contents
 ---------------

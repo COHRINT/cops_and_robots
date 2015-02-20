@@ -1,0 +1,26 @@
+cops_and_robots.test package
+============================
+
+Subpackages
+-----------
+
+.. toctree::
+
+    cops_and_robots.test.map_tools
+    cops_and_robots.test.robo_tools
+    cops_and_robots.test.unit
+
+Submodules
+----------
+
+.. toctree::
+
+   cops_and_robots.test.main
+
+Module contents
+---------------
+
+.. automodule:: cops_and_robots.test
+    :members:
+    :undoc-members:
+    :show-inheritance:

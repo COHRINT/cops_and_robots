@@ -30,6 +30,8 @@ from cops_and_robots.map_tools.layer import Layer
 class ProbabilityLayer(Layer):
     """A probabilistic distribution representing the target position.
 
+    .. image:: img/classes_Probability_Layer.png
+
     Parameters
     ----------
     cell_size : float, optional

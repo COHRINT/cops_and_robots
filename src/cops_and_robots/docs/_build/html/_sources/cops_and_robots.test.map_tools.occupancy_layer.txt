@@ -1,0 +1,7 @@
+cops_and_robots.test.map_tools.occupancy_layer module
+=====================================================
+
+.. automodule:: cops_and_robots.test.map_tools.occupancy_layer
+    :members:
+    :undoc-members:
+    :show-inheritance:

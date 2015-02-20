@@ -1,0 +1,338 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cops_and_robots.test.robo_tools.fusion.fusion_engine &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="../../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../../../index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.html"> Robo Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.fusion.html">Fusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.cop.html">Cop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.iRobot_create.html">iRobot Create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.planner.html">Planner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.robber.html">Robber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.feasible_layer.html">Feasible Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.human_interface.html">Human Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.layer.html">Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.map.html">Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.map_obj.html">Map Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.occupancy_layer.html">Occupancy Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.particle_layer.html">Particle Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.probability_layer.html">Probability Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.shape_layer.html">Shape Layer</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../../../index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+      
+    <li>cops_and_robots.test.robo_tools.fusion.fusion_engine</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for cops_and_robots.test.robo_tools.fusion.fusion_engine</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Provides an abstracted interface to multiple types of data fusion.</span>
+
+<span class="sd">By dictating the type of the fusion_engine, a cop using the fusion</span>
+<span class="sd">engine doesn&#39;t need to call specific functions for particle filters or</span>
+<span class="sd">Gaussian Mixture Models -- it asks the fusion engine for what it wants</span>
+<span class="sd">(generally a goal pose for the cop&#39;s planner) and lets the fusion</span>
+<span class="sd">engine call whichever type of data fusion it wants to use.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    Only cop robots have fusion engines (for now). Robbers may get</span>
+<span class="sd">    smarter in future versions, in which case this would be owned by</span>
+<span class="sd">    the ``robot`` module instead of the ``cop`` module.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPL&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.particle_filter</span> <span class="kn">import</span> <span class="n">ParticleFilter</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.gauss_sum_filter</span> <span class="kn">import</span> \
+    <span class="n">GaussSumFilter</span>
+
+
+<div class="viewcode-block" id="FusionEngine"><a class="viewcode-back" href="../../../../../cops_and_robots.test.robo_tools.fusion.fusion_engine.html#cops_and_robots.test.robo_tools.fusion.fusion_engine.FusionEngine">[docs]</a><span class="k">class</span> <span class="nc">FusionEngine</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A collection of filters to estimate and fuse data about a target&#39;s pose.</span>
+
+<span class="sd">    The fusion engine tracks each robber, as well as a `combined`</span>
+<span class="sd">    representation of the average target estimate.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filter_type : {&#39;particle&#39;,&#39;gauss sum&#39;}</span>
+<span class="sd">        The type of filter to be used.</span>
+<span class="sd">    missing_robber_names : list of str</span>
+<span class="sd">        The list of all robbers, to create one filter per robber.</span>
+<span class="sd">    feasible_layer : FeasibleLayer</span>
+<span class="sd">        A layer object providing both permissible point regions for any object</span>
+<span class="sd">        and permissible pose regions for any robot with physical dimensions.</span>
+<span class="sd">    shape_layer : ShapeLayer</span>
+<span class="sd">        A layer object providing all the shapes in the map so that the human</span>
+<span class="sd">        sensor can ground its statements.</span>
+<span class="sd">    motion_model : {&#39;stationary&#39;,&#39;clockwise&#39;,&#39;counterclockwise&#39;,&#39;random walk&#39;},</span>
+<span class="sd">        optional</span>
+<span class="sd">        The motion model used to update the filter.</span>
+<span class="sd">    total_particles : int, optional</span>
+<span class="sd">        The number of particles used for a particle filter. This is the number</span>
+<span class="sd">        used for the `combined` model, which is distributed among all other</span>
+<span class="sd">        models. Default is 2000.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">filter_type</span><span class="p">,</span>
+                 <span class="n">missing_robber_names</span><span class="p">,</span>
+                 <span class="n">feasible_layer</span><span class="p">,</span>
+                 <span class="n">shape_layer</span><span class="p">,</span>
+                 <span class="n">motion_model</span><span class="o">=</span><span class="s">&#39;stationary&#39;</span><span class="p">,</span>
+                 <span class="n">total_particles</span><span class="o">=</span><span class="mi">2000</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FusionEngine</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter_type</span> <span class="o">=</span> <span class="n">filter_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">missing_robber_names</span> <span class="o">=</span> <span class="n">missing_robber_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span> <span class="o">=</span> <span class="n">shape_layer</span>
+
+        <span class="c"># &lt;&gt;TODO: rename &#39;filters&#39; to &#39;particle filters&#39; and test</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_robber_names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">particles_per_filter</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_particles</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">particles_per_filter</span> <span class="o">=</span> <span class="n">total_particles</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_type</span> <span class="o">==</span> <span class="s">&#39;particle&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">missing_robber_names</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ParticleFilter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span>
+                                                    <span class="n">feasible_layer</span><span class="p">,</span>
+                                                    <span class="n">motion_model</span><span class="p">,</span>
+                                                    <span class="n">particles_per_filter</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ParticleFilter</span><span class="p">(</span><span class="s">&#39;combined&#39;</span><span class="p">,</span>
+                                                      <span class="n">feasible_layer</span><span class="p">,</span>
+                                                      <span class="n">motion_model</span><span class="p">,</span>
+                                                      <span class="n">particles_per_filter</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_type</span> <span class="o">==</span> <span class="s">&#39;gauss sum&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">missing_robber_names</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">GMMs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">GaussSumFilter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">feasible_layer</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">GMMs</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">GaussSumFilter</span><span class="p">(</span><span class="s">&#39;combined&#39;</span><span class="p">,</span>
+                                                   <span class="n">feasible_layer</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;FusionEngine must be of type &#39;particle&#39; or &quot;</span>
+                             <span class="s">&quot;&#39;gauss sum&#39;.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FusionEngine.update"><a class="viewcode-back" href="../../../../../cops_and_robots.test.robo_tools.fusion.fusion_engine.html#cops_and_robots.test.robo_tools.fusion.fusion_engine.FusionEngine.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robot_pose</span><span class="p">,</span> <span class="n">sensors</span><span class="p">,</span> <span class="n">robbers</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update fusion_engine agnostic to fusion type.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        robot_pose : array_like</span>
+<span class="sd">            The robot&#39;s current [x, y, theta] in [m,m,degrees].</span>
+<span class="sd">        sensors : dict</span>
+<span class="sd">            A collection of all sensors to be updated.</span>
+<span class="sd">        robbers :</span>
+<span class="sd">            A collection of all robber objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Update camera values (viewcone, selected zone, etc.)</span>
+        <span class="k">for</span> <span class="n">sensorname</span><span class="p">,</span> <span class="n">sensor</span> <span class="ow">in</span> <span class="n">sensors</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">sensorname</span> <span class="o">==</span> <span class="s">&#39;camera&#39;</span><span class="p">:</span>
+                <span class="n">sensor</span><span class="o">.</span><span class="n">update_viewcone</span><span class="p">(</span><span class="n">robot_pose</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="p">)</span>
+
+        <span class="c"># Update probabilities (particle and/or GMM)</span>
+        <span class="k">for</span> <span class="n">robber</span> <span class="ow">in</span> <span class="n">robbers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">finished</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">sensors</span><span class="p">[</span><span class="s">&#39;camera&#39;</span><span class="p">],</span>
+                                                 <span class="n">robber</span><span class="o">.</span><span class="n">pose</span><span class="p">,</span>
+                                                 <span class="n">sensors</span><span class="p">[</span><span class="s">&#39;human&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">robber</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s">&#39;detected&#39;</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;{} detected!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">robber_detected</span><span class="p">(</span><span class="n">robber</span><span class="o">.</span><span class="n">pose</span><span class="p">)</span>
+
+            <span class="c"># Chop down list of missing robber names if one was captured</span>
+            <span class="k">if</span> <span class="n">robber</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s">&#39;captured&#39;</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;{} captured!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">missing_robber_names</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_combined</span><span class="p">(</span><span class="n">sensors</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_update_combined</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sensors</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the `combined` filter.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sensors : dict</span>
+<span class="sd">            A collection of all sensors to be updated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_type</span> <span class="o">==</span> <span class="s">&#39;particle&#39;</span><span class="p">:</span>
+
+            <span class="c"># Remove all particles from combined filter</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">particles</span> <span class="o">=</span> \
+                <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+            <span class="c"># Add all particles from missing robots to combined filter</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">missing_robber_names</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">n_particles</span> <span class="o">+=</span> \
+                    <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">n_particles</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">particles</span> <span class="o">=</span> \
+                    <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">particles</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">particles</span><span class="p">,</span>
+                              <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">n_particles</span> <span class="o">=</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">particles</span><span class="p">)</span>
+
+            <span class="c"># Reset the human sensor</span>
+            <span class="n">sensors</span><span class="p">[</span><span class="s">&#39;human&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">input_string</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="n">sensors</span><span class="p">[</span><span class="s">&#39;human&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="s">&#39;&#39;</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
