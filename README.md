@@ -1,4 +1,4 @@
-##cops-and-robots
+##Cops and Robots
 
 Robotic cops and robbers project for dynamic target-tracking on the iRobot Create platform.
 
