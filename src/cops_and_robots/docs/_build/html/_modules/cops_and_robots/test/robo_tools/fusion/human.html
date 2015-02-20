@@ -1,0 +1,355 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cops_and_robots.test.robo_tools.fusion.human &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="../../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../../../index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.html"> Robo Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.fusion.html">Fusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.cop.html">Cop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.iRobot_create.html">iRobot Create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.planner.html">Planner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.robber.html">Robber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.robo_tools.robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.feasible_layer.html">Feasible Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.human_interface.html">Human Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.layer.html">Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.map.html">Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.map_obj.html">Map Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.occupancy_layer.html">Occupancy Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.particle_layer.html">Particle Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.probability_layer.html">Probability Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../cops_and_robots.map_tools.shape_layer.html">Shape Layer</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../../../index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+      
+    <li>cops_and_robots.test.robo_tools.fusion.human</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for cops_and_robots.test.robo_tools.fusion.human</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Provides a structured input interface for a human to the cop robot.</span>
+
+<span class="sd">The human can provide some information that a robot can&#39;t easily</span>
+<span class="sd">determine on its own (i.e. visual recognition of a target). Given a</span>
+<span class="sd">proper GUI, the human can send information that the fusion engine will</span>
+<span class="sd">merge with the robot&#39;s own sensors to generate a rich probability</span>
+<span class="sd">distribution.</span>
+
+<span class="sd">Currently the human uses a simple grounded, pre-defined codebook to</span>
+<span class="sd">provide information. For example, the human can say, &quot;I think Roy is</span>
+<span class="sd">behind wall 3.&quot; from a pre-defined codebook that has all robbers (i.e.</span>
+<span class="sd">Roy), spatial relationships (i.e. &#39;behind&#39;), and physical groundings</span>
+<span class="sd">(i.e. wall 3). This is the basic interface from which we will build</span>
+<span class="sd">upon.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    Only cop robots have human helpers (for now). Robbers may get</span>
+<span class="sd">    human teammate upgreades in future versions, in which case this</span>
+<span class="sd">    would be owned by the ``robot`` module instead of the ``cop`` module.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPL&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">Point</span>
+
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.sensor</span> <span class="kn">import</span> <span class="n">Sensor</span>
+
+
+<div class="viewcode-block" id="Human"><a class="viewcode-back" href="../../../../../cops_and_robots.test.robo_tools.fusion.human.html#cops_and_robots.test.robo_tools.fusion.human.Human">[docs]</a><span class="k">class</span> <span class="nc">Human</span><span class="p">(</span><span class="n">Sensor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The human sensor, able to provide updates to a fusion engine.</span>
+<span class="sd">    :param shape_layer: the groundings for the human&#39;s updates.</span>
+<span class="sd">    :type shape_layer: ShapeLayer.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shape_layer : ShapeLayer</span>
+<span class="sd">        A layer object providing all the shapes in the map so that the human</span>
+<span class="sd">        sensor can ground its statements.</span>
+<span class="sd">    robber_names : list of str</span>
+<span class="sd">        The list of all robbers, for the human to specify targets.</span>
+<span class="sd">    detection_chance : float</span>
+<span class="sd">        The human sensor&#39;s ability to correctly name a target, given that</span>
+<span class="sd">        the target is within the human sensor&#39;s view -- that is, P(D=i|x).</span>
+
+<span class="sd">        Note that this is the detection chance related to the &quot;I think&quot;</span>
+<span class="sd">        statement, which can be increased if the human says &quot;I know&quot; instead.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape_layer</span><span class="p">,</span> <span class="n">robber_names</span><span class="p">,</span> <span class="n">detection_chance</span><span class="o">=</span><span class="mf">0.6</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_rate</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_physical_dimensions</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span> <span class="o">=</span> <span class="n">detection_chance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">certain_detection_chance</span> <span class="o">=</span> <span class="n">detection_chance</span> <span class="o">+</span> \
+            <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">detection_chance</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.8</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_detection_chance</span> <span class="o">=</span> <span class="mf">0.01</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Human</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_rate</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">has_physical_dimensions</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">grounding_objects</span> <span class="o">=</span> <span class="n">shape_layer</span><span class="o">.</span><span class="n">shapes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groundings</span> <span class="o">=</span> <span class="n">shape_layer</span><span class="o">.</span><span class="n">shapes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groundings</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">robber_names</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robber_names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;nothing&#39;</span><span class="p">,</span> <span class="s">&#39;a robber&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">robber_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">certainties</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;think&#39;</span><span class="p">,</span> <span class="s">&#39;know&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;behind&#39;</span><span class="p">,</span> <span class="s">&#39;in front of&#39;</span><span class="p">,</span> <span class="s">&#39;left of&#39;</span><span class="p">,</span> <span class="s">&#39;right of&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movements</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;stopped&#39;</span><span class="p">,</span> <span class="s">&#39;moving CCW&#39;</span><span class="p">,</span> <span class="s">&#39;moving CW&#39;</span><span class="p">,</span>
+                          <span class="s">&#39;moving randomly&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;certainty&#39;</span><span class="p">:</span> <span class="s">&#39;think&#39;</span><span class="p">,</span>
+                         <span class="s">&#39;target&#39;</span><span class="p">:</span> <span class="s">&#39;a robber&#39;</span><span class="p">,</span>
+                         <span class="s">&#39;timing&#39;</span><span class="p">:</span> <span class="s">&#39;is&#39;</span><span class="p">,</span>
+                         <span class="s">&#39;relation&#39;</span><span class="p">:</span> <span class="s">&#39;behind&#39;</span><span class="p">,</span>
+                         <span class="s">&#39;grounding&#39;</span><span class="p">:</span> <span class="s">&#39;wall 1&#39;</span>
+                         <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_string</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+<div class="viewcode-block" id="Human.detect"><a class="viewcode-back" href="../../../../../cops_and_robots.test.robo_tools.fusion.human.html#cops_and_robots.test.robo_tools.fusion.human.Human.detect">[docs]</a>    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">particles</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update a fusion engine&#39;s probability from human sensor updates.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        particles : array_like</span>
+<span class="sd">            The particle list, assuming [x,y,p], where x and y are position</span>
+<span class="sd">            data and p is the particle&#39;s associated probability. `None` if not</span>
+<span class="sd">            using particles.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Parse the input string</span>
+        <span class="k">for</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">certainties</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_string</span><span class="p">:</span>
+                <span class="n">certainty</span> <span class="o">=</span> <span class="n">str_</span>
+
+        <span class="k">for</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_string</span><span class="p">:</span>
+                <span class="n">relation</span> <span class="o">=</span> <span class="n">str_</span>
+
+        <span class="k">for</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groundings</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_string</span><span class="p">:</span>
+                <span class="n">grounding</span> <span class="o">=</span> <span class="n">str_</span>
+
+        <span class="k">for</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">movements</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_string</span><span class="p">:</span>
+                <span class="n">movement</span> <span class="o">=</span> <span class="n">str_</span>
+
+        <span class="c"># Translate relation to zone label</span>
+        <span class="k">if</span> <span class="n">relation</span> <span class="o">==</span> <span class="s">&#39;behind&#39;</span><span class="p">:</span>
+            <span class="n">zone_label</span> <span class="o">=</span> <span class="s">&#39;back&#39;</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="o">==</span> <span class="s">&#39;in front of&#39;</span><span class="p">:</span>
+            <span class="n">zone_label</span> <span class="o">=</span> <span class="s">&#39;front&#39;</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="o">==</span> <span class="s">&#39;left of&#39;</span><span class="p">:</span>
+            <span class="n">zone_label</span> <span class="o">=</span> <span class="s">&#39;left&#39;</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="o">==</span> <span class="s">&#39;right of&#39;</span><span class="p">:</span>
+            <span class="n">zone_label</span> <span class="o">=</span> <span class="s">&#39;right&#39;</span>
+        <span class="n">zone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grounding_objects</span><span class="p">[</span><span class="n">grounding</span><span class="p">]</span><span class="o">.</span><span class="n">zones_by_label</span><span class="p">[</span><span class="n">zone_label</span><span class="p">]</span>
+
+        <span class="c"># Translate movement to motion model</span>
+        <span class="k">if</span> <span class="n">movement</span> <span class="o">==</span> <span class="s">&#39;stopped&#39;</span><span class="p">:</span>
+            <span class="n">motion_model</span> <span class="o">=</span> <span class="s">&#39;stationary&#39;</span>
+        <span class="k">elif</span> <span class="n">movement</span> <span class="o">==</span> <span class="s">&#39;moving CW&#39;</span><span class="p">:</span>
+            <span class="n">motion_model</span> <span class="o">=</span> <span class="s">&#39;clockwise&#39;</span>
+        <span class="k">elif</span> <span class="n">movement</span> <span class="o">==</span> <span class="s">&#39;moving CCW&#39;</span><span class="p">:</span>
+            <span class="n">motion_model</span> <span class="o">=</span> <span class="s">&#39;counterclockwise&#39;</span>
+        <span class="k">elif</span> <span class="n">movement</span> <span class="o">==</span> <span class="s">&#39;moving randomly&#39;</span><span class="p">:</span>
+            <span class="n">motion_model</span> <span class="o">=</span> <span class="s">&#39;random walk&#39;</span>
+
+        <span class="c"># &lt;&gt;TODO consider probabilities as well</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detect_particles</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">certainty</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">motion_model</span>
+</div>
+<div class="viewcode-block" id="Human.detect_particles"><a class="viewcode-back" href="../../../../../cops_and_robots.test.robo_tools.fusion.human.html#cops_and_robots.test.robo_tools.fusion.human.Human.detect_particles">[docs]</a>    <span class="k">def</span> <span class="nf">detect_particles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">particles</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">certainty</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update particles based on sensor model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        particles : array_like</span>
+<span class="sd">            The particle list, assuming [x,y,p], where x and y are position</span>
+<span class="sd">            data and p is the particle&#39;s associated probability. `None` if not</span>
+<span class="sd">            using particles.</span>
+<span class="sd">        zone : str</span>
+<span class="sd">            The zone specified by the human sensor.</span>
+<span class="sd">        certainty : float</span>
+<span class="sd">            The certainty specified by the human sensor.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Update particle probabilities in view cone</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">particle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">particles</span><span class="p">):</span>
+
+            <span class="c"># Negative information</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">==</span> <span class="s">&#39;nothing&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">zone</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="n">particle</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])):</span>
+                    <span class="k">if</span> <span class="n">certainty</span> <span class="o">==</span> <span class="s">&#39;know&#39;</span><span class="p">:</span>
+                        <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">certain_detection_chance</span><span class="p">)</span>
+                        <span class="k">print</span><span class="p">(</span><span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span><span class="p">)</span>
+                        <span class="k">print</span><span class="p">(</span><span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># Positive information</span>
+                <span class="k">if</span> <span class="n">zone</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="n">particle</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])):</span>
+                    <span class="k">if</span> <span class="n">certainty</span> <span class="o">==</span> <span class="s">&#39;know&#39;</span><span class="p">:</span>
+                        <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">certain_detection_chance</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_detection_chance</span>
+
+        <span class="c"># Renormalize</span>
+        <span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

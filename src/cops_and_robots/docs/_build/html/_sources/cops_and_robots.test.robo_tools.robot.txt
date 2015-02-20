@@ -1,0 +1,7 @@
+cops_and_robots.test.robo_tools.robot module
+============================================
+
+.. automodule:: cops_and_robots.test.robo_tools.robot
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -43,6 +43,7 @@ class Camera(Sensor):
     The camera provides a viewcone from the point of view of the robot which
     rescales based on its environment (e.g. if it's in front of a wall).
 
+    .. image:: img/classes_Camera.png
 
     Parameters
     ----------

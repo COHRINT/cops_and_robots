@@ -1,0 +1,7 @@
+cops_and_robots.test.unit.moveTest module
+=========================================
+
+.. automodule:: cops_and_robots.test.unit.moveTest
+    :members:
+    :undoc-members:
+    :show-inheritance:

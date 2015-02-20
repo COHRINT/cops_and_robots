@@ -1,0 +1,279 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Particle Filter module &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="index.html"/>
+        <link rel="up" title="Fusion package" href="cops_and_robots.robo_tools.fusion.html"/>
+        <link rel="next" title="Sensor module" href="cops_and_robots.robo_tools.fusion.sensor.html"/>
+        <link rel="prev" title="Human module" href="cops_and_robots.robo_tools.fusion.human.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="cops_and_robots.robo_tools.html"> Robo Tools</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="cops_and_robots.robo_tools.fusion.html">Fusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.cop.html">Cop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.iRobot_create.html">iRobot Create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.planner.html">Planner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robber.html">Robber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.feasible_layer.html">Feasible Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.human_interface.html">Human Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.layer.html">Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map.html">Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map_obj.html">Map Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.occupancy_layer.html">Occupancy Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.particle_layer.html">Particle Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.probability_layer.html">Probability Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.shape_layer.html">Shape Layer</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="cops_and_robots.robo_tools.html">Robo Tools package</a> &raquo;</li>
+      
+          <li><a href="cops_and_robots.robo_tools.fusion.html">Fusion package</a> &raquo;</li>
+      
+    <li>Particle Filter module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/cops_and_robots.robo_tools.fusion.particle_filter.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="module-cops_and_robots.robo_tools.fusion.particle_filter">
+<span id="particle-filter-module"></span><h1>Particle Filter module<a class="headerlink" href="#module-cops_and_robots.robo_tools.fusion.particle_filter" title="Permalink to this headline">¶</a></h1>
+<p>Provides a particle cloud to estimate target robber locatons.</p>
+<p>The particle filter takes a brute-force approach to estimating target
+parameters (starting with 2D position, but planned to move to 3D
+pose, velocity, and anything else estimatable). It does this by
+generating n particles, each one as a separate discrete potential
+model of the target. Each particle has estimated parameters (i.e, 2D
+position), weights (how important that particle is), and probabilities
+(how likely the estimated value is). For many cases, weights and
+probabilities are interchangable.</p>
+<dl class="class">
+<dt id="cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter">
+<em class="property">class </em><tt class="descname">ParticleFilter</tt><big>(</big><em>target</em>, <em>feasible_layer</em>, <em>motion_model='stationary'</em>, <em>n_particles=500</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/particle_filter.html#ParticleFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Particle-based representation of target locations.</p>
+<img alt="_images/classes_Particle_Filter.png" src="_images/classes_Particle_Filter.png" />
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>target</strong> (<em>str</em>) &#8211; Name of the target tracked by the particle filter (&#8216;combined&#8217; for
+all targets).</li>
+<li><strong>feasible_layer</strong> (<em>FeasibleLayer</em>) &#8211; A layer object providing both permissible point regions for any object
+and permissible pose regions for any robot with physical dimensions.</li>
+<li><strong>motion_model</strong> (<em>{&#8216;stationary&#8217;,&#8217;clockwise&#8217;,&#8217;counterclockwise&#8217;,&#8217;random walk&#8217;},</em>) &#8211; optional
+The motion model used to update each particle.</li>
+<li><strong>n_particles</strong> (<em>int, optional</em>) &#8211; The number of particles this particle filter has. Default is 500.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.generate_particles">
+<tt class="descname">generate_particles</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/particle_filter.html#ParticleFilter.generate_particles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.generate_particles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate uniformly distributed particles.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.resample">
+<tt class="descname">resample</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/particle_filter.html#ParticleFilter.resample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.resample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample or resample distribution to generate new particles</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.robber_detected">
+<tt class="descname">robber_detected</tt><big>(</big><em>robber_pose</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/particle_filter.html#ParticleFilter.robber_detected"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.robber_detected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the particle filter for a detected robber.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.update">
+<tt class="descname">update</tt><big>(</big><em>camera</em>, <em>target_pose</em>, <em>human=None</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/particle_filter.html#ParticleFilter.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move particles (if mobile) and update probabilities.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>camera</strong> (<em>Camera</em>) &#8211; A camera sensor object to update the particle weights and
+probabilities.</li>
+<li><strong>target_pose</strong> (<em>array_like</em>) &#8211; The target&#8217;s current [x, y, theta] in [m,m,degrees].</li>
+<li><strong>human</strong> (<em>Human, optional</em>) &#8211; A human sensor object to update the particle weights and
+probabilities. Default is <cite>None</cite> for no update.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.update_particle_motion">
+<tt class="descname">update_particle_motion</tt><big>(</big><em>step_dist=0.05</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/particle_filter.html#ParticleFilter.update_particle_motion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter.update_particle_motion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update one step in the particles&#8217; motion.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>step_dist</strong> (<em>float, optional</em>) &#8211; A scaling factor for how large the update to the particles&#8217;
+positions is. Default is 0.05.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="cops_and_robots.robo_tools.fusion.sensor.html" class="btn btn-neutral float-right" title="Sensor module"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="cops_and_robots.robo_tools.fusion.human.html" class="btn btn-neutral" title="Human module"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+cops_and_robots.test.map_tools.shape_layer module
+=================================================
+
+.. automodule:: cops_and_robots.test.map_tools.shape_layer
+    :members:
+    :undoc-members:
+    :show-inheritance:

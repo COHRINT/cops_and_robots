@@ -1,0 +1,254 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cops_and_robots.robo_tools.robber &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../cops_and_robots.robo_tools.html"> Robo Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.robo_tools.fusion.html">Fusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.robo_tools.cop.html">Cop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.robo_tools.iRobot_create.html">iRobot Create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.robo_tools.planner.html">Planner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.robo_tools.robber.html">Robber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.robo_tools.robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.feasible_layer.html">Feasible Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.human_interface.html">Human Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.layer.html">Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.map.html">Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.map_obj.html">Map Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.occupancy_layer.html">Occupancy Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.particle_layer.html">Particle Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.probability_layer.html">Probability Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cops_and_robots.map_tools.shape_layer.html">Shape Layer</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>cops_and_robots.robo_tools.robber</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for cops_and_robots.robo_tools.robber</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Provides some common functionality for robber robots.</span>
+
+<span class="sd">While a robber&#39;s functionality is largely defined by the ``robot``</span>
+<span class="sd">module, this module is meant to update the robber&#39;s status (which</span>
+<span class="sd">differs from cop statuses) and provide a basis for any additional</span>
+<span class="sd">functionality the robbers may need (such as communication between</span>
+<span class="sd">robbers).</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPL&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.robot</span> <span class="kn">import</span> <span class="n">Robot</span>
+
+
+<div class="viewcode-block" id="Robber"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.robber.html#cops_and_robots.robo_tools.robber.Robber">[docs]</a><span class="k">class</span> <span class="nc">Robber</span><span class="p">(</span><span class="n">Robot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The robber subclass of the generic Robot type.</span>
+
+<span class="sd">    .. image:: img/classes_Robber.png</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The robber&#39;s name.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Arguments passed to the ``Robber`` superclass.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    found : bool</span>
+<span class="sd">        Whether or not the robber knows its been found.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mission_statuses : {&#39;stationary&#39;, &#39;on the run&#39;, &#39;detected&#39;, &#39;captured&#39;}</span>
+<span class="sd">        The possible mission-level statuses of any robber, where:</span>
+<span class="sd">            * `stationary` means the robber is holding its position;</span>
+<span class="sd">            * `on the run` means the robber is moving around and avoiding the</span>
+<span class="sd">                cop;</span>
+<span class="sd">            * `detected` means the robber knows it has been detected by the</span>
+<span class="sd">                cop;</span>
+<span class="sd">            * `captured` means the robber has been captured by the cop and</span>
+<span class="sd">                is no longer moving.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mission_statuses</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;stationary&#39;</span><span class="p">,</span> <span class="s">&#39;on the run&#39;</span><span class="p">,</span> <span class="s">&#39;detected&#39;</span><span class="p">,</span> <span class="s">&#39;captured&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Robber</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                                     <span class="n">role</span><span class="o">=</span><span class="s">&#39;robber&#39;</span><span class="p">,</span>
+                                     <span class="n">planner_type</span><span class="o">=</span><span class="s">&#39;simple&#39;</span><span class="p">,</span>
+                                     <span class="n">color_str</span><span class="o">=</span><span class="s">&#39;darkorange&#39;</span><span class="p">,</span>
+                                     <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">found</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># &lt;&gt;TODO: break out each robber as its own thread and have them move</span>
+        <span class="c"># while not self.found:</span>
+        <span class="c">#     self.update()</span>
+
+<div class="viewcode-block" id="Robber.update_status"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.robber.html#cops_and_robots.robo_tools.robber.Robber.update_status">[docs]</a>    <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the robber&#39;s status</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">immobile_statuses</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;stationary&#39;</span><span class="p">,</span> <span class="s">&#39;captured&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">immobile_statuses</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s">&#39;detected&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_since_detected</span> <span class="o">&lt;</span> <span class="mi">50</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">time_since_detected</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">time_since_detected</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s">&#39;on the run&#39;</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

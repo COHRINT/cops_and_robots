@@ -6,8 +6,8 @@ arbitrary cell size) and gives each cell a value: 0 for unoccupied
 cells, 1 for occupied cells, and None for cells that have not yet
 been explored.
 
-Notes
------
+Note
+----
     The Bernoulli distribution (0 or 1) per cell is ideal, and a true
     occupancy grid would include a continuous probability per cell of
     its likelihood of occupancy. This will likely be added in future
@@ -41,6 +41,8 @@ class OccupancyLayer(Layer):
 
     Gridded occupancy layer for the map, translating euclidean coordinates
     to grid cells. Each cell has a probability of occupancy from 0 to 1.
+
+    .. image:: img/classes_.png
 
     Parameters
     ----------
@@ -105,8 +107,8 @@ class OccupancyLayer(Layer):
             The shape layer from which to generate the feasible regions. If
             no layer is provided, the entire map is deemed feasible.
 
-        Notes
-        -----
+        Note
+        ----
         Not yet implemented.
         """
         pass

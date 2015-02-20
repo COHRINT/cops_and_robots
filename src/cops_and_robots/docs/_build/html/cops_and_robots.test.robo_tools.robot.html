@@ -1,0 +1,443 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cops_and_robots.test.robo_tools.robot module &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.robo_tools.html"> Robo Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.fusion.html">cops_and_robots.robo_tools.fusion package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.cop.html">cops_and_robots.robo_tools.cop module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.iRobot_create.html">cops_and_robots.robo_tools.iRobot_create module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.planner.html">cops_and_robots.robo_tools.planner module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robber.html">cops_and_robots.robo_tools.robber module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robot.html">cops_and_robots.robo_tools.robot module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.robo_tools.cop.html">     Cop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.feasible_layer.html">cops_and_robots.map_tools.feasible_layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.human_interface.html">cops_and_robots.map_tools.human_interface module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.layer.html">cops_and_robots.map_tools.layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map.html">cops_and_robots.map_tools.map module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map_obj.html">cops_and_robots.map_tools.map_obj module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.occupancy_layer.html">cops_and_robots.map_tools.occupancy_layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.particle_layer.html">cops_and_robots.map_tools.particle_layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.probability_layer.html">cops_and_robots.map_tools.probability_layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.shape_layer.html">cops_and_robots.map_tools.shape_layer module</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>cops_and_robots.test.robo_tools.robot module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/cops_and_robots.test.robo_tools.robot.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="module-cops_and_robots.test.robo_tools.robot">
+<span id="cops-and-robots-test-robo-tools-robot-module"></span><h1>cops_and_robots.test.robo_tools.robot module<a class="headerlink" href="#module-cops_and_robots.test.robo_tools.robot" title="Permalink to this headline">¶</a></h1>
+<p>Generic definition of a robot.</p>
+<p>Currently subclasses from the iRobotCreate class to allow for
+physical control of an iRobot Create base (if the Robot class is
+configured to control hardware) but could be subclassed to use other
+physical hardware in the future.</p>
+<p>A robot has a planner that allows it to select goals and a map to
+keep track of other robots, feasible regions to which it can move,
+an occupancy grid representation of the world, and role-specific
+information (such as a probability layer for the rop robot to keep
+track of where robber robots may be).</p>
+<dl class="docutils">
+<dt>Required Knowledge:</dt>
+<dd><p class="first">This module and its classes needs to know about the following
+other modules in the cops_and_robots parent module:</p>
+<blockquote class="last">
+<div><ol class="arabic simple">
+<li><tt class="docutils literal"><span class="pre">iRobot_create</span></tt> for hardware control.</li>
+<li><tt class="docutils literal"><span class="pre">planner</span></tt> to set goal poses and paths.</li>
+<li><tt class="docutils literal"><span class="pre">map</span></tt> to maintain environment information.</li>
+<li><tt class="docutils literal"><span class="pre">map_obj</span></tt> to create its own shape in the map.</li>
+</ol>
+</div></blockquote>
+</dd>
+</dl>
+<dl class="class">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot">
+<em class="property">class </em><tt class="descname">Robot</tt><big>(</big><em>name, pose=[0, 0.5, 0], map_name='fleming', role='robber', status=['on the run', 'without a goal'], planner_type='simple', consider_others=False, control_hardware=False, **kwargs</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cops_and_robots.robo_tools.iRobot_create.html#cops_and_robots.robo_tools.iRobot_create.iRobotCreate" title="cops_and_robots.robo_tools.iRobot_create.iRobotCreate"><tt class="xref py py-class docutils literal"><span class="pre">cops_and_robots.robo_tools.iRobot_create.iRobotCreate</span></tt></a></p>
+<p>Class definition for the generic robot object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) &#8211; The robot&#8217;s name.</li>
+<li><strong>pose</strong> (<em>array_like, optional</em>) &#8211; The robot&#8217;s initial [x, y, theta] in [m,m,degrees] (defaults to
+[0, 0.5, 0]).</li>
+<li><strong>map_name</strong> (<em>str, optional</em>) &#8211; The name of the map (defaults to &#8216;fleming&#8217;).</li>
+<li><strong>role</strong> (<em>{&#8216;robber&#8217;,&#8217;cop&#8217;}, optional</em>) &#8211; The robot&#8217;s role in the cops and robbers game.</li>
+<li><strong>status</strong> (<em>two-element list of strings, optional</em>) &#8211; <p>The robot&#8217;s initial mission status and movement status. Cops and
+robbers share possible movement statuses, but their mission statuses</p>
+<blockquote>
+<div>differ entirely. Defaults to [&#8216;on the run&#8217;, &#8216;without a goal&#8217;].</div></blockquote>
+</li>
+<li><strong>planner_type</strong> (<em>{&#8216;simple&#8217;, &#8216;particle&#8217;, &#8216;MAP&#8217;}, optional</em>) &#8211; The robot&#8217;s type of planner.</li>
+<li><strong>consider_others</strong> (<em>bool, optional</em>) &#8211; Whether this robot generates other robot models (e.g. the primary cop
+will imagine other robots moving around.) Defaults to false.</li>
+<li><strong>control_hardware</strong> (<em>bool, optional</em>) &#8211; Whether this robot controls physical hardware. Defaults to false.</li>
+<li><strong>**kwargs</strong> &#8211; <p>Arguments passed to the <tt class="docutils literal"><span class="pre">MapObj</span></tt> attribute.</p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.all_robots">
+<tt class="descname">all_robots</tt><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.all_robots" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em></p>
+<p>A dictionary of all robot names (as the key) and their respective roles
+(as the value).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.movement_statuses">
+<tt class="descname">movement_statuses</tt><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.movement_statuses" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>{&#8216;stuck&#8217;,&#8217;at goal&#8217;,&#8217;near goal&#8217;,&#8217;on goal path&#8217;,</em></p>
+<p>&#8216;rotating&#8217;,&#8217;without a goal&#8217;}
+The possible movement statuses of any robot, where:</p>
+<blockquote>
+<div><ul class="simple">
+<li><cite>stuck</cite> means the robot hasn&#8217;t moved recently;</li>
+<li><cite>at goal</cite> means the robot has reached its goal pose;</li>
+<li><cite>near goal</cite> means the robot has reached its goal pose in</li>
+</ul>
+<p>cartesian distance, but has not rotated to the final pose;
+* <cite>on goal path</cite> means the robot is translating along the goal
+path;
+* <cite>rotating</cite> means the robot is rotating to align itself with the
+next path segment;
+* <cite>without a goal</cite> means the robot has no movement goal.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">all_robots</tt><em class="property"> = {'Roy': 'robber', 'Deckard': 'cop', 'Leon': 'robber'}</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.has_new_goal">
+<tt class="descname">has_new_goal</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.has_new_goal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.has_new_goal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the robot received a new goal from the planner.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the robot has a new goal, false otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.is_at_goal">
+<tt class="descname">is_at_goal</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.is_at_goal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.is_at_goal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the robot is near its goal in both distance and rotation.</p>
+<p>Once the robot is near its goal, it rotates towards the final goal
+pose. Once it reaches this goal pose (within some predetermined
+rotation allowance), it is deemed to be at its goal.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the robot is at its goal, false otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.is_near_goal">
+<tt class="descname">is_near_goal</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.is_near_goal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.is_near_goal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the robot is near its goal (in distance, not rotation).</p>
+<p>The robot will only rotate to its final goal pose after it no longer
+needs to translate to be close enough to its goal point. &#8216;Close enough&#8217;
+is given by a predetermined distance allowance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the robot is near its goal, false otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.is_on_path">
+<tt class="descname">is_on_path</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.is_on_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.is_on_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the robot is on the correct path.</p>
+<p>The robot will first rotate to the correct angle before translating
+towards its goal.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the robot is pointing along the goal path, false otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.is_stuck">
+<tt class="descname">is_stuck</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.is_stuck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.is_stuck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the robot has not moved significantly.</p>
+<p>Evaluated overover some n time steps. If the robot has not
+existed for n time steps, it is assumed to not be stuck.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.make_others">
+<tt class="descname">make_others</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.make_others"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.make_others" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate robot objects for all other robots.</p>
+<p>Create personal belief (not necessarily true!) of other robots,
+largely regarding their map positions. Their positions are
+known to the &#8216;self&#8217; robot, but this function will be expanded
+in the future to include registration between robots: i.e.,
+optional pose and information sharing instead of predetermined
+sharing.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">movement_statuses</tt><em class="property"> = ['stuck', 'at goal', 'near goal', 'on goal path', 'rotating', 'without a goal']</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.rotate_to_pose">
+<tt class="descname">rotate_to_pose</tt><big>(</big><em>theta=None</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.rotate_to_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.rotate_to_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the robot about its centroid towards a goal angle.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>theta</strong> (<em>float, optional</em>) &#8211; The goal angle in degrees for the robot to attempt to rotate
+towards. Defaults to the robot&#8217;s current goal pose angle.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.translate_towards_goal">
+<tt class="descname">translate_towards_goal</tt><big>(</big><em>path=None</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.translate_towards_goal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.translate_towards_goal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move the robot&#8217;s x,y positions towards a goal point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> (<em>LineString, optional</em>) &#8211; a line representing the path to the goal.</li>
+<li><strong>path</strong> &#8211; A movement path represented as a Shapely LineString.Defaults to
+the robot&#8217;s current path.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.update">
+<tt class="descname">update</tt><big>(</big><em>i=0</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update all primary functionality of the robot.</p>
+<p>This includes planning and movement for both cops and robbers,
+as well as sensing and map animations for cops.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>i</strong> (<em>int, optional</em>) &#8211; The current animation frame. Default is 0 for non-animated robots.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><cite>None</cite> if the robot does not generate an animation packet, or a
+tuple of all animation parameters otherwise.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.update_movement_status">
+<tt class="descname">update_movement_status</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.update_movement_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.update_movement_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define the robot&#8217;s current movement status.</p>
+<dl class="docutils">
+<dt>The robot can be:</dt>
+<dd><ol class="first last arabic simple">
+<li>stuck (hasn&#8217;t moved recently)</li>
+<li>at goal (reached its goal pose)</li>
+<li>near goal (x and y are close to goal pose, but not theta)</li>
+<li>on goal path (translating along its goal path)</li>
+<li>rotating (turning to align with path segment)</li>
+<li>without a goal (in need of a goal pose and path)</li>
+</ol>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.robot.Robot.update_shape">
+<tt class="descname">update_shape</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/robot.html#Robot.update_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.robot.Robot.update_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the robot&#8217;s map_obj.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

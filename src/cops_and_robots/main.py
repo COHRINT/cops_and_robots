@@ -7,7 +7,6 @@ import logging
 from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.robo_tools.cop import Cop
 
-
 def main():
     # <>TODO: set up sublime text build system so that this file always runs
 

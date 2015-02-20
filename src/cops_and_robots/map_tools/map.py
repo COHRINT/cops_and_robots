@@ -42,6 +42,8 @@ from cops_and_robots.map_tools.human_interface import HumanInterface
 class Map(object):
     """Environment map composed of multiple elements and layers.
 
+    .. image:: img/classes_Map.png
+
     Parameters
     ----------
     mapname : str

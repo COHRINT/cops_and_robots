@@ -1,0 +1,28 @@
+cops_and_robots.test.robo_tools package
+=======================================
+
+Subpackages
+-----------
+
+.. toctree::
+
+    cops_and_robots.test.robo_tools.fusion
+
+Submodules
+----------
+
+.. toctree::
+
+   cops_and_robots.test.robo_tools.cop
+   cops_and_robots.test.robo_tools.iRobot_create
+   cops_and_robots.test.robo_tools.planner
+   cops_and_robots.test.robo_tools.robber
+   cops_and_robots.test.robo_tools.robot
+
+Module contents
+---------------
+
+.. automodule:: cops_and_robots.test.robo_tools
+    :members:
+    :undoc-members:
+    :show-inheritance:

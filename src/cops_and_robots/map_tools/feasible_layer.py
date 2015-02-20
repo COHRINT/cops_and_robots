@@ -6,8 +6,8 @@ regions. Point regions are simply all points not contained within
 solid physical objects, whereas pose regions are all locations to
 which a robot can reach without intersecting with a physical object.
 
-Notes
------
+Note
+----
     Currently, the feasible layer uses the shape layer to generate
     the ideal feasible regions. However, a more realistic approach
     would use the occupancy layer. This will likely be the approach
@@ -40,6 +40,8 @@ class FeasibleLayer(Layer):
     A polygon (or collection of polygons) that represent feasible
     regions of the map. Feasible can be defined as either feasible robot
     poses or unoccupied space.
+
+    .. image:: img/classes_Feasible_Layer.png
 
     Parameters
     ----------

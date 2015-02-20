@@ -25,6 +25,8 @@ from cops_and_robots.map_tools.layer import Layer
 class ShapeLayer(Layer):
     """A layer object containing all fixed map objects.
 
+    .. image:: img/classes_Shape_Layer.png
+
     Parameters
     ----------
     **kwargs

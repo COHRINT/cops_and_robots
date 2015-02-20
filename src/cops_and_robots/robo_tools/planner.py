@@ -36,6 +36,8 @@ class Planner(object):
     view pose from which to see the target. Goal paths are generated as a
     deterministic path from the robot's current location to the goal pose.
 
+    .. image:: img/classes_Planner.png
+
     Attributes
     ----------
     types : {'simple','particle','MAP'}

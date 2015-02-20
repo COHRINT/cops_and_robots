@@ -14,7 +14,8 @@ Roy), spatial relationships (i.e. 'behind'), and physical groundings
 (i.e. wall 3). This is the basic interface from which we will build
 upon.
 
-Note:
+Note
+----
     Only cop robots have human helpers (for now). Robbers may get
     human teammate upgreades in future versions, in which case this
     would be owned by the ``robot`` module instead of the ``cop`` module.
@@ -38,8 +39,8 @@ from cops_and_robots.robo_tools.fusion.sensor import Sensor
 
 class Human(Sensor):
     """The human sensor, able to provide updates to a fusion engine.
-    :param shape_layer: the groundings for the human's updates.
-    :type shape_layer: ShapeLayer.
+
+    .. image:: img/classes_Human.png
 
     Parameters
     ----------

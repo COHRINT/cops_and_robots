@@ -1,0 +1,392 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cops_and_robots.test.map_tools.human_interface &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../../index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.html"> Robo Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.fusion.html">Fusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.cop.html">Cop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.iRobot_create.html">iRobot Create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.planner.html">Planner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.robber.html">Robber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.feasible_layer.html">Feasible Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.human_interface.html">Human Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.layer.html">Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.map.html">Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.map_obj.html">Map Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.occupancy_layer.html">Occupancy Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.particle_layer.html">Particle Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.probability_layer.html">Probability Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.shape_layer.html">Shape Layer</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../../index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      
+    <li>cops_and_robots.test.map_tools.human_interface</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for cops_and_robots.test.map_tools.human_interface</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Provides interface types for the human operator/sensor.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPL&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib.widgets</span> <span class="kn">import</span> <span class="n">RadioButtons</span><span class="p">,</span> <span class="n">Button</span>
+
+<span class="c"># &lt;&gt;TEST STUB:</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.patches</span> <span class="kn">import</span> <span class="n">Rectangle</span>
+
+
+<div class="viewcode-block" id="HumanInterface"><a class="viewcode-back" href="../../../../cops_and_robots.test.map_tools.human_interface.html#cops_and_robots.test.map_tools.human_interface.HumanInterface">[docs]</a><span class="k">class</span> <span class="nc">HumanInterface</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a human interface on a given figure.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fig : figure handle</span>
+<span class="sd">        The figure on which to generate the human interface.</span>
+<span class="sd">    robber_names : list of str, optional</span>
+<span class="sd">        The list of all robbers. Defaults to [&#39;Roy&#39;,&#39;Pris&#39;].</span>
+<span class="sd">    cop_names : list of str, optional</span>
+<span class="sd">        The list of all cops. Defaults to [&#39;Deckard&#39;].</span>
+<span class="sd">    groundings : list of str</span>
+<span class="sd">        The list of all grounding elements for human sensor information (i.e.,</span>
+<span class="sd">        in the phrase &#39;Roy is next to wall 1&#39;, `wall 1` is the grounding).</span>
+<span class="sd">        Defaults to [&#39;Wall 1&#39;, &#39;Wall 2&#39;, &#39;Wall 3&#39;, &#39;Wall 4&#39;].</span>
+<span class="sd">    type_ : {&#39;radio_buttons&#39;,&#39;textbox&#39;}</span>
+<span class="sd">        The type of human interface to generate.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;radio_buttons&#39;</span><span class="p">,</span> <span class="s">&#39;textbox&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">human_sensor</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">robber_names</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Roy&#39;</span><span class="p">,</span> <span class="s">&#39;Pris&#39;</span><span class="p">],</span>
+                 <span class="n">cop_names</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Deckard&#39;</span><span class="p">],</span>
+                 <span class="n">groundings</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Wall 1&#39;</span><span class="p">,</span> <span class="s">&#39;Wall 2&#39;</span><span class="p">,</span> <span class="s">&#39;Wall 3&#39;</span><span class="p">,</span> <span class="s">&#39;Wall 4&#39;</span><span class="p">],</span>
+                 <span class="n">type_</span><span class="o">=</span><span class="s">&#39;radio_buttons&#39;</span><span class="p">):</span>
+        <span class="c"># Sort input object lists</span>
+        <span class="n">robber_names</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">cop_names</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">groundings</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="c"># General interface parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="o">=</span> <span class="n">fig</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">type_</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">human_input</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c"># Content</span>
+        <span class="k">if</span> <span class="n">human_sensor</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">robber_names</span> <span class="o">=</span> <span class="n">human_sensor</span><span class="o">.</span><span class="n">robber_names</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">groundings</span> <span class="o">=</span> <span class="n">human_sensor</span><span class="o">.</span><span class="n">groundings</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">certainties</span> <span class="o">=</span> <span class="n">human_sensor</span><span class="o">.</span><span class="n">certainties</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span> <span class="o">=</span> <span class="n">human_sensor</span><span class="o">.</span><span class="n">relationships</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">movements</span> <span class="o">=</span> <span class="n">human_sensor</span><span class="o">.</span><span class="n">movements</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">robber_names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;nothing&#39;</span><span class="p">,</span> <span class="s">&#39;a robber&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">robber_names</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">groundings</span> <span class="o">=</span> <span class="n">groundings</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">certainties</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;think&#39;</span><span class="p">,</span> <span class="s">&#39;know&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;behind&#39;</span><span class="p">,</span> <span class="s">&#39;in front of&#39;</span><span class="p">,</span> <span class="s">&#39;left of&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;right of&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">movements</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;stopped&#39;</span><span class="p">,</span> <span class="s">&#39;moving CCW&#39;</span><span class="p">,</span> <span class="s">&#39;moving CW&#39;</span><span class="p">,</span>
+                              <span class="s">&#39;moving randomly&#39;</span><span class="p">]</span>
+
+        <span class="c"># Radio button parameters and default values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio_boxcolor</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">certainty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">certainties</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robber_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grounding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">groundings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movement</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">movements</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c"># General button parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">button_color</span> <span class="o">=</span> <span class="s">&#39;lightgreen&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">button_color_hover</span> <span class="o">=</span> <span class="s">&#39;palegreen&#39;</span>
+
+        <span class="c"># Create interface between interface and human sensor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">human_sensor</span> <span class="o">=</span> <span class="n">human_sensor</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;radio_buttons&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">make_radio_buttons</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;textbox&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">make_textbox</span><span class="p">()</span>
+
+<div class="viewcode-block" id="HumanInterface.make_radio_buttons"><a class="viewcode-back" href="../../../../cops_and_robots.test.map_tools.human_interface.html#cops_and_robots.test.map_tools.human_interface.HumanInterface.make_radio_buttons">[docs]</a>    <span class="k">def</span> <span class="nf">make_radio_buttons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Genrate the radio button interface.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">bottom</span><span class="o">=</span><span class="mf">0.22</span><span class="p">)</span>
+
+        <span class="c"># Make the input a complete sentence (and pretty! ...ish)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="mf">0.05</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="mf">0.155</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;off&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">Rectangle</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span> <span class="mf">0.88</span><span class="p">,</span> <span class="n">v</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s">&#39;white&#39;</span><span class="p">,</span>
+                               <span class="n">edgecolor</span><span class="o">=</span><span class="s">&#39;black&#39;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=-</span><span class="mi">100</span><span class="p">))</span>
+
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.01</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="s">&#39;I&#39;</span><span class="p">)</span>
+
+        <span class="c"># Certainty radio buttons</span>
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.01</span>
+        <span class="n">rax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="mf">0.065</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">],</span> <span class="n">axisbg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">radio_boxcolor</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;off&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;certain&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RadioButtons</span><span class="p">(</span><span class="n">rax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">certainties</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">certain_func</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">certainty</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">certainty</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;certain&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">on_clicked</span><span class="p">(</span><span class="n">certain_func</span><span class="p">)</span>
+
+        <span class="c"># Target radio buttons</span>
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.1</span>
+        <span class="n">rax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="mf">0.045</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">],</span> <span class="n">axisbg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">radio_boxcolor</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;off&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;target&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RadioButtons</span><span class="p">(</span><span class="n">rax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">robber_names</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">target_func</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;target&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">on_clicked</span><span class="p">(</span><span class="n">target_func</span><span class="p">)</span>
+
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.13</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="s">&#39;is&#39;</span><span class="p">)</span>
+
+        <span class="c"># Relationship radio buttons</span>
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.02</span>
+        <span class="n">rax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="mf">0.045</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">],</span> <span class="n">axisbg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">radio_boxcolor</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;off&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;relation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RadioButtons</span><span class="p">(</span><span class="n">rax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">relation_func</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">relation</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relation</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;relation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">on_clicked</span><span class="p">(</span><span class="n">relation_func</span><span class="p">)</span>
+
+        <span class="c"># Map object radio buttons</span>
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.125</span>
+        <span class="n">rax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="mf">0.035</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">],</span> <span class="n">axisbg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">radio_boxcolor</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;off&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;map_obj&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RadioButtons</span><span class="p">(</span><span class="n">rax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groundings</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">map_obj_func</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grounding</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grounding</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;map_obj&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">on_clicked</span><span class="p">(</span><span class="n">map_obj_func</span><span class="p">)</span>
+
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="s">&#39;and&#39;</span><span class="p">)</span>
+
+        <span class="c"># Movement radio buttons</span>
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.03</span>
+        <span class="n">rax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="mf">0.045</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">],</span> <span class="n">axisbg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">radio_boxcolor</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">rax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;off&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;movement&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RadioButtons</span><span class="p">(</span><span class="n">rax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">movements</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">movement_func</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">movement</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">movement</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radio</span><span class="p">[</span><span class="s">&#39;movement&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">on_clicked</span><span class="p">(</span><span class="n">movement_func</span><span class="p">)</span>
+
+        <span class="c"># Submission button</span>
+        <span class="n">h</span> <span class="o">+=</span> <span class="mf">0.2</span>
+        <span class="n">rax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">v</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">submit_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">rax</span><span class="p">,</span> <span class="s">&#39;Submit&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">button_color</span><span class="p">,</span>
+                                    <span class="n">hovercolor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">button_color_hover</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">submit_selection</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">human_input</span> <span class="o">=</span> <span class="s">&#39;I &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">certainty</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">+</span> \
+                <span class="s">&#39; is &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">relation</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">grounding</span> <span class="o">+</span> <span class="s">&#39; and &#39;</span> <span class="o">+</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">movement</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Human says: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">human_input</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">human_sensor</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">human_sensor</span><span class="o">.</span><span class="n">input_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">human_input</span>
+                <span class="k">for</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">robber_names</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">str_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">human_input</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">human_sensor</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">str_</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">submit_button</span><span class="o">.</span><span class="n">on_clicked</span><span class="p">(</span><span class="n">submit_selection</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="HumanInterface.make_textbox"><a class="viewcode-back" href="../../../../cops_and_robots.test.map_tools.human_interface.html#cops_and_robots.test.map_tools.human_interface.HumanInterface.make_textbox">[docs]</a>    <span class="k">def</span> <span class="nf">make_textbox</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the textbox interface.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+</div></div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%(levelname)s</span><span class="s">: </span><span class="si">%(message)s</span><span class="s">&#39;</span><span class="p">,</span>
+                        <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">s0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+    <span class="n">l</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">s0</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;red&#39;</span><span class="p">)</span>
+
+    <span class="n">hi</span> <span class="o">=</span> <span class="n">HumanInterface</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -25,6 +25,8 @@ from cops_and_robots.robo_tools.robot import Robot
 class Robber(Robot):
     """The robber subclass of the generic Robot type.
 
+    .. image:: img/classes_Robber.png
+
     Parameters
     ----------
     name : str

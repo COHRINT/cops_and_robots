@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Cops and Robots documentation build configuration file, created by
-# sphinx-quickstart on Fri Jan 23 12:06:06 2015.
+# sphinx-quickstart on Wed Feb 18 21:50:43 2015.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -14,14 +14,13 @@
 
 import sys
 import os
+import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+#sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../'))
-# sys.path.insert(os.path.abspath('../../'))
-# sys.path.insert(os.path.abspath('../../'))
-
 
 #Remove mock modules
 import mock
@@ -32,7 +31,6 @@ for mod_name in MOCK_MODULES:
 
 # -- General configuration ------------------------------------------------
 
-
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 
@@ -41,6 +39,8 @@ for mod_name in MOCK_MODULES:
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinxcontrib.napoleon',
@@ -94,7 +94,7 @@ exclude_patterns = ['_build']
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -114,7 +114,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -122,7 +122,7 @@ html_theme = 'default'
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -272,17 +272,3 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
-
-# -- Custom options ------------------------------------------------------
-
-# Sort members by type
-autodoc_member_order = 'groupwise'
-
-# Ensure that the __init__ method gets documented.
-def skip(app, what, name, obj, skip, options):
-    if name == "__init__":
-        return False
-    return skip
-
-def setup(app):
-    app.connect("autodoc-skip-member", skip)

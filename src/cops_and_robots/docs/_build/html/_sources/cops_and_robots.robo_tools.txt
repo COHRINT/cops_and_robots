@@ -1,56 +1,25 @@
-cops_and_robots.robo_tools package
+Robo Tools package
 ==================================
+
+Robo tools is a collection of modules specific to robots (the `model` in a `model-view-control` framework.)
 
 Subpackages
 -----------
 
 .. toctree::
 
-    cops_and_robots.robo_tools.fusion
+    Fusion <cops_and_robots.robo_tools.fusion>
 
 Submodules
 ----------
 
-cops_and_robots.robo_tools.cop module
--------------------------------------
+.. toctree::
 
-.. automodule:: cops_and_robots.robo_tools.cop
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.iRobot_create module
------------------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.iRobot_create
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.planner module
------------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.planner
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.robber module
-----------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.robber
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.robo_tools.robot module
----------------------------------------
-
-.. automodule:: cops_and_robots.robo_tools.robot
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   Cop <cops_and_robots.robo_tools.cop>
+   iRobot Create <cops_and_robots.robo_tools.iRobot_create>
+   Planner <cops_and_robots.robo_tools.planner>
+   Robber <cops_and_robots.robo_tools.robber>
+   Robot <cops_and_robots.robo_tools.robot>
 
 Module contents
 ---------------

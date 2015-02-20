@@ -1,0 +1,7 @@
+cops_and_robots.test.robo_tools.fusion.camera module
+====================================================
+
+.. automodule:: cops_and_robots.test.robo_tools.fusion.camera
+    :members:
+    :undoc-members:
+    :show-inheritance:

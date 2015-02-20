@@ -1,0 +1,7 @@
+cops_and_robots.test.map_tools.probability_layer module
+=======================================================
+
+.. automodule:: cops_and_robots.test.map_tools.probability_layer
+    :members:
+    :undoc-members:
+    :show-inheritance:

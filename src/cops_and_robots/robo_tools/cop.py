@@ -4,10 +4,10 @@
 Much of a cop's functionality is defined by the ``robot`` module, but
 this module provides cops with the tools it uses to hunt the robbers,
 such as:
-* sensors (both human and camera) to collect environment information;
-* a fusion_engine (either particle or gaussian mixture) to make sense
+    * sensors (both human and camera) to collect environment information;
+    * a fusion_engine (either particle or gaussian mixture) to make sense
   of the environment information;
-* animation to display its understanding of the world to the human.
+    * animation to display its understanding of the world to the human.
 
 """
 __author__ = "Nick Sweet"
@@ -36,6 +36,8 @@ class Cop(Robot):
 
     Cops extend the functionality of basic robots, providing sensing (both
     camera-based and human) and a fusion engine.
+
+    .. image:: img/classes_Cop.png
 
     Parameters
     ----------

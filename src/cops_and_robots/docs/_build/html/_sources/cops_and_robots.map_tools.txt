@@ -1,73 +1,22 @@
-cops_and_robots.map_tools package
+Map Tools package
 =================================
+
+Robo tools is a collection of modules specific to displaying an environment graphically (the `view` in a `model-view-control` framework.)
 
 Submodules
 ----------
 
-cops_and_robots.map_tools.feasible_layer module
------------------------------------------------
+.. toctree::
 
-.. automodule:: cops_and_robots.map_tools.feasible_layer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.map_tools.layer module
---------------------------------------
-
-.. automodule:: cops_and_robots.map_tools.layer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.map_tools.map module
-------------------------------------
-
-.. automodule:: cops_and_robots.map_tools.map
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.map_tools.map_obj module
-----------------------------------------
-
-.. automodule:: cops_and_robots.map_tools.map_obj
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.map_tools.occupancy_layer module
-------------------------------------------------
-
-.. automodule:: cops_and_robots.map_tools.occupancy_layer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.map_tools.particle_layer module
------------------------------------------------
-
-.. automodule:: cops_and_robots.map_tools.particle_layer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.map_tools.probability_layer module
---------------------------------------------------
-
-.. automodule:: cops_and_robots.map_tools.probability_layer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cops_and_robots.map_tools.shape_layer module
---------------------------------------------
-
-.. automodule:: cops_and_robots.map_tools.shape_layer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   Feasible Layer <cops_and_robots.map_tools.feasible_layer>
+   Human Interface <cops_and_robots.map_tools.human_interface>
+   Layer <cops_and_robots.map_tools.layer>
+   Map <cops_and_robots.map_tools.map>
+   Map Object <cops_and_robots.map_tools.map_obj>
+   Occupancy Layer <cops_and_robots.map_tools.occupancy_layer>
+   Particle Layer <cops_and_robots.map_tools.particle_layer>
+   Probability Layer <cops_and_robots.map_tools.probability_layer>
+   Shape Layer <cops_and_robots.map_tools.shape_layer>
 
 Module contents
 ---------------

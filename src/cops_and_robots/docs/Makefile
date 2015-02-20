@@ -50,12 +50,10 @@ clean:
 	rm -rf $(BUILDDIR)/*
 
 html:
+	#Don't forget to call: sphinx-apidoc -f -e -o ./ ../
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
-
-rst:
-	sphinx-apidoc -f -o ./ ../
 
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml

@@ -1,0 +1,227 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cops_and_robots.test.map_tools.layer &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../../index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.html"> Robo Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.fusion.html">Fusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.cop.html">Cop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.iRobot_create.html">iRobot Create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.planner.html">Planner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.robber.html">Robber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.robo_tools.robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.feasible_layer.html">Feasible Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.human_interface.html">Human Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.layer.html">Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.map.html">Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.map_obj.html">Map Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.occupancy_layer.html">Occupancy Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.particle_layer.html">Particle Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.probability_layer.html">Probability Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cops_and_robots.map_tools.shape_layer.html">Shape Layer</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../../index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      
+    <li>cops_and_robots.test.map_tools.layer</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for cops_and_robots.test.map_tools.layer</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Provides a common base class for all map layers.</span>
+
+<span class="sd">Since many layers share parameters and functions, the ``layer`` module</span>
+<span class="sd">defines these in one place, allowing all layers to use it as a</span>
+<span class="sd">superclass.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPL&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+
+<div class="viewcode-block" id="Layer"><a class="viewcode-back" href="../../../../cops_and_robots.test.map_tools.layer.html#cops_and_robots.test.map_tools.layer.Layer">[docs]</a><span class="k">class</span> <span class="nc">Layer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A collection of generic layer parameters and functions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bounds : array_like, optional</span>
+<span class="sd">        Map boundaries as [xmin,ymin,xmax,ymax] in [m]. Defaults to</span>
+<span class="sd">        [-5, -5, 5, 5].</span>
+<span class="sd">    visible : bool, optional</span>
+<span class="sd">        Whether or not the layer is shown when plotting.</span>
+<span class="sd">    target : str, optional</span>
+<span class="sd">        Name of target tracked by this layer. Defaults to `&#39;&#39;`.</span>
+<span class="sd">    ax : axes handle, optional</span>
+<span class="sd">        The axes to be used for plotting. Defaults to current axes.</span>
+<span class="sd">    alpha : float, optional</span>
+<span class="sd">        The layer&#39;s transparency, from 0 to 1. Defaults to 0.8.</span>
+<span class="sd">    cmap_str : str, optional</span>
+<span class="sd">        The colormap string for the layer. Defaults to `&#39;jet&#39;`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">visible</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+                 <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">cmap_str</span><span class="o">=</span><span class="s">&#39;jet&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>  <span class="c"># [xmin,ymin,xmax,ymax] in [m]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="n">visible</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmap</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">cmap_str</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

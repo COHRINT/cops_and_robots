@@ -12,14 +12,6 @@ an occupancy grid representation of the world, and role-specific
 information (such as a probability layer for the rop robot to keep
 track of where robber robots may be).
 
-Required Knowledge:
-    This module and its classes needs to know about the following
-    other modules in the cops_and_robots parent module:
-        1. ``iRobot_create`` for hardware control.
-        2. ``planner`` to set goal poses and paths.
-        3. ``map`` to maintain environment information.
-        4. ``map_obj`` to create its own shape in the map.
-
 """
 __author__ = "Nick Sweet"
 __copyright__ = "Copyright 2015, Cohrint"
@@ -45,6 +37,8 @@ from cops_and_robots.map_tools.map_obj import MapObj
 
 class Robot(iRobotCreate):
     """Class definition for the generic robot object.
+
+    .. image:: img/classes_Robot.png
 
     Parameters
     ----------

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Generic definition of a softmax probability distribution
 
+Softmax
+=======
 """
 from __future__ import division
 
@@ -37,6 +39,8 @@ class SoftMax(object):
 
     All norms must sum to zero in each dimension.
 
+    .. image:: img/classes_Softmax.png
+
     Parameters
     ----------
     weights : array_like, semi-optional
@@ -54,14 +58,14 @@ class SoftMax(object):
         colorization between each superclass (i.e. all classes with the same
         label will have the same color).
 
-    Notes
-    ----------
+    Note
+    ----
     The Softmax function takes the form:
 
     .. math::
 
-        P(D=j \vert x) = \frac{ e^{ \mathbf{x}^T \mathbf{w}_j }}
-            {\sum_{k=1}^{M} e^{\mathbf{x}^T\mathbf{w}_k} }
+        P(D=j \\vert x) = \\frac{ e^{ \\mathbf{x}^T \\mathbf{w}_j }}
+            {\\sum_{k=1}^{M} e^{\\mathbf{x}^T \\mathbf{w}_k} }
 
     Where `x` is the state vector.
 
@@ -69,8 +73,8 @@ class SoftMax(object):
 
     .. math::
 
-        \log(\frac{ P(D=j \vert x) }{ P(D=k \vert x)}) = \mathbf{x}^T
-            (\mathbf{w}_j - \mathbf{w}_k)
+        \\log(\\frac{ P(D=j \\vert x) }{ P(D=k \\vert x)}) = \\mathbf{x}^T
+            (\\mathbf{w}_j - \\mathbf{w}_k)
 
     """
     class_cmaps = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples', 'Greys']

@@ -1,0 +1,7 @@
+cops_and_robots.test.map_tools.map module
+=========================================
+
+.. automodule:: cops_and_robots.test.map_tools.map
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,226 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Sensor module &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="index.html"/>
+        <link rel="up" title="Fusion package" href="cops_and_robots.robo_tools.fusion.html"/>
+        <link rel="next" title="Softmax module" href="cops_and_robots.robo_tools.fusion.softmax.html"/>
+        <link rel="prev" title="Particle Filter module" href="cops_and_robots.robo_tools.fusion.particle_filter.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="cops_and_robots.robo_tools.html"> Robo Tools</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="cops_and_robots.robo_tools.fusion.html">Fusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.cop.html">Cop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.iRobot_create.html">iRobot Create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.planner.html">Planner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robber.html">Robber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.feasible_layer.html">Feasible Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.human_interface.html">Human Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.layer.html">Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map.html">Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map_obj.html">Map Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.occupancy_layer.html">Occupancy Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.particle_layer.html">Particle Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.probability_layer.html">Probability Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.shape_layer.html">Shape Layer</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="cops_and_robots.robo_tools.html">Robo Tools package</a> &raquo;</li>
+      
+          <li><a href="cops_and_robots.robo_tools.fusion.html">Fusion package</a> &raquo;</li>
+      
+    <li>Sensor module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/cops_and_robots.robo_tools.fusion.sensor.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="module-cops_and_robots.robo_tools.fusion.sensor">
+<span id="sensor-module"></span><h1>Sensor module<a class="headerlink" href="#module-cops_and_robots.robo_tools.fusion.sensor" title="Permalink to this headline">¶</a></h1>
+<p>Provides an base class for various sensor types.</p>
+<p>Since many sensors share parameters and functions, the <tt class="docutils literal"><span class="pre">sensor</span></tt>
+module defines these in one place, allowing all sensors to use it as
+a superclass.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Only cop robots have sensors (for now). Robbers may get hardware
+upgreades in future versions, in which case this would be owned by
+the <tt class="docutils literal"><span class="pre">robot</span></tt> module instead of the <tt class="docutils literal"><span class="pre">cop</span></tt> module.</p>
+</div>
+<dl class="class">
+<dt id="cops_and_robots.robo_tools.fusion.sensor.Sensor">
+<em class="property">class </em><tt class="descname">Sensor</tt><big>(</big><em>update_rate</em>, <em>has_physical_dimensions</em>, <em>detection_chance</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/sensor.html#Sensor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.sensor.Sensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for all sensor models.</p>
+<img alt="_images/classes_Sensor.png" src="_images/classes_Sensor.png" />
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>update_rate</strong> (<em>float</em>) &#8211; <p>Frequency of sensor updates in Hz. <cite>None</cite> for intermittant updates.</p>
+<p>Note: Not yet implemented.</p>
+</li>
+<li><strong>has_physical_dimensions</strong> (<em>bool</em>) &#8211; Whether or not the sensor can be considered a physical sensor (i.e. a
+camera).</li>
+<li><strong>detection_chance</strong> (<em>float</em>) &#8211; A probability value between 0 and 1 denoting P(detect|x), when x is in
+view of the sensor.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="cops_and_robots.robo_tools.fusion.softmax.html" class="btn btn-neutral float-right" title="Softmax module"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="cops_and_robots.robo_tools.fusion.particle_filter.html" class="btn btn-neutral" title="Particle Filter module"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

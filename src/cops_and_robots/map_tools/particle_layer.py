@@ -25,6 +25,8 @@ from cops_and_robots.map_tools.layer import Layer
 class ParticleLayer(Layer):
     """Visually represents a collection of particles.
 
+    .. image:: img/classes_Particle_Layer.png
+
     Parameters
     ----------
     particle_size : int, optional

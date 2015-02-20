@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cops_and_robots.test.robo_tools.planner module &mdash; Cops and Robots 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> Cops and Robots</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.robo_tools.html"> Robo Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.fusion.html">cops_and_robots.robo_tools.fusion package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.cop.html">cops_and_robots.robo_tools.cop module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.iRobot_create.html">cops_and_robots.robo_tools.iRobot_create module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.planner.html">cops_and_robots.robo_tools.planner module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robber.html">cops_and_robots.robo_tools.robber module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.robo_tools.robot.html">cops_and_robots.robo_tools.robot module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.robo_tools.cop.html">     Cop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cops_and_robots.map_tools.html"> Map Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.feasible_layer.html">cops_and_robots.map_tools.feasible_layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.human_interface.html">cops_and_robots.map_tools.human_interface module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.layer.html">cops_and_robots.map_tools.layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map.html">cops_and_robots.map_tools.map module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.map_obj.html">cops_and_robots.map_tools.map_obj module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.occupancy_layer.html">cops_and_robots.map_tools.occupancy_layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.particle_layer.html">cops_and_robots.map_tools.particle_layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.probability_layer.html">cops_and_robots.map_tools.probability_layer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cops_and_robots.map_tools.shape_layer.html">cops_and_robots.map_tools.shape_layer module</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Cops and Robots</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>cops_and_robots.test.robo_tools.planner module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/cops_and_robots.test.robo_tools.planner.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="module-cops_and_robots.test.robo_tools.planner">
+<span id="cops-and-robots-test-robo-tools-planner-module"></span><h1>cops_and_robots.test.robo_tools.planner module<a class="headerlink" href="#module-cops_and_robots.test.robo_tools.planner" title="Permalink to this headline">¶</a></h1>
+<p>The planner module manages goals and goal paths for the robot.</p>
+<p>The planner can be either: simple, in which it picks a random
+feasible point on the map as a goal pose; particle-based, in which
+it selects a goal pose from a particle cloud; or probability-based,
+in which it selects a goal pose from a continuous probability
+distribution.</p>
+<p>The goal path generated uses the A* planning algorithm, and the
+goal pose is generated as the best location from which the robot
+can view its target.</p>
+<dl class="class">
+<dt id="cops_and_robots.test.robo_tools.planner.Planner">
+<em class="property">class </em><tt class="descname">Planner</tt><big>(</big><em>type_</em>, <em>feasible_layer</em>, <em>view_distance=0.3</em>, <em>use_target_as_goal=True</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/planner.html#Planner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.planner.Planner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The planner class generates goal poses and paths for a robot.</p>
+<p>The goal poses are generated either as the exact target pose, or as a
+view pose from which to see the target. Goal paths are generated as a
+deterministic path from the robot&#8217;s current location to the goal pose.</p>
+<dl class="attribute">
+<dt id="cops_and_robots.test.robo_tools.planner.Planner.types">
+<tt class="descname">types</tt><a class="headerlink" href="#cops_and_robots.test.robo_tools.planner.Planner.types" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>{&#8216;simple&#8217;,&#8217;particle&#8217;,&#8217;MAP&#8217;}</em></p>
+<p>A collection of all methods in which the goal planner finds its goal
+point:</p>
+<blockquote>
+<div><ul class="simple">
+<li>a <cite>simple</cite> planner randomly picks a point in the feasible</li>
+</ul>
+<p>region;
+* a <cite>particle</cite> planner selects the particle with greatest
+probability (or randomly selects from the particles that share
+the greatest probability if more than one exists.)
+* a <cite>MAP</cite> or maximum a posteriori planner uses the point of
+greatest posterior probability as the goal point.</p>
+</div></blockquote>
+</dd></dl>
+
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>type</strong> (<em>{&#8216;simple&#8217;,&#8217;particle&#8217;,&#8217;MAP&#8217;}</em>) &#8211; The choice of planner type.</li>
+<li><strong>feasible_layer</strong> (<em>FeasibleLayer</em>) &#8211; A layer object providing both permissible point regions for any object
+and permissible pose regions for any robot with physical dimensions.</li>
+<li><strong>view_distance</strong> (<em>float, optional</em>) &#8211; The distance in meters from the target goal to place the view goal.
+Default is 0.3m.</li>
+<li><strong>use_target_as_goal</strong> (<em>bool, optional</em>) &#8211; Use the target location as a goal, rather than using a view pose as
+the goal.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.planner.Planner.find_goal_from_particles">
+<tt class="descname">find_goal_from_particles</tt><big>(</big><em>fusion_engine</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/planner.html#Planner.find_goal_from_particles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.planner.Planner.find_goal_from_particles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find a goal from the most likely particle(s).</p>
+<p>Find a goal pose taken from the particle with the greatest associated
+probability. If multiple particles share the maximum probability, the
+goal pose will be randomly selected from those particles.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fusion_engine</strong> (<em>FusionEngine</em>) &#8211; A fusion engine with a particle filter.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A pose as [x,y,theta] in [m,m,degrees].</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array_like</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.planner.Planner.find_goal_from_probability">
+<tt class="descname">find_goal_from_probability</tt><big>(</big><em>fusion_engine</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/planner.html#Planner.find_goal_from_probability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.planner.Planner.find_goal_from_probability" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Find a goal pose from the point of highest probability (the</dt>
+<dd>Maximum A Posteriori, or MAP, point).</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fusion_engine</strong> (<em>FusionEngine</em>) &#8211; A fusion engine with a probabilistic filter.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A pose as [x,y,theta] in [m,m,degrees].</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array_like</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.planner.Planner.find_goal_pose">
+<tt class="descname">find_goal_pose</tt><big>(</big><em>fusion_engine=None</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/planner.html#Planner.find_goal_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.planner.Planner.find_goal_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find a goal pose, agnostic of planner type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fusion_engine</strong> (<em>FusionEngine, optional</em>) &#8211; If using a non-simple planner, a provided fusion engine is used
+to generate the goal poses. Defaults to None, using a <cite>simple</cite>
+planners.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A pose as [x,y,theta] in [m,m,degrees].</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array_like</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.planner.Planner.find_goal_simply">
+<tt class="descname">find_goal_simply</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/planner.html#Planner.find_goal_simply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.planner.Planner.find_goal_simply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find a random goal pose on the map.</p>
+<p>Find a random goal pose within map boundaries, residing in the
+feasible pose regions associated with the map.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A pose as [x,y,theta] in [m,m,degrees].</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">array_like</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">types</tt><em class="property"> = ['simple', 'particle', 'MAP']</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.planner.Planner.update_path">
+<tt class="descname">update_path</tt><big>(</big><em>current_pose</em>, <em>goal_pose=None</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/planner.html#Planner.update_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.planner.Planner.update_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find path to a goal_pose, agnostic of planner type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>current_pose</strong> (<em>array_like</em>) &#8211; The robot&#8217;s current pose as [x,y,theta] in [m,m,degrees].</li>
+<li><strong>goal_pose</strong> (<em>array_like, optional</em>) &#8211; The goal pose as [x,y,theta] in [m,m,degrees] used to generate
+the path. Defaults to <tt class="docutils literal"><span class="pre">None</span></tt> which uses the planner&#8217;s current
+goal pose.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Returns both a complete goal path (as a Shapely <cite>LineString</cite>) and
+the angle between the robot&#8217;s current pose and the first path
+segment.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array_like</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cops_and_robots.test.robo_tools.planner.Planner.view_goal">
+<tt class="descname">view_goal</tt><big>(</big><em>target_pose</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/test/robo_tools/planner.html#Planner.view_goal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.test.robo_tools.planner.Planner.view_goal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a goal as a view pose from which to see the target.</p>
+<p>Translate a target&#8217;s position to a feasible goal pose for the robot,
+such that the robot can easily see the target. It is not expected
+that the target&#8217;s heading matters (i.e. the view pose need only
+capture the target, not the target from any side).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>target_pose</strong> (<em>array_like</em>) &#8211; The target pose as [x,y,theta] in [m,m,degrees].</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A pose as [x,y,theta] in [m,m,degrees].</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array_like</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Nick Sweet.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
