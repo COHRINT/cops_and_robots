@@ -62,39 +62,41 @@ KEYBOARDTELEOP.Teleop = function(options) {
     // check which key was pressed
     switch (keyCode) {
       case 16:
-		// Move up
-		z = 0.5 * speed;
+	// move up shift
+	z = 1*speed;
+	break;
       case 17:
-		// move down
-		z = -0.5 * speed;
+	// move down ctrl
+	z = -1 * speed;
+	break;
       case 81:
-        // turn left
+        // turn left q
         z_ang = 1 * speed;
         break;
       case 87:
-        // forward
+        // forward w
         x = 0.5 * speed;
         break;
       case 69:
-        // turn right
+        // turn right r
         z_ang = -1 * speed;
         break;
       case 83:
-        // backward
+        // backward s
         x = -0.5 * speed;
         break;
       case 68:
-        // strafe right
+        // strafe right a 
         y = -0.5 * speed;
         break;
       case 65:
-        // strafe left
+        // strafe left d
         y = 0.5 * speed;
         break;
       default:
         pub = false;    
     }
-
+	console.log('Keypressed:' + keyCode)
     // publish the command
     if (pub === true) {
       var twist = new ROSLIB.Message({
@@ -110,7 +112,7 @@ KEYBOARDTELEOP.Teleop = function(options) {
         }
       });
       cmdVel.publish(twist);
-      console.log('Published:' + twist)
+      
 
       // check for changes
       if (oldX !== x || oldY !== y || oldZ !== z) {
