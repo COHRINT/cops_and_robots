@@ -8,6 +8,7 @@ var rosMaster = new ROSLIB.Ros({
   url : rosurl + ':9090'
 });
 
+
 //Set up robot objects
 var settings = [];
 var robotNames = ['deckard','roy','pris','zhora','leon'];
@@ -220,7 +221,15 @@ function init() {
 	    var robot = jQuery(this).parent().prev().text().trim();	    
 	    selectView(robot);
 	})	
+
+
+	 // Initialize the teleop.
+    var teleop = new KEYBOARDTELEOP.Teleop({
+      ros : rosMaster,
+      topic : '/cmd_vel'
+    });
 	
+/*
 	// Listen to key presses and publish through ROS 
 	document.addEventListener('keypress', function(event) {
 	    char = String.fromCharCode(event.which);	    	    
@@ -228,6 +237,7 @@ function init() {
 	    settings.commandTopic.publish(cmd);
 	}, true);
 	
+*/
 /*
 	// Create subscriber to /battery topic
 	var deckard_batteryListener = new ROSLIB.Topic({

@@ -244,24 +244,4 @@ class MapObj(object):
                            self.centroid['theta'],
                            )
 
-if __name__ == '__main__':
-    l = 1.2192  # [m] wall length
-    w = 0.1524  # [m] wall width
 
-    fig = plt.figure(1, figsize=(10, 6))
-    ax = fig.add_subplot(111)
-
-    shape = [(0, 0), (3 * l, w), (3 * l, -w), (0, 0)]
-    pose = (2, -2, 0)
-    wall1 = MapObj('wall3', shape, pose)
-
-    wall1.plot(plot_zones=False)
-
-    wall1.move_shape((0, 0, 90), wall1.shape.exterior.coords[0])
-
-    wall1.plot(color=cnames['darkred'], plot_zones=False)
-
-    lim = 5
-    ax.set_xlim([-lim, lim])
-    ax.set_ylim([-lim, lim])
-    plt.show()
