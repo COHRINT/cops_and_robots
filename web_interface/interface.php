@@ -22,7 +22,9 @@ $map_objects = array("Wall 1","Wall 2","Wall 3","Wall 4","Wall 5","Wall 6","Wall
 		<!-- Camera Visual -->
 		<div id="visual" class="col-md-6">
 			<h3 align="center">Deckard Visual</h3>		
-<iframe  id="camera-visual" class="embed-responsive-item" src="http://fleming.recuv.org:8083/stream_viewer?topic=/camera/rgb/image_raw&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe>
+<!-- <iframe  id="camera-visual" class="embed-responsive-item" src="http://fleming.recuv.org:8083/stream_viewer?topic=/camera/rgb/image_raw&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> -->
+<iframe  id="camera-visual" class="embed-responsive-item" src="http://fleming.recuv.org:8083/stream_viewer?topic=/front_cam/camera/image&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe>
+
 
 		</div><!-- /#visual -->
 		
@@ -192,5 +194,6 @@ $map_objects = array("Wall 1","Wall 2","Wall 3","Wall 4","Wall 5","Wall 6","Wall
 <script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
+<script type="text/javascript" src="sites/all/includes/keyboardteleopquadrotor.js"></script>
 <script type="text/javascript" src="sites/all/includes/interface.js"></script>
 <script type="text/javascript" src="sites/all/includes/jquery-cookie/jquery.cookie.js"

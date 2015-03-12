@@ -29,6 +29,8 @@ import numpy as np
 from shapely.geometry import Point, LineString
 
 
+# <>TODO: Split Planner class into GoalPlanner class and PathPlanner class
+
 class Planner(object):
     """The planner class generates goal poses and paths for a robot.
 
