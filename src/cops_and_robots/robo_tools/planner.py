@@ -241,13 +241,13 @@ class Planner(object):
         else:
             particles = next(fusion_engine.filters.iteritems()).particles
 
-        max_prob = particles[:, 2].max()
-        max_particle_i = np.where(particles[:, 2] == max_prob)
+        max_prob = particles[:, 0].max()
+        max_particle_i = np.where(particles[:, 0] == max_prob)
         max_particles = particles[max_particle_i, :]
 
         # Select randomly from max_particles
         max_particle = random.choice(max_particles[0])
-        goal_pose = np.append(max_particle[0:2], theta)
+        goal_pose = np.append(max_particle[1:3], theta)
 
         return goal_pose
 

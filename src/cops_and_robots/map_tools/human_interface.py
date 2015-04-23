@@ -75,8 +75,10 @@ class HumanInterface(object):
             self.certainties = ['think', 'know']
             self.relationships = ['behind', 'in front of', 'left of',
                                   'right of']
-            self.movements = ['stopped', 'moving CCW', 'moving CW',
-                              'moving randomly']
+            # self.movements = ['stopped', 'moving CCW', 'moving CW',
+            #                   'moving randomly']
+            self.movements = ['stopped', 'moving slowly', 'moving along',
+                              'moving quickly']
 
         # Radio button parameters and default values
         self.radio_boxcolor = None

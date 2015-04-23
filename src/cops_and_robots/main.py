@@ -16,7 +16,7 @@ def main():
                         level=logging.INFO,)
 
     # Pre-test config
-    robber_model = 'stationary'
+    robber_model = 'random walk'
     deckard = Cop(robber_model=robber_model)
     deckard.map.combined_only = False
 
