@@ -146,6 +146,7 @@
 <span class="kn">from</span> <span class="nn">shapely</span> <span class="kn">import</span> <span class="n">affinity</span>
 
 <span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.sensor</span> <span class="kn">import</span> <span class="n">Sensor</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.softmax</span> <span class="kn">import</span> <span class="n">camera_model_2D</span>
 
 <span class="c"># &lt;&gt;TODO: Remove test stub</span>
 <span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.map_obj</span> <span class="kn">import</span> <span class="n">MapObj</span>
@@ -184,12 +185,14 @@
                         <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
                         <span class="p">]</span>
 
+        <span class="c"># Create SoftMax model for camera</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection_model</span> <span class="o">=</span> <span class="n">camera_model_2D</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_view_dist</span><span class="p">,</span>
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">max_view_dist</span><span class="p">)</span>
+
         <span class="c"># Instantiate Sensor superclass object</span>
         <span class="n">update_rate</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c"># [hz]</span>
-        <span class="n">detection_chance</span> <span class="o">=</span> <span class="mf">0.8</span>
         <span class="n">has_physical_dimensions</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Camera</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">update_rate</span><span class="p">,</span> <span class="n">has_physical_dimensions</span><span class="p">,</span>
-                                     <span class="n">detection_chance</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Camera</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">update_rate</span><span class="p">,</span> <span class="n">has_physical_dimensions</span><span class="p">)</span>
 
         <span class="c"># Set the ideal and actual viewcones</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ideal_viewcone</span> <span class="o">=</span> <span class="n">MapObj</span><span class="p">(</span><span class="s">&#39;Ideal viewcone&#39;</span><span class="p">,</span>
@@ -305,13 +308,21 @@
 <span class="sd">            The particle list, assuming [x,y,p], where x and y are position</span>
 <span class="sd">            data and p is the particle&#39;s associated probability.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c">#&lt;&gt;TODO: Get unit tests running</span>
+        <span class="c"># Define rotation matrix</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">view_pose</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)],])</span>
+
         <span class="c"># Update particle probabilities in view cone</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">particle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">particles</span><span class="p">):</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">viewcone</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="n">particle</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])):</span>
-                <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">viewcone</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="n">particle</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">])):</span>
+                <span class="n">relative_pose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">particle</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_pose</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">relative_pose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">relative_pose</span><span class="p">)</span>
+                <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_model</span><span class="o">.</span><span class="n">probs_at_state</span><span class="p">(</span><span class="n">relative_pose</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">],</span><span class="mi">0</span><span class="p">))</span>
 
         <span class="c"># Renormalize</span>
-        <span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">_detect_probability</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>

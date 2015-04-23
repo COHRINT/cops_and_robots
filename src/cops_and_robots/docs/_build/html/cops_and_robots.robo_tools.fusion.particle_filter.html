@@ -131,7 +131,7 @@ position), weights (how important that particle is), and probabilities
 probabilities are interchangable.</p>
 <dl class="class">
 <dt id="cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter">
-<em class="property">class </em><tt class="descname">ParticleFilter</tt><big>(</big><em>target</em>, <em>feasible_layer</em>, <em>motion_model='stationary'</em>, <em>n_particles=500</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/particle_filter.html#ParticleFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descname">ParticleFilter</tt><big>(</big><em>target, feasible_layer, motion_model='stationary', n_particles=500, state_spec='x y x_dot y_dot', v_params=[0, 0.1]</em><big>)</big><a class="reference internal" href="_modules/cops_and_robots/robo_tools/fusion/particle_filter.html#ParticleFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cops_and_robots.robo_tools.fusion.particle_filter.ParticleFilter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Particle-based representation of target locations.</p>
 <img alt="_images/classes_Particle_Filter.png" src="_images/classes_Particle_Filter.png" />
@@ -147,6 +147,8 @@ and permissible pose regions for any robot with physical dimensions.</li>
 <li><strong>motion_model</strong> (<em>{&#8216;stationary&#8217;,&#8217;clockwise&#8217;,&#8217;counterclockwise&#8217;,&#8217;random walk&#8217;},</em>) &#8211; optional
 The motion model used to update each particle.</li>
 <li><strong>n_particles</strong> (<em>int, optional</em>) &#8211; The number of particles this particle filter has. Default is 500.</li>
+<li><strong>state_spec</strong> (<em>str, optional</em>) &#8211; A string defining the state captured by each particle. Defaults to
+&#8216;x y&#8217;, but could also be &#8216;x y x_dot ydot&#8217;.</li>
 </ul>
 </td>
 </tr>

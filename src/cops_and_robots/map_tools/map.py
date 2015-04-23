@@ -341,13 +341,13 @@ class Map(object):
                         .add_patch(self.robber_patch[robber_name])
 
                 # Update Particle Filter
-                colors = particles[:, 2]\
+                colors = particles[:, 0]\
                     * next(self.particle_layer.itervalues()).color_gain
 
                 self.particle_scat[robber_name].set_array(colors)
                 # colors = np.repeat([colors],3,axis=0).T
                 # self.particle_scat[robber_name].set_facecolor(colors)
-                self.particle_scat[robber_name].set_offsets(particles[:, 0:2])
+                self.particle_scat[robber_name].set_offsets(particles[:, 1:3])
 
 
 def set_up_fleming():

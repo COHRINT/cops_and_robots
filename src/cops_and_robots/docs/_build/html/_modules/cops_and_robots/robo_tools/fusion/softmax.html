@@ -114,10 +114,8 @@
             
   <h1>Source code for cops_and_robots.robo_tools.fusion.softmax</h1><div class="highlight"><pre>
 <span class="c">#!/usr/bin/env python</span>
-<span class="sd">&quot;&quot;&quot;Generic definition of a softmax probability distribution</span>
+<span class="sd">&quot;&quot;&quot;Provides creation, maniputlation and plotting of SoftMax distributions.</span>
 
-<span class="sd">Softmax</span>
-<span class="sd">=======</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
 
@@ -131,43 +129,86 @@
 <span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">box</span><span class="p">,</span> <span class="n">Polygon</span>
+
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">ColorConverter</span>
 <span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>  <span class="c"># Seemingly unused, but for 3D plots</span>
+<span class="kn">from</span> <span class="nn">descartes.patch</span> <span class="kn">import</span> <span class="n">PolygonPatch</span>
+
+<span class="kn">from</span> <span class="nn">cops_and_robots.helpers.visualizations</span> <span class="kn">import</span> <span class="n">plot_multisurface</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>  <span class="c"># To suppress nolabel warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s">&quot;.*cannot be automatically added.*&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SoftMax"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax">[docs]</a><span class="k">class</span> <span class="nc">SoftMax</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate a softmax distribution from weights or hyperplane normals.</span>
+    <span class="sd">&quot;&quot;&quot;Generate a softmax distribution from weights or class boundaries.</span>
 
 <span class="sd">    The relative magnitude of weights defines the slope of each softmax</span>
 <span class="sd">    class probability, and the hyperplanes at which one softmax class</span>
 <span class="sd">    crosses another represents the boundary between those two classes.</span>
 <span class="sd">    Boundaries between two dominant classes (those with greatest</span>
 <span class="sd">    probability for a given region) are called critical boundaries, and</span>
-<span class="sd">    their norms are the only ones that need to be specified.</span>
+<span class="sd">    their normals are the only ones that need to be specified.</span>
 
 <span class="sd">    If a space has non-dominant classes (and non-critical boundaries), then</span>
 <span class="sd">    the weights are slack variables that can take on any values so long as</span>
-<span class="sd">    the norms of ``all`` dimensions sum up to the 0 vector.</span>
+<span class="sd">    the normals of ``all`` class boundaries sum up to the 0 vector.</span>
 
-<span class="sd">    All norms must sum to zero in each dimension.</span>
+<span class="sd">    Since a class represents a probability distribution, the probabilities of</span>
+<span class="sd">    all classes at any state must sum to one.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    Either the weights and biases, normals and offsets, or poly must be</span>
+<span class="sd">    specified. Their effects are mutually exclusive, and take precedence in the</span>
+<span class="sd">    above order.</span>
 
 <span class="sd">    .. image:: img/classes_Softmax.png</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    weights : array_like, semi-optional</span>
-<span class="sd">        Weights must be specified as an `M` by `N` matrix, with each row</span>
-<span class="sd">        representing an `N`-dimensional vector for each of the `M` classes.</span>
-<span class="sd">    norms : array_like, semi-optional</span>
-<span class="sd">        Norms must be specified as an `M` by `N` matrix, with one row</span>
-<span class="sd">        representing each of the `M` classes, and each column representing one</span>
-<span class="sd">        of `N` dimensions (i.e. `N` = 2 for an x-y cartesian class division).</span>
+<span class="sd">        Weights must be specified as an `M` by `N` multidimensional array, with</span>
+<span class="sd">        each sub-array (akin to a matrix row) representing a 1-dimensional</span>
+<span class="sd">        array (akin to an `N`-dimensional vector) of weights for each of the</span>
+<span class="sd">        `M` classes. `N` must be the same size as the state vector.</span>
+<span class="sd">    biases : array_like, semi-optional</span>
+<span class="sd">        Provided with weights, biases must be specified as a 1-dimensional</span>
+<span class="sd">        array containing the bias of all `M` classes.</span>
+
+<span class="sd">        Defaults to an array of `M` zeros.</span>
+<span class="sd">    normals : array_like, semi-optional</span>
+<span class="sd">        Normals must be specified as an `M` by `N` multidimensional array, with</span>
+<span class="sd">        each sub-array (akin to a matrix row) representing a 1-dimensional</span>
+<span class="sd">        array (akin to an `N`-dimensional vector) of coefficients for each of</span>
+<span class="sd">        the normal vectors representing `M(M + 1) / 2` class boundaries.</span>
+<span class="sd">        `N` must be the same size as the state vector.</span>
+<span class="sd">    offsets : array_like, semi-optional</span>
+<span class="sd">        Provided with normals, offsets must be specified as a 1-dimensional</span>
+<span class="sd">        array containing the constant offset of all `M` classes.</span>
+
+<span class="sd">        Defaults to an array of `M` zeros.</span>
+<span class="sd">    poly : shapely.Polygon, semi-optional</span>
+<span class="sd">        A polygon object from `Shapely`. Used to create normals.</span>
+<span class="sd">    steepness : array_like, optional</span>
+<span class="sd">        Steepness must be specified as a 1-dimensional array containing scalar</span>
+<span class="sd">        values that modify the shape of `M` classes by linearly scaling their</span>
+<span class="sd">        weights.</span>
+<span class="sd">    rotation : float, optional</span>
+<span class="sd">        For a two-dimensional state space, `rotation` is the angular rotation</span>
+<span class="sd">        in radians of the entire state space. It is not defined for higher- or</span>
+<span class="sd">        lower-order state spaces.</span>
+<span class="sd">    state_spec : str, optional</span>
+<span class="sd">        A string specified as defined in :func:`~softmax.SoftMax.define_state`.</span>
 <span class="sd">    bounds : array_like, optional</span>
 <span class="sd">        Distribution boundaries, in meters, as [xmin, ymin, xmax, ymax].</span>
 <span class="sd">        Defaults to [-5, -5, 5, 5].</span>
+<span class="sd">    resolution : float, optional</span>
+<span class="sd">        Grid resolution over which the state space is defined. Defaults to 0.1.</span>
 <span class="sd">    class_labels : list of str, optional</span>
 <span class="sd">        If given, assigns labels to each subclass and allows for consistent</span>
 <span class="sd">        colorization between each superclass (i.e. all classes with the same</span>
@@ -192,28 +233,261 @@
 <span class="sd">            (\\mathbf{w}_j - \\mathbf{w}_k)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">class_cmaps</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Reds&#39;</span><span class="p">,</span> <span class="s">&#39;Blues&#39;</span><span class="p">,</span> <span class="s">&#39;Greens&#39;</span><span class="p">,</span> <span class="s">&#39;Oranges&#39;</span><span class="p">,</span> <span class="s">&#39;Purples&#39;</span><span class="p">,</span> <span class="s">&#39;Greys&#39;</span><span class="p">]</span>
-    <span class="n">class_colors</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;red&#39;</span><span class="p">,</span> <span class="s">&#39;blue&#39;</span><span class="p">,</span> <span class="s">&#39;green&#39;</span><span class="p">,</span> <span class="s">&#39;orange&#39;</span><span class="p">,</span> <span class="s">&#39;purple&#39;</span><span class="p">,</span> <span class="s">&#39;grey&#39;</span><span class="p">]</span>
+    <span class="n">class_cmaps</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Reds&#39;</span><span class="p">,</span> <span class="s">&#39;Blues&#39;</span><span class="p">,</span> <span class="s">&#39;Greens&#39;</span><span class="p">,</span> <span class="s">&#39;Oranges&#39;</span><span class="p">,</span> <span class="s">&#39;Purples&#39;</span><span class="p">,</span> <span class="s">&#39;Greys&#39;</span><span class="p">,</span>
+                   <span class="s">&#39;RdPu&#39;</span><span class="p">]</span>
+    <span class="n">class_colors</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;red&#39;</span><span class="p">,</span> <span class="s">&#39;blue&#39;</span><span class="p">,</span> <span class="s">&#39;green&#39;</span><span class="p">,</span> <span class="s">&#39;orange&#39;</span><span class="p">,</span> <span class="s">&#39;purple&#39;</span><span class="p">,</span> <span class="s">&#39;grey&#39;</span><span class="p">,</span> <span class="s">&#39;pink&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">norms</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
-                 <span class="n">resolution</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">class_labels</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">SoftMax</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">norms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Both weights and norms specified - choose only &#39;</span>
-                             <span class="s">&#39;one!&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">biases</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">normals</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">poly</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">steepness</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">state_spec</span><span class="o">=</span><span class="s">&#39;x y&#39;</span><span class="p">,</span>
+                 <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">resolution</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">class_labels</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">normals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">poly</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;One of weights, normals or poly must be &#39;</span>
+                             <span class="s">&#39;specified - choose only one!&#39;</span><span class="p">)</span>
 
         <span class="c"># Define base object attributes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">norms</span> <span class="o">=</span> <span class="n">norms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biases</span> <span class="o">=</span> <span class="n">biases</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normals</span> <span class="o">=</span> <span class="n">normals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">=</span> <span class="n">offsets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">poly</span> <span class="o">=</span> <span class="n">poly</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">=</span> <span class="n">steepness</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_spec</span> <span class="o">=</span> <span class="n">state_spec</span>
+
+        <span class="c"># Define possibly unspecfied values</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">biases</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">normals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normals</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c"># Create state vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">define_state</span><span class="p">(</span><span class="n">state_spec</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+
+        <span class="c"># Create softmax distributons</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poly</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">normals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">=</span> <span class="n">normals_from_polygon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poly</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">probs_from_weights</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norms</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norms</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">probs_from_normals</span><span class="p">()</span>
 
         <span class="c"># Define superclasses and all class/superclass colors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_class_labels</span><span class="p">(</span><span class="n">class_labels</span><span class="p">)</span>
+
+        <span class="c"># Combine MMS superclasses</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">combine_mms</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SoftMax.define_state"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.define_state">[docs]</a>    <span class="k">def</span> <span class="nf">define_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_spec</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a numeric state vector from a specification.</span>
+
+<span class="sd">        Possible specifications:</span>
+<span class="sd">        * &#39;x&#39;</span>
+<span class="sd">        * &#39;x y&#39;</span>
+<span class="sd">        * &#39;x x_dot&#39;</span>
+<span class="sd">        * &#39;x y_dot&#39;</span>
+<span class="sd">        * &#39;x y x_dot&#39;</span>
+<span class="sd">        * &#39;x y y_dot&#39;</span>
+<span class="sd">        * &#39;x y x_dot y_dot&#39;</span>
+<span class="sd">        * &#39;x y x^2 y^2 2xy&#39;</span>
+
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        &gt;&gt;&gt; self.define_state(&#39;x y&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; print(self.X.shape)</span>
+<span class="sd">        (101, 101)</span>
+<span class="sd">        &gt;&gt;&gt; print(self.Y.shape)</span>
+<span class="sd">        (101, 101)</span>
+<span class="sd">        &gt;&gt;&gt; print(self.state.shape)</span>
+<span class="sd">        (10201, 3)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># &lt;&gt;TODO: Fix for 3D or n-dimensional</span>
+        <span class="c"># &lt;&gt;TODO: Use SymPy</span>
+        <span class="c"># Define distribution over a gridded state space</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[:]</span>
+        <span class="k">if</span> <span class="n">state_spec</span> <span class="o">==</span> <span class="s">&#39;x&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                 <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">res</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">elif</span> <span class="n">state_spec</span> <span class="o">==</span> <span class="s">&#39;x y&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">res</span><span class="p">:</span><span class="n">res</span><span class="p">,</span>
+                                      <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">res</span><span class="p">:</span><span class="n">res</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">state_spec</span> <span class="o">==</span> <span class="s">&#39;x x_dot&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">state_spec</span> <span class="o">==</span> <span class="s">&#39;x y_dot&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">state_spec</span> <span class="o">==</span> <span class="s">&#39;x y x_dot&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">state_spec</span> <span class="o">==</span> <span class="s">&#39;x y y_dot&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">state_spec</span> <span class="o">==</span> <span class="s">&#39;x y x_dot y_dot&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">state_spec</span> <span class="o">==</span> <span class="s">&#39;x y x^2 y^2 2xy&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="SoftMax.probs_from_normals"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.probs_from_normals">[docs]</a>    <span class="k">def</span> <span class="nf">probs_from_normals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interior</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a softmax distributions from a set of normals.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        interior: bool, optional</span>
+<span class="sd">            Whether or not to generate a new interior class. Defaults to true.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Derive weights from normals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">normals</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biases</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">))</span>
+
+        <span class="c"># Create the SoftMax distribution from the weights we found</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">probs_from_weights</span><span class="p">()</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Weights generated from normals:</span><span class="se">\n</span><span class="s"> {}&quot;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Biases generated from normals:</span><span class="se">\n</span><span class="s"> {}&quot;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="SoftMax.probs_from_weights"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.probs_from_weights">[docs]</a>    <span class="k">def</span> <span class="nf">probs_from_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a softmax distributions from a set of weights.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Modify steepness</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biases</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="c"># &lt;&gt;TODO:</span>
+        <span class="c"># Subtract a constant from all weights to prevent overflow:</span>
+        <span class="c"># http://ufldl.stanford.edu/wiki/index.php/Exercise:Softmax_Regression</span>
+
+        <span class="c"># Define the softmax normalization term</span>
+        <span class="n">sum_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">weights</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">):</span>
+            <span class="n">exp_term</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">sum_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_term</span><span class="p">)</span>
+        <span class="n">normalizer</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sum_</span><span class="p">)</span>  <span class="c"># scalar value</span>
+
+        <span class="c"># Define each class&#39; probability</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">):</span>
+            <span class="n">exp_term</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_term</span><span class="p">)</span> <span class="o">/</span> <span class="n">normalizer</span>
+
+        <span class="c"># Check probs to make sure everything sums to 1</span>
+        <span class="k">if</span> <span class="o">~</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">))):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Probabilites not summing to 1 at each point in&#39;</span>
+                            <span class="s">&#39;the state!&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SoftMax.probs_at_state"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.probs_at_state">[docs]</a>    <span class="k">def</span> <span class="nf">probs_at_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find the probabilities for each class for a given state.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        state : array_like</span>
+<span class="sd">            A a 1-dimensional array containing the state values of all `N`</span>
+<span class="sd">            states at which to find the probabilities of each class</span>
+<span class="sd">            specified.</span>
+<span class="sd">        class_ : int, optional</span>
+<span class="sd">            The zero-indexed ID of the class.</span>
+
+<span class="sd">            Defaults to `None`, which will provide all classes&#39; probabilities.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        An array_like object containing the probabilities of the class(es)</span>
+<span class="sd">        specified.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># &lt;&gt;TODO:</span>
+        <span class="c"># Subtract a constant from all weights to prevent overflow:</span>
+        <span class="c"># http://ufldl.stanford.edu/wiki/index.php/Exercise:Softmax_Regression</span>
+
+        <span class="c"># &lt;&gt;TODO:</span>
+        <span class="c"># Allow for class labels to be used instead of class IDs.</span>
+        
+        <span class="c"># &lt;&gt;TODO:</span>
+        <span class="c"># Fix for MMS models</span>
+
+        <span class="c"># Define the softmax normalizer</span>
+        <span class="n">sum_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">weights</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">):</span>
+            <span class="n">exp_term</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">sum_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_term</span><span class="p">)</span>
+        <span class="n">normalizer</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sum_</span><span class="p">)</span>  <span class="c"># scalar value</span>
+
+        <span class="c"># Define each class&#39; probability</span>
+        <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">):</span>
+            <span class="n">exp_term</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">probs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_term</span><span class="p">)</span> <span class="o">/</span> <span class="n">normalizer</span>
+
+        <span class="c"># Check probs to make sure everything sums to 1</span>
+        <span class="k">if</span> <span class="o">~</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">probs</span><span class="p">))):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Probabilites not summing to 1 at each point in&#39;</span>
+                            <span class="s">&#39;the state!&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">class_</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">probs</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">probs</span><span class="p">[</span><span class="n">class_</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="SoftMax.combine_mms"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.combine_mms">[docs]</a>    <span class="k">def</span> <span class="nf">combine_mms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Combine classes with the same label.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Convert classes to subclasses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subclass_probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">[:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subclass_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span><span class="p">[:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subclass_colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span><span class="p">[:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subclass_cmaps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_cmaps</span><span class="p">[:]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_subclasses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subclass_probs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span><span class="p">))</span>
+
+        <span class="c"># Assign new colors to unique classes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_cmaps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_cmaps</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">]</span>
+
+        <span class="c"># Merge probabilities from subclasses</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">remaining_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subclass_labels</span><span class="p">[:]</span>
+        <span class="n">remaining_probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subclass_probs</span><span class="p">[:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">subclass_probs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">remaining_labels</span><span class="p">:</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">other_label</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">remaining_labels</span><span class="p">)</span>
+                       <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="n">other_label</span><span class="p">]</span>
+            <span class="n">probs</span> <span class="o">=</span> <span class="n">remaining_probs</span><span class="p">[:,</span> <span class="n">indices</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">remaining_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">remaining_labels</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">remaining_labels</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+            <span class="n">remaining_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">remaining_probs</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">remaining_labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="SoftMax.set_class_labels"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.set_class_labels">[docs]</a>    <span class="k">def</span> <span class="nf">set_class_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">class_labels</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets label and label colors for all classes and subclasses.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Make sure we have as many colors as classes</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">SoftMax</span><span class="o">.</span><span class="n">class_cmaps</span><span class="p">):</span>
+            <span class="n">SoftMax</span><span class="o">.</span><span class="n">class_cmaps</span> <span class="o">+=</span> <span class="n">SoftMax</span><span class="o">.</span><span class="n">class_cmaps</span>
+            <span class="n">SoftMax</span><span class="o">.</span><span class="n">class_colors</span> <span class="o">+=</span> <span class="n">SoftMax</span><span class="o">.</span><span class="n">class_colors</span>
+
         <span class="k">if</span> <span class="n">class_labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span> <span class="o">=</span> <span class="n">class_labels</span>
 
@@ -233,63 +507,98 @@
                                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">)]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">class_cmaps</span> <span class="o">=</span> <span class="n">SoftMax</span><span class="o">.</span><span class="n">class_cmaps</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span> <span class="o">=</span> <span class="n">SoftMax</span><span class="o">.</span><span class="n">class_colors</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">]</span>
-
-        <span class="c"># &lt;&gt;TODO: Fix for 3D or n-dimensional</span>
-        <span class="c"># Define distribution over a gridded space</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">resolution</span><span class="p">:</span><span class="n">resolution</span><span class="p">,</span>
-                                  <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">resolution</span><span class="p">:</span><span class="n">resolution</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">))</span>
-
-        <span class="c"># Define the softmax normalizer</span>
-        <span class="n">sum_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">class_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">):</span>
-            <span class="k">print</span><span class="p">(</span><span class="n">sum_</span><span class="p">)</span>
-            <span class="n">sum_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">class_</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">normalizer</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sum_</span><span class="p">)</span>  <span class="c"># scalar value</span>
-
-        <span class="c"># Define each class&#39; probability</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pdfs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">pdfs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]))</span>\
-                    <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalizer</span>
-
-<div class="viewcode-block" id="SoftMax.plot"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Generate a figure for the softmax function.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="SoftMax.plot_class"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.plot_class">[docs]</a>    <span class="k">def</span> <span class="nf">plot_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">class_i</span><span class="p">):</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">)</span>
 
-        <span class="n">proxy</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span>
-
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_cmaps</span><span class="p">):</span>
-            <span class="n">prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdfs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-            <span class="n">cmap</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_cmaps</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-            <span class="n">color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-                                   <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span>
-                                   <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
-                                   <span class="n">antialiased</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">shade</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-
-            <span class="c"># Create Proxy artists for legend labels</span>
-            <span class="n">proxy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                                     <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
-
-            <span class="c"># fig.colorbar(surf)</span>
+        <span class="c"># Plot each surface</span>
+        <span class="n">prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">[:,</span> <span class="n">class_i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                        <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s">&#39;jet&#39;</span><span class="p">),</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">vmax</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">antialiased</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">shade</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
         <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
-        <span class="c"># ax.set_zlim(-0.01, 1.01)</span>
+
+        <span class="c"># Shrink current axis&#39;s height by 10% on the bottom</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">box</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">y0</span> <span class="o">+</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">,</span>
+                         <span class="n">box</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="mf">0.9</span><span class="p">])</span>
 
         <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;x [m]&#39;</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;y [m]&#39;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s">&#39;Probability P(D=i|X)&#39;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Softmax distribution&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s">&#39;Probability of {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span><span class="p">[</span><span class="n">class_i</span><span class="p">]))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Class Probailities&#39;</span><span class="p">)</span>
 
-        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">proxy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span><span class="p">)</span>
-        <span class="c"># plt.tight_layout()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="SoftMax.plot"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot_classes</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">plot_probs</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">plot_poly</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+             <span class="n">plot_normals</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;SoftMax Classification&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Display the class and/or PDF plots of the SoftMax distribution.</span>
+
+<span class="sd">        The class plot shows only the critical classes (those that have the</span>
+<span class="sd">        greatest probability at any given state).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        plot_classes : bool, optional</span>
+<span class="sd">            Plot the critical classes. Defaults to `True`.</span>
+<span class="sd">        plot_probs : bool, optional</span>
+<span class="sd">            Plot the probability densities. Defaults to `True`.</span>
+<span class="sd">        plot_poly : bool, optional</span>
+<span class="sd">            Plot the polygon from which the boundaries are formed. Defaults to</span>
+<span class="sd">            `False`.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Keyword arguments for ``plot_classes``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Plotting attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">plot_classes</span> <span class="ow">and</span> <span class="n">plot_probs</span><span class="p">:</span>
+            <span class="n">ax1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">ax2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ax2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_classes</span><span class="p">(</span><span class="n">ax1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_probs</span><span class="p">(</span><span class="n">ax2</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">plot_classes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_classes</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">plot_probs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_probs</span><span class="p">()</span>
+
+        <span class="c"># Create Proxy artists for legend labels</span>
+        <span class="n">proxy</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span><span class="p">[:</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">proxy_label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">proxy_label</span> <span class="o">=</span> <span class="s">&quot;_nolegend_&quot;</span>
+            <span class="n">proxy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                     <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">proxy_label</span><span class="p">,)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="n">proxy</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s">&#39;lower center&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;expand&#39;</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                   <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">1.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.175</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.075</span><span class="p">),</span> <span class="n">borderaxespad</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+
+        <span class="c"># Plot polygon, if possible</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">poly</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">plot_poly</span> <span class="ow">and</span> <span class="n">plot_classes</span><span class="p">:</span>
+            <span class="n">patch</span> <span class="o">=</span> <span class="n">PolygonPatch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poly</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s">&#39;none&#39;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                                 <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s">&#39;black&#39;</span><span class="p">,)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+
+        <span class="c"># Plot normals, if possible</span>
+        <span class="c"># &lt;&gt;TODO fix crashing issue with vertical normals</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">plot_normals</span> <span class="ow">and</span> <span class="n">plot_classes</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">normal</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normals</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">normal</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">0.0001</span><span class="p">:</span>
+                    <span class="n">ax1</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ls</span><span class="o">=</span><span class="s">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&#39;black&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">slope</span> <span class="o">=</span> <span class="n">normal</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">slope</span> <span class="o">*</span> <span class="n">t</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&#39;black&#39;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="SoftMax.learn_from_data"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.learn_from_data">[docs]</a>    <span class="k">def</span> <span class="nf">learn_from_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -298,35 +607,204 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
 </div>
-<div class="viewcode-block" id="SoftMax.check_norms"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.check_norms">[docs]</a>    <span class="k">def</span> <span class="nf">check_norms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Ensures that all norms are correctly formed</span>
+<div class="viewcode-block" id="SoftMax.check_normals"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.SoftMax.check_normals">[docs]</a>    <span class="k">def</span> <span class="nf">check_normals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Ensures that all normals are correctly formed</span>
 
-<span class="sd">        Especially that each dimension of all norms sums to zero.</span>
+<span class="sd">        Especially that each dimension of all normals sums to zero.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Check the augmented matrix A = [W | n] to see if W and n are</span>
+        <span class="c"># linearly dependent</span>
+        <span class="c"># Check that all n_x, n_y sum to 0</span>
+
+        <span class="c"># Get all normal vectors between *all* classes</span>
+        <span class="k">for</span> <span class="n">class_weight</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c"># &lt;&gt;TODO: implement this function!</span>
+</div>
+    <span class="k">def</span> <span class="nf">_plot_probs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_probs_1D</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_probs_2D</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_probs_3D</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;The state vector must be able to be represented &#39;</span>
+                             <span class="s">&#39;in 1D, 2D or 3D to be plotted.&#39;</span><span class="p">)</span>
+
+        <span class="c"># Shrink current axis&#39;s height by 10% on the bottom</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">box</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">y0</span> <span class="o">+</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">,</span>
+                         <span class="n">box</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="mf">0.9</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_plot_probs_1D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span><span class="p">):</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;Probability P(D=i|X)&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Class Probabilities&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_plot_probs_2D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">)</span>
+
+        <span class="n">plot_multisurface</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;x1&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;x2&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s">&#39;Probability P(D=i|X)&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Class Probabilities&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_plot_probs_3D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
         <span class="k">pass</span>
 
-</div></div>
-<div class="viewcode-block" id="make_simple_softmax"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.make_simple_softmax">[docs]</a><span class="k">def</span> <span class="nf">make_simple_softmax</span><span class="p">():</span>
-    <span class="c"># weights = np.array([[1, 0.1, 0.1],</span>
-    <span class="c">#                     [1, 0.1, -0.1],</span>
-    <span class="c">#                     [1, -0.1, -0.1]])</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">2.8721</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2223</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.7769</span><span class="p">],</span>
-                        <span class="p">[</span><span class="o">-</span><span class="mf">2.6089</span><span class="p">,</span> <span class="mf">1.0582</span><span class="p">,</span> <span class="mf">0.5460</span><span class="p">]])</span>
-    <span class="n">simple</span> <span class="o">=</span> <span class="n">SoftMax</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_plot_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">plot_poly</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Plot only the critical classes.</span>
 
-    <span class="c"># weights = np.array([[-4.58589689939030,6.50488972803049,-0.000634799985029515],</span>
-    <span class="c">#                    [-0.635589026753982,-242.553237254745,-423.697666826221],</span>
-    <span class="c">#                    [-0.638808964339006,-242.014980120127,422.728842454847],</span>
-    <span class="c">#                    [0,0,0]</span>
-    <span class="c">#                    ])</span>
-    <span class="c"># labels = [&#39;ND&#39;,&#39;ND&#39;,&#39;D&#39;]</span>
-    <span class="c"># simple = SoftMax(weights, class_labels=labels)</span>
+<span class="sd">        Critical classes are defined as the classes with highest probability</span>
+<span class="sd">        for a given state vector `x`.</span>
 
-    <span class="n">simple</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># &lt;&gt;TODO: Fix the checking of the state vector to allow, say, 1 x y x^2</span>
+        <span class="c"># Plot based on the dimension of the state vector</span>
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_classes_1D</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_classes_2D</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_classes_3D</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;The state vector must be able to be represented &#39;</span>
+                             <span class="s">&#39;in 1D, 2D or 3D to be plotted.&#39;</span><span class="p">)</span>
+
+        <span class="c"># Shrink current axis&#39;s height by 10% on the bottom</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">box</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">y0</span> <span class="o">+</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">,</span>
+                         <span class="n">box</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="mf">0.9</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_plot_classes_1D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">fake_X</span><span class="p">,</span> <span class="n">fake_Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">res</span><span class="p">:</span><span class="n">res</span><span class="p">,</span>
+                                  <span class="mi">0</span><span class="p">:</span><span class="mf">0.1</span><span class="p">]</span>
+        <span class="n">max_pdf_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">max_colors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span><span class="p">,</span> <span class="n">max_pdf_indices</span><span class="p">)</span>
+        <span class="n">cc</span> <span class="o">=</span> <span class="n">ColorConverter</span><span class="p">()</span>
+        <span class="n">max_colors_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cc</span><span class="o">.</span><span class="n">to_rgb</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">max_colors</span><span class="p">])</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">max_colors_rgb</span><span class="p">,</span>
+               <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Critical Classes&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_plot_classes_2D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+        <span class="c"># &lt;&gt;TODO: come up with more elegant solution than scatter plot</span>
+        <span class="c"># Identify colors of critical classes for each state</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">max_pdf_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">max_colors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_colors</span><span class="p">,</span> <span class="n">max_pdf_indices</span><span class="p">)</span>
+        <span class="n">cc</span> <span class="o">=</span> <span class="n">ColorConverter</span><span class="p">()</span>
+        <span class="n">max_colors_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cc</span><span class="o">.</span><span class="n">to_rgb</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">max_colors</span><span class="p">])</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">max_colors_rgb</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                   <span class="n">linewidths</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;x1&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;x2&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Critical Classes&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_plot_classes_3D</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
 
 </div>
-<div class="viewcode-block" id="make_2D_camera"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.make_2D_camera">[docs]</a><span class="k">def</span> <span class="nf">make_2D_camera</span><span class="p">(</span><span class="n">min_view_dist</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_view_dist</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="normals_from_polygon"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.normals_from_polygon">[docs]</a><span class="k">def</span> <span class="nf">normals_from_polygon</span><span class="p">(</span><span class="n">polygon</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get all unit normal vectors from the exterior of a polygon.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        polygon : shapely.Polygon</span>
+<span class="sd">            A simple polygon.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    array_like</span>
+<span class="sd">        List of unit vectors.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># &lt;&gt;TODO: Extend to 3D</span>
+
+    <span class="n">centroid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">polygon</span><span class="o">.</span><span class="n">centroid</span><span class="p">)</span>
+    <span class="n">pts</span> <span class="o">=</span> <span class="n">polygon</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">[:]</span> <span class="o">-</span> <span class="n">centroid</span>
+    <span class="n">n_faces</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">normals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_faces</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c"># &lt;&gt;EXTEND</span>
+    <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_faces</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_faces</span><span class="p">):</span>
+        <span class="n">midpoint</span> <span class="o">=</span> <span class="n">pts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">pts</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">pts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">midpoint</span><span class="p">,</span> <span class="n">pts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]))</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">P</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))</span>
+
+        <span class="c"># Use SVD to find nullspace (normals)</span>
+        <span class="n">u</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;u:</span><span class="se">\n</span><span class="s">{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;s:</span><span class="se">\n</span><span class="s">{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;v:</span><span class="se">\n</span><span class="s">{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+        <span class="n">tolerance</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">6</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tolerance</span><span class="p">))</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">normals</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">sign</span>
+        <span class="n">offsets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">sign</span> <span class="o">-</span> <span class="n">normals</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">centroid</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">v</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:]))</span> <span class="o">&gt;</span> <span class="n">tolerance</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Not a well-defined nullspace!&#39;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Normals generated via SVD: </span><span class="se">\n</span><span class="s">{}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">normals</span><span class="p">))</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Offsets generated via SVD: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">offsets</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">normals</span><span class="p">,</span> <span class="n">offsets</span>
+
+</div>
+<div class="viewcode-block" id="make_regular_2D_poly"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.make_regular_2D_poly">[docs]</a><span class="k">def</span> <span class="nf">make_regular_2D_poly</span><span class="p">(</span><span class="n">n_sides</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">theta</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_r</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">max_r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">n</span> <span class="o">/</span> <span class="n">n_sides</span> <span class="o">+</span> <span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">origin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+         <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_sides</span><span class="p">)]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">max_r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">n</span> <span class="o">/</span> <span class="n">n_sides</span> <span class="o">+</span> <span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+         <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_sides</span><span class="p">)]</span>
+    <span class="n">pts</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Generated points:</span><span class="se">\n</span><span class="s">{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="n">pts</span><span class="p">))))</span>
+
+    <span class="k">return</span> <span class="n">Polygon</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="camera_model_2D"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.camera_model_2D">[docs]</a><span class="k">def</span> <span class="nf">camera_model_2D</span><span class="p">(</span><span class="n">min_view_dist</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">max_view_dist</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Generate a softmax model for a two dimensional camera.</span>
 
 <span class="sd">    A softmax model decomposing the space into five subclasses: four</span>
@@ -352,34 +830,53 @@
 
     <span class="c"># Define view cone centered at origin</span>
     <span class="n">horizontal_view_angle</span> <span class="o">=</span> <span class="mi">57</span>  <span class="c"># from Kinect specifications (degrees)</span>
-    <span class="n">origin</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-    <span class="n">view_slope</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">horizontal_view_angle</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">min_y</span> <span class="o">=</span> <span class="n">min_view_dist</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">horizontal_view_angle</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">max_y</span> <span class="o">=</span> <span class="n">max_view_dist</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">horizontal_view_angle</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">camera_poly</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">([(</span><span class="n">min_view_dist</span><span class="p">,</span>  <span class="n">min_y</span><span class="p">),</span>
+                           <span class="p">(</span><span class="n">max_view_dist</span><span class="p">,</span>  <span class="n">max_y</span><span class="p">),</span>
+                           <span class="p">(</span><span class="n">max_view_dist</span><span class="p">,</span> <span class="o">-</span><span class="n">max_y</span><span class="p">),</span>
+                           <span class="p">(</span><span class="n">min_view_dist</span><span class="p">,</span> <span class="o">-</span><span class="n">min_y</span><span class="p">)])</span>
 
-    <span class="c"># Define class weights</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="n">view_slope</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
-                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
-                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">view_slope</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
-                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">min_view_dist</span><span class="p">],</span>
-                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">max_view_dist</span><span class="p">],</span>
-                        <span class="p">])</span>
-    <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;No Detection&#39;</span><span class="p">,</span> <span class="s">&#39;No Detection&#39;</span><span class="p">,</span> <span class="s">&#39;No Detection&#39;</span><span class="p">,</span> <span class="s">&#39;No Detection&#39;</span><span class="p">,</span>
-              <span class="s">&#39;Detection&#39;</span><span class="p">]</span>
-    <span class="n">camera</span> <span class="o">=</span> <span class="n">SoftMax</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">class_labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
-    <span class="n">camera</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">min_view_dist</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">steepness</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Detection&#39;</span><span class="p">,</span> <span class="s">&#39;No Detection&#39;</span><span class="p">,</span> <span class="s">&#39;No Detection&#39;</span><span class="p">,</span>  <span class="s">&#39;No Detection&#39;</span><span class="p">,</span> 
+              <span class="s">&#39;No Detection&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">steepness</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">100</span><span class="p">,]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Detection&#39;</span><span class="p">,</span> <span class="s">&#39;No Detection&#39;</span><span class="p">,</span>  <span class="s">&#39;No Detection&#39;</span><span class="p">,</span> <span class="s">&#39;No Detection&#39;</span><span class="p">]</span>        
+    
+    <span class="n">camera</span> <span class="o">=</span> <span class="n">SoftMax</span><span class="p">(</span><span class="n">poly</span><span class="o">=</span><span class="n">camera_poly</span><span class="p">,</span> <span class="n">class_labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> 
+                     <span class="n">steepness</span><span class="o">=</span><span class="n">steepness</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">camera</span>
 
 </div>
-<div class="viewcode-block" id="make_3D_camera"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.make_3D_camera">[docs]</a><span class="k">def</span> <span class="nf">make_3D_camera</span><span class="p">():</span>
-    <span class="c"># horizontal_view_angle = 57  # from Kinect specifications (degrees)</span>
-    <span class="c"># vertical_view_angle = 43  # from Kinect specifications (degrees)</span>
+<div class="viewcode-block" id="speed_model"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.speed_model">[docs]</a><span class="k">def</span> <span class="nf">speed_model</span><span class="p">():</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Stopped&#39;</span><span class="p">,</span> <span class="s">&#39;Slow&#39;</span><span class="p">,</span> <span class="s">&#39;Medium&#39;</span><span class="p">,</span> <span class="s">&#39;Fast&#39;</span><span class="p">]</span>
+    <span class="n">sm</span> <span class="o">=</span> <span class="n">SoftMax</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">150</span><span class="p">],</span> <span class="p">[</span><span class="mi">175</span><span class="p">],</span> <span class="p">[</span><span class="mi">200</span><span class="p">]]),</span>
+                 <span class="n">biases</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="o">-</span><span class="mi">14</span><span class="p">]),</span>
+                 <span class="n">state_spec</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">class_labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                 <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">sm</span>
+</div>
+<div class="viewcode-block" id="wall_model"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.softmax.html#cops_and_robots.robo_tools.fusion.softmax.wall_model">[docs]</a><span class="k">def</span> <span class="nf">wall_model</span><span class="p">(</span><span class="n">l</span><span class="o">=</span><span class="mf">1.2192</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="mf">0.1524</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a two-dimensional SoftMax model around a wall.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">wall</span> <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="o">-</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">origin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+               <span class="o">-</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">w</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">origin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">l</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
-    <span class="c"># # Camera origin</span>
-    <span class="c"># origin = [0,0,1] # [x,y,z]</span>
-    <span class="k">pass</span>
+    <span class="n">steepness</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Interior&#39;</span><span class="p">,</span><span class="s">&#39;Front&#39;</span><span class="p">,</span> <span class="s">&#39;Left&#39;</span><span class="p">,</span> <span class="s">&#39;Back&#39;</span><span class="p">,</span> <span class="s">&#39;Right&#39;</span><span class="p">]</span>
+    <span class="n">wall_sm</span> <span class="o">=</span> <span class="n">SoftMax</span><span class="p">(</span><span class="n">poly</span><span class="o">=</span><span class="n">wall</span><span class="p">,</span> <span class="n">steepness</span><span class="o">=</span><span class="n">steepness</span><span class="p">,</span> <span class="n">class_labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wall_sm</span>
 </div>
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-    <span class="n">make_simple_softmax</span><span class="p">()</span>
-    <span class="c"># make_2D_camera()</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">suppress</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">camera</span> <span class="o">=</span> <span class="n">camera_model_2D</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">camera</span><span class="o">.</span><span class="n">probs_at_state</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="mi">0</span><span class="p">))</span>
 </pre></div>
 
           </div>

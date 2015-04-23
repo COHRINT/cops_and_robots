@@ -43,7 +43,7 @@ class Sensor(object):
         view of the sensor.
 
     """
-    def __init__(self, update_rate, has_physical_dimensions, detection_chance):
+    def __init__(self, update_rate, has_physical_dimensions, detection_chance=0):
         super(Sensor, self).__init__()
 
         # Define simlated sensor parameters

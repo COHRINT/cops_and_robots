@@ -31,6 +31,7 @@ from shapely.geometry import Point
 from shapely import affinity
 
 from cops_and_robots.robo_tools.fusion.sensor import Sensor
+from cops_and_robots.robo_tools.fusion.softmax import camera_model_2D
 
 # <>TODO: Remove test stub
 from cops_and_robots.map_tools.map_obj import MapObj
@@ -69,12 +70,14 @@ class Camera(Sensor):
                         (0, 0),
                         ]
 
+        # Create SoftMax model for camera
+        self.detection_model = camera_model_2D(self.min_view_dist,
+                                               self.max_view_dist)
+
         # Instantiate Sensor superclass object
         update_rate = 1  # [hz]
-        detection_chance = 0.8
         has_physical_dimensions = True
-        super(Camera, self).__init__(update_rate, has_physical_dimensions,
-                                     detection_chance)
+        super(Camera, self).__init__(update_rate, has_physical_dimensions)
 
         # Set the ideal and actual viewcones
         self.ideal_viewcone = MapObj('Ideal viewcone',
@@ -190,13 +193,21 @@ class Camera(Sensor):
             The particle list, assuming [x,y,p], where x and y are position
             data and p is the particle's associated probability.
         """
+        #<>TODO: Get unit tests running
+        # Define rotation matrix
+        theta = 2 * np.pi - np.radians(self.view_pose[2])
+        R = np.array([[np.cos(theta), -np.sin(theta)],
+                      [np.sin(theta), np.cos(theta)],])
+
         # Update particle probabilities in view cone
         for i, particle in enumerate(particles):
-            if self.viewcone.shape.contains(Point(particle[0:2])):
-                particles[i, 2] *= (1 - self.detection_chance)
+            if self.viewcone.shape.contains(Point(particle[1:3])):
+                relative_pose = np.subtract(particle[1:3], self.view_pose[0:2])
+                relative_pose = np.dot(R, relative_pose)
+                particles[i, 0] *= (1 - self.detection_model.probs_at_state(relative_pose[0:2],0))
 
         # Renormalize
-        particles[:, 2] /= sum(particles[:, 2])
+        particles[:, 0] /= sum(particles[:, 0])
 
     def _detect_probability(self):
         pass
