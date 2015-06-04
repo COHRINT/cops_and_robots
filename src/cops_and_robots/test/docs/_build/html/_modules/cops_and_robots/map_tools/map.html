@@ -1,0 +1,490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cops_and_robots.map_tools.map &mdash; Cops and Robots 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Cops and Robots 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Cops and Robots 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for cops_and_robots.map_tools.map</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Collects all the information a robot has of its environment.</span>
+
+<span class="sd">A map has three different parts: its properties, its elements, and its</span>
+<span class="sd">layers. Properties define key intrinsics of the map (such as its</span>
+<span class="sd">boundaries). Elements define the collections of physical objects on</span>
+<span class="sd">the map (robots, walls, etc.). Layers (meant to be toggled for</span>
+<span class="sd">visibility) represent perspectives on the map: where the map&#39;s</span>
+<span class="sd">elements are, what probability distributions are associated with a</span>
+<span class="sd">given element, etc.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015, Cohrint&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Nick Sweet&quot;</span><span class="p">,</span> <span class="s">&quot;Nisar Ahmed&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;GPL&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.0.0&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s">&quot;Nick Sweet&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s">&quot;nick.sweet@colorado.edu&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
+
+<span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">cnames</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">Point</span>
+<span class="kn">from</span> <span class="nn">descartes.patch</span> <span class="kn">import</span> <span class="n">PolygonPatch</span>
+
+<span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.map_obj</span> <span class="kn">import</span> <span class="n">MapObj</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.shape_layer</span> <span class="kn">import</span> <span class="n">ShapeLayer</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.occupancy_layer</span> <span class="kn">import</span> <span class="n">OccupancyLayer</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.feasible_layer</span> <span class="kn">import</span> <span class="n">FeasibleLayer</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.probability_layer</span> <span class="kn">import</span> <span class="n">ProbabilityLayer</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.particle_layer</span> <span class="kn">import</span> <span class="n">ParticleLayer</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.map_tools.human_interface</span> <span class="kn">import</span> <span class="n">HumanInterface</span>
+
+
+<div class="viewcode-block" id="Map"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map">[docs]</a><span class="k">class</span> <span class="nc">Map</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Environment map composed of multiple elements and layers.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mapname : str</span>
+<span class="sd">        The name of the map.</span>
+<span class="sd">    bounds : array_like, optional</span>
+<span class="sd">        Map boundaries as [xmin,ymin,xmax,ymax] in [m].</span>
+<span class="sd">    combined_only : bool, optional</span>
+<span class="sd">        Whether to show only the combined plot (as opposed to individual plots</span>
+<span class="sd">        for each robber, plus one combined plot). Defaults to `True`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mapname</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">combined_only</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="c"># Define map properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapname</span> <span class="o">=</span> <span class="n">mapname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>  <span class="c"># [x_min,y_min,x_max,y_max] in [m] useful area</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outer_bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="mf">1.1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c"># in [m]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">combined_only</span> <span class="o">=</span> <span class="n">combined_only</span>
+
+        <span class="c"># Define map elements</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objects</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># For dynamic/static map objects (not robbers/cops)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cops</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robbers</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c"># Define layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span> <span class="o">=</span> <span class="n">ShapeLayer</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">occupancy_layer</span> <span class="o">=</span> <span class="n">OccupancyLayer</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feasible_layer</span> <span class="o">=</span> <span class="n">FeasibleLayer</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">particle_layer</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># One per robber, plus one combined</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">probability_layer</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># One per robber, plus one combined</span>
+
+<div class="viewcode-block" id="Map.add_human_sensor"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.add_human_sensor">[docs]</a>    <span class="k">def</span> <span class="nf">add_human_sensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">human_sensor</span><span class="p">):</span>
+        <span class="c"># Add human sensor for the human interface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">human_sensor</span> <span class="o">=</span> <span class="n">human_sensor</span>
+</div>
+<div class="viewcode-block" id="Map.add_obj"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.add_obj">[docs]</a>    <span class="k">def</span> <span class="nf">add_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Append a static ``MapObj`` to the map.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        map_obj_name : MapObj</span>
+<span class="sd">            The object to be added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objects</span><span class="p">[</span><span class="n">map_obj</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">map_obj</span>
+        <span class="c"># self.occupancy_layer.add_obj(map_obj)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="o">.</span><span class="n">add_obj</span><span class="p">(</span><span class="n">map_obj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feasible_layer</span><span class="o">.</span><span class="n">define_feasible_regions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="p">)</span>
+        <span class="c"># &lt;&gt;TODO: Update probability layer</span>
+</div>
+<div class="viewcode-block" id="Map.rem_obj"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.rem_obj">[docs]</a>    <span class="k">def</span> <span class="nf">rem_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_obj_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove a ``MapObj`` from the Map by its name.</span>
+
+<span class="sd">        map_obj_name : str</span>
+<span class="sd">            Name of the map object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="o">.</span><span class="n">rem_obj</span><span class="p">(</span><span class="n">map_obj_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feasible_layer</span><span class="o">.</span><span class="n">define_feasible_regions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="p">)</span>
+        <span class="c"># self.occupancy_layer.rem_obj(self.objects[map_obj_name])</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">objects</span><span class="p">[</span><span class="n">map_obj_name</span><span class="p">]</span>
+        <span class="c"># &lt;&gt;TODO: Update probability layer</span>
+</div>
+<div class="viewcode-block" id="Map.add_cop"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.add_cop">[docs]</a>    <span class="k">def</span> <span class="nf">add_cop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cop_obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a dynamic ``Robot`` cop from the Map</span>
+
+<span class="sd">        cop_obj : Cop</span>
+<span class="sd">            The full cop object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># self.shape_layer.add_obj(cop)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cops</span><span class="p">[</span><span class="n">cop_obj</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">cop_obj</span>
+</div>
+<div class="viewcode-block" id="Map.rem_cop"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.rem_cop">[docs]</a>    <span class="k">def</span> <span class="nf">rem_cop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cop_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove a dynamic ``Robot`` cop from the Map by its name.</span>
+
+<span class="sd">        cop_name : str</span>
+<span class="sd">            Name of the cop.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># self.shape_layer.rem_obj(cop_name)</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">cops</span><span class="p">[</span><span class="n">cop_name</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Map.add_robber"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.add_robber">[docs]</a>    <span class="k">def</span> <span class="nf">add_robber</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robber</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a dynamic ``Robot`` robber from the Map.</span>
+
+<span class="sd">        robber_obj : Robber</span>
+<span class="sd">            The full robber object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">robber</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">particle_layer</span><span class="p">[</span><span class="n">robber</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ParticleLayer</span><span class="p">()</span>
+        <span class="c"># &lt;&gt;TODO: Update probability layer</span>
+</div>
+<div class="viewcode-block" id="Map.rem_robber"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.rem_robber">[docs]</a>    <span class="k">def</span> <span class="nf">rem_robber</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robber_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove a dynamic ``Robot`` robber from the Map by its name.</span>
+
+<span class="sd">        robber_name : str</span>
+<span class="sd">            Name of the robber.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="o">.</span><span class="n">rem_obj</span><span class="p">(</span><span class="n">robber_name</span><span class="p">)</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">probability_layer</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span>
+        <span class="c"># &lt;&gt;TODO: Update probability layer</span>
+</div>
+<div class="viewcode-block" id="Map.plot"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Plot the current state of the map.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># &lt;&gt;TODO: Generate static plot</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="Map.setup_plot"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.setup_plot">[docs]</a>    <span class="k">def</span> <span class="nf">setup_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the initial plot for the animation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">combined_only</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num_axes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">num_rows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">num_axes</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">robber</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">):</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span><span class="p">((</span><span class="n">num_rows</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                                      <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="n">i</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+                                      <span class="n">colspan</span><span class="o">=</span><span class="mi">2</span>
+                                      <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="n">robber</span><span class="p">]</span> <span class="o">=</span> <span class="n">ax</span>
+
+            <span class="c"># Add a plot for the combined estimate</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">num_axes</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span><span class="p">((</span><span class="n">num_rows</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="n">num_rows</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                      <span class="n">colspan</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span><span class="p">((</span><span class="n">num_rows</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="n">num_rows</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                      <span class="n">colspan</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ax</span>
+
+        <span class="c"># Define generic plot elements</span>
+        <span class="n">movement_path</span> <span class="o">=</span> <span class="n">Line2D</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+                               <span class="n">color</span><span class="o">=</span><span class="n">cnames</span><span class="p">[</span><span class="s">&#39;green&#39;</span><span class="p">])</span>
+        <span class="n">simple_poly</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+        <span class="n">arbitrary_particle_layer</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">particle_layer</span><span class="o">.</span><span class="n">itervalues</span><span class="p">())</span>
+        <span class="n">init_particles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cop_patch</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movement_path</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">camera_patch</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">particle_scat</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c"># Set up all robber plots</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">combined_only</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">robber</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">:</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="n">robber</span><span class="p">]</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Tracking {}.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">robber</span><span class="p">))</span>
+
+                <span class="c"># Plot static elements</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">plot_zones</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+                <span class="c"># Define cop path</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cop_patch</span><span class="p">[</span><span class="n">robber</span><span class="p">]</span> <span class="o">=</span> <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">simple_poly</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cop_patch</span><span class="p">[</span><span class="n">robber</span><span class="p">])</span>
+
+                <span class="c"># Define cop movement path</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">movement_path</span><span class="p">[</span><span class="n">robber</span><span class="p">]</span> <span class="o">=</span> <span class="n">movement_path</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">movement_path</span><span class="p">[</span><span class="n">robber</span><span class="p">])</span>
+
+                <span class="c"># Define camera patch</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">camera_patch</span><span class="p">[</span><span class="n">robber</span><span class="p">]</span> <span class="o">=</span> <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">simple_poly</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">camera_patch</span><span class="p">[</span><span class="n">robber</span><span class="p">])</span>
+
+                <span class="c"># Define robber patch</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="n">robber</span><span class="p">]</span> <span class="o">=</span> <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">simple_poly</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="n">robber</span><span class="p">])</span>
+
+                <span class="c"># Define particle scatter plot</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">particle_scat</span><span class="p">[</span><span class="n">robber</span><span class="p">]</span> <span class="o">=</span> \
+                    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">init_particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                               <span class="n">init_particles</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                               <span class="n">c</span><span class="o">=</span><span class="n">init_particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                               <span class="n">cmap</span><span class="o">=</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">cmap</span><span class="p">,</span>
+                               <span class="n">s</span><span class="o">=</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">particle_size</span><span class="p">,</span>
+                               <span class="n">lw</span><span class="o">=</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">line_weight</span><span class="p">,</span>
+                               <span class="n">alpha</span><span class="o">=</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
+                               <span class="n">marker</span><span class="o">=</span><span class="s">&#39;.&#39;</span><span class="p">,</span>
+                               <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                               <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span>
+                               <span class="p">)</span>
+
+        <span class="c"># Set up combined plot</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">combined_only</span><span class="p">:</span>
+            <span class="c"># Plot setup</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Combined tracking of all &#39;</span>
+                                               <span class="s">&#39;remaining targets.&#39;</span><span class="p">)</span>
+
+            <span class="c"># Static elements</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">shape_layer</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">plot_zones</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                  <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">])</span>
+
+            <span class="c"># Dynamic elements</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cop_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">simple_poly</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">movement_path</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">movement_path</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">camera_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">simple_poly</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cop_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">movement_path</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">camera_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">])</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">robber</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">][</span><span class="n">robber</span><span class="p">]</span> <span class="o">=</span> \
+                    <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">simple_poly</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span>\
+                    <span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">][</span><span class="n">robber</span><span class="p">])</span>
+
+            <span class="n">init_combined_particles</span> <span class="o">=</span> <span class="n">init_particles</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">particle_scat</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span>\
+                <span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">init_combined_particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                         <span class="n">init_combined_particles</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                         <span class="n">c</span><span class="o">=</span><span class="n">init_combined_particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                         <span class="n">cmap</span><span class="o">=</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">cmap</span><span class="p">,</span>
+                         <span class="n">s</span><span class="o">=</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">particle_size</span><span class="p">,</span>
+                         <span class="n">lw</span><span class="o">=</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">line_weight</span><span class="p">,</span>
+                         <span class="n">alpha</span><span class="o">=</span><span class="n">arbitrary_particle_layer</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
+                         <span class="n">marker</span><span class="o">=</span><span class="s">&#39;.&#39;</span><span class="p">,</span>
+                         <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                         <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span>
+                         <span class="p">)</span>
+
+        <span class="c"># Set up the human interface</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">human_sensor</span><span class="p">:</span>
+            <span class="n">HumanInterface</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">human_sensor</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Map.animation_stream"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.Map.animation_stream">[docs]</a>    <span class="k">def</span> <span class="nf">animation_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the animated plot.</span>
+
+<span class="sd">        This is a generator function that takes in packets of animation</span>
+<span class="sd">        data and yields nothing.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">packet</span> <span class="o">=</span> <span class="k">yield</span>
+            <span class="k">for</span> <span class="n">robber_name</span><span class="p">,</span> <span class="n">pkt</span> <span class="ow">in</span> <span class="n">packet</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Updating {}&#39;s animation frame.&quot;</span>
+                              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">robber_name</span><span class="p">))</span>
+
+                <span class="p">(</span><span class="n">cop_shape</span><span class="p">,</span> <span class="n">cop_path</span><span class="p">,</span> <span class="n">camera_shape</span><span class="p">,</span> <span class="n">robber_shape</span><span class="p">,</span> <span class="n">particles</span><span class="p">)</span>\
+                    <span class="o">=</span> <span class="n">pkt</span>
+
+                <span class="c"># Update cop patch</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cop_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cop_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span> <span class="o">=</span> \
+                    <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">cop_shape</span><span class="p">,</span>
+                                 <span class="n">facecolor</span><span class="o">=</span><span class="n">cnames</span><span class="p">[</span><span class="s">&#39;green&#39;</span><span class="p">],</span>
+                                 <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+                                 <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span>\
+                    <span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cop_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">])</span>
+
+                <span class="c"># Update movement path</span>
+                <span class="c"># &lt;&gt;TODO: Figure out why this doesn&#39;t work for multiple plots</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">movement_path</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">cop_path</span><span class="p">)</span>
+
+                <span class="c"># Update sensor patch</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">camera_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">camera_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span> <span class="o">=</span> \
+                    <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">camera_shape</span><span class="p">,</span>
+                                 <span class="n">facecolor</span><span class="o">=</span><span class="n">cnames</span><span class="p">[</span><span class="s">&#39;yellow&#39;</span><span class="p">],</span>
+                                 <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                                 <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span>\
+                    <span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">camera_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">])</span>
+
+                <span class="c"># Update robber patch</span>
+                <span class="k">if</span> <span class="n">robber_name</span> <span class="o">==</span> <span class="s">&#39;combined&#39;</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">robber</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">robbers</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">][</span><span class="n">robber</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">][</span><span class="n">robber</span><span class="p">]</span> <span class="o">=</span> \
+                            <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">robber_shape</span><span class="p">[</span><span class="n">robber</span><span class="p">],</span>
+                                         <span class="n">facecolor</span><span class="o">=</span><span class="n">cnames</span><span class="p">[</span><span class="s">&#39;orange&#39;</span><span class="p">],</span>
+                                         <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+                                         <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">]</span>\
+                            <span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="s">&#39;combined&#39;</span><span class="p">][</span><span class="n">robber</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span> <span class="o">=</span> \
+                        <span class="n">PolygonPatch</span><span class="p">(</span><span class="n">robber_shape</span><span class="p">,</span>
+                                     <span class="n">facecolor</span><span class="o">=</span><span class="n">cnames</span><span class="p">[</span><span class="s">&#39;orange&#39;</span><span class="p">],</span>
+                                     <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+                                     <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span>\
+                        <span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">])</span>
+
+                <span class="c"># Update Particle Filter</span>
+                <span class="n">colors</span> <span class="o">=</span> <span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>\
+                    <span class="o">*</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">particle_layer</span><span class="o">.</span><span class="n">itervalues</span><span class="p">())</span><span class="o">.</span><span class="n">color_gain</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">particle_scat</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">set_array</span><span class="p">(</span><span class="n">colors</span><span class="p">)</span>
+                <span class="c"># colors = np.repeat([colors],3,axis=0).T</span>
+                <span class="c"># self.particle_scat[robber_name].set_facecolor(colors)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">particle_scat</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">set_offsets</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+
+</div></div>
+<div class="viewcode-block" id="set_up_fleming"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.html#cops_and_robots.map_tools.map.set_up_fleming">[docs]</a><span class="k">def</span> <span class="nf">set_up_fleming</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Set up a map as the generic Fleming space configuration.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Make vicon field space object</span>
+    <span class="n">net_w</span> <span class="o">=</span> <span class="mf">0.2</span>  <span class="c"># [m] Netting width</span>
+    <span class="n">field_w</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c"># [m] field width</span>
+    <span class="n">netting</span> <span class="o">=</span> <span class="n">MapObj</span><span class="p">(</span><span class="s">&#39;Netting&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">field_w</span> <span class="o">+</span> <span class="n">net_w</span><span class="p">,</span> <span class="n">field_w</span> <span class="o">+</span> <span class="n">net_w</span><span class="p">],</span>
+                     <span class="n">has_zones</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">field</span> <span class="o">=</span> <span class="n">MapObj</span><span class="p">(</span><span class="s">&#39;Field&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">field_w</span><span class="p">,</span> <span class="n">field_w</span><span class="p">],</span> <span class="n">has_zones</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="c"># Make wall objects</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="mf">1.2192</span>  <span class="c"># [m] wall length</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">0.1524</span>  <span class="c"># [m] wall width</span>
+    <span class="n">wall_shape</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span><span class="p">,</span> <span class="n">w</span><span class="p">]</span>
+    <span class="n">poses</span> <span class="o">=</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+             <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+             <span class="p">(</span><span class="n">l</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="o">+</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">l</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="o">-</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span>
+             <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">l</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">l</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+             <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">l</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+             <span class="p">(</span><span class="n">l</span> <span class="o">*</span> <span class="mf">2.5</span> <span class="o">+</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">l</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="o">-</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span>
+             <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+             <span class="p">(</span><span class="n">l</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="o">+</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">l</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span>
+             <span class="p">)</span>
+
+    <span class="n">walls</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">poses</span><span class="p">)):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;Wall &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">pose</span> <span class="o">=</span> <span class="n">poses</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">wall</span> <span class="o">=</span> <span class="n">MapObj</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">wall_shape</span><span class="p">,</span> <span class="n">pose</span><span class="p">)</span>
+        <span class="n">walls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wall</span><span class="p">)</span>
+
+    <span class="c"># Create Fleming map</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">field_w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">field_w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">field_w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">field_w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">fleming</span> <span class="o">=</span> <span class="n">Map</span><span class="p">(</span><span class="s">&#39;Fleming&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+
+    <span class="c"># &lt;&gt;TODO: Fix whatever the hell this was supposed to be</span>
+    <span class="n">fleming</span><span class="o">.</span><span class="n">add_obj</span><span class="p">(</span><span class="n">netting</span><span class="p">)</span>
+    <span class="n">fleming</span><span class="o">.</span><span class="n">add_obj</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+    <span class="n">fleming</span><span class="o">.</span><span class="n">rem_obj</span><span class="p">(</span><span class="s">&#39;Field&#39;</span><span class="p">)</span>
+    <span class="n">fleming</span><span class="o">.</span><span class="n">rem_obj</span><span class="p">(</span><span class="s">&#39;Netting&#39;</span><span class="p">)</span>
+
+    <span class="c"># Add walls to map</span>
+    <span class="k">for</span> <span class="n">wall</span> <span class="ow">in</span> <span class="n">walls</span><span class="p">:</span>
+        <span class="n">fleming</span><span class="o">.</span><span class="n">add_obj</span><span class="p">(</span><span class="n">wall</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fleming</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Cops and Robots 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Nick Sweet.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

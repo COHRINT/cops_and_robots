@@ -47,7 +47,7 @@ class ParticleLayer(Layer):
         self.n_particles = n_particles  # <>TODO: get rid of this!
 
         self.line_weight = 0
-        self.alpha = 0.5
+        self.alpha = 0.3
         self.color_gain = 400
 
     def plot(self, robber_names, fusion_engine, **kwargs):

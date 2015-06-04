@@ -456,13 +456,13 @@
                         <span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robber_patch</span><span class="p">[</span><span class="n">robber_name</span><span class="p">])</span>
 
                 <span class="c"># Update Particle Filter</span>
-                <span class="n">colors</span> <span class="o">=</span> <span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>\
+                <span class="n">colors</span> <span class="o">=</span> <span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>\
                     <span class="o">*</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">particle_layer</span><span class="o">.</span><span class="n">itervalues</span><span class="p">())</span><span class="o">.</span><span class="n">color_gain</span>
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">particle_scat</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">set_array</span><span class="p">(</span><span class="n">colors</span><span class="p">)</span>
                 <span class="c"># colors = np.repeat([colors],3,axis=0).T</span>
                 <span class="c"># self.particle_scat[robber_name].set_facecolor(colors)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">particle_scat</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">set_offsets</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">particle_scat</span><span class="p">[</span><span class="n">robber_name</span><span class="p">]</span><span class="o">.</span><span class="n">set_offsets</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
 
 </div></div>
 <div class="viewcode-block" id="set_up_fleming"><a class="viewcode-back" href="../../../cops_and_robots.map_tools.map.html#cops_and_robots.map_tools.map.set_up_fleming">[docs]</a><span class="k">def</span> <span class="nf">set_up_fleming</span><span class="p">():</span>

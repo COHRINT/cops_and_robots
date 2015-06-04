@@ -6,7 +6,7 @@ this module provides cops with the tools it uses to hunt the robbers,
 such as:
     * sensors (both human and camera) to collect environment information;
     * a fusion_engine (either particle or gaussian mixture) to make sense
-  of the environment information;
+      of the environment information;
     * animation to display its understanding of the world to the human.
 
 """

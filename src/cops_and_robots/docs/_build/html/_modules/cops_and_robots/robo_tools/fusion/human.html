@@ -146,10 +146,12 @@
 <span class="n">__status__</span> <span class="o">=</span> <span class="s">&quot;Development&quot;</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">Point</span>
 
 <span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.sensor</span> <span class="kn">import</span> <span class="n">Sensor</span>
+<span class="kn">from</span> <span class="nn">cops_and_robots.robo_tools.fusion.softmax</span> <span class="kn">import</span> <span class="n">SoftMax</span><span class="p">,</span> <span class="n">speed_model</span>
 
 
 <div class="viewcode-block" id="Human"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.human.html#cops_and_robots.robo_tools.fusion.human.Human">[docs]</a><span class="k">class</span> <span class="nc">Human</span><span class="p">(</span><span class="n">Sensor</span><span class="p">):</span>
@@ -175,13 +177,16 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape_layer</span><span class="p">,</span> <span class="n">robber_names</span><span class="p">,</span> <span class="n">detection_chance</span><span class="o">=</span><span class="mf">0.6</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_rate</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">has_physical_dimensions</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span> <span class="o">=</span> <span class="n">detection_chance</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">certain_detection_chance</span> <span class="o">=</span> <span class="n">detection_chance</span> <span class="o">+</span> \
-            <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">detection_chance</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.8</span>
+        <span class="c"># self.detection_chance = detection_chance</span>
+        <span class="c"># self.certain_detection_chance = detection_chance + \</span>
+        <span class="c">#     (1 - detection_chance) * 0.8</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">speed_model</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">motion_labels</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">class_labels</span><span class="p">;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection_model</span> <span class="o">=</span> <span class="n">sm</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">no_detection_chance</span> <span class="o">=</span> <span class="mf">0.01</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Human</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_rate</span><span class="p">,</span>
-                                    <span class="bp">self</span><span class="o">.</span><span class="n">has_physical_dimensions</span><span class="p">,</span>
-                                    <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span><span class="p">)</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">has_physical_dimensions</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">grounding_objects</span> <span class="o">=</span> <span class="n">shape_layer</span><span class="o">.</span><span class="n">shapes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">groundings</span> <span class="o">=</span> <span class="n">shape_layer</span><span class="o">.</span><span class="n">shapes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
@@ -190,8 +195,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">robber_names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;nothing&#39;</span><span class="p">,</span> <span class="s">&#39;a robber&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">robber_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">certainties</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;think&#39;</span><span class="p">,</span> <span class="s">&#39;know&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;behind&#39;</span><span class="p">,</span> <span class="s">&#39;in front of&#39;</span><span class="p">,</span> <span class="s">&#39;left of&#39;</span><span class="p">,</span> <span class="s">&#39;right of&#39;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">movements</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;stopped&#39;</span><span class="p">,</span> <span class="s">&#39;moving CCW&#39;</span><span class="p">,</span> <span class="s">&#39;moving CW&#39;</span><span class="p">,</span>
-                          <span class="s">&#39;moving randomly&#39;</span><span class="p">]</span>
+        <span class="c"># self.movements = [&#39;stopped&#39;, &#39;moving CCW&#39;, &#39;moving CW&#39;,</span>
+        <span class="c">#                   &#39;moving randomly&#39;]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movements</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;stopped&#39;</span><span class="p">,</span> <span class="s">&#39;moving slowly&#39;</span><span class="p">,</span> <span class="s">&#39;moving along&#39;</span><span class="p">,</span>
+                              <span class="s">&#39;moving quickly&#39;</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;certainty&#39;</span><span class="p">:</span> <span class="s">&#39;think&#39;</span><span class="p">,</span>
                          <span class="s">&#39;target&#39;</span><span class="p">:</span> <span class="s">&#39;a robber&#39;</span><span class="p">,</span>
@@ -251,12 +258,15 @@
         <span class="k">elif</span> <span class="n">movement</span> <span class="o">==</span> <span class="s">&#39;moving randomly&#39;</span><span class="p">:</span>
             <span class="n">motion_model</span> <span class="o">=</span> <span class="s">&#39;random walk&#39;</span>
 
-        <span class="c"># &lt;&gt;TODO consider probabilities as well</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detect_particles</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">certainty</span><span class="p">)</span>
+        <span class="n">m_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">movements</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">movement</span><span class="p">)</span>
+        <span class="n">motion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">motion_labels</span><span class="p">[</span><span class="n">m_i</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">motion_model</span>
+        <span class="c"># &lt;&gt;TODO consider probabilities as well</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detect_particles</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">certainty</span><span class="p">,</span> <span class="n">motion</span><span class="p">)</span>
+
+        <span class="c"># return motion_model</span>
 </div>
-<div class="viewcode-block" id="Human.detect_particles"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.human.html#cops_and_robots.robo_tools.fusion.human.Human.detect_particles">[docs]</a>    <span class="k">def</span> <span class="nf">detect_particles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">particles</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">certainty</span><span class="p">):</span>
+<div class="viewcode-block" id="Human.detect_particles"><a class="viewcode-back" href="../../../../cops_and_robots.robo_tools.fusion.human.html#cops_and_robots.robo_tools.fusion.human.Human.detect_particles">[docs]</a>    <span class="k">def</span> <span class="nf">detect_particles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">particles</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">certainty</span><span class="p">,</span> <span class="n">motion</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Update particles based on sensor model.</span>
 
 <span class="sd">        Parameters</span>
@@ -271,30 +281,44 @@
 <span class="sd">            The certainty specified by the human sensor.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c"># Update particle probabilities in view cone</span>
+        <span class="c"># Update particles given velocity</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">particle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">particles</span><span class="p">):</span>
+            <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">particle</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">particle</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">m_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">motion_labels</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">motion</span><span class="p">)</span>
 
             <span class="c"># Negative information</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">==</span> <span class="s">&#39;nothing&#39;</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">zone</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="n">particle</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])):</span>
-                    <span class="k">if</span> <span class="n">certainty</span> <span class="o">==</span> <span class="s">&#39;know&#39;</span><span class="p">:</span>
-                        <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">certain_detection_chance</span><span class="p">)</span>
-                        <span class="k">print</span><span class="p">(</span><span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span><span class="p">)</span>
-                        <span class="k">print</span><span class="p">(</span><span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+                <span class="n">particle</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_model</span><span class="o">.</span><span class="n">probs_at_state</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span><span class="n">m_i</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c"># Positive information</span>
-                <span class="k">if</span> <span class="n">zone</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="n">particle</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])):</span>
-                    <span class="k">if</span> <span class="n">certainty</span> <span class="o">==</span> <span class="s">&#39;know&#39;</span><span class="p">:</span>
-                        <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">certain_detection_chance</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_chance</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">particles</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_detection_chance</span>
+                <span class="n">particle</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_model</span><span class="o">.</span><span class="n">probs_at_state</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span><span class="n">m_i</span><span class="p">)</span>
+
+
+
+        <span class="c"># # Update particle probabilities in view cone</span>
+        <span class="c"># for i, particle in enumerate(particles):</span>
+
+        <span class="c">#     # Negative information</span>
+        <span class="c">#     if self.target == &#39;nothing&#39;:</span>
+        <span class="c">#         if zone.contains(Point(particle[1:3])):</span>
+        <span class="c">#             if certainty == &#39;know&#39;:</span>
+        <span class="c">#                 particles[i, 0] *= (1 - self.certain_detection_chance)</span>
+        <span class="c">#                 print(particles[i, 0])</span>
+        <span class="c">#             else:</span>
+        <span class="c">#                 particles[i, 0] *= (1 - self.detection_chance)</span>
+        <span class="c">#                 print(particles[i, 0])</span>
+        <span class="c">#     else:</span>
+        <span class="c">#         # Positive information</span>
+        <span class="c">#         if zone.contains(Point(particle[1:3])):</span>
+        <span class="c">#             if certainty == &#39;know&#39;:</span>
+        <span class="c">#                 particles[i, 0] *= self.certain_detection_chance</span>
+        <span class="c">#             else:</span>
+        <span class="c">#                 particles[i, 0] *= self.detection_chance</span>
+        <span class="c">#         else:</span>
+        <span class="c">#             particles[i, 0] *= self.no_detection_chance</span>
 
         <span class="c"># Renormalize</span>
-        <span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span></div></div>
+        <span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span></div></div>
 </pre></div>
 
           </div>

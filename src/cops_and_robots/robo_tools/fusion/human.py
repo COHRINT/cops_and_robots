@@ -31,10 +31,12 @@ __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
 import logging
+import numpy as np
 
 from shapely.geometry import Point
 
 from cops_and_robots.robo_tools.fusion.sensor import Sensor
+from cops_and_robots.robo_tools.fusion.softmax import SoftMax, speed_model
 
 
 class Human(Sensor):
@@ -60,13 +62,16 @@ class Human(Sensor):
     def __init__(self, shape_layer, robber_names, detection_chance=0.6):
         self.update_rate = None
         self.has_physical_dimensions = False
-        self.detection_chance = detection_chance
-        self.certain_detection_chance = detection_chance + \
-            (1 - detection_chance) * 0.8
+        # self.detection_chance = detection_chance
+        # self.certain_detection_chance = detection_chance + \
+        #     (1 - detection_chance) * 0.8
+        sm = speed_model()
+        self.motion_labels = sm.class_labels;
+        self.detection_model = sm
+
         self.no_detection_chance = 0.01
         super(Human, self).__init__(self.update_rate,
-                                    self.has_physical_dimensions,
-                                    self.detection_chance)
+                                    self.has_physical_dimensions)
 
         self.grounding_objects = shape_layer.shapes
         self.groundings = shape_layer.shapes.keys()
@@ -75,8 +80,10 @@ class Human(Sensor):
         self.robber_names = ['nothing', 'a robber'] + robber_names
         self.certainties = ['think', 'know']
         self.relationships = ['behind', 'in front of', 'left of', 'right of']
-        self.movements = ['stopped', 'moving CCW', 'moving CW',
-                          'moving randomly']
+        # self.movements = ['stopped', 'moving CCW', 'moving CW',
+        #                   'moving randomly']
+        self.movements = ['stopped', 'moving slowly', 'moving along',
+                              'moving quickly']
 
         self.defaults = {'certainty': 'think',
                          'target': 'a robber',
@@ -136,12 +143,15 @@ class Human(Sensor):
         elif movement == 'moving randomly':
             motion_model = 'random walk'
 
+        m_i = self.movements.index(movement)
+        motion = self.motion_labels[m_i]
+
         # <>TODO consider probabilities as well
-        self.detect_particles(particles, zone, certainty)
+        self.detect_particles(particles, zone, certainty, motion)
 
-        return motion_model
+        # return motion_model
 
-    def detect_particles(self, particles, zone, certainty):
+    def detect_particles(self, particles, zone, certainty, motion):
         """Update particles based on sensor model.
 
         Parameters
@@ -156,27 +166,41 @@ class Human(Sensor):
             The certainty specified by the human sensor.
 
         """
-        # Update particle probabilities in view cone
+        # Update particles given velocity
         for i, particle in enumerate(particles):
+            speed = np.sqrt(particle[3] ** 2 + particle[4] ** 2)
+            m_i = self.motion_labels.index(motion)
 
             # Negative information
             if self.target == 'nothing':
-                if zone.contains(Point(particle[0:2])):
-                    if certainty == 'know':
-                        particles[i, 2] *= (1 - self.certain_detection_chance)
-                        print(particles[i, 2])
-                    else:
-                        particles[i, 2] *= (1 - self.detection_chance)
-                        print(particles[i, 2])
+                particle[0] *= (1 - self.detection_model.probs_at_state(speed,m_i))
             else:
                 # Positive information
-                if zone.contains(Point(particle[0:2])):
-                    if certainty == 'know':
-                        particles[i, 2] *= self.certain_detection_chance
-                    else:
-                        particles[i, 2] *= self.detection_chance
-                else:
-                    particles[i, 2] *= self.no_detection_chance
+                particle[0] *= self.detection_model.probs_at_state(speed,m_i)
+
+
+
+        # # Update particle probabilities in view cone
+        # for i, particle in enumerate(particles):
+
+        #     # Negative information
+        #     if self.target == 'nothing':
+        #         if zone.contains(Point(particle[1:3])):
+        #             if certainty == 'know':
+        #                 particles[i, 0] *= (1 - self.certain_detection_chance)
+        #                 print(particles[i, 0])
+        #             else:
+        #                 particles[i, 0] *= (1 - self.detection_chance)
+        #                 print(particles[i, 0])
+        #     else:
+        #         # Positive information
+        #         if zone.contains(Point(particle[1:3])):
+        #             if certainty == 'know':
+        #                 particles[i, 0] *= self.certain_detection_chance
+        #             else:
+        #                 particles[i, 0] *= self.detection_chance
+        #         else:
+        #             particles[i, 0] *= self.no_detection_chance
 
         # Renormalize
-        particles[:, 2] /= sum(particles[:, 2])
+        particles[:, 0] /= sum(particles[:, 0])

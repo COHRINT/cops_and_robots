@@ -144,6 +144,8 @@
 <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">LineString</span>
 
 
+<span class="c"># &lt;&gt;TODO: Split Planner class into GoalPlanner class and PathPlanner class</span>
+
 <div class="viewcode-block" id="Planner"><a class="viewcode-back" href="../../../cops_and_robots.robo_tools.planner.html#cops_and_robots.robo_tools.planner.Planner">[docs]</a><span class="k">class</span> <span class="nc">Planner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The planner class generates goal poses and paths for a robot.</span>
 
@@ -354,13 +356,13 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">particles</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">fusion_engine</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">iteritems</span><span class="p">())</span><span class="o">.</span><span class="n">particles</span>
 
-        <span class="n">max_prob</span> <span class="o">=</span> <span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-        <span class="n">max_particle_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">max_prob</span><span class="p">)</span>
+        <span class="n">max_prob</span> <span class="o">=</span> <span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">max_particle_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">max_prob</span><span class="p">)</span>
         <span class="n">max_particles</span> <span class="o">=</span> <span class="n">particles</span><span class="p">[</span><span class="n">max_particle_i</span><span class="p">,</span> <span class="p">:]</span>
 
         <span class="c"># Select randomly from max_particles</span>
         <span class="n">max_particle</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">max_particles</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">goal_pose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">max_particle</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="n">goal_pose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">max_particle</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="n">theta</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">goal_pose</span>
 </div>

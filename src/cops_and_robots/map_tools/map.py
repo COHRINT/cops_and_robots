@@ -24,6 +24,7 @@ __status__ = "Development"
 from pylab import *
 import logging
 import math
+import numpy as np
 
 from matplotlib.colors import cnames
 import matplotlib.pyplot as plt
@@ -66,6 +67,7 @@ class Map(object):
 
         # Define map elements
         self.objects = {}  # For dynamic/static map objects (not robbers/cops)
+        self.locations = {}
         self.cops = {}
         self.robbers = {}
 
@@ -106,6 +108,12 @@ class Map(object):
         del self.objects[map_obj_name]
         # <>TODO: Update probability layer
 
+    def add_location(self, label, point):
+        self.locations[label] = point
+
+    def rem_location(self, label):
+        del self.locations[label]
+
     def add_cop(self, cop_obj):
         """Add a dynamic ``Robot`` cop from the Map
 
@@ -145,12 +153,22 @@ class Map(object):
         del self.probability_layer[robber_name]
         # <>TODO: Update probability layer
 
-    def plot(self):
-        """Plot the current state of the map.
+    def plot(self, show_locations=False):
+        """Plot the static map.
 
         """
-        # <>TODO: Generate static plot
-        pass
+        fig = plt.figure(1, figsize=(12, 10))
+        ax = fig.add_subplot(111)
+        self.shape_layer.plot(plot_zones=False, ax=ax)
+
+        if show_locations:
+            for label, point in self.locations.items():
+                ax.text(point[0], point[1], label)
+
+        ax.set_xlim([self.bounds[0], self.bounds[2]])
+        ax.set_ylim([self.bounds[1], self.bounds[3]])
+        ax.set_title('Experimental environment with landmarks and locations')
+        plt.show()
 
     def setup_plot(self):
         """Create the initial plot for the animation.
@@ -341,13 +359,13 @@ class Map(object):
                         .add_patch(self.robber_patch[robber_name])
 
                 # Update Particle Filter
-                colors = particles[:, 2]\
+                colors = particles[:, 0]\
                     * next(self.particle_layer.itervalues()).color_gain
 
                 self.particle_scat[robber_name].set_array(colors)
                 # colors = np.repeat([colors],3,axis=0).T
                 # self.particle_scat[robber_name].set_facecolor(colors)
-                self.particle_scat[robber_name].set_offsets(particles[:, 0:2])
+                self.particle_scat[robber_name].set_offsets(particles[:, 1:3])
 
 
 def set_up_fleming():
@@ -355,45 +373,127 @@ def set_up_fleming():
 
     """
     # Make vicon field space object
-    net_w = 0.2  # [m] Netting width
-    field_w = 10  # [m] field width
-    netting = MapObj('Netting', [field_w + net_w, field_w + net_w],
-                     has_zones=False)
+    field_w = 7.5  # [m] field width
     field = MapObj('Field', [field_w, field_w], has_zones=False)
 
     # Make wall objects
     l = 1.2192  # [m] wall length
     w = 0.1524  # [m] wall width
     wall_shape = [l, w]
-    poses = ((0, 0, 0),
-             (l, l, 0),
-             (l * 1.5 + w / 2, l * 1.5 - w / 2, 90),
-             (2 * l, 2 * l, 0),
-             (l, 3 * l, 0),
-             (l * 2.5 + w / 2, l * 1.5 - w / 2, 90),
-             (l, 0, 0),
-             (l * 1.5 + w / 2, -l * 0.5 + w / 2, 90),
-             )
 
+    poses = np.array([[-5 + w/2, -1.5 - w/2, 1],
+                      [-5 + w/2, -2.5 - w/2, 1],
+                      [-4.5, -1, 0],
+                      [-3.5, -1, 0],
+                      [-2.5, -1, 0],
+                      [-1 + w/2, -1.5 - w/2, 1],
+                      [-0.5, -1, 0],
+                      [0.5, -1, 0],
+                      [1.5, -1, 0],
+                      [-6.5 - w/2, 0, 0],
+                      [-5.5 - w/2, 0, 0],
+                      [-4.5 - w/2, 0, 0],
+                      [-3.5 - w/2, 0, 0],
+                      [-2.5 - w/2, 0, 0],
+                      [-1.5 - w/2, 0, 0],
+                      [0.5 - w/2, 0, 0],
+                      [1.5 - w/2, 0, 0],
+                      [0, 0.5 + w/2, 1],
+                      [0, 1.5 + w/2, 1],
+                     ])
+
+    poses = poses * np.array([l, l, 90])
+
+    n_walls = poses.shape[0]
+    print('{} walls used, {} remaining.'.format(n_walls, 24 - n_walls))
     walls = []
-    for i in range(0, len(poses)):
+    for i in range(poses.shape[0]):
         name = 'Wall ' + str(i)
-        pose = poses[i]
+        pose = poses[i, :]
         wall = MapObj(name, wall_shape, pose)
         walls.append(wall)
 
-    # Create Fleming map
-    bounds = [-field_w / 2, -field_w / 2, field_w / 2, field_w / 2]
-    fleming = Map('Fleming', bounds)
+    # Make landmark billiards
+    poses = np.array([[2.2, 1.5, 0],
+                      [1.2, 1, 0],
+                      [1.2, 2.75, 0]
+                     ])
+    colors = ['yellow', 'blue', 'red', 'purple', 'orange', 'green', 'brown',
+              'black']
 
-    # <>TODO: Fix whatever the hell this was supposed to be
-    fleming.add_obj(netting)
-    fleming.add_obj(field)
-    fleming.rem_obj('Field')
-    fleming.rem_obj('Netting')
+    landmarks = []
+    for i, pose in enumerate(poses):
+        name = 'Ball ' + str(i)
+        shape_pts = Point(pose).buffer(0.075).exterior.coords
+        landmark = MapObj(name, shape_pts[:], pose, has_zones=False, color_str=colors[i])
+        landmarks.append(landmark)
+
+    # Make landmark glasses
+    poses = np.array([[-4.7, 2.3, 0],
+                      [-4.8, 2.45, 0],
+                      [-4.5, 2.35, 0]
+                     ])
+
+    for i, pose in enumerate(poses):
+        name = 'Glass ' + str(i)
+        shape_pts = Point(pose).buffer(0.06).exterior.coords
+        landmark = MapObj(name, shape_pts[:], pose, has_zones=False, color_str='grey')
+        landmarks.append(landmark)
+
+    # Make rectangular objects (desk, bookcase, etc)
+    poses = np.array([[0.5, -1.5, 0],
+                      [-5.0, -2.4, 0],
+                      [-9.0, -2.5, 0]
+                     ])
+    colors = ['sandybrown', 'sandybrown', 'brown']
+    labels = ['Bookcase', 'Desk', 'Table']
+    sizes = np.array([[1.3, 0.4],
+                      [0.8, 1.5],
+                      [1.6, 1.6]
+                     ])
+    
+    for i, pose in enumerate(poses):
+        landmark = MapObj(labels[i], sizes[i], pose, color_str=colors[i])
+        landmarks.append(landmark)
+
+    # Make odd landmarks
+    landmark = MapObj('Box', [0.6, 0.8], [-7.5, 1.8, 0], color_str='black')
+    landmarks.append(landmark)
+    pose = [-9.5, 2.1, 0]
+    shape_pts = Point(pose).buffer(0.2).exterior.coords
+    landmark = MapObj('Frying Pan', shape_pts, pose, color_str='slategrey')
+    landmarks.append(landmark)
+
+    # Create Fleming map
+    bounds = [-field_w * 1.5, -field_w / 2, field_w / 2, field_w / 2]
+    fleming = Map('Fleming', bounds)
 
     # Add walls to map
     for wall in walls:
         fleming.add_obj(wall)
 
+    # Add landmarks to map
+    for landmark in landmarks:
+        fleming.add_obj(landmark)
+
+    # Create locations
+    labels = ['Study', 'Library', 'Kitchen', 'Billiard Room', 'Hallway', 
+              'Dining Room']
+    points = np.array([[-4.0, -2.5],
+                       [0.5, -2.5],
+                       [-6.0, 2.75],
+                       [1.5, 2],
+                       [-4, -0.65],
+                       [-9, -1.2]
+                      ])
+    for i, point in enumerate(points):
+        fleming.add_location(labels[i], point)
+    # areas
+
+
     return fleming
+
+if __name__ == '__main__':
+    fleming = set_up_fleming()
+    fleming.plot(show_locations=True)
+
