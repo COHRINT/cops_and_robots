@@ -118,9 +118,9 @@ class SoftMax(object):
             (\\mathbf{w}_j - \\mathbf{w}_k)
 
     """
-    class_cmaps = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples', 'Greys',
+    class_cmaps = ['Greys', 'Reds', 'Purples', 'Oranges', 'Greens', 'Blues',
                    'RdPu']
-    class_colors = ['red', 'blue', 'green', 'orange', 'purple', 'grey', 'pink']
+    class_colors = ['grey', 'red', 'purple', 'orange', 'green', 'blue', 'pink']
 
     def __init__(self, weights=None, biases=None, normals=None, offsets=None,
                  poly=None, steepness=None, rotation=None, state_spec='x y',
@@ -274,7 +274,7 @@ class SoftMax(object):
             logging.warning('Probabilites not summing to 1 at each point in'
                             'the state!')
 
-    def probs_at_state(self, state, class_=None):
+    def probs_at_state(self, state, class_=None,):
         """Find the probabilities for each class for a given state.
 
         Parameters
@@ -364,6 +364,20 @@ class SoftMax(object):
             else:
                 j += 1
 
+    def add_classes(self, weights, biases, labels=None, steepness=1):
+        self.weights = np.vstack((self.weights, weights))
+        self.biases = np.hstack((self.biases, biases))
+        self.steepness = np.hstack((self.steepness, steepness))
+        self.num_classes += biases.size
+
+        if labels is None:
+            labels = ['Class {}'.format(self.num_classes)]
+
+        new_class_labels = self.class_labels + labels
+        self.set_class_labels(new_class_labels)
+
+        self.probs_from_weights()
+
     def set_class_labels(self, class_labels=None):
         """Sets label and label colors for all classes and subclasses.
 
@@ -411,8 +425,8 @@ class SoftMax(object):
         ax.set_position([box.x0, box.y0 + box.height * 0.1,
                          box.width, box.height * 0.9])
 
-        ax.set_xlabel('x [m]')
-        ax.set_ylabel('y [m]')
+        ax.set_xlabel('x1')
+        ax.set_ylabel('x2')
         ax.set_zlabel('Probability of {}'.format(self.class_labels[class_i]))
         ax.set_title('Class Probailities')
 
@@ -464,7 +478,7 @@ class SoftMax(object):
                                      alpha=0.6, label=proxy_label,)
 
         plt.legend(handles=proxy, loc='lower center', mode='expand', ncol=4,
-                   bbox_to_anchor=(-1.1, -0.175, 2, -0.075), borderaxespad=0.)
+                   bbox_to_anchor=(-1.3, -0.175, 2.2, -0.075), borderaxespad=0.)
         plt.suptitle(title, fontsize=16)
 
         # Plot polygon, if possible
@@ -736,6 +750,8 @@ def camera_model_2D(min_view_dist=0., max_view_dist=2):
 
 
 def speed_model():
+    """Generate a one-dimensional SoftMax model for speeds.
+    """
     labels = ['Stopped', 'Slow', 'Medium', 'Fast']
     sm = SoftMax(weights=np.array([[0], [150], [175], [200]]),
                  biases=np.array([0, -2.5, -6, -14]),
@@ -746,19 +762,49 @@ def speed_model():
 def wall_model(l=1.2192, w=0.1524, origin=[0,0]):
     """Generate a two-dimensional SoftMax model around a wall.
     """
-    wall = box(-w/2 + origin[0],
-               -l/2 + origin[1],
-                w/2 + origin[0],
-                l/2 + origin[1])
+    wall_poly = box(-w/2 + origin[0],
+                    -l/2 + origin[1],
+                    w/2 + origin[0],
+                    l/2 + origin[1])
 
     steepness = [0, 10, 10, 10, 10]
     labels = ['Interior','Front', 'Left', 'Back', 'Right']
-    wall_sm = SoftMax(poly=wall, steepness=steepness, class_labels=labels)
-    return wall_sm
+    wall = SoftMax(poly=wall_poly, steepness=steepness, class_labels=labels)
+    return wall
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     np.set_printoptions(precision=2, suppress=True)
 
-    camera = camera_model_2D()
-    print(camera.probs_at_state(np.array([1, 0]), 0))
+    # poly = make_regular_2D_poly(5, max_r=2, theta=np.pi/3.1)
+    # labels = ['Interior',
+    #           'Mall Terrace Entrance',
+    #           'Heliport Facade',
+    #           'South Parking Entrance', 
+    #           'Concourse Entrance',
+    #           'River Terrace Entrance', 
+    #          ]
+    # steepness = 5
+    # sm = SoftMax(poly=poly, class_labels=labels, resolution=0.1, steepness=5)
+    # sm.plot(plot_poly=True, plot_normals=False)
+
+    sm = speed_model()
+    sm.plot()
+
+    # # Make big poly
+    # poly = make_regular_2D_poly(n_sides=4, origin=(0,0), theta=np.pi/4, max_r=3)
+    # steepness = np.array([0, 10, 10, 10, 10])
+    # sm_big = SoftMax(poly=poly , steepness=steepness)
+    
+    # # Make big poly
+    # poly = make_regular_2D_poly(n_sides=4, origin=(0,0), theta=np.pi/4, max_r=1)
+    # steepness = np.array([0, 10, 10, 10, 10])
+    # sm_small = SoftMax(poly=poly, steepness=steepness)
+    
+    # new_weights = sm_small.weights[1:]
+    # new_biases = sm_small.biases[1:]
+    # new_class_labels = ['Interior'] * 4
+    # new_steepness = steepness[1:]
+
+    # sm_big.add_classes(new_weights, new_biases, new_class_labels, new_steepness)
+    # sm_big.plot(plot_poly=True)
