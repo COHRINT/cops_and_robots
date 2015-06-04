@@ -6,7 +6,8 @@ def plot_multisurface(X, Y, Z, ax, cmaps=None, min_alpha=0.6, **kwargs):
     num_surfs = Z.shape[2]
 
     if cmaps == None:
-        cmaps = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples', 'Greys','RdPu']
+        cmaps = ['Greys', 'Reds', 'Purples', 'Oranges', 'Greens', 'Blues',
+                   'RdPu']
         while num_surfs > len(cmaps):
                 cmaps += cmaps
 
