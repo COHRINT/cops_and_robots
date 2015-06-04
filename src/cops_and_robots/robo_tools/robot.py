@@ -437,6 +437,7 @@ class Robot(iRobotCreate):
             self.planner.type = 'simple'
             self.goal_pose = self.planner.find_goal_pose(self.fusion_engine)
             self.planner.type = prev_type
+            self.status[1] = 'rotating'
 
         # Translate or rotate, depending on status
         if self.status[1] == 'rotating':
