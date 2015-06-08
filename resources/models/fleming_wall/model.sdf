@@ -107,7 +107,7 @@
 
      <plugin name="ros_transform" filename="/home/cohrint/catkin_ws/devel/lib/libros_transform.so">
       <targetLink>wall</targetLink>
-      <transformTopic>/vicon/Wall1/Wall1</transformTopic>
+      <transformTopic>/vicon/small_wall/small_wall</transformTopic>
     </plugin>
 
   </model>
