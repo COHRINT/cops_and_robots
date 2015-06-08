@@ -444,7 +444,9 @@
       </axis>
     </joint>
 
-     <plugin name="ros_transform" filename="/home/cohrint/catkin_ws/devel/lib/libros_transform.so">
+     <!-- Make sure to grab the shared object from
+  https://github.com/kdhansen/aau_gazebo_vicon -->
+     <plugin name="ros_transform" filename="/usr/lib/libros_transform.so">
       <targetLink>create::base</targetLink>
       <transformTopic>/vicon/deckard/deckard</transformTopic>
     </plugin>
