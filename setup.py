@@ -1,10 +1,9 @@
 from setuptools import setup, find_packages
-from catkin_pkg.python_setup import generate_distutils_setup
+# from catkin_pkg.python_setup import generate_distutils_setup
 import ez_setup
 ez_setup.use_setuptools()
 
-setup_args = generate_distutils_setup(
-    
+setup(
     # Author information and Metadata
     name='cops_and_robots',
     version=cops_and_robots.__version__,
@@ -22,5 +21,3 @@ setup_args = generate_distutils_setup(
     install_requires=[i.strip() for i in open("requirements.txt").readlines()],
     scripts=['scripts'],
 )
-
-setup(**setup_args)
