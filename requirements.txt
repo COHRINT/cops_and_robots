@@ -1,12 +1,10 @@
 sphinxcontrib-napoleon
-numpy
-scipy
 shapely
-matplotlib
 shapely
 descartes
 py-getch
 docutils>=0.3
-catkin-sphinx
-catkin_pkg
-catkin_tools
+#catkin-sphinx
+#catkin_pkg
+#catkin_tools
+pyserial
