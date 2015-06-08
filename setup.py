@@ -6,7 +6,7 @@ ez_setup.use_setuptools()
 setup(
     # Author information and Metadata
     name='cops_and_robots',
-    version=cops_and_robots.__version__,
+    version=1.0,
     license='Apache Software License',
     author='Nick Sweet',
     author_email='nick.sweet@colorado.edu',
