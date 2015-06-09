@@ -22,6 +22,10 @@ source cops_and_robots/bin/activate
 
 Install [SciPy](http://www.scipy.org/):
 ```
+# On Linux only:
+sudo apt-get install libatlas-base-dev gfortran
+
+# On OS X and Linux:
 pip install numpy scipy matplotlib
 ```
 
