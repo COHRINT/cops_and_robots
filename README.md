@@ -9,7 +9,7 @@ The testbed is broken up into three parts: python simulation, [gazebo simulation
 See [the documentation](http://recuv.colorado.edu/~sweet/cops_and_robots) for a low-level discussion of the Python code.
 
 ## Installation Instructions
-*For Unix-based systems only. Sorry, Windows users, but you're on your own.*
+*For Unix-based systems (specifically OS X and Ubuntu 14.04) only. Sorry, Windows users, but you're on your own.*
 
 Create and load a [virtual environment](https://virtualenv.pypa.io/en/latest/):
 ```
@@ -22,10 +22,10 @@ source cops_and_robots/bin/activate
 
 Install [SciPy](http://www.scipy.org/):
 ```
-# On Linux only:
+# On Ubuntu only:
 sudo apt-get install libatlas-base-dev gfortran
 
-# On OS X and Linux:
+# On OS X and Ubuntu:
 pip install numpy scipy matplotlib
 ```
 
