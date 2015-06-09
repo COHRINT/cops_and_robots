@@ -44,7 +44,7 @@ python setup.py develop
 **NOTE**: Running `python setup.py develop` installs the cops and robots package dependencies, but, [until I can find a fix for it]( http://stackoverflow.com/questions/30737431/module-found-in-install-mode-but-not-in-develop-mode-using-setuptools), it won't add `cops_and_robots` to your virtual environment's python path automatically. So, we're fixing it manually:
 
 ```
-nano ~/virtual_environments/cops_and_robots/lib/python-2.7/site-packages/easy-install.pth
+nano ~/virtual_environments/cops_and_robots/lib/python2.7/site-packages/easy-install.pth
 ```
 
 Add `/src` to the absolute path to the cops and robots directory (in my case, I now have `/Users/nick/Downloads/cops_and_robots/src` on the third line of my `easy-install.pth`).
