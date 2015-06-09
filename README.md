@@ -37,6 +37,9 @@ git clone https://github.com/COHRINT/cops_and_robots.git
 cd cops_and_robots
 python setup.py develop
 ```
+
+**NOTE**: You may need to upgrade your `easy_install` before running `python setup.py develop`. If it complains, follow the instructions to upgrade `easy_install`.
+
 **NOTE**: Running `python setup.py develop` installs the cops and robots package dependencies, but, [until I can find a fix for it]( http://stackoverflow.com/questions/30737431/module-found-in-install-mode-but-not-in-develop-mode-using-setuptools), it won't add `cops_and_robots` to your virtual environment's python path automatically. So, we're fixing it manually:
 
 ```
