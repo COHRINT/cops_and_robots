@@ -12,7 +12,7 @@ setup(
     author_email='nick.sweet@colorado.edu',
 
     # Package data
-    packages=find_packages(),
+    packages=find_packages('src'),
     package_dir={'cops_and_robots':'src/cops_and_robots'},
     include_package_data=True,
     platforms='any',
