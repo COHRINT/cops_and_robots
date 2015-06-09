@@ -19,5 +19,5 @@ setup(
     requires=['std_msgs','rospy'],
     tests_require=['pytest'],
     install_requires=[i.strip() for i in open("requirements.txt").readlines()],
-    scripts=['scripts'],
+#    scripts=['scripts'],
 )
