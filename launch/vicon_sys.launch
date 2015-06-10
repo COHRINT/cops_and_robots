@@ -15,8 +15,13 @@
 
 	<!-- Run tf_remap node to remap frame_id's. -->	
 	<!-- <>TODO: Remove after vicon_bridge has been modified to take frames as args -->
-    <node pkg="tf" type="tf_remap" name="tf_remap_vicon" output="log">
-    	<param name="mappings" value="[{old: /world, new: /map}, {old: vicon/deckard/deckard, new: /base_footprint}]" />
+    <node pkg="tf" type="tf_remap" name="tf_remap_vicon" output="screen">
+    	<rosparam param="mappings">
+          - {old: "/world",
+            new: "/map"}
+          - {old: "vicon/deckard/deckard",
+            new: "/base_footprint"}
+        </rosparam>
     </node>
 
     <!-- Run the vicon vicon node needed by vicon_odom -->
