@@ -20,7 +20,7 @@
           - {old: "/world",
             new: "/map"}
           - {old: "vicon/deckard/deckard",
-            new: "/base_footprint"}
+            new: "/odom"}
         </rosparam>
     </node>
 
@@ -39,6 +39,6 @@
         <remap from="~vicon" to="/vicon/$(arg model)"/>
         
         <!-- Remaps to odom topic. Will need multiple instances for mulitple moving robots -->
-        <remap from="~odom" to="/odom"/>
+        <remap from="~odom" to="/vo"/>
     </node>
 </launch>
