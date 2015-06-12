@@ -36,7 +36,7 @@ class ParticleFilter(object):
 
     Parameters
     ----------
-    target : str
+    target_name : str
         Name of the target tracked by the particle filter ('combined' for
         all targets).
     feasible_layer : FeasibleLayer
@@ -52,10 +52,10 @@ class ParticleFilter(object):
         'x y', but could also be 'x y x_dot ydot'.
 
     """
-    def __init__(self, target, feasible_layer, motion_model='stationary',
+    def __init__(self, target_name, feasible_layer, motion_model='stationary',
                  n_particles=500, state_spec='x y x_dot y_dot', 
                  v_params=[0, 0.1]):
-        self.target = target
+        self.target_name = target_name
         self.bounds = feasible_layer.bounds
         self.n_particles = n_particles
         self.motion_model = motion_model
@@ -92,7 +92,7 @@ class ParticleFilter(object):
         probs = np.ones(self.n_particles) / self.n_particles
         self.particles = np.column_stack((probs, pts))
 
-    def update(self, camera, target_pose, human=None):
+    def update(self, camera, target_pose, human_sensor=None):
         """Move particles (if mobile) and update probabilities.
 
         Parameters
@@ -112,7 +112,7 @@ class ParticleFilter(object):
 
         self.update_particle_motion()
         self._camera_update(camera)
-        self._human_update(human)
+        self._human_update(human_sensor)
 
         # <>TODO: Resample particles
         # self.resample()
@@ -174,7 +174,7 @@ class ParticleFilter(object):
         """
         camera.detect('particle', self.particles)
 
-    def _human_update(self, human):
+    def _human_update(self, human_sensor):
         """Update the particle filter's values from a human sensor update.
 
         Parameters
@@ -183,12 +183,7 @@ class ParticleFilter(object):
             A human sensor object.
 
         """
-        if human.target in [self.target, 'nothing', 'a robber']:
-            motion_model = human.detect(self.particles)
-            # if human.target in [self.target, 'a robber']:
-            #     self.motion_model = motion_model
-            # elif motion_model == self.motion_model:
-            #     self.motion_model = 'stationary'
+        human_sensor.detect('particle', self.particles, self.target_name)
 
     def resample(self):
         """Sample or resample distribution to generate new particles

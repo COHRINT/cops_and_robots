@@ -67,7 +67,7 @@ class Map(object):
 
         # Define map elements
         self.objects = {}  # For dynamic/static map objects (not robbers/cops)
-        self.locations = {}
+        self.areas = {}
         self.cops = {}
         self.robbers = {}
 
@@ -108,11 +108,11 @@ class Map(object):
         del self.objects[map_obj_name]
         # <>TODO: Update probability layer
 
-    def add_location(self, label, point):
-        self.locations[label] = point
+    def add_area(self, label, point):
+        self.areas[label] = point
 
-    def rem_location(self, label):
-        del self.locations[label]
+    def rem_area(self, label):
+        del self.areas[label]
 
     def add_cop(self, cop_obj):
         """Add a dynamic ``Robot`` cop from the Map
@@ -153,7 +153,7 @@ class Map(object):
         del self.probability_layer[robber_name]
         # <>TODO: Update probability layer
 
-    def plot(self, show_locations=False):
+    def plot(self, show_areas=False):
         """Plot the static map.
 
         """
@@ -161,13 +161,13 @@ class Map(object):
         ax = fig.add_subplot(111)
         self.shape_layer.plot(plot_zones=False, ax=ax)
 
-        if show_locations:
-            for label, point in self.locations.items():
+        if show_areas:
+            for label, point in self.areas.items():
                 ax.text(point[0], point[1], label)
 
         ax.set_xlim([self.bounds[0], self.bounds[2]])
         ax.set_ylim([self.bounds[1], self.bounds[3]])
-        ax.set_title('Experimental environment with landmarks and locations')
+        ax.set_title('Experimental environment with landmarks and areas')
         plt.show()
 
     def setup_plot(self):
@@ -476,7 +476,7 @@ def set_up_fleming():
     for landmark in landmarks:
         fleming.add_obj(landmark)
 
-    # Create locations
+    # Create areas
     labels = ['Study', 'Library', 'Kitchen', 'Billiard Room', 'Hallway', 
               'Dining Room']
     points = np.array([[-4.0, -2.5],
@@ -487,7 +487,7 @@ def set_up_fleming():
                        [-9, -1.2]
                       ])
     for i, point in enumerate(points):
-        fleming.add_location(labels[i], point)
+        fleming.add_area(labels[i], point)
 
     # <>TODO: Include area demarcations
 
@@ -495,5 +495,5 @@ def set_up_fleming():
 
 if __name__ == '__main__':
     fleming = set_up_fleming()
-    fleming.plot(show_locations=True)
+    fleming.plot(show_areas=True)
 

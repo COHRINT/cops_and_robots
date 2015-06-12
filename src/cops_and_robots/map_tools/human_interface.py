@@ -16,7 +16,6 @@ __status__ = "Development"
 import logging
 
 from matplotlib.widgets import RadioButtons, Button
-from matplotlib.text import Text
 
 # <>TEST STUB:
 import numpy as np
@@ -27,43 +26,23 @@ from matplotlib.patches import Rectangle
 class HumanInterface(object):
     """Generate a human interface on a given figure.
 
-    Allows humans to provide phrases in the following forms (with default
-    examples).
-
-    *Movement*
-    I [certainty] [target] is [movement type] [movement quality].
-    * Default certainties:
-      * think
-      * know
-    * Default targets:
-      * Roy
-      * Pris
-      * Zhora
-    * Default movement types:
-      * stopped
-      * moving
-    * Default movement qualities:
-      * slowly
-      * along
-      * quickly
-
     .. image:: img/classes_Human_interface.png
 
     Parameters
     ----------
     fig : figure handle
         The figure on which to generate the human interface.
-    robber_names : list of str, optional
+    targets : list of str, optional
         The list of all robbers. Defaults to ['Roy','Pris'].
     cop_names : list of str, optional
         The list of all cops. Defaults to ['Deckard'].
     groundings : dict of object and area lists
         A dict containing all grounding elements for human sensor information
         (i.e., in the phrase 'Roy is next to the bookshelf', `the bookshelf`
-        is the grounding). Defaults to 
+        is the grounding). Defaults to
         {'area' :
          ['study', 'billiard room', 'hallway', 'dining room', 'kitchen'],
-         'object' : ['bookshelf', 'chair', 'desk', 'table']
+         'object' : ['Deckard', 'bookshelf', 'chair', 'desk', 'table']
          }
     type_ : {'radio_buttons','textbox'}
         The type of human interface to generate.
@@ -71,58 +50,68 @@ class HumanInterface(object):
     """
     types = ['radio_buttons', 'textbox']
 
-    def __init__(self, fig, human_sensor=None,
-                 robber_names=['Roy', 'Pris', 'Zhora'],
-                 cop_names=['Deckard'],
-                 groundings={'area' :
-                             ['study', 'billiard room', 'hallway',
-                             'dining room', 'kitchen', 'library'],
-                             'object' : 
-                             ['bookshelf', 'chair', 'desk', 'table']
-                            },
-                 type_='radio_buttons'):
-        # Sort input object lists
-        robber_names.sort()
-        cop_names.sort()
-        groundings['area'].sort()
-        groundings['object'].sort()
-
+    def __init__(self, fig, human_sensor=None, type_='radio_buttons'):
         # General interface parameters
         self.fig = fig
         self.type = type_
-        self.human_input_str = ''
+        self.utterance = ''
         self.radio = {}
-        self.relations = {}
 
-        # Content
+        # Use human sensor values if one is provided
         if human_sensor:
-            self.robber_names = human_sensor.robber_names
-            self.groundings = human_sensor.groundings
             self.certainties = human_sensor.certainties
-            self.relations['object'] = human_sensor.relations['object']
-            self.relations['area'] = human_sensor.relations['area']
+            self.targets = human_sensor.targets_names
+            self.groundings = {'object': [], 'area': []}
+            for key, value in human_sensor.groundings['object']:
+                self.groundings['object'].append(key)
+            for key, value in human_sensor.groundings['area']:
+                self.groundings['area'].append(key)
+            self.positivities = human_sensor.positivities
+            self.relations = human_sensor.relations
             self.movement_type = human_sensor.movement_type
             self.movement_quality = human_sensor.movement_quality
         else:
-            self.robber_names = ['nothing', 'a robber'] + robber_names
-            self.groundings = groundings
             self.certainties = ['think', 'know']
-            self.relations['object'] = ['behind', 'in front of', 'left of',
-                                        'right of']
-            self.relations['area'] = ['inside', 'near', 'outside',]
-            self.movement_types = ['stopped', 'moving']
-            self.movement_qualities = ['slowly','moderately','quickly']
-        self.positivities = ['is', 'is not']
+            self.targets = ['nothing',
+                            'a robber',
+                            'Roy',
+                            'Pris',
+                            'Zhora',
+                            ]
+            self.positivities = ['is', 'is not']
+            self.relations = {'object': ['behind',
+                                         'in front of',
+                                         'left of',
+                                         'right of',
+                                         ],
+                              'area': ['inside',
+                                       'near',
+                                       'outside'
+                                       ]}
+            self.groundings = {'area': ['the study',
+                                        'the billiard room',
+                                        'the hallway',
+                                        'the dining room',
+                                        'the kitchen',
+                                        'the library'
+                                        ],
+                               'object': ['Deckard',
+                                          'the bookshelf',
+                                          'the chair',
+                                          'the desk',
+                                          'the table',
+                                          ]}
+            self.movement_types = ['moving', 'stopped']
+            self.movement_qualities = ['slowly', 'moderately', 'quickly']
+        self.groundings['object'].sort()
+        self.groundings['area'].sort()
+        self.relations['object'].sort()
+        self.relations['area'].sort()
+        self.targets[2:] = sorted(self.targets[2:])
 
         # Radio button parameters and default values
         self.radio_boxcolor = None
-        self.certainty = self.certainties[0]
-        self.target = self.robber_names[0]
-        self.positivity = self.positivities[0]
-        self.relation = self.relations['object'][0]
-        self.grounding = self.groundings['object'][0]
-        self.movement_type = self.movement_types[0]
-        self.movement_quality = self.movement_qualities[0]
+        self.set_default_values()
 
         # General button parameters
         self.button_color = 'lightgreen'
@@ -159,14 +148,13 @@ class HumanInterface(object):
                                           hovercolor=self.button_color_hover)
         bax = plt.axes([min_x + tab_w, min_y + h, tab_w, tab_h])
         self.position_area_button = Button(bax, 'Position (Area)',
-                                          color=self.button_color,
-                                          hovercolor=self.button_color_hover)
-        bax = plt.axes([min_x + 2*tab_w, min_y + h, tab_w, tab_h])
+                                           color=self.button_color,
+                                           hovercolor=self.button_color_hover)
+        bax = plt.axes([min_x + 2 * tab_w, min_y + h, tab_w, tab_h])
         self.movement_button = Button(bax, 'Movement',
                                       color=self.button_color,
                                       hovercolor=self.button_color_hover)
 
-        
         self.make_position_dialog('object')
 
         self.position_obj_button.on_clicked(self.set_position_obj_dialog)
@@ -185,7 +173,7 @@ class HumanInterface(object):
         self.submit_button.ax.patch.set_visible(True)
         self.submit_button.on_clicked(self.submit_selection)
 
-        # Make the input a complete sentence 
+        # Make the input a complete sentence
         min_x = 0.05
         min_y = 0.18
         self.fig.text(min_x, min_y, 'I')
@@ -193,7 +181,8 @@ class HumanInterface(object):
         # Certainty radio buttons
         min_x += 0.01
         w, h = (0.09, 0.18)
-        rax = plt.axes([min_x, min_y + 0.07 - h, w, h], axisbg=self.radio_boxcolor)
+        rax = plt.axes([min_x, min_y + 0.07 - h, w, h],
+                       axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
         self.radio['certainty'] = RadioButtons(rax, self.certainties)
@@ -202,16 +191,18 @@ class HumanInterface(object):
         # Target radio buttons
         min_x += w
         w, h = (0.09, 0.18)
-        rax = plt.axes([min_x, min_y + 0.0435 - h, w, h], axisbg=self.radio_boxcolor)
+        rax = plt.axes([min_x, min_y + 0.0435 - h, w, h],
+                       axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
-        self.radio['target'] = RadioButtons(rax, self.robber_names)
+        self.radio['target'] = RadioButtons(rax, self.targets)
         self.radio['target'].on_clicked(self.target_func)
 
         # Positivity radio buttons
         min_x += w + 0.02
         w, h = (0.09, 0.18)
-        rax = plt.axes([min_x, min_y + 0.07 - h, w, h], axisbg=self.radio_boxcolor)
+        rax = plt.axes([min_x, min_y + 0.07 - h, w, h],
+                       axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
         self.radio['positivity'] = RadioButtons(rax, self.positivities)
@@ -226,23 +217,26 @@ class HumanInterface(object):
 
         # Relationship radio buttons
         w, h = (0.09, 0.18)
-        rax = plt.axes([min_x, min_y + 0.045 - h, w, h], axisbg=self.radio_boxcolor)
+        if type_ == 'object':
+            a = 0.045
+        else:
+            a = 0.06
+        rax = plt.axes([min_x, min_y + a - h, w, h],
+                       axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
         self.radio['relation'] = RadioButtons(rax, self.relations[type_])
         self.radio['relation'].on_clicked(self.relation_func)
 
-        min_x += w + 0.03
-        self.radio['filler'] = self.fig.text(min_x, min_y, 'the')
-
         # Map object radio buttons
-        min_x += 0.04
+        min_x += w + 0.04
         w, h = (0.09, 0.18)
-        rax = plt.axes([min_x, min_y + 0.045 - h, w, h], axisbg=self.radio_boxcolor)
+        rax = plt.axes([min_x, min_y + 0.045 - h, w, h],
+                       axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
-        self.radio['map_obj'] = RadioButtons(rax, self.groundings[type_])
-        self.radio['map_obj'].on_clicked(self.grounding_func)
+        self.radio['grounding'] = RadioButtons(rax, self.groundings[type_])
+        self.radio['grounding'].on_clicked(self.grounding_func)
 
     def make_movement_dialog(self):
         """Genrate the movement radio button interface.
@@ -253,7 +247,8 @@ class HumanInterface(object):
 
         # Movement type radio buttons
         w, h = (0.09, 0.18)
-        rax = plt.axes([min_x, min_y + 0.07 - h, w, h], axisbg=self.radio_boxcolor)
+        rax = plt.axes([min_x, min_y + 0.07 - h, w, h],
+                       axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
         self.radio['movement_type'] = RadioButtons(rax, self.movement_types)
@@ -262,30 +257,33 @@ class HumanInterface(object):
         # Movement quality radio buttons
         min_x += w + 0.04
         w, h = (0.09, 0.18)
-        rax = plt.axes([min_x, min_y + 0.06 - h, w, h], axisbg=self.radio_boxcolor)
+        rax = plt.axes([min_x, min_y + 0.06 - h, w, h],
+                       axisbg=self.radio_boxcolor)
         rax.patch.set_visible(False)
         rax.axis('off')
-        self.radio['movement_quality'] = RadioButtons(rax, self.movement_qualities)
+        self.radio['movement_quality'] = RadioButtons(rax,
+                                                      self.movement_qualities)
         self.radio['movement_quality'].on_clicked(self.movement_quality_func)
 
     def remove_dialog(self):
         for radio_name, radio in self.radio.iteritems():
-            if type(radio) is Text:
-                radio.remove()
-            elif radio_name not in ['certainty','target','positivity']:
-                radio.ax.clear()
-                radio.ax.patch.set_visible(False)
-                radio.ax.axis('off')
-        remove_names = ['filler', 'relation', 'grounding', 'movement_type', 'movement_quality']
+            if radio_name not in ['certainty', 'target', 'positivity']:
+                self.fig.delaxes(radio.ax)
+        remove_names = ['relation', 'grounding', 'movement_type',
+                        'movement_quality']
         for remove_name in remove_names:
             if remove_name in self.radio:
                 del self.radio[remove_name]
+                logging.debug('deleted {}'.format(remove_name))
 
-
-    def make_textbox(self):
-        """Generate the textbox interface.
-        """
-        pass
+    def set_default_values(self, type_='object'):
+        self.certainty = self.certainties[0]
+        self.target = self.targets[0]
+        self.positivity = self.positivities[0]
+        self.relation = self.relations[type_][0]
+        self.grounding = self.groundings[type_][0]
+        self.movement_type = self.movement_types[0]
+        self.movement_quality = self.movement_qualities[0]
 
     def set_helpers(self):
         """Set helper functions for buttons and radios.
@@ -331,9 +329,13 @@ class HumanInterface(object):
                 self.current_dialog = 'position (object)'
                 self.remove_dialog()
                 self.make_position_dialog('object')
+                self.set_default_values('object')
                 self.fig.canvas.draw()
                 logging.info('Swapped dialog to: {}'
-                    .format(self.current_dialog))
+                             .format(self.current_dialog))
+            else:
+                logging.debug('Attempted to swap from {} to position (object).'
+                              .format(self.current_dialog))
         self.set_position_obj_dialog = set_position_obj_dialog
 
         def set_position_area_dialog(event):
@@ -341,9 +343,13 @@ class HumanInterface(object):
                 self.current_dialog = 'position (area)'
                 self.remove_dialog()
                 self.make_position_dialog('area')
+                self.set_default_values('area')
                 self.fig.canvas.draw()
                 logging.info('Swapped dialog to: {}'
-                    .format(self.current_dialog))
+                             .format(self.current_dialog))
+            else:
+                logging.debug('Attempted to swap from {} to position (area).'
+                              .format(self.current_dialog))
         self.set_position_area_dialog = set_position_area_dialog
 
         def set_movement_dialog(event):
@@ -351,38 +357,47 @@ class HumanInterface(object):
                 self.current_dialog = 'movement'
                 self.remove_dialog()
                 self.make_movement_dialog()
+                self.set_default_values()
                 self.fig.canvas.draw()
                 logging.info('Swapped dialog to: {}'
-                    .format(self.current_dialog))
+                             .format(self.current_dialog))
+            else:
+                logging.debug('Attempted to swap from {} to movement.'
+                              .format(self.current_dialog))
         self.set_movement_dialog = set_movement_dialog
 
         def submit_selection(event):
+            # Create human sensor utterance
             if 'position' in self.current_dialog:
                 custom_content = ' '.join([self.relation,
-                                           'the',
                                            self.grounding,
                                            ])
             elif 'movement' in self.current_dialog:
+                # <>TODO: stopped slowly?
                 custom_content = ' '.join([self.movement_type,
                                            self.movement_quality,
                                            ])
             else:
                 custom_content = ''
 
-            self.human_input_str = ' '.join(['I',
+            self.utterance = ' '.join(['I',
                                              self.certainty,
                                              self.target,
                                              self.positivity,
                                              custom_content
-                                            ]) + '.'
-            logging.info('Human says: {}'.format(self.human_input_str))
+                                             ]) + '.'
+            logging.info('Human says: {}'.format(self.utterance))
 
+            # Send result to human sensor
             if self.human_sensor:
-                self.human_sensor.input_string = self.human_input_str
-                for str_ in self.robber_names:
-                    if str_ in self.human_input_str:
-                        self.human_sensor.target = str_
+                self.human_sensor.utterance = self.utterance
+                self.human_sensor.new_update = True
         self.submit_selection = submit_selection
+
+    def make_textbox(self):
+        """Generate the textbox interface.
+        """
+        pass
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s: %(message)s',
