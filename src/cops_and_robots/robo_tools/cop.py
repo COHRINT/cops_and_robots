@@ -124,7 +124,7 @@ class Cop(Robot):
         detected_robber = any(self.missing_robbers.values()).status[0] \
             == 'detected'
 
-        # <>TODO: Find a more elegant solution
+        # <>TODO: Replace with a proper state machine
         if set(self.status[0]) - set(['capturing', 'at goal']) == set([]):
             captured_robber_names = [r.name for r in self.missing_robbers
                                      .values() if r.status[0] == 'detected']

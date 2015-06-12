@@ -97,6 +97,7 @@ class Camera(Sensor):
                                centroid_at_origin=False,
                                )
         self.view_pose = (0, 0, 0)
+
         # <>TODO: Add in and test an offset of (-0.1,-0.1)
         self.offset = (0, 0, 0)  # [m] offset (x,y,theta) from center of robot
         self._move_viewcone(robot_pose)

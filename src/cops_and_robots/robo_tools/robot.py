@@ -216,7 +216,7 @@ class Robot(iRobotCreate):
                 self.map.add_cop(new_cop.map_obj)
                 self.known_cops[name] = new_cop
 
-    # <>TODO: Break out into Pilot class
+    # <>TODO: Break out into Controller class
     def translate_towards_goal(self, path=None):
         """Move the robot's x,y positions towards a goal point.
 

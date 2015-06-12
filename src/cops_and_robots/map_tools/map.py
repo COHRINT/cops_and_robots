@@ -488,8 +488,8 @@ def set_up_fleming():
                       ])
     for i, point in enumerate(points):
         fleming.add_location(labels[i], point)
-    # areas
 
+    # <>TODO: Include area demarcations
 
     return fleming
 
