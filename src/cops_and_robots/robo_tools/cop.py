@@ -103,8 +103,7 @@ class Cop(Robot):
                                           robber_model)
         self.sensors = {}
         self.sensors['camera'] = Camera((0, 0, 0))
-        self.sensors['human'] = Human(self.map.shape_layer,
-                                      robber_names)
+        self.sensors['human'] = Human(self.map, robber_names)
         self.map.add_human_sensor(self.sensors['human'])
 
         # Animation attributes

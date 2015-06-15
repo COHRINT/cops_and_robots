@@ -36,7 +36,9 @@ import numpy as np
 from shapely.geometry import Point
 
 from cops_and_robots.robo_tools.fusion.sensor import Sensor
-from cops_and_robots.robo_tools.fusion.softmax import SoftMax, speed_model
+from cops_and_robots.robo_tools.fusion.softmax import Softmax, speed_model
+from cops_and_robots.robo_tools.fusion.binary_softmax import binary_speed_model
+
 
 
 class Human(Sensor):
@@ -62,12 +64,7 @@ class Human(Sensor):
     def __init__(self, map_=None, detection_chance=0.6):
         self.update_rate = None
         self.has_physical_dimensions = False
-        # self.detection_chance = detection_chance
-        # self.certain_detection_chance = detection_chance + \
-        #     (1 - detection_chance) * 0.8
-        sm = speed_model()
-        self.motion_labels = sm.class_labels;
-        self.detection_model = sm
+        self.speed_model = speed_model()
 
         self.no_detection_chance = 0.01
         super(Human, self).__init__(self.update_rate,
@@ -89,11 +86,20 @@ class Human(Sensor):
 
         self.groundings = {}
         self.groundings['area'] = map_.areas
-        self.groundings['object'] = map_.objects + map_.cops
+
+        self.groundings['object'] = {}
+        for cop_name, cop in map_.cops.iteritems():
+            if cop.has_spaces:
+                self.groundings['object'][cop_name] = cop
+        for object_name, obj in map_.objects.iteritems():
+            if obj.has_spaces:
+                self.groundings['object'][object_name] = obj
+
         self.target_names = ['nothing', 'a robot'] + map_.robbers.keys()
+        logging.info(map_.robbers.keys())
         self.utterance = ''
 
-    def detect(self, target_name, type_="particle", particles=None, GMM=None):
+    def detect(self, filter_name, type_="particle", particles=None, GMM=None):
         """Update a fusion engine's probability from human sensor updates.
 
         Parameters
@@ -104,21 +110,26 @@ class Human(Sensor):
             using particles.
         """
 
-        if parse_utterance():
-            logging.error('No utterance to parse!')
+        if self.utterance != '':
+            logging.info('Human said: {}'.format(self.utterance))
 
-        # End detect loop if not the right target
-        if self.target_name not in ['nothing', 'a robot', target_name]:
+        if not self.parse_utterance():
+            logging.debug('No utterance to parse!')
             return
 
-        if any(r in self.utterance for r in self.relations['object']):
-            translate_relation()
-            self.detection_type = 'position (object)'
-        if any(r in self.utterance for r in self.relations['area']):
-            translate_relation()
-            self.detection_type = 'position (area)'
-        elif any(m in self.utterance for m in self.movements):
-            translate_movement()
+        logging.info((filter_name, self.target_name))
+
+        # End detect loop if not the right target
+        if self.target_name not in ['nothing', 'a robot', filter_name]:
+            logging.info('Target {} is not in {} Looking for {}.'
+                .format(filter_name, self.utterance, self.target_name))
+            return
+
+        if self.relation != '':
+            self.translate_relation()
+            self.detection_type = 'position'
+        elif self.movement_type != '':
+            self.translate_movement()
             self.detection_type = 'movement'
         else:
             logging.error("No relations or movements found in utterance.")
@@ -141,34 +152,48 @@ class Human(Sensor):
         else:
             self.certainty = ''
 
-        for str_ in self.targets:
+        for str_ in self.target_names:
             if str_ in self.utterance:
                 self.target_name = str_
                 break
         else:
             self.target_name = ''
 
-        for str_ in self.relations:
+        for str_ in self.positivities:
             if str_ in self.utterance:
-                self.relation = str_
+                self.positivity = str_
                 break
+        else:
+            self.positivity = ''
+
+        for str_type in self.relations:
+            for str_ in self.relations[str_type]:
+                if str_ in self.utterance:
+                    self.relation = str_
+                    break
+            else:
+                continue
+            break
         else:
             self.relation = ''
 
-        for str_ in self.groundings:
-            if str_ in self.utterance:
-                self.grounding_name = str_
-                if str_ in self.groundings['object'].keys():
-                    self.grounding = self.groundings['object'][str_]
-                elif str_ in self.groundings['area'].keys():
-                    self.grounding = self.groundings['area'][str_]
-                break
+        for str_type in self.groundings:
+            for str_ in self.groundings[str_type].keys():
+                if str_ in self.utterance:
+                    self.grounding = self.groundings[str_type][str_]
+                    break
+            else:
+                continue
+            break
         else:
-            self.grounding_name = ''
+            self.grounding = None
 
-        for str_ in self.movement_type:
+        for str_ in self.movement_types:
             if str_ in self.utterance:
                 self.movement_type = str_
+
+                logging.info(str_)
+                
                 break
         else:
             self.movement_type = ''
@@ -176,6 +201,9 @@ class Human(Sensor):
         for str_ in self.movement_qualities:
             if str_ in self.utterance:
                 self.movement_quality = str_
+                
+                logging.info(str_)
+                
                 break
         else:
             self.movement_quality = ''
@@ -192,15 +220,15 @@ class Human(Sensor):
         if relation_type == 'intrinsic':
             # Translate relation to zone label
             if self.relation == 'behind':
-                translated_relation = 'back'
+                translated_relation = 'Back'
             elif self.relation == 'in front of':
-                translated_relation = 'front'
+                translated_relation = 'Front'
             elif self.relation == 'left of':
-                translated_relation = 'left'
+                translated_relation = 'Left'
             elif self.relation == 'right of':
-                translated_relation = 'right'
+                translated_relation = 'Right'
             elif self.relation in ['inside', 'near', 'outside']:
-                translated_relation = relation
+                translated_relation = self.relation.title()
             self.relation = translated_relation
         elif relation_type == 'relative':
             pass # <>TODO: Implement relative relations
@@ -230,23 +258,33 @@ class Human(Sensor):
             position data and p is the particle's associated probability.
 
         """
+        # <>TODO: include certainty
+
         if self.detection_type == 'position':
             label = self.relation
-        elif self.detection_type == 'movement':
-            label = self.movement
-
-        # <>TODO: include certainty
-        for i, particle in enumerate(particles):
-            state = particle[1:]
-
             if self.target_name == 'nothing' and self.positivity == 'not':
                 self.target_name = 'a robot'
             elif self.target_name == 'nothing' or self.positivity == 'not':
-                label = 'not ' + label
-            particle[0] *= self.grounding.prob_at_state(state, label)
+                label = 'Not ' + label
+
+            for i, particle in enumerate(particles):
+                state = particle[1:3]
+                particle[0] *= self.grounding.spaces.probs_at_state(state, label)
+
+        elif self.detection_type == 'movement':
+            label = self.movement
+            if self.target_name == 'nothing' and self.positivity == 'not':
+                self.target_name = 'a robot'
+            elif self.target_name == 'nothing' or self.positivity == 'not':
+                label = 'Not ' + label
+
+            for i, particle in enumerate(particles):
+                state = np.sqrt(particle[3] ** 2 + particle[4] ** 2)
+                particle[0] *= self.speed_model.probs_at_state(state, label)
 
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])
 
         def detect_GMM(self, GMM):
             pass
+

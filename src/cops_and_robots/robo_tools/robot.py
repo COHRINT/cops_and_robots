@@ -32,7 +32,7 @@ from shapely.geometry import Point
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
 from cops_and_robots.robo_tools.planner import Planner
 from cops_and_robots.map_tools.map import set_up_fleming
-from cops_and_robots.map_tools.map_obj import MapObj
+from cops_and_robots.map_tools.map_elements import MapObject
 
 
 class Robot(iRobotCreate):
@@ -63,7 +63,7 @@ class Robot(iRobotCreate):
     control_hardware : bool, optional
         Whether this robot controls physical hardware. Defaults to false.
     **kwargs
-        Arguments passed to the ``MapObj`` attribute.
+        Arguments passed to the ``MapObject`` attribute.
 
     Attributes
     ----------
@@ -159,10 +159,10 @@ class Robot(iRobotCreate):
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
         self.num_goals = None  # number of goals to reach (None for infinite)
 
-        # Define MapObj
+        # Define MapObject
         shape_pts = Point(pose[0:2]).buffer(iRobotCreate.DIAMETER / 2)\
             .exterior.coords
-        self.map_obj = MapObj(self.name, shape_pts[:], has_zones=False,
+        self.map_obj = MapObject(self.name, shape_pts[:], has_spaces=False,
                               **kwargs)
         self.update_shape()
 

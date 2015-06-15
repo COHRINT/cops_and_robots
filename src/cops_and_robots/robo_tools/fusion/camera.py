@@ -34,7 +34,7 @@ from cops_and_robots.robo_tools.fusion.sensor import Sensor
 from cops_and_robots.robo_tools.fusion.softmax import camera_model_2D
 
 # <>TODO: Remove test stub
-from cops_and_robots.map_tools.map_obj import MapObj
+from cops_and_robots.map_tools.map_elements import MapObject
 from cops_and_robots.map_tools.shape_layer import ShapeLayer
 
 
@@ -80,20 +80,20 @@ class Camera(Sensor):
         super(Camera, self).__init__(update_rate, has_physical_dimensions)
 
         # Set the ideal and actual viewcones
-        self.ideal_viewcone = MapObj('Ideal viewcone',
+        self.ideal_viewcone = MapObject('Ideal viewcone',
                                      viewcone_pts,
                                      visible=False,
                                      color_str='pink',
                                      pose=robot_pose,
-                                     has_zones=False,
+                                     has_spaces=False,
                                      centroid_at_origin=False,
                                      )
-        self.viewcone = MapObj('Viewcone',
+        self.viewcone = MapObject('Viewcone',
                                viewcone_pts,
                                visible=True,
                                color_str='lightyellow',
                                pose=robot_pose,
-                               has_zones=False,
+                               has_spaces=False,
                                centroid_at_origin=False,
                                )
         self.view_pose = (0, 0, 0)
@@ -236,9 +236,9 @@ if __name__ == '__main__':
     w = 0.1524  # [m] wall width
 
     pose = (2.4, 0, 90)
-    wall1 = MapObj('wall1', (l, w), pose)
+    wall1 = MapObject('wall1', (l, w), pose)
     pose = (2, 2.2, 0)
-    wall2 = MapObj('wall2', (l, w), pose)
+    wall2 = MapObject('wall2', (l, w), pose)
 
     shape_layer = ShapeLayer(bounds=bounds)
     shape_layer.add_obj(wall1)

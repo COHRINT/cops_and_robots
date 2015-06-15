@@ -60,16 +60,16 @@ class HumanInterface(object):
         # Use human sensor values if one is provided
         if human_sensor:
             self.certainties = human_sensor.certainties
-            self.targets = human_sensor.targets_names
+            self.targets = human_sensor.target_names
             self.groundings = {'object': [], 'area': []}
-            for key, value in human_sensor.groundings['object']:
+            for key, value in human_sensor.groundings['object'].iteritems():
                 self.groundings['object'].append(key)
-            for key, value in human_sensor.groundings['area']:
+            for key, value in human_sensor.groundings['area'].iteritems():
                 self.groundings['area'].append(key)
             self.positivities = human_sensor.positivities
             self.relations = human_sensor.relations
-            self.movement_type = human_sensor.movement_type
-            self.movement_quality = human_sensor.movement_quality
+            self.movement_types = human_sensor.movement_types
+            self.movement_qualities = human_sensor.movement_qualities
         else:
             self.certainties = ['think', 'know']
             self.targets = ['nothing',
@@ -391,7 +391,7 @@ class HumanInterface(object):
             # Send result to human sensor
             if self.human_sensor:
                 self.human_sensor.utterance = self.utterance
-                self.human_sensor.new_update = True
+                self.human_sensor.new_update = True  # <>TODO: interrupt
         self.submit_selection = submit_selection
 
     def make_textbox(self):
