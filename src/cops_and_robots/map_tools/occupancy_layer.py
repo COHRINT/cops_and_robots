@@ -61,6 +61,7 @@ class OccupancyLayer(Layer):
         x, y = self.bounds[0], self.bounds[1]
         c = self.cell_size
 
+        # <>TODO: @Matt Redo grid cell generation (it's too slow!)
         # Create cells with grid centered on (0,0)
         while x + c <= self.bounds[2]:
             while y + c <= self.bounds[3]:

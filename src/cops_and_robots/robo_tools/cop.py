@@ -103,8 +103,7 @@ class Cop(Robot):
                                           robber_model)
         self.sensors = {}
         self.sensors['camera'] = Camera((0, 0, 0))
-        self.sensors['human'] = Human(self.map.shape_layer,
-                                      robber_names)
+        self.sensors['human'] = Human(self.map, robber_names)
         self.map.add_human_sensor(self.sensors['human'])
 
         # Animation attributes
@@ -124,7 +123,7 @@ class Cop(Robot):
         detected_robber = any(self.missing_robbers.values()).status[0] \
             == 'detected'
 
-        # <>TODO: Find a more elegant solution
+        # <>TODO: Replace with a proper state machine
         if set(self.status[0]) - set(['capturing', 'at goal']) == set([]):
             captured_robber_names = [r.name for r in self.missing_robbers
                                      .values() if r.status[0] == 'detected']
