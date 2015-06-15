@@ -77,15 +77,15 @@ class ShapeLayer(Layer):
             all_shapes.append(obj_.shape)
         self.all_shapes = MultiPolygon(all_shapes)
 
-    def plot(self, plot_zones=True, **kwargs):
-        """Plot all visible map objects (and their zones, if visible).
+    def plot(self, plot_spaces=True, **kwargs):
+        """Plot all visible map objects (and their spaces, if visible).
 
         Parameters
         ----------
-        plot_zones : bool, optional
-            `True` to plot the zones of the map objects. Default is `True`.
+        plot_spaces : bool, optional
+            `True` to plot the spaces of the map objects. Default is `True`.
 
         """
         for shape in self.shapes.values():
             if shape.visible:
-                shape.plot(plot_zones=plot_zones, alpha=self.alpha, **kwargs)
+                shape.plot(plot_spaces=plot_spaces, alpha=self.alpha, **kwargs)

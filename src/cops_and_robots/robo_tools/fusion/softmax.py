@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Provides creation, maniputlation and plotting of SoftMax distributions.
+"""Provides creation, maniputlation and plotting of Softmax distributions.
 
 """
 from __future__ import division
@@ -29,7 +29,7 @@ import warnings  # To suppress nolabel warnings
 warnings.filterwarnings("ignore", message=".*cannot be automatically added.*")
 
 
-class SoftMax(object):
+class Softmax(object):
     """Generate a softmax distribution from weights or class boundaries.
 
     The relative magnitude of weights defines the slope of each softmax
@@ -88,7 +88,7 @@ class SoftMax(object):
         in radians of the entire state space. It is not defined for higher- or
         lower-order state spaces.
     state_spec : str, optional
-        A string specified as defined in :func:`~softmax.SoftMax.define_state`.
+        A string specified as defined in :func:`~softmax.Softmax.define_state`.
     bounds : array_like, optional
         Distribution boundaries, in meters, as [xmin, ymin, xmax, ymax].
         Defaults to [-5, -5, 5, 5].
@@ -124,7 +124,8 @@ class SoftMax(object):
 
     def __init__(self, weights=None, biases=None, normals=None, offsets=None,
                  poly=None, steepness=None, rotation=None, state_spec='x y',
-                 bounds=[-5, -5, 5, 5], resolution=0.1, class_labels=None):
+                 bounds=[-5, -5, 5, 5], resolution=0.1, class_labels=None,
+                 auto_create_mms=True):
 
         if weights is not None and normals is not None and poly is not None:
             raise ValueError('One of weights, normals or poly must be '
@@ -154,7 +155,6 @@ class SoftMax(object):
         # Create softmax distributons
         if self.poly is not None:
             self.normals, self.offsets = normals_from_polygon(self.poly)
-
         if self.weights is not None:
             self.num_classes = self.weights.shape[0]
             self.num_params = self.weights.shape[1]
@@ -168,7 +168,7 @@ class SoftMax(object):
         self.set_class_labels(class_labels)
 
         # Combine MMS superclasses
-        if self.num_classes > len(set(self.class_labels)):
+        if self.num_classes > len(set(self.class_labels)) and auto_create_mms:
             self.combine_mms()
 
     def define_state(self, state_spec, res):
@@ -235,13 +235,13 @@ class SoftMax(object):
         self.weights = np.vstack((np.zeros(self.num_params), self.normals))
         self.biases = np.hstack((np.zeros(1), self.offsets))
 
-        # Create the SoftMax distribution from the weights we found
+        # Create the Softmax distribution from the weights we found
         self.num_classes = self.num_classes + 1
         self.probs_from_weights()
 
-        logging.info("Weights generated from normals:\n {}"
+        logging.debug("Weights generated from normals:\n {}"
                      .format(self.weights))
-        logging.info("Biases generated from normals:\n {}"
+        logging.debug("Biases generated from normals:\n {}"
                      .format(self.biases))
 
     def probs_from_weights(self):
@@ -295,28 +295,50 @@ class SoftMax(object):
 
         """
 
-        # <>TODO:
-        # Subtract a constant from all weights to prevent overflow:
+        # <>TODO: Subtract a constant from all weights to prevent overflow:
         # http://ufldl.stanford.edu/wiki/index.php/Exercise:Softmax_Regression
 
-        # <>TODO:
-        # Allow for class labels to be used instead of class IDs.
-        
-        # <>TODO:
-        # Fix for MMS models
+        # <>TODO: Refactor for MMS class
 
-        # Define the softmax normalizer
-        sum_ = np.zeros(self.weights.shape[0])
-        for i, weights in enumerate(self.weights):
-            exp_term = np.dot(state, weights) + self.biases[i]
-            sum_[i] = np.exp(exp_term)
-        normalizer = sum(sum_)  # scalar value
+        if type(class_) is str:
+            class_ = self.class_labels.index(class_)
 
-        # Define each class' probability
-        probs = np.zeros(self.num_classes)
-        for i in range(self.num_classes):
-            exp_term = np.dot(state, self.weights[i, :]) + self.biases[i]
-            probs[i] = np.exp(exp_term) / normalizer
+        if hasattr(self, 'subclass_weights'):
+            weights = self.subclass_weights[:]
+
+            # Define the softmax normalizer
+            sum_ = np.zeros(weights.shape[0])
+            for i, weight in enumerate(weights):
+                exp_term = np.dot(state, weight) + self.biases[i]
+                sum_[i] = np.exp(exp_term)
+            normalizer = sum(sum_)  # scalar value
+
+            # Define each class' probability
+            probs = np.zeros(self.num_classes)
+            for i in range(self.num_classes):
+                exp_term = 0
+
+                #Use all related subclasses
+                for j in range(self.num_subclasses):
+                    if self.class_labels[i] == self.subclass_labels[j]:
+                        exp_term += np.exp(np.dot(state, self.subclass_weights[j, :])\
+                            + self.subclass_biases[j])
+                probs[i] = exp_term / normalizer
+        else:
+            weights = self.weights[:]
+
+            # Define the softmax normalizer
+            sum_ = np.zeros(weights.shape[0])
+            for i, weight in enumerate(weights):
+                exp_term = np.dot(state, weight) + self.biases[i]
+                sum_[i] = np.exp(exp_term)
+            normalizer = sum(sum_)  # scalar value
+
+            # Define each class' probability
+            probs = np.zeros(self.num_classes)
+            for i in range(self.num_classes):
+                exp_term = np.dot(state, self.weights[i, :]) + self.biases[i]
+                probs[i] = np.exp(exp_term) / normalizer
 
         # Check probs to make sure everything sums to 1
         if ~(np.all(np.sum(probs))):
@@ -336,24 +358,40 @@ class SoftMax(object):
         self.subclass_labels = self.class_labels[:]
         self.subclass_colors = self.class_colors[:]
         self.subclass_cmaps = self.class_cmaps[:]
+        self.subclass_weights = self.weights[:]
+        self.subclass_biases = self.biases[:]
 
         self.num_subclasses = self.subclass_probs.shape[1]
         self.num_classes = len(set(self.class_labels))
+        self.class_labels = []
+        [self.class_labels.append(l) for l in self.subclass_labels
+         if l not in self.class_labels]
 
         # Assign new colors to unique classes
-        self.class_cmaps = self.class_cmaps[:self.num_classes]
-        self.class_colors = self.class_colors[:self.num_classes]
+        self.class_cmaps = []
+        self.class_colors = []
+        for i, label in enumerate(self.class_labels):
+            self.class_cmaps.append(
+                next(self.subclass_cmaps[j]
+                    for j, slabel in enumerate(self.subclass_labels)
+                    if label == slabel))
+            self.class_colors.append(
+                next(self.subclass_colors[j]
+                    for j, slabel in enumerate(self.subclass_labels)
+                    if label == slabel))
 
         # Merge probabilities from subclasses
         j = 0
+        h = 0
         remaining_labels = self.subclass_labels[:]
+        old_label = ''  # <>TODO: get rid of this. TLC would find it unpretty.
         remaining_probs = self.subclass_probs[:]
         self.probs = np.zeros((self.subclass_probs.shape[0], self.num_classes))
         for label in remaining_labels:
             indices = [k for k, other_label in enumerate(remaining_labels)
                        if label == other_label]
             probs = remaining_probs[:, indices]
-            self.probs[:, j] = np.sum(probs, axis=1)
+            self.probs[:, h] += np.sum(probs, axis=1)
 
             remaining_labels = [remaining_labels[k]
                                 for k, _ in enumerate(remaining_labels)
@@ -363,8 +401,28 @@ class SoftMax(object):
                 break
             else:
                 j += 1
+                if label != old_label:
+                    h += 1
+                old_label = label
+
+    def weights_by_label(self, label):
+        weights = []
+        biases = []
+        if hasattr(self, 'subclass_weights'):
+            for i, subclass_label in enumerate(self.subclass_labels):
+                if label == subclass_label:
+                    weights.append(self.subclass_weights[i])
+                    biases.append(self.subclass_biases[i])
+        else:
+            for i, class_labels in enumerate(self.class_labels):
+                if label == class_labels:
+                    weights.append(self.weights[i])
+                    biases.append(self.biases[i])
+        return weights, biases
 
     def add_classes(self, weights, biases, labels=None, steepness=1):
+        """Add m>=1 classes to the current Softmax model.
+        """
         self.weights = np.vstack((self.weights, weights))
         self.biases = np.hstack((self.biases, biases))
         self.steepness = np.hstack((self.steepness, steepness))
@@ -383,9 +441,9 @@ class SoftMax(object):
 
         """
         # Make sure we have as many colors as classes
-        while self.num_classes > len(SoftMax.class_cmaps):
-            SoftMax.class_cmaps += SoftMax.class_cmaps
-            SoftMax.class_colors += SoftMax.class_colors
+        while self.num_classes > len(Softmax.class_cmaps):
+            Softmax.class_cmaps += Softmax.class_cmaps
+            Softmax.class_colors += Softmax.class_colors
 
         if class_labels is not None:
             self.class_labels = class_labels
@@ -395,8 +453,8 @@ class SoftMax(object):
             self.class_colors = [None] * self.num_classes
             j = 0
             for i in range(0, self.num_classes):
-                self.class_cmaps[i] = SoftMax.class_cmaps[j]
-                self.class_colors[i] = SoftMax.class_colors[j]
+                self.class_cmaps[i] = Softmax.class_cmaps[j]
+                self.class_colors[i] = Softmax.class_colors[j]
                 if i == self.num_classes - 1:
                     break
                 elif self.class_labels[i] != self.class_labels[i + 1]:
@@ -404,8 +462,8 @@ class SoftMax(object):
         else:
             self.class_labels = ['Class {}'.format(i + 1)
                                  for i in range(0, self.num_classes)]
-            self.class_cmaps = SoftMax.class_cmaps[0:self.num_classes]
-            self.class_colors = SoftMax.class_colors[0:self.num_classes]
+            self.class_cmaps = Softmax.class_cmaps[0:self.num_classes]
+            self.class_colors = Softmax.class_colors[0:self.num_classes]
 
     def plot_class(self, class_i):
         fig = plt.figure(1, figsize=(12, 10))
@@ -433,8 +491,8 @@ class SoftMax(object):
         plt.show()
 
     def plot(self, plot_classes=True, plot_probs=True, plot_poly=False,
-             plot_normals=False, title='SoftMax Classification', **kwargs):
-        """Display the class and/or PDF plots of the SoftMax distribution.
+             plot_normals=False, title='Softmax Classification', **kwargs):
+        """Display the class and/or PDF plots of the Softmax distribution.
 
         The class plot shows only the critical classes (those that have the
         greatest probability at any given state).
@@ -726,7 +784,6 @@ def camera_model_2D(min_view_dist=0., max_view_dist=2):
         of detection. The default is 1 meter.
 
     """
-
     # Define view cone centered at origin
     horizontal_view_angle = 57  # from Kinect specifications (degrees)
     min_y = min_view_dist * np.tan(np.radians(horizontal_view_angle / 2))
@@ -737,30 +794,31 @@ def camera_model_2D(min_view_dist=0., max_view_dist=2):
                            (min_view_dist, -min_y)])
 
     if min_view_dist > 0:
-        steepness=[100, 100, 2.5, 100, 100]
-        labels = ['Detection', 'No Detection', 'No Detection',  'No Detection', 
-              'No Detection']
+        steepness = [100, 100, 2.5, 100, 100]
+        labels = ['Detection', 'No Detection', 'No Detection', 'No Detection',
+                  'No Detection']
     else:
-        steepness=[100, 100, 2.5, 100,]
-        labels = ['Detection', 'No Detection',  'No Detection', 'No Detection']        
-    
-    camera = SoftMax(poly=camera_poly, class_labels=labels, 
+        steepness = [100, 100, 2.5, 100,]
+        labels = ['Detection', 'No Detection', 'No Detection', 'No Detection']
+
+    camera = Softmax(poly=camera_poly, class_labels=labels,
                      steepness=steepness)
     return camera
 
 
 def speed_model():
-    """Generate a one-dimensional SoftMax model for speeds.
+    """Generate a one-dimensional Softmax model for speeds.
     """
     labels = ['Stopped', 'Slow', 'Medium', 'Fast']
-    sm = SoftMax(weights=np.array([[0], [150], [175], [200]]),
+    sm = Softmax(weights=np.array([[0], [150], [175], [200]]),
                  biases=np.array([0, -2.5, -6, -14]),
                  state_spec='x', class_labels=labels,
                  bounds=[0, 0, 0.4, 0.4])
     return sm
 
+
 def wall_model(l=1.2192, w=0.1524, origin=[0,0]):
-    """Generate a two-dimensional SoftMax model around a wall.
+    """Generate a two-dimensional Softmax model around a wall.
     """
     wall_poly = box(-w/2 + origin[0],
                     -l/2 + origin[1],
@@ -769,37 +827,84 @@ def wall_model(l=1.2192, w=0.1524, origin=[0,0]):
 
     steepness = [0, 10, 10, 10, 10]
     labels = ['Interior','Front', 'Left', 'Back', 'Right']
-    wall = SoftMax(poly=wall_poly, steepness=steepness, class_labels=labels)
+    wall = Softmax(poly=wall_poly, steepness=steepness, class_labels=labels)
     return wall
+
+def pentagon_model():
+    poly = make_regular_2D_poly(5, max_r=2, theta=np.pi/3.1)
+    labels = ['Interior',
+              'Mall Terrace Entrance',
+              'Heliport Facade',
+              'South Parking Entrance', 
+              'Concourse Entrance',
+              'River Terrace Entrance', 
+             ]
+    steepness = 5
+    sm = Softmax(poly=poly, class_labels=labels, resolution=0.1, steepness=5)
+    return sm
+
+def distance_space_model(poly=None):
+    if poly == None:
+        poly = make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
+    labels = ['Inside'] + ['Near'] * 4
+    steepnesses = [3] * 5
+    sm = Softmax(poly=poly, class_labels=labels, resolution=0.1,
+                 steepness=steepnesses, auto_create_mms=False)
+
+    steepnesses = [3.1] * 5
+    far_bounds = make_regular_2D_poly(4, max_r=3, theta=np.pi/4)
+    labels = ['Inside'] + ['Outside'] * 4
+    sm_far = Softmax(poly=poly, class_labels=labels, resolution=0.1,
+                 steepness=steepnesses)
+
+    new_weights = sm_far.weights[1:]
+    new_biases = sm_far.biases[1:] - 0.05  # <>TODO: Fix this hack
+    new_class_labels = ['Outside'] * 4
+    new_steepnesses = steepnesses[1:]
+
+    sm.add_classes(new_weights, new_biases, new_class_labels, new_steepnesses)
+    sm.combine_mms()
+    return sm
+
+def intrinsic_space_model(poly=None):
+    if poly == None:
+        poly = make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
+
+    # <>TODO: If sides != 4, find a way to make it work!
+
+    labels = ['Inside', 'Front', 'Back', 'Left', 'Right']
+    steepness = 3
+    sm = Softmax(poly=poly, class_labels=labels, resolution=0.1,
+                 steepness=steepness)
+    return sm
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     np.set_printoptions(precision=2, suppress=True)
 
-    # poly = make_regular_2D_poly(5, max_r=2, theta=np.pi/3.1)
-    # labels = ['Interior',
-    #           'Mall Terrace Entrance',
-    #           'Heliport Facade',
-    #           'South Parking Entrance', 
-    #           'Concourse Entrance',
-    #           'River Terrace Entrance', 
-    #          ]
-    # steepness = 5
-    # sm = SoftMax(poly=poly, class_labels=labels, resolution=0.1, steepness=5)
-    # sm.plot(plot_poly=True, plot_normals=False)
+    # sm = pentagon_model()
+    # sm.plot()
 
-    sm = speed_model()
-    sm.plot()
+    # sm = speed_model()
+    # sm.plot()
+
+    x = [-3, -3, 3, 3]
+    y = [-1, 1, 1, -1]
+    y = [-3, -1, -1, -3]
+    pts = zip(x,y)
+    poly = Polygon(pts)
+    sm = distance_space_model(poly)
+    sm.plot(plot_poly=True)
 
     # # Make big poly
     # poly = make_regular_2D_poly(n_sides=4, origin=(0,0), theta=np.pi/4, max_r=3)
-    # steepness = np.array([0, 10, 10, 10, 10])
-    # sm_big = SoftMax(poly=poly , steepness=steepness)
+    # steepness = np.array([0, 3, 3, 3, 3])
+    # sm_big = Softmax(poly=poly , steepness=steepness)
     
-    # # Make big poly
+    # # Make small poly
     # poly = make_regular_2D_poly(n_sides=4, origin=(0,0), theta=np.pi/4, max_r=1)
-    # steepness = np.array([0, 10, 10, 10, 10])
-    # sm_small = SoftMax(poly=poly, steepness=steepness)
+    # steepness = np.array([0, 3, 3, 3, 3])
+    # sm_small = Softmax(poly=poly, steepness=steepness)
     
     # new_weights = sm_small.weights[1:]
     # new_biases = sm_small.biases[1:]
