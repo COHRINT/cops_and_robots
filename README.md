@@ -16,7 +16,7 @@ Create and load a [virtual environment](https://virtualenv.pypa.io/en/latest/):
 pip install virtualenv
 mkdir ~/virtual_environments # or whatever you'd like to name your folder
 cd ~/virtual_environments 
-virtualenv cops_and_robots # or whatever you'd like to name your environment
+virtualenv --no-site-packages cops_and_robots # or whatever you'd like to name your environment
 source cops_and_robots/bin/activate
 ```
 
