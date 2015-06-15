@@ -22,10 +22,11 @@ source cops_and_robots/bin/activate
 
 Install [SciPy](http://www.scipy.org/):
 ```
-# On Ubuntu only:
+# On Ubuntu:
 sudo apt-get install libatlas-base-dev gfortran
+pip install numpy scipy matplotlib
 
-# On OS X and Ubuntu:
+# On OS X:
 pip install numpy scipy matplotlib
 ```
 
@@ -37,10 +38,13 @@ git clone https://github.com/COHRINT/cops_and_robots.git
 cd cops_and_robots
 python setup.py develop
 ```
+
+**NOTE**: You may need to upgrade your `easy_install` before running `python setup.py develop`. If it complains, follow the instructions to upgrade `easy_install`.
+
 **NOTE**: Running `python setup.py develop` installs the cops and robots package dependencies, but, [until I can find a fix for it]( http://stackoverflow.com/questions/30737431/module-found-in-install-mode-but-not-in-develop-mode-using-setuptools), it won't add `cops_and_robots` to your virtual environment's python path automatically. So, we're fixing it manually:
 
 ```
-nano ~/virtual_environments/cops_and_robots/lib/python-2.7/site-packages/easy-install.pth
+nano ~/virtual_environments/cops_and_robots/lib/python2.7/site-packages/easy-install.pth
 ```
 
 Add `/src` to the absolute path to the cops and robots directory (in my case, I now have `/Users/nick/Downloads/cops_and_robots/src` on the third line of my `easy-install.pth`).
