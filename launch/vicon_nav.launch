@@ -17,7 +17,7 @@
   <!-- Fake Localization -->
   <node name="fake_localization" pkg="fake_localization" type="fake_localization">
     <param name="base_frame_id" value="base_footprint"/>
-    <remap from="base_pose_ground_truth" to="odom"/>
+    <remap from="base_pose_ground_truth" to="vo"/>
   </node>
 
   <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
