@@ -1,4 +1,4 @@
-image: Clue_map.png
+image: nakedClueWorld.png
 resolution: 0.02
 origin: [7, 6, 3.14]
 occupied_thresh: 0.65
