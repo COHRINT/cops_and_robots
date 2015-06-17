@@ -44,7 +44,9 @@ class ParticleLayer(Layer):
         super(ParticleLayer, self).__init__(**kwargs)
         self.particle_size = particle_size
         self.colorbar_visible = colorbar_visible
-        self.n_particles = n_particles  # <>TODO: get rid of this!
+
+        # <>TODO: grab from particle filter instead
+        self.n_particles = n_particles
 
         self.line_weight = 0
         self.alpha = 0.3

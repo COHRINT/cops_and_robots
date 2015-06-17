@@ -8,15 +8,14 @@ from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.robo_tools.cop import Cop
 
 def main():
-    # <>TODO: set up sublime text build system so that this file always runs
-
-    # <>TODO: add function name, properly formatted
+    # <>TODO: add function name, properly formatted, to logger
     # Set up logger
     logging.basicConfig(format='%(levelname)s: %(message)s',
-                        level=logging.INFO,)
+                        level=logging.INFO,
+                        )
 
     # Pre-test config
-    robber_model = 'random walk'
+    robber_model = 'static'
     deckard = Cop(robber_model=robber_model)
     deckard.map.combined_only = False
 

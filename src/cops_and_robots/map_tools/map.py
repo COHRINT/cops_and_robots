@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
-from cops_and_robots.map_tools.map_obj import MapObj
+from cops_and_robots.map_tools.map_elements import MapObject, MapArea
 from cops_and_robots.map_tools.shape_layer import ShapeLayer
 from cops_and_robots.map_tools.occupancy_layer import OccupancyLayer
 from cops_and_robots.map_tools.feasible_layer import FeasibleLayer
@@ -67,7 +67,7 @@ class Map(object):
 
         # Define map elements
         self.objects = {}  # For dynamic/static map objects (not robbers/cops)
-        self.locations = {}
+        self.areas = {}
         self.cops = {}
         self.robbers = {}
 
@@ -108,11 +108,11 @@ class Map(object):
         del self.objects[map_obj_name]
         # <>TODO: Update probability layer
 
-    def add_location(self, label, point):
-        self.locations[label] = point
+    def add_area(self, label, area):
+        self.areas[label] = area
 
-    def rem_location(self, label):
-        del self.locations[label]
+    def rem_area(self, label):
+        del self.areas[label]
 
     def add_cop(self, cop_obj):
         """Add a dynamic ``Robot`` cop from the Map
@@ -153,21 +153,21 @@ class Map(object):
         del self.probability_layer[robber_name]
         # <>TODO: Update probability layer
 
-    def plot(self, show_locations=False):
+    def plot(self, show_areas=False):
         """Plot the static map.
 
         """
         fig = plt.figure(1, figsize=(12, 10))
         ax = fig.add_subplot(111)
-        self.shape_layer.plot(plot_zones=False, ax=ax)
+        self.shape_layer.plot(plot_spaces=False, ax=ax)
 
-        if show_locations:
-            for label, point in self.locations.items():
-                ax.text(point[0], point[1], label)
+        if show_areas:
+            for _, area in self.areas.iteritems():
+                area.plot()
 
         ax.set_xlim([self.bounds[0], self.bounds[2]])
         ax.set_ylim([self.bounds[1], self.bounds[3]])
-        ax.set_title('Experimental environment with landmarks and locations')
+        ax.set_title('Experimental environment with landmarks and areas')
         plt.show()
 
     def setup_plot(self):
@@ -219,7 +219,7 @@ class Map(object):
                 ax.set_title('Tracking {}.'.format(robber))
 
                 # Plot static elements
-                self.shape_layer.plot(plot_zones=False, ax=ax)
+                self.shape_layer.plot(plot_spaces=False, ax=ax)
 
                 # Define cop path
                 self.cop_patch[robber] = PolygonPatch(simple_poly)
@@ -260,7 +260,7 @@ class Map(object):
                                                'remaining targets.')
 
             # Static elements
-            self.shape_layer.plot(plot_zones=False,
+            self.shape_layer.plot(plot_spaces=False,
                                   ax=self.ax_list['combined'])
 
             # Dynamic elements
@@ -374,7 +374,7 @@ def set_up_fleming():
     """
     # Make vicon field space object
     field_w = 7.5  # [m] field width
-    field = MapObj('Field', [field_w, field_w], has_zones=False)
+    field = MapArea('Field', [field_w, field_w], has_spaces=False)
 
     # Make wall objects
     l = 1.2192  # [m] wall length
@@ -405,12 +405,11 @@ def set_up_fleming():
     poses = poses * np.array([l, l, 90])
 
     n_walls = poses.shape[0]
-    print('{} walls used, {} remaining.'.format(n_walls, 24 - n_walls))
     walls = []
     for i in range(poses.shape[0]):
         name = 'Wall ' + str(i)
         pose = poses[i, :]
-        wall = MapObj(name, wall_shape, pose)
+        wall = MapObject(name, wall_shape, pose=pose, color_str='sienna', has_spaces=False)
         walls.append(wall)
 
     # Make landmark billiards
@@ -425,7 +424,7 @@ def set_up_fleming():
     for i, pose in enumerate(poses):
         name = 'Ball ' + str(i)
         shape_pts = Point(pose).buffer(0.075).exterior.coords
-        landmark = MapObj(name, shape_pts[:], pose, has_zones=False, color_str=colors[i])
+        landmark = MapObject(name, shape_pts[:], pose=pose, has_spaces=False, color_str=colors[i])
         landmarks.append(landmark)
 
     # Make landmark glasses
@@ -437,7 +436,7 @@ def set_up_fleming():
     for i, pose in enumerate(poses):
         name = 'Glass ' + str(i)
         shape_pts = Point(pose).buffer(0.06).exterior.coords
-        landmark = MapObj(name, shape_pts[:], pose, has_zones=False, color_str='grey')
+        landmark = MapObject(name, shape_pts[:], pose=pose, has_spaces=False, color_str='grey')
         landmarks.append(landmark)
 
     # Make rectangular objects (desk, bookcase, etc)
@@ -453,15 +452,15 @@ def set_up_fleming():
                      ])
     
     for i, pose in enumerate(poses):
-        landmark = MapObj(labels[i], sizes[i], pose, color_str=colors[i])
+        landmark = MapObject(labels[i], sizes[i], pose=pose, color_str=colors[i])
         landmarks.append(landmark)
 
     # Make odd landmarks
-    landmark = MapObj('Box', [0.6, 0.8], [-7.5, 1.8, 0], color_str='black')
+    landmark = MapObject('Box', [0.6, 0.8], pose=[-7.5, 1.8, 0], color_str='black')
     landmarks.append(landmark)
     pose = [-9.5, 2.1, 0]
     shape_pts = Point(pose).buffer(0.2).exterior.coords
-    landmark = MapObj('Frying Pan', shape_pts, pose, color_str='slategrey')
+    landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
     landmarks.append(landmark)
 
     # Create Fleming map
@@ -476,24 +475,30 @@ def set_up_fleming():
     for landmark in landmarks:
         fleming.add_obj(landmark)
 
-    # Create locations
+    # Create areas
     labels = ['Study', 'Library', 'Kitchen', 'Billiard Room', 'Hallway', 
               'Dining Room']
-    points = np.array([[-4.0, -2.5],
-                       [0.5, -2.5],
-                       [-6.0, 2.75],
-                       [1.5, 2],
-                       [-4, -0.65],
-                       [-9, -1.2]
+    colors = ['aquamarine','lightcoral', 'goldenrod', 'sage','cornflowerblue',
+              'orchid']
+    points = np.array([[[-6.0, -4], [-6.0, -1.2], [-1.2, -1.2], [-1.2, -4]],
+                       [[-1.2, -4], [-1.2, -1.2],[4.0, -1.2], [4.0, -4]],
+                       [[-12.0, 0], [-12.0, 4],[0, 4], [0, 0]],
+                       [[0, 0], [0, 4],[4, 4], [4, 0]],
+                       [[-12, -1.2], [-12, 0],[4, 0], [4, -1.2]],
+                       [[-12, -4], [-12, -1.2],[-6, -1.2], [-6, -4]],
                       ])
-    for i, point in enumerate(points):
-        fleming.add_location(labels[i], point)
-    # areas
+    for i, pts in enumerate(points):
+        centroid = [pts[0,0] + np.abs(pts[2,0] - pts[0,0]) / 2,
+                    pts[0,1] + np.abs(pts[1,1] - pts[0,1]) / 2, 0 ]
+        area = MapArea(name=labels[i], shape_pts=pts, pose=centroid,
+                       color_str=colors[i])
+        fleming.add_area(labels[i], area)
 
+    # <>TODO: Include area demarcations
 
     return fleming
 
 if __name__ == '__main__':
     fleming = set_up_fleming()
-    fleming.plot(show_locations=True)
+    fleming.plot(show_areas=True)
 

@@ -125,6 +125,7 @@ class FusionEngine(object):
                 self.filters[robber.name].update(sensors['camera'],
                                                  robber.pose,
                                                  sensors['human'])
+
                 if robber.status == 'detected':
                     logging.info('{} detected!'.format(robber.name))
                     self.filters[robber.name].robber_detected(robber.pose)
@@ -162,5 +163,6 @@ class FusionEngine(object):
                 len(self.filters['combined'].particles)
 
             # Reset the human sensor
-            sensors['human'].input_string = ''
+            sensors['human'].utterance = ''
             sensors['human'].target = ''
+
