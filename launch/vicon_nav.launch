@@ -12,7 +12,7 @@
   </include>
 
   <!-- Map server -->
-  <arg name="map_file" default="/home/odroid/cops_and_robots/resources/maps/OccupancyGrid/Clue_world.yaml"/>
+  <arg name="map_file" default="/home/odroid/cops_and_robots/resources/maps/OccupancyGrid/lowResolutionMap.yaml"/>
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
 
   <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
