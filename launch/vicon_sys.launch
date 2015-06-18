@@ -10,9 +10,9 @@
 
 	<!-- Run vicon_bridge -->
     <!-- <>TODO: Set the transform frame_id and child_frame_id as an arg -->
-	<node pkg="vicon_bridge" type="vicon_bridge" name="vicon_bridge" output="log">
+	<node pkg="vicon_bridge" type="vicon_bridge" name="vicon_bridge" output="screen">
 		<param name="stream_mode" value="ClientPull" type="str" />
-		<param name="datastream_hostport" value="192.168.20.191:801" type="str" />
+		<param name="datastream_hostport" value="192.168.20.100:801" type="str" />
 		<!--param name="datastream_hostport" value="vicon:80" type="str" -->
 		<param name="tf_ref_frame_id" value="/world" type="str" />
 	    <remap from="/tf" to="/tf_old"/>
@@ -35,7 +35,7 @@
         <param name="max_accel" value="5.0"/>
         <param name="child_frame_id" value="/base_footprint" type="str"/>
         <param name="frame_id" value="/odom" type="str"/> 
-        <remap from="~vicon" to="/vicon/$(arg model)"/>
-        <remap from="~odom" to="/odom"/>
+        <remap from="/vicon" to="/vicon/$(arg model)/$(arg model)"/>
+        <remap from="/odom" to="/odom"/>
     </node>
 </launch>
