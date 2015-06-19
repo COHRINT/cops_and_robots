@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
-  <model name="roy">
+  <model name="zhora">
+    <static>true</static>
     <link name="rack">
       <inertial>
         <pose>0.001453 -0.000453 0.029787 0 0 0</pose>
@@ -26,7 +27,7 @@
         <pose>-0.043340 0 0.084757 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://turtlebot/meshes/plate_0_logo.dae</uri>
+            <uri>model://zhora/meshes/plate_0_logo.dae</uri>
           </mesh>
         </geometry>
       </visual>
@@ -58,7 +59,7 @@
         <pose>-0.002660 0 0.199108 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Roy/meshes/plate_1_logo.dae</uri>
+            <uri>model://zhora/meshes/plate_1_logo.dae</uri>
           </mesh>
         </geometry>
       </visual>
@@ -446,7 +447,7 @@
 
      <plugin name="ros_transform" filename="/usr/lib/libros_transform.so">
       <targetLink>create::base</targetLink>
-      <transformTopic>/vicon/roy/roy</transformTopic>
+      <transformTopic>/vicon/zhora/zhora</transformTopic>
     </plugin>
 
   </model>

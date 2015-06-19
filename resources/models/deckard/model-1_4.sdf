@@ -470,5 +470,11 @@
       </axis>
     </joint>
 
+    <plugin name="ros_transform" filename="/usr/lib/libros_transform.so">
+      <targetLink>rack</targetLink>
+      <transformTopic>/vicon/deckard/deckard</transformTopic>
+    </plugin>
+
+
   </model>
 </sdf>
