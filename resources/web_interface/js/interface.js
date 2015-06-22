@@ -134,53 +134,84 @@ function init() {
 	});
 	
 	//Toggle velocity fields
-	var select3 = document.getElementById("sel3");
-	select3.onchange=function(){
-	    if(select3.value=="moving"){
-	       document.getElementById("sel4").style.display="none";
-	       document.getElementById("sel5").style.display="inline";
-	       document.getElementById("sel6").style.display="inline";
-	    }else{
-	       document.getElementById("sel4").style.display="inline";
-	       document.getElementById("sel5").style.display="none";
-	       document.getElementById("sel6").style.display="none";
-	    }
+		//Toggle velocity fields
+
+	var pos_obj = jQuery("#Position_obj");
+	var pos_area = jQuery("#position_area");
+	var moving = jQuery("#Movement");
+
+	var certainties_obj = document.getElementById("obj_certainties");
+	var targets_obj = document.getElementById("obj_targets");
+	var positivities_obj = document.getElementById("obj_positivities");
+	var object_relations = document.getElementById("obj_relations");
+	var objects = document.getElementById("obj");
+	var certainties_area = document.getElementById("area_certainties");
+	var targets_area = document.getElementById("area_targets");
+	var positivities_area = document.getElementById("area_positivities")
+	var area_relations = document.getElementById("area_relation");
+	var areas = document.getElementById("area");
+	var certainties_mv = document.getElementById("mv_certainties");
+	var targets_mv = document.getElementById("mv_targets");
+	var positivities_mv = document.getElementById("mv_positivities")
+	var movement_types = document.getElementById("mv_types");
+	var movement_qualities = document.getElementById("mv_qualities");
+
+	var tabs = [pos_obj, pos_area, moving];
+	var certainty_cases = [certainties_obj, certainties_area, certainties_mv];
+	var target_cases = [targets_obj, targets_area, targets_mv];
+	var positivity_cases = [positivities_obj, positivities_area, positivities_mv];
+	var discribers = [object_relations, area_relations, movement_types];
+	var specifications = [objects, areas, movement_qualities];
+	
+	
+	targets_obj.onchange = function(){
+		if(targets_obj.value == "nothing"){
+			positivities_obj.options[1].style.display="none";
+		}else{
+			positivities_obj.options[1].style.display="inline";
+		}
 	}
-	
-	//Toggle negative information-based fields contextually
-	var select2 = document.getElementById("sel2");
-	select2.onchange=function(){
-	    if(select2.value=="nothing"){
-	       document.getElementById("sel4").style.display="inline";    
-	       document.getElementById("sel5").style.display="none";
-	       document.getElementById("sel6").style.display="none";
-	       document.getElementById("selMoving").style.display="none";
-	    }else{
-	       document.getElementById("selMoving").style.display="inline";
-			if(select3.value=="moving"){
-			       document.getElementById("sel4").style.display="none";
-			       document.getElementById("sel5").style.display="inline";
-			       document.getElementById("sel6").style.display="inline";
-			    }else{
-			       document.getElementById("sel4").style.display="inline";
-			       document.getElementById("sel5").style.display="none";
-			       document.getElementById("sel6").style.display="none";
-			    }
-	    }
-	
-	};
+
+	targets_area.onchange = function(){
+		if(targets_area.value == "nothing"){
+			positivities_area.options[1].style.display="none";
+		}else{
+			positivities_area.options[1].style.display="inline";
+		}
+	}
+
+	targets_mv.onchange = function(){
+		if(targets_mv.value == "nothing"){
+			positivities_mv.options[1].style.display="none";
+		}else{
+			positivities_mv.options[1].style.display="inline";
+		}
+	}
+
+	movement_types.onchange = function(){
+		if(movement_types.value == "stopped"){
+			movement_qualities.style.display="none";
+		}else{
+			movement_qualities.style.display="inline";
+		}
+	}
+
 	
 	// Publish through ros every time 'submit' is pressed
 	jQuery("#human_sensor_button").click(function() { 
-	    var s = [];
-
-	    s[1] = document.getElementById("sel1");
-	    s[2] = document.getElementById("sel2");
-	    s[3] = document.getElementById("sel3");
-	    s[4] = document.getElementById("sel4");
-	    s[5] = document.getElementById("sel5");
-	    s[6] = document.getElementById("sel6");
 	    
+	    var s = [];
+	    for(i = 0; i<tabs.length; i++){
+	    	if(tabs[i].hasClass('active') == true){
+	    		s[1] = certainty_cases[i];
+			    s[2] = target_cases[i];
+			    s[3] = positivity_cases[i];
+			    s[4] = discribers[i];
+			    s[5] = specifications[i];
+	    		break;
+	    	}
+	    }
+
 	    var return_str = [];
 	    for (i in s) {
 		    if (s[i].style.display == "none"){
@@ -193,12 +224,11 @@ function init() {
 		     }
 	    }
 	    
-		var str = 	["I " 		+ return_str[1],
-				  	" " 	+ return_str[2],
-				  	" is " 		+ return_str[3],
+		var str = 	["" 		+ return_str[1],
+				  	" " 		+ return_str[2],
+				  	" " 		+ return_str[3],
 				  	" " 		+ return_str[4],
-				  	"" 			+ return_str[5],
-				  	"" 			+ return_str[6],
+				  	" " 		+ return_str[5],
 				  	"."].join('');
 	  	var msg = new ROSLIB.Message({data: str});	 
 		human_sensor.publish(msg);
@@ -300,5 +330,3 @@ jQuery('#start-stop').click(function(){
     jQuery(this).children("span").toggleClass("glyphicon-play");
     jQuery(this).children("span").toggleClass("glyphicon-stop");			        
 });
-
-

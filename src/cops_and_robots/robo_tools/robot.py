@@ -94,7 +94,8 @@ class Robot(iRobotCreate):
 
     all_robots = {'Deckard': 'cop',
                   'Roy': 'robber',
-                  'Leon': 'robber',
+                  'Pris': 'robber',
+                  'Zhora': 'robber',
                   }
 
     movement_statuses = ['stuck',
@@ -278,20 +279,20 @@ class Robot(iRobotCreate):
             return False
 
         if len(self.pose_history) > self.check_last_n:
-            distance_travelled = 0
+            self.distance_travelled = 0
             last_poses = self.pose_history[-self.check_last_n:]
             for i, pose in enumerate(last_poses):
                 dist = math.sqrt((last_poses[i][0] - pose[0]) ** 2 +
                                  (last_poses[i][1] - pose[1]) ** 2)
-                distance_travelled += dist
+                self.distance_travelled += dist
 
             # Update the buffer
             self.stuck_buffer = 20
 
             logging.debug('{} travelled {:.2f}m in last {}'
-                          .format(self.name, distance_travelled,
+                          .format(self.name, self.distance_travelled,
                                   self.check_last_n))
-            return distance_travelled < self.stuck_distance
+            return self.distance_travelled < self.stuck_distance
         else:
             return False
 

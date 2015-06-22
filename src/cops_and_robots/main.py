@@ -4,20 +4,22 @@
 """
 import logging
 
+import numpy as np
 from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.robo_tools.cop import Cop
 
 def main():
     # <>TODO: add function name, properly formatted, to logger
     # Set up logger
-    logging.basicConfig(format='%(levelname)s: %(message)s',
+    logging.basicConfig(format='[%(levelname)-7s] %(funcName)-30s %(message)s',
                         level=logging.INFO,
                         )
+    np.set_printoptions(precision=2, suppress=True)
 
     # Pre-test config
     robber_model = 'static'
     deckard = Cop(robber_model=robber_model)
-    deckard.map.combined_only = False
+    deckard.map.combined_only = True
 
     # Describe simulation
     robber_names = [name for name, role in Robot.all_robots.iteritems()
