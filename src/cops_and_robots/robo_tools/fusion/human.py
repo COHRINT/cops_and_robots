@@ -96,7 +96,6 @@ class Human(Sensor):
                 self.groundings['object'][object_name] = obj
 
         self.target_names = ['nothing', 'a robot'] + map_.robbers.keys()
-        logging.info(map_.robbers.keys())
         self.utterance = ''
 
     def detect(self, filter_name, type_="particle", particles=None, GMM=None):
@@ -110,18 +109,13 @@ class Human(Sensor):
             using particles.
         """
 
-        if self.utterance != '':
-            logging.info('Human said: {}'.format(self.utterance))
-
         if not self.parse_utterance():
             logging.debug('No utterance to parse!')
             return
 
-        logging.info((filter_name, self.target_name))
-
         # End detect loop if not the right target
         if self.target_name not in ['nothing', 'a robot', filter_name]:
-            logging.info('Target {} is not in {} Looking for {}.'
+            logging.debug('Target {} is not in {} Looking for {}.'
                 .format(filter_name, self.utterance, self.target_name))
             return
 

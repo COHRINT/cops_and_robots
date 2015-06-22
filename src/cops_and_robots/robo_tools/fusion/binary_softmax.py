@@ -124,14 +124,17 @@ def binary_intrinsic_space_model(poly=None):
 
 
 if __name__ == '__main__':
+
+    bsm = binary_speed_model()
+    bsm.binary_models['Slow'].plot()
     # <>TODO: Ensure the color of the 'not' is always grey
     # pent = pentagon_model()
     # bpent = BinarySoftmax(pent)
 
     # bpent.binary_models['Heliport Facade'].plot()
 
-    bdsm = binary_distance_space_model()
-    bdsm.binary_models['Near'].plot()
+    # bdsm = binary_distance_space_model()
+    # bdsm.binary_models['Near'].plot()
 
     # bism = binary_intrinsic_space_model()
     # bism.binary_models['Front'].plot()
