@@ -111,6 +111,8 @@ class Cop(Robot):
         self.show_animation = False
         self.stream = self.map.animation_stream()
 
+        self.prev_status = []
+
     def update_mission_status(self):
         """Update the cop's high-level mission status.
 
@@ -138,8 +140,14 @@ class Cop(Robot):
         elif self.status[0] != 'capturing':
             self.status[0] = 'searching'
 
-        logging.info('{} is {} and {}.'.format(self.name, self.status[0],
-                                               self.status[1]))
+        if self.status[1] is 'stuck':
+            logging.warn('{} is {} and {} (moved {}m in last {} time steps).'
+              .format(self.name, self.status[0], self.status[1],
+                      self.distance_travelled, self.check_last_n))
+        elif self.prev_status != self.status:
+            logging.info('{} is {} and {}.'.format(self.name, self.status[0],
+                                                   self.status[1]))
+        self.prev_status = self.status[:]
 
     def animated_exploration(self):
         """Start the cop's exploration of the environment, while
