@@ -148,8 +148,8 @@ class FusionEngine(object):
         if self.filter_type == 'particle':
 
             # Remove all particles from combined filter
-            self.filters['combined'].particles = \
-                np.zeros((1, 5))
+            # <>TODO: correct number of particles based on state
+            self.filters['combined'].particles = np.zeros((1, 5))
 
             # Add all particles from missing robots to combined filter
             for i, name in enumerate(self.missing_robber_names):

@@ -465,30 +465,68 @@ class Softmax(object):
             self.class_cmaps = Softmax.class_cmaps[0:self.num_classes]
             self.class_colors = Softmax.class_colors[0:self.num_classes]
 
-    def plot_class(self, class_i):
-        fig = plt.figure(1, figsize=(12, 10))
-        ax = fig.gca(projection='3d')
+    def plot_class(self, class_i, ax=None, plot_3d=False, fill_between=True, **kwargs):
+        
+        if self.state.shape[1] > 1:
+            if ax is None:
+                fig = plt.figure(1, figsize=(8, 8))
+                if plot_3d:
+                    ax = fig.gca(projection='3d')
+                else:
+                    ax = fig.gca()
 
-        # Plot each surface
-        prob = self.probs[:, class_i].reshape(self.X.shape)
-        ax.plot_surface(self.X, self.Y, prob, rstride=1, cstride=3,
-                        cmap=plt.get_cmap('jet'), alpha=0.8, vmin=0,
-                        vmax=1.2, linewidth=0, antialiased=True, shade=False)
+            # Plot surface
+            prob = self.probs[:, class_i].reshape(self.X.shape)
+            
+            if plot_3d:
+                ax.plot_surface(self.X, self.Y, prob, rstride=1, cstride=3,
+                                cmap=plt.get_cmap('jet'), alpha=0.8, vmin=0,
+                                vmax=1.2, linewidth=0, antialiased=True,
+                                shade=False, **kwargs)
+            else:
+                ax.contourf(self.X, self.Y, prob, cmap=plt.get_cmap('jet'),
+                            **kwargs)
 
-        ax.set_xlim(self.bounds[0], self.bounds[2])
-        ax.set_ylim(self.bounds[1], self.bounds[3])
+            ax.set_xlim(self.bounds[0], self.bounds[2])
+            ax.set_ylim(self.bounds[1], self.bounds[3])
 
-        # Shrink current axis's height by 10% on the bottom
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                         box.width, box.height * 0.9])
+            # Shrink current axis's height by 10% on the bottom
+            if plot_3d:
+                box = ax.get_position()
+                ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                                 box.width, box.height * 0.9])
 
-        ax.set_xlabel('x1')
-        ax.set_ylabel('x2')
-        ax.set_zlabel('Probability of {}'.format(self.class_labels[class_i]))
-        ax.set_title('Class Probailities')
+            ax.set_xlabel('x1')
+            ax.set_ylabel('x2')
 
-        plt.show()
+            if plot_3d:
+                ax.set_zlabel('Probability of {}'
+                              .format(self.class_labels[class_i]))
+            ax.set_title('Class Probailities')
+
+        else:
+            if ax is None:
+                fig = plt.figure(1, figsize=(8, 8))
+                ax = fig.gca()
+
+            # Plot curve
+            ax.plot(self.X[0, :], self.probs[:, class_i],
+                    color=self.class_colors[class_i], **kwargs)
+            if fill_between:
+                ax.fill_between(self.X[0, :], 0, self.probs[:, i],
+                                color=self.class_colors[class_i],
+                                alpha=0.4)
+            
+            ax.set_xlim(self.bounds[0], self.bounds[2])
+
+            ax.set_xlabel('x')
+            ax.set_ylabel('Probability of {}'
+                          .format(self.class_labels[class_i]))
+            # ax.set_title('Probability of {}'
+            #              .format(self.class_labels[class_i]))
+        
+        # plt.show()
+        return ax 
 
     def plot(self, plot_classes=True, plot_probs=True, plot_poly=False,
              plot_normals=False, title='Softmax Classification', **kwargs):
@@ -510,9 +548,11 @@ class Softmax(object):
             Keyword arguments for ``plot_classes``.
         """
         # Plotting attributes
-        self.fig = plt.figure(3, figsize=(14, 8))
 
         if plot_classes and plot_probs:
+            self.fig = plt.figure(3, figsize=(14, 8))
+            bbox_size = (-1.3, -0.175, 2.2, -0.075)
+
             ax1 = self.fig.add_subplot(1, 2, 1)
             if self.state.shape[1] > 1:
                 ax2 = self.fig.add_subplot(1, 2, 2, projection='3d')
@@ -520,9 +560,17 @@ class Softmax(object):
                 ax2 = self.fig.add_subplot(1, 2, 2)
             self._plot_classes(ax1)
             self._plot_probs(ax2)
+            
         elif plot_classes:
+            self.fig = plt.figure(3, figsize=(8, 8))
+            bbox_size = (0, -0.175, 1, -0.075)
+
             self._plot_classes(**kwargs)
         elif plot_probs:
+            self.fig = plt.figure(3, figsize=(8, 8))
+            bbox_size = (0, -0.15, 1, -0.05)
+
+
             self._plot_probs()
 
         # Create Proxy artists for legend labels
@@ -536,7 +584,7 @@ class Softmax(object):
                                      alpha=0.6, label=proxy_label,)
 
         plt.legend(handles=proxy, loc='lower center', mode='expand', ncol=4,
-                   bbox_to_anchor=(-1.3, -0.175, 2.2, -0.075), borderaxespad=0.)
+                   bbox_to_anchor=bbox_size, borderaxespad=0.)
         plt.suptitle(title, fontsize=16)
 
         # Plot polygon, if possible
@@ -880,7 +928,7 @@ def intrinsic_space_model(poly=None):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    np.set_printoptions(precision=2, suppress=True)
+    np.set_printoptions(precision=10, suppress=True)
 
     # sm = pentagon_model()
     # sm.plot()
@@ -888,13 +936,18 @@ if __name__ == '__main__':
     # sm = speed_model()
     # sm.plot()
 
-    x = [-3, -3, 3, 3]
-    y = [-1, 1, 1, -1]
-    y = [-3, -1, -1, -3]
-    pts = zip(x,y)
-    poly = Polygon(pts)
-    sm = distance_space_model(poly)
-    sm.plot(plot_poly=True)
+    sm = intrinsic_space_model()
+    sm.plot_class(1)
+    print sm.weights
+    print sm.biases
+
+    # x = [-3, -3, 3, 3]
+    # y = [-1, 1, 1, -1]
+    # y = [-3, -1, -1, -3]
+    # pts = zip(x,y)
+    # poly = Polygon(pts)
+    # sm = distance_space_model(poly)
+    # sm.plot(plot_poly=True)
 
     # # Make big poly
     # poly = make_regular_2D_poly(n_sides=4, origin=(0,0), theta=np.pi/4, max_r=3)

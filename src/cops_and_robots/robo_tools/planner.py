@@ -22,8 +22,8 @@ __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
 import logging
-import random
 import math
+import random
 
 import numpy as np
 from shapely.geometry import Point, LineString
@@ -110,8 +110,9 @@ class Planner(object):
                                                 self.goal_pose]))
         else:
             self.goal_pose = self.view_goal(target_pose)
-            logging.info("New view goal: {} to see {}"
-                         .format(["{:.2f}".format(a) for a in target_pose],
+            logging.info("New view goal ({}): {} to see {}"
+                         .format(self.type,
+                                 ["{:.2f}".format(a) for a in target_pose],
                                  ["{:.2f}".format(a) for a in self.goal_pose]))
 
         return self.goal_pose
@@ -241,12 +242,14 @@ class Planner(object):
         else:
             particles = next(fusion_engine.filters.iteritems()).particles
 
+
         max_prob = particles[:, 0].max()
-        max_particle_i = np.where(particles[:, 0] == max_prob)
+        max_particle_i = np.where(particles[:, 0] == max_prob)[0]
         max_particles = particles[max_particle_i, :]
 
+
         # Select randomly from max_particles
-        max_particle = random.choice(max_particles[0])
+        max_particle = random.choice(max_particles)
         goal_pose = np.append(max_particle[1:3], theta)
 
         return goal_pose

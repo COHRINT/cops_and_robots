@@ -183,7 +183,6 @@ class ParticleFilter(object):
             A human sensor object.
 
         """
-        logging.info('Calling the PF for {}'.format(self.target_name))
         human_sensor.detect(self.target_name, 'particle', self.particles,)
 
     def resample(self):
