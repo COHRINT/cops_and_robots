@@ -364,8 +364,9 @@ class Softmax(object):
         self.num_subclasses = self.subclass_probs.shape[1]
         self.num_classes = len(set(self.class_labels))
         self.class_labels = []
-        [self.class_labels.append(l) for l in self.subclass_labels
-         if l not in self.class_labels]
+        for l in self.subclass_labels:
+            if l not in self.class_labels:
+                self.class_labels.append(l)
 
         # Assign new colors to unique classes
         self.class_cmaps = []
@@ -920,7 +921,7 @@ def intrinsic_space_model(poly=None):
 
     # <>TODO: If sides != 4, find a way to make it work!
 
-    labels = ['Inside', 'Front', 'Back', 'Left', 'Right']
+    labels = ['Inside', 'Front', 'Left', 'Back', 'Right']
     steepness = 3
     sm = Softmax(poly=poly, class_labels=labels, resolution=0.1,
                  steepness=steepness)
