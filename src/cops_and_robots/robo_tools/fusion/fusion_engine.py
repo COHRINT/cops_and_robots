@@ -123,12 +123,12 @@ class FusionEngine(object):
         for robber in robbers.values():
             if not self.filters[robber.name].finished:
                 self.filters[robber.name].update(sensors['camera'],
-                                                 robber.pose,
+                                                 robber.pose2D.pose,
                                                  sensors['human'])
 
                 if robber.status == 'detected':
                     logging.info('{} detected!'.format(robber.name))
-                    self.filters[robber.name].robber_detected(robber.pose)
+                    self.filters[robber.name].robber_detected(robber.pose2D.pose)
 
             # Chop down list of missing robber names if one was captured
             if robber.status == 'captured':

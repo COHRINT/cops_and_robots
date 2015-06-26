@@ -8,6 +8,7 @@ import numpy as np
 from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.robo_tools.cop import Cop
 
+
 def main():
     # <>TODO: add function name, properly formatted, to logger
     # Set up logger
@@ -18,7 +19,7 @@ def main():
 
     # Pre-test config
     robber_model = 'static'
-    deckard = Cop(robber_model=robber_model)
+    deckard = Cop(robber_model=robber_model, pose_source='odom')
     deckard.map.combined_only = True
 
     # Describe simulation

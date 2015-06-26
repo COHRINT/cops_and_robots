@@ -75,7 +75,8 @@ class Cop(Robot):
 
     def __init__(self,
                  name="Deckard",
-                 pose=[0, 0.5, 90],
+                 pose=[0, 0, 90],
+                 pose_source='python',
                  fusion_engine_type='particle',
                  planner_type='particle',
                  cop_model='simple',
@@ -84,6 +85,7 @@ class Cop(Robot):
         # Superclass and compositional attributes
         super(Cop, self).__init__(name,
                                   pose=pose,
+                                  pose_source=pose_source,
                                   role='cop',
                                   status=['searching', 'without a goal'],
                                   consider_others=True,

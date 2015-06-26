@@ -29,6 +29,7 @@ from shapely.geometry import box, Polygon, LineString
 from shapely.affinity import rotate
 from descartes.patch import PolygonPatch
 
+from cops_and_robots.robo_tools.pose import Pose
 from cops_and_robots.robo_tools.fusion.binary_softmax import binary_distance_space_model, binary_intrinsic_space_model
 
 class MapElement(object):
@@ -76,7 +77,7 @@ class MapElement(object):
         self.has_spaces = has_spaces
         self.space_resolution = space_resolution
         self.default_color = cnames[color_str]
-        self.pose = pose
+        self.pose2D = Pose(pose)
 
         # If shape has only length and width, convert to point-based poly
         if len(shape_pts) == 2:
@@ -116,7 +117,7 @@ class MapElement(object):
         self.rotate_poly(pose[2], rotation_point)
 
         # Translate the polygon
-        self.pose = pose
+        self.pose2D.pose = pose
         shape_pts = [(p[0] + pose[0], p[1] + pose[1])
                      for p in self.shape.exterior.coords]
         self.shape = Polygon(shape_pts)
@@ -245,5 +246,5 @@ class MapArea(MapElement):
         if self.show_name:
             if not ax:
                 ax = plt.gca()
-            ax.annotate(self.name, self.pose[:2])
+            ax.annotate(self.name, self.pose2D.pose[:2])
 

@@ -81,21 +81,21 @@ class Camera(Sensor):
 
         # Set the ideal and actual viewcones
         self.ideal_viewcone = MapObject('Ideal viewcone',
-                                     viewcone_pts,
-                                     visible=False,
-                                     color_str='pink',
-                                     pose=robot_pose,
-                                     has_spaces=False,
-                                     centroid_at_origin=False,
-                                     )
+                                        viewcone_pts,
+                                        visible=False,
+                                        color_str='pink',
+                                        pose=robot_pose,
+                                        has_spaces=False,
+                                        centroid_at_origin=False,
+                                        )
         self.viewcone = MapObject('Viewcone',
-                               viewcone_pts,
-                               visible=True,
-                               color_str='lightyellow',
-                               pose=robot_pose,
-                               has_spaces=False,
-                               centroid_at_origin=False,
-                               )
+                                  viewcone_pts,
+                                  visible=True,
+                                  color_str='lightyellow',
+                                  pose=robot_pose,
+                                  has_spaces=False,
+                                  centroid_at_origin=False,
+                                  )
         self.view_pose = (0, 0, 0)
 
         # <>TODO: Add in and test an offset of (-0.1,-0.1)
@@ -136,7 +136,7 @@ class Camera(Sensor):
                                        rotation_pt=self.view_pose[0:2])
         self.viewcone.move_shape(transform, rotation_pt=self.view_pose[0:2])
         self.view_pose = pose
-
+        
     def _rescale_viewcone(self, robot_pose, shape_layer):
         """Rescale the viewcone based on intersecting map objects.
 
@@ -167,7 +167,7 @@ class Camera(Sensor):
             self.viewcone.shape = self.ideal_viewcone.shape
 
     def detect_robber(self, robber):
-        if self.viewcone.shape.contains(Point(robber.pose)):
+        if self.viewcone.shape.contains(Point(robber.pose2D.pose)):
             robber.status = 'detected'
 
     def detect(self, filter_type, particles=None):
@@ -196,14 +196,14 @@ class Camera(Sensor):
         """
         #<>TODO: Get unit tests running
         # Define rotation matrix
-        theta = 2 * np.pi - np.radians(self.view_pose[2])
+        theta = 2 * np.pi - np.radians(self.viewcone.pose2D.pose[2])
         R = np.array([[np.cos(theta), -np.sin(theta)],
                       [np.sin(theta), np.cos(theta)],])
 
         # Update particle probabilities in view cone
         for i, particle in enumerate(particles):
             if self.viewcone.shape.contains(Point(particle[1:3])):
-                relative_pose = np.subtract(particle[1:3], self.view_pose[0:2])
+                relative_pose = np.subtract(particle[1:3], self.viewcone.pose2D.pose[0:2])
                 relative_pose = np.dot(R, relative_pose)
                 particles[i, 0] *= (1 - self.detection_model.probs_at_state(relative_pose[0:2],0))
 
@@ -236,14 +236,14 @@ if __name__ == '__main__':
     w = 0.1524  # [m] wall width
 
     pose = (2.4, 0, 90)
-    wall1 = MapObject('wall1', (l, w), pose)
+    wall1 = MapObject('wall1', (l, w), pose=pose)
     pose = (2, 2.2, 0)
-    wall2 = MapObject('wall2', (l, w), pose)
+    wall2 = MapObject('wall2', (l, w), pose=pose)
 
     shape_layer = ShapeLayer(bounds=bounds)
     shape_layer.add_obj(wall1)
     shape_layer.add_obj(wall2)
-    shape_layer.plot(plot_zones=False)
+    shape_layer.plot()
 
     # Define Particle Filter
     # target_pose = (10,10,0)
@@ -254,8 +254,9 @@ if __name__ == '__main__':
     for point in goal_points:
         # kinect.update_viewcone(point,shape_layer,particle_filter,target_pose)
         kinect.update_viewcone(point, shape_layer)
-        kinect.viewcone.plot(plot_zones=False,
-                             color=cnames['yellow'],
+        print('preplot', kinect.viewcone.pose2D.pose)
+        print('self.view_pose', kinect.view_pose)
+        kinect.viewcone.plot(color=cnames['yellow'],
                              alpha=0.5
                              )
 
