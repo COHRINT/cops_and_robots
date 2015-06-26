@@ -29,6 +29,7 @@ import numpy as np
 
 from shapely.geometry import Point
 
+from cops_and_robots.robo_tools.pose import Pose
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
 from cops_and_robots.robo_tools.planner import Planner
 from cops_and_robots.map_tools.map import set_up_fleming
@@ -109,6 +110,7 @@ class Robot(iRobotCreate):
     def __init__(self,
                  name,
                  pose=[0, 0.5, 0],
+                 pose_source='python',
                  map_name='fleming',
                  role='robber',
                  status=['on the run', 'without a goal'],
@@ -136,10 +138,10 @@ class Robot(iRobotCreate):
         if self.control_hardware:
             super(Robot, self).__init__()
 
-        # Class attributes
+        # Object attributes
         self.name = name
-        self.pose = pose
-        self.goal_pose = self.pose[:]
+        self.pose2D = Pose(pose, pose_source)
+        self.goal_pose = pose[:]
         self.role = role
         self.status = status
         if not map_name:
@@ -152,7 +154,7 @@ class Robot(iRobotCreate):
         # Movement attributes
         self.move_distance = 0.2  # [m] per time step
         self.rotate_distance = 15  # [deg] per time step
-        self.pose_history = np.array(([0, 0, 0], self.pose))
+        self.pose_history = np.array(([0, 0, 0], pose))
         self.check_last_n = 50  # number of poses to look at before stuck
         self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
         self.stuck_buffer = 20  # time steps after being stuck before checking
@@ -176,14 +178,14 @@ class Robot(iRobotCreate):
 
         # Start with a goal and a path
         self.goal_pose = self.planner.find_goal_pose(self.fusion_engine)
-        self.path, self.path_theta = self.planner.update_path(self.pose)
+        self.path, self.path_theta = self.planner.update_path(pose)
 
     def update_shape(self):
         """Update the robot's map_obj.
         """
 
         # <>TODO: refactor this
-        self.map_obj.move_shape((self.pose -
+        self.map_obj.move_shape((self.pose2D.pose -
                                  self.pose_history[-2:, :]).tolist()[0])
 
     def make_others(self):
@@ -234,10 +236,11 @@ class Robot(iRobotCreate):
         if not path:
             path = self.path
         next_point = path.interpolate(self.move_distance)
-        self.pose[0:2] = (next_point.x, next_point.y)
+        self.pose2D.x = next_point.x
+        self.pose2D.y = next_point.y
         logging.debug("{} translated to {}"
                       .format(self.name,
-                              ["{:.2f}".format(a) for a in self.pose]))
+                              ["{:.2f}".format(a) for a in self.pose2D.pose]))
 
     def rotate_to_pose(self, theta=None):
         """Rotate the robot about its centroid towards a goal angle.
@@ -253,18 +256,18 @@ class Robot(iRobotCreate):
             theta = self.goal_pose[2]
 
         # Rotate ccw or cw
-        angle_diff = theta - self.pose[2]
-        rotate_ccw = (abs(angle_diff) < 180) and theta > self.pose[2] or \
-                     (abs(angle_diff) > 180) and theta < self.pose[2]
+        angle_diff = theta - self.pose2D.pose[2]
+        rotate_ccw = (abs(angle_diff) < 180) and theta > self.pose2D.pose[2] or \
+                     (abs(angle_diff) > 180) and theta < self.pose2D.pose[2]
         if rotate_ccw:
             next_angle = min(self.rotate_distance, abs(angle_diff))
         else:
             next_angle = -min(self.rotate_distance, abs(angle_diff))
         logging.debug('Next angle: {:.2f}'.format(next_angle))
-        self.pose[2] = (self.pose[2] + next_angle) % 360
+        self.pose2D.theta = (self.pose2D.theta + next_angle) % 360
         logging.debug("{} rotated to {}"
                       .format(self.name,
-                              ["{:.2f}".format(a) for a in self.pose]))
+                              ["{:.2f}".format(a) for a in self.pose2D.pose]))
 
     def is_stuck(self):
         """Check if the robot has not moved significantly.
@@ -322,7 +325,7 @@ class Robot(iRobotCreate):
             raise RuntimeError("*is_on_path* should not be called while the "
                                "robot's status is anything but *rotating*.")
 
-        return abs(self.pose[2] - self.path_theta) < self.rotation_allowance
+        return abs(self.pose2D.pose[2] - self.path_theta) < self.rotation_allowance
 
     def is_near_goal(self):
         """Check if the robot is near its goal (in distance, not rotation).
@@ -343,7 +346,7 @@ class Robot(iRobotCreate):
 
         goal_pt = Point(self.goal_pose[0:2])
         approximation_circle = goal_pt.buffer(self.distance_allowance)
-        pose_pt = Point(self.pose[0:2])
+        pose_pt = Point(self.pose2D.pose[0:2])
         return approximation_circle.contains(pose_pt)
 
     def is_at_goal(self):
@@ -362,7 +365,7 @@ class Robot(iRobotCreate):
             raise RuntimeError("*is_at_goal* should not be called while the "
                                "robot's status is anything but *near goal*.")
 
-        return abs(self.pose[2] - self.goal_pose[2]) < self.rotation_allowance
+        return abs(self.pose2D.pose[2] - self.goal_pose[2]) < self.rotation_allowance
 
     def update_movement_status(self):
         """Define the robot's current movement status.
@@ -441,27 +444,29 @@ class Robot(iRobotCreate):
             self.status[1] = 'rotating'
 
         # Translate or rotate, depending on status
-        if self.status[1] == 'rotating':
-            self.rotate_to_pose(self.path_theta)
-        elif self.status[1] == 'on goal path':
-            self.translate_towards_goal()
-        elif self.status[1] == 'near goal':
-            self.rotate_to_pose(self.goal_pose[2])
-
-        self.path, self.path_theta = self.planner.update_path(self.pose)
+        if self.pose2D.pose_source == 'python':
+            if self.status[1] == 'rotating':
+                self.rotate_to_pose(self.path_theta)
+            elif self.status[1] == 'on goal path':
+                self.translate_towards_goal()
+            elif self.status[1] == 'near goal':
+                self.rotate_to_pose(self.goal_pose[2])
+        
+        self.path, self.path_theta = self.planner.update_path(self.pose2D.pose)
 
         # Update sensor and fusion information, if a cop
         if self.role == 'cop':
+            print('sensor pose', self.sensors['camera'].viewcone.pose2D.pose)
             # Try to visually spot a robber
             for missing_robber in self.missing_robbers.values():
                 self.sensors['camera'].detect_robber(missing_robber)
 
             # Update probability model
-            self.fusion_engine.update(self.pose, self.sensors,
+            self.fusion_engine.update(self.pose2D.pose, self.sensors,
                                       self.missing_robbers)
 
         # Add to the pose history, update the map and status
-        self.pose_history = np.vstack((self.pose_history, self.pose[:]))
+        self.pose_history = np.vstack((self.pose_history, self.pose2D.pose[:]))
         self.update_shape()
         self.update_movement_status()
         self.update_mission_status()
