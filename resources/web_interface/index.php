@@ -1,7 +1,7 @@
 <!-- PLEASE SEE AND UPDATE INSTRUCTIONS HERE: https://github.com/COHRINT/Cops-and-Robots/wiki/Operating-Procedures -->
 
 <link href="interface.css" type="text/css" rel="stylesheet" />
-<link href="bootstrap.min.css" rel="stylesheet">
+<link href="bootstrap-3.3.4-dist/bootstrap.min.css" rel="stylesheet">
 
 <?php
 $robots = array("Deckard", "Pris", "Roy", "Zhora");
@@ -41,50 +41,52 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		<!-- Camera Options -->
 		        <div role="tabpanel">
 
+
+
 	                <!-- Nav tabs -->
             		<ul class="nav nav-tabs" role="tablist">
-                   		 	<li role="presentation" class="active"><a href="#Deckard's Camera" aria-controls="Deckard's Camera" role="tab" data-toggle="tab">Deckard's Camera</a></li>
+                   		 	<li role="presentation" class="active"><a href="#Deckard's Camera" aria-controls="Deckard's Camera" data-toggle="tab">Deckard's Camera</a></li>
                    		 	<li class="dropdown">
-                   		 		<a href="#Robber Camera's" class="dropdown-toggle" data-toggle="dropdown" role="tab" aria-haspopup="true" aria-expanded="false">Robber Camera's<span class="caret"></span></a>
+                   		 		<a href="#Robber Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Robber Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
-		                   		 		<li role="presentation"><a href="#Pris's Camera" aria-controls="Pris's Camera" role="tab" data-toggle="tab">Pris's Camera</a></li>
-		                   		 		<li role="presentation"><a href="#Roy's Camera" aria-controls="Roy's Camera" role="tab" data-toggle="tab">Roy's Camera</a></li>
-		                   		 		<li role="presentation"><a href="#Zhora's Camera" aria-controls="Zhora's Camera" role="tab" data-toggle="tab">Zhora's Camera</a></li>
+		                   		 		<li><a data-toggle="tab" href="#Pris's Camera" aria-controls="Pris's Camera" >Pris's Camera</a></li>
+		                   		 		<li><a data-toggle="tab" href="#Roy's Camera" aria-controls="Roy's Camera" >Roy's Camera</a></li>
+		                   		 		<li><a data-toggle="tab" href="#Zhora's Camera" aria-controls="Zhora's Camera" >Zhora's Camera</a></li>
                    		 			</ul>
                    		 	</li>
                    		 	<li class="dropdown">
-                   		 		<a href="#Camera's" class="dropdown-toggle" data-toggle="dropdown" role="tab" aria-haspopup="true" aria-expanded="false">Camera's<span class="caret"></span></a>
+                   		 		<a href="#Security Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Security Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
-		                    			<li role="presentation"><a href="#Camera 1" aria-controls="Camera 1" role="tab" data-toggle="tab">Camera 1</a></li>
-		                    			<li role="presentation"><a href="#Camera 2" aria-controls="Camera 2" role="tab" data-toggle="tab">Camera 2</a></li>
-		                    			<li role="presentation"><a href="#Camera 3" aria-controls="Camera 3" role="tab" data-toggle="tab">Camera 3</a></li>
+		                    			<li><a data-toggle="tab" href="#Camera 1" aria-controls="Camera 1" >Camera 1</a></li>
+		                    			<li><a data-toggle="tab" href="#Camera 2" aria-controls="Camera 2" >Camera 2</a></li>
+		                    			<li><a data-toggle="tab" href="#Camera 3" aria-controls="Camera 3" >Camera 3</a></li>
 		                    		</ul>
 		                    </li>
             		</ul>
 
 		  			<!-- Tab panes -->
 	  				<div class="tab-content">
-	    					<div role="tabpanel" class="tab-pane active" id="Deckard's Camera"> 
-	    						<iframe  id="cameraDeckard-visual" class="embed-responsive-item" src="http://192.168.20.121:9021/stream_viewer?topic=/camera/rgb/image_raw&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					<div class="tab-pane active" id="Deckard's Camera"> 
+	    						<iframe  id="deckard-camera-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
 	    					</div>
-	    					<!-- <div role="tabpanel" class="tab-pane" id="Pris's Camera"> 
-	    						<iframe  id="camera1-visual" class="embed-responsive-item" src="http://192.168.20.123:9023/stream_viewer?topic=TOPIC&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div> -->
-	    					<!-- <div role="tabpanel" class="tab-pane" id="Roy's Camera"> 
-	    						<iframe  id="camera1-visual" class="embed-responsive-item" src="http://192.168.20.122:9022/stream_viewer?topic=TOPIC&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div> -->
-	    					<!-- <div role="tabpanel" class="tab-pane" id="Zhora's Camera"> 
-	    						<iframe  id="camera1-visual" class="embed-responsive-item" src="http://192.168.20.124:9024/stream_viewer?topic=TOPIC&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div> -->
-	    					<!-- <div role="tabpanel" class="tab-pane" id="Camera 1"> 
-	    						<iframe  id="camera1-visual" class="embed-responsive-item" src="http://192.168.20.131:9041/stream_viewer?topic=TOPIC&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div> -->
-	    					<!-- <div role="tabpanel" class="tab-pane" id="Camera 2"> 
-	    						<iframe  id="camera2-visual" class="embed-responsive-item" src="http://192.168.20.132:9042/stream_viewer?topic=TOPIC&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div> -->
-	    					<!-- <div role="tabpanel" class="tab-pane" id="Camera 3"> 
-	    						<iframe  id="camera3-visual" class="embed-responsive-item" src="http://192.168.20.133:9043/stream_viewer?topic=TOPIC&width=547&height=400" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div> -->
+	    					<div class="tab-pane" id="Pris's Camera"> 
+	    						<iframe  id="pris-camera-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					</div>
+	    					<div class="tab-pane" id="Roy's Camera"> 
+	    						<iframe  id="roy-camera-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					</div>
+	    					<div class="tab-pane" id="Zhora's Camera"> 
+	    						<iframe  id="zhora-camera-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					</div>
+	    					<div class="tab-pane" id="Camera 1"> 
+	    						<iframe  id="camera1-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					</div>
+	    					<div class="tab-pane" id="Camera 2"> 
+	    						<iframe  id="camera2-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					</div>
+	    					<div class="tab-pane" id="Camera 3"> 
+	    						<iframe  id="camera3-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					</div>
 	  				</div>
 
 				</div>
@@ -92,8 +94,9 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		</div><!-- /#visual -->
 
 		<!-- Environment Map -->
-<!-- Currently running through local host -->
+			<!-- Currently running through local host -->
 
+		
 		<div id="map-test" class="col-md-6">
 			<h3 align="center">Environment Map
 				<button class="btn btn-info btn-sm" data-toggle="modal" data-target=".bs-example-modal-lg">
@@ -124,13 +127,28 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 			        <h4 class="modal-title" id="myModalLabel">Settings</h4>
 			      </div>
 			      <div class="modal-body">
-			        <h3>Data Source</h3>
+			      	
+			      	<h3>Search Style</h3>
 			        <div id="settings-source" class="btn-group" data-toggle="buttons">
 					  <label class="btn btn-info active">
-					    <input type="radio" name="options" id="setting-source-vicon" autocomplete="off" checked> Vicon
+					    <input type="radio" name="options" id="setting-style-static" autocomplete="off" checked> Static
 					  </label>
 					  <label class="btn btn-info ">
-					    <input type="radio" name="options" id="setting-source-sim" autocomplete="off" > Gazebo
+					    <input type="radio" name="options" id="setting-style-dynamic" autocomplete="off" > Dynamic
+					  </label>
+					</div>
+
+
+			        <h3>Experiment/Simulation Type</h3>
+			        <div id="settings-source" class="btn-group" data-toggle="buttons">
+					  <label class="btn btn-info active">
+					    <input type="radio" name="options" id="setting-source-vicon" autocomplete="off" checked > Vicon
+					  </label>
+					  <label class="btn btn-info ">
+					    <input type="radio" name="options" id="setting-source-gazebo" autocomplete="off" > Gazebo
+					  </label>
+					  <label class="btn btn-info ">
+					    <input type="radio" name="options" id="setting-source-python" autocomplete="off" > Python
 					  </label>
 					</div>
 
@@ -155,9 +173,12 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 
 		<!-- Controls -->
 		<!-- Major Lanch Button -->
+		<!-- onclick= "<?php //shell_exec("/bash/start_stop.sh");?>" -->
+
+
 		<div id="controls" class="col-md-6">
 			<div>
-			<button id="start-stop" type="button" class="btn btn-success btn-lg col-md-12" onclick= "<?php shell_exec("/bash/start_stop.sh");?>">
+			<button id="start-stop" type="button" class="btn btn-success btn-lg col-md-12" >
 				<span class="glyphicon glyphicon-play"></span>
 			</button>
 			</div>
@@ -295,7 +316,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-<script src="bootstrap.min.js"></script>
+<script src="bootstrap-3.3.4-dist/bootstrap.min.js"></script>
 <script type="text/javascript" src="js/keyboardteleopquadrotor.js"></script>
 <script type="text/javascript" src="js/interface.js"></script>
 
