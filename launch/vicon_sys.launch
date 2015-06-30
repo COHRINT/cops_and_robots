@@ -24,7 +24,7 @@
     	<rosparam param="mappings">
           - {old: "/world",
             new: "/odom"}
-          - {old: "vicon/deckard/deckard",
+          - {old: "/vicon/$(arg model)/$(arg model)",
             new: "/base_footprint"}
         </rosparam>
     </node>
