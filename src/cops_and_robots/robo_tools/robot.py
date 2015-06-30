@@ -111,6 +111,7 @@ class Robot(iRobotCreate):
                  name,
                  pose=[0, 0.5, 0],
                  pose_source='python',
+                 publish_to_ROS=False,
                  map_name='fleming',
                  role='robber',
                  status=['on the run', 'without a goal'],
@@ -148,16 +149,16 @@ class Robot(iRobotCreate):
             self.map = None
         else:
             self.map = set_up_fleming()
-        self.planner = Planner(planner_type, self.map.feasible_layer)
+        self.planner = Planner(planner_type, self.map.feasible_layer, publish_to_ROS)
         self.fusion_engine = None
 
         # Movement attributes
         self.move_distance = 0.2  # [m] per time step
         self.rotate_distance = 15  # [deg] per time step
         self.pose_history = np.array(([0, 0, 0], pose))
-        self.check_last_n = 50  # number of poses to look at before stuck
         self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
-        self.stuck_buffer = 20  # time steps after being stuck before checking
+        self.stuck_buffer = 50  # time steps after being stuck before checking
+        self.check_last_n = self.stuck_buffer  # number of poses to look at before stuck
         self.distance_allowance = 0.1  # [m] acceptable distance to a goal
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
         self.num_goals = None  # number of goals to reach (None for infinite)
@@ -281,24 +282,22 @@ class Robot(iRobotCreate):
             self.stuck_buffer += -1
             return False
 
-        if len(self.pose_history) > self.check_last_n:
-            self.distance_travelled = 0
-            last_poses = self.pose_history[-self.check_last_n:]
-            for i, pose in enumerate(last_poses):
-                dist = math.sqrt((last_poses[i][0] - pose[0]) ** 2 +
-                                 (last_poses[i][1] - pose[1]) ** 2)
+        self.distance_travelled = 0
+        last_poses = self.pose_history[-self.check_last_n:]
+        for i, pose in enumerate(last_poses):
+            if i < self.check_last_n-1:
+                dist = math.sqrt((last_poses[i+1][0] - pose[0]) ** 2 +
+                                 (last_poses[i+1][1] - pose[1]) ** 2)
                 self.distance_travelled += dist
 
-            # Update the buffer
-            self.stuck_buffer = 20
+        # Update the buffer
+        self.stuck_buffer = 20
 
-            logging.debug('{} travelled {:.2f}m in last {}'
-                          .format(self.name, self.distance_travelled,
-                                  self.check_last_n))
-            return self.distance_travelled < self.stuck_distance
-        else:
-            return False
-
+        logging.debug('{} travelled {:.2f}m in last {}'
+                      .format(self.name, self.distance_travelled,
+                              self.check_last_n))
+        return self.distance_travelled < self.stuck_distance
+        
     def has_new_goal(self):
         """Check if the robot received a new goal from the planner.
 
@@ -451,12 +450,11 @@ class Robot(iRobotCreate):
                 self.translate_towards_goal()
             elif self.status[1] == 'near goal':
                 self.rotate_to_pose(self.goal_pose[2])
-        
+
         self.path, self.path_theta = self.planner.update_path(self.pose2D.pose)
 
         # Update sensor and fusion information, if a cop
         if self.role == 'cop':
-            print('sensor pose', self.sensors['camera'].viewcone.pose2D.pose)
             # Try to visually spot a robber
             for missing_robber in self.missing_robbers.values():
                 self.sensors['camera'].detect_robber(missing_robber)
