@@ -114,7 +114,6 @@ class Robot(iRobotCreate):
                  status=['on the run', 'without a goal'],
                  planner_type='simple',
                  consider_others=False,
-                 control_hardware=False,
                  **kwargs):
 
         # Check robot name
@@ -131,11 +130,6 @@ class Robot(iRobotCreate):
         else:
             self.other_robots = {}
 
-        # Initialize iRobot Create superclass only if controlling hardware
-        self.control_hardware = control_hardware
-        if self.control_hardware:
-            super(Robot, self).__init__()
-
         # Class attributes
         self.name = name
         self.pose = pose
@@ -150,8 +144,7 @@ class Robot(iRobotCreate):
         self.fusion_engine = None
 
         # Movement attributes
-        self.move_distance = 0.2  # [m] per time step
-        self.rotate_distance = 15  # [deg] per time step
+        
         self.pose_history = np.array(([0, 0, 0], self.pose))
         self.check_last_n = 50  # number of poses to look at before stuck
         self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
@@ -233,7 +226,7 @@ class Robot(iRobotCreate):
 
         if not path:
             path = self.path
-        next_point = path.interpolate(self.move_distance)
+        next_point = path.interpolate(self.max_move_distance)
         self.pose[0:2] = (next_point.x, next_point.y)
         logging.debug("{} translated to {}"
                       .format(self.name,
@@ -257,9 +250,9 @@ class Robot(iRobotCreate):
         rotate_ccw = (abs(angle_diff) < 180) and theta > self.pose[2] or \
                      (abs(angle_diff) > 180) and theta < self.pose[2]
         if rotate_ccw:
-            next_angle = min(self.rotate_distance, abs(angle_diff))
+            next_angle = min(self.max_rotate_distance, abs(angle_diff))
         else:
-            next_angle = -min(self.rotate_distance, abs(angle_diff))
+            next_angle = -min(self.max_rotate_distance, abs(angle_diff))
         logging.debug('Next angle: {:.2f}'.format(next_angle))
         self.pose[2] = (self.pose[2] + next_angle) % 360
         logging.debug("{} rotated to {}"
@@ -440,13 +433,9 @@ class Robot(iRobotCreate):
             self.planner.type = prev_type
             self.status[1] = 'rotating'
 
+
         # Translate or rotate, depending on status
-        if self.status[1] == 'rotating':
-            self.rotate_to_pose(self.path_theta)
-        elif self.status[1] == 'on goal path':
-            self.translate_towards_goal()
-        elif self.status[1] == 'near goal':
-            self.rotate_to_pose(self.goal_pose[2])
+        self.controller.update()
 
         self.path, self.path_theta = self.planner.update_path(self.pose)
 
