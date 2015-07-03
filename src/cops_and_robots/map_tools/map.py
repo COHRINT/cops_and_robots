@@ -148,9 +148,9 @@ class Map(object):
         robber_name : str
             Name of the robber.
         """
-        self.shape_layer.rem_obj(robber_name)
+        # self.shape_layer.rem_obj(robber_name)
         del self.robbers[robber_name]
-        del self.probability_layer[robber_name]
+        # del self.probability_layer[robber_name]
         # <>TODO: Update probability layer
 
     def plot(self, show_areas=False):

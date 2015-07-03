@@ -198,7 +198,7 @@ class Robot(iRobotCreate):
         logging.warn('{} has stopped'.format(self.name))
         self.mission_status = 'stopped'
 
-    def update(self, i=0):
+    def update(self):
         """Update all primary functionality of the robot.
 
         This includes planning and movement for both cops and robbers,
@@ -227,60 +227,6 @@ class Robot(iRobotCreate):
             self.pose_history = np.vstack((self.pose_history, self.pose2D.pose[:]))
             self.update_shape()
 
-            # Update sensor and fusion information, if a cop
-            if self.role == 'cop':
-                # Try to visually spot a robber
-                for missing_robber in self.missing_robbers.values():
-                    self.sensors['camera'].detect_robber(missing_robber)
-
-                # Update probability model
-                self.fusion_engine.update(self.pose2D.pose, self.sensors,
-                                          self.missing_robbers)
-            # Export the next animation stream
-            if self.role == 'cop' and self.show_animation:
-                packet = {}
-                if not self.map.combined_only:
-                    for i, robber_name in enumerate(self.missing_robbers):
-                        packet[robber_name] = \
-                            self._form_animation_packet(robber_name)
-                packet['combined'] = self._form_animation_packet('combined')
-                return self.stream.send(packet)
-
-    def _form_animation_packet(self, robber_name):
-        """Turn all important animation data into a tuple.
-
-        Parameters
-        ----------
-        robber_name : str
-            The name of the robber (or 'combined') associated with this packet.
-
-        Returns
-        -------
-        tuple
-            All important animation parameters.
-
-        """
-        # Cop-related values
-        cop_shape = self.map_obj.shape
-        if len(self.pose_history) < self.goal_planner.stuck_buffer:
-            cop_path = np.hsplit(self.pose_history[:, 0:2], 2)
-        else:
-            cop_path = np.hsplit(self.pose_history[-self.goal_planner.stuck_buffer:, 0:2],
-                                 2)
-
-        camera_shape = self.sensors['camera'].viewcone.shape
-
-        # Robber-related values
-        particles = self.fusion_engine.filters[robber_name].particles
-        if robber_name == 'combined':
-            robber_shape = {name: robot.map_obj.shape for name, robot
-                            in self.missing_robbers.iteritems()}
-        else:
-            robber_shape = self.missing_robbers[robber_name].map_obj.shape
-
-        # Form and return packet to be sent
-        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles,)
-        return packet
 
 # Import statements left to the bottom because of subclass circular dependency
 import cops_and_robots.robo_tools.cop as cop_module

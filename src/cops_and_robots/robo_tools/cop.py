@@ -20,10 +20,12 @@ __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
 import logging
+import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import cnames
+from shapely.geometry import Point
 
 from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.robo_tools.fusion.fusion_engine import FusionEngine
@@ -125,16 +127,72 @@ class Cop(Robot):
             2. searching (moving around to gather information)
 
         """
-        # <>TODO: Replace with a proper state machine
         if self.mission_status is 'searching':
             if len(self.missing_robbers) is 0:
                 self.mission_status = 'retired'
                 self.stop_all_movement()
 
+    def update(self, i=0):
+        super(Cop, self).update()
 
-        # maxp = self.fusion_engine.filters['combined'].particles[:, 0].max()
-        # minp = self.fusion_engine.filters['combined'].particles[:, 0].min()
-        # logging.info('Max particle is {}, Min particle is {}'.format(maxp, minp))
+        # Update sensor and fusion information
+        # Try to visually spot a robber
+        for robber in self.missing_robbers.values():
+            if self.sensors['camera'].viewcone.shape.contains(Point(robber.pose2D.pose)):
+                robber.mission_status = 'captured'
+                logging.info('{} captured!'.format(robber.name))
+                self.fusion_engine.filters[robber.name].robber_detected(robber.pose2D.pose)
+                self.found_robbers.update({robber.name: self.missing_robbers.pop(robber.name)})
+                self.map.rem_robber(robber.name)
+
+        # Update probability model
+        self.fusion_engine.update(self.pose2D.pose, self.sensors,
+                                  self.missing_robbers)
+        # Export the next animation stream
+        if self.role == 'cop' and self.show_animation:
+            packet = {}
+            if not self.map.combined_only:
+                for i, robber_name in enumerate(self.missing_robbers):
+                    packet[robber_name] = \
+                        self._form_animation_packet(robber_name)
+            packet['combined'] = self._form_animation_packet('combined')
+            return self.stream.send(packet)
+
+    def _form_animation_packet(self, robber_name):
+        """Turn all important animation data into a tuple.
+
+        Parameters
+        ----------
+        robber_name : str
+            The name of the robber (or 'combined') associated with this packet.
+
+        Returns
+        -------
+        tuple
+            All important animation parameters.
+
+        """
+        # Cop-related values
+        cop_shape = self.map_obj.shape
+        if len(self.pose_history) < self.goal_planner.stuck_buffer:
+            cop_path = np.hsplit(self.pose_history[:, 0:2], 2)
+        else:
+            cop_path = np.hsplit(self.pose_history[-self.goal_planner.stuck_buffer:, 0:2],
+                                 2)
+
+        camera_shape = self.sensors['camera'].viewcone.shape
+
+        # Robber-related values
+        particles = self.fusion_engine.filters[robber_name].particles
+        if robber_name == 'combined':
+            robber_shape = {name: robot.map_obj.shape for name, robot
+                            in self.missing_robbers.iteritems()}
+        else:
+            robber_shape = self.missing_robbers[robber_name].map_obj.shape
+
+        # Form and return packet to be sent
+        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles,)
+        return packet
 
     def animated_exploration(self):
         """Start the cop's exploration of the environment, while
