@@ -31,7 +31,7 @@ from shapely.geometry import Point
 
 from cops_and_robots.robo_tools.pose import Pose
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
-from cops_and_robots.robo_tools.planner import Planner
+from cops_and_robots.robo_tools.planner import GoalPlanner, PathPlanner, Controller
 from cops_and_robots.map_tools.map import set_up_fleming
 from cops_and_robots.map_tools.map_elements import MapObject
 
@@ -71,18 +71,6 @@ class Robot(iRobotCreate):
     all_robots : dict
         A dictionary of all robot names (as the key) and their respective roles
         (as the value).
-    movement_statuses : {'stuck','at goal','near goal','on goal path',
-        'rotating','without a goal'}
-        The possible movement statuses of any robot, where:
-            * `stuck` means the robot hasn't moved recently;
-            * `at goal` means the robot has reached its goal pose;
-            * `near goal` means the robot has reached its goal pose in
-            cartesian distance, but has not rotated to the final pose;
-            * `on goal path` means the robot is translating along the goal
-            path;
-            * `rotating` means the robot is rotating to align itself with the
-            next path segment;
-            * `without a goal` means the robot has no movement goal.
 
     """
 
@@ -99,14 +87,6 @@ class Robot(iRobotCreate):
                   'Zhora': 'robber',
                   }
 
-    movement_statuses = ['stuck',
-                         'at goal',
-                         'near goal',
-                         'on goal path',
-                         'rotating',
-                         'without a goal'
-                         ]
-
     def __init__(self,
                  name,
                  pose=[0, 0.5, 0],
@@ -114,10 +94,10 @@ class Robot(iRobotCreate):
                  publish_to_ROS=False,
                  map_name='fleming',
                  role='robber',
-                 status=['on the run', 'without a goal'],
-                 planner_type='simple',
+                 mission_status='on the run',
+                 goal_planner_type='simple',
+                 path_planner_type='direct',
                  consider_others=False,
-                 control_hardware=False,
                  **kwargs):
 
         # Check robot name
@@ -134,40 +114,32 @@ class Robot(iRobotCreate):
         else:
             self.other_robots = {}
 
-        # Initialize iRobot Create superclass only if controlling hardware
-        self.control_hardware = control_hardware
-        if self.control_hardware:
-            super(Robot, self).__init__()
-
         # Object attributes
         self.name = name
         self.pose2D = Pose(pose, pose_source)
-        self.goal_pose = pose[:]
         self.role = role
-        self.status = status
+        self.num_goals = None  # number of goals to reach (None for infinite)
+        self.mission_status = mission_status
         if not map_name:
             self.map = None
         else:
             self.map = set_up_fleming()
-        self.planner = Planner(planner_type, self.map.feasible_layer, publish_to_ROS)
+        self.goal_planner = GoalPlanner(self,
+                                        publish_to_ROS,
+                                        type_=goal_planner_type)
+        if publish_to_ROS is False:
+            self.path_planner = PathPlanner(self, path_planner_type)
+            self.controller = Controller(self)
         self.fusion_engine = None
 
         # Movement attributes
-        self.move_distance = 0.2  # [m] per time step
-        self.rotate_distance = 15  # [deg] per time step
-        self.pose_history = np.array(([0, 0, 0], pose))
-        self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
-        self.stuck_buffer = 50  # time steps after being stuck before checking
-        self.check_last_n = self.stuck_buffer  # number of poses to look at before stuck
-        self.distance_allowance = 0.1  # [m] acceptable distance to a goal
-        self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
-        self.num_goals = None  # number of goals to reach (None for infinite)
+        self.pose_history = np.array(([0, 0, 0], self.pose2D.pose))
 
         # Define MapObject
         shape_pts = Point(pose[0:2]).buffer(iRobotCreate.DIAMETER / 2)\
             .exterior.coords
         self.map_obj = MapObject(self.name, shape_pts[:], has_spaces=False,
-                              **kwargs)
+                                 **kwargs)
         self.update_shape()
 
         # Add self and others to the map
@@ -176,10 +148,6 @@ class Robot(iRobotCreate):
         else:
             self.map.add_robber(self.map_obj)
         self.make_others()
-
-        # Start with a goal and a path
-        self.goal_pose = self.planner.find_goal_pose(self.fusion_engine)
-        self.path, self.path_theta = self.planner.update_path(pose)
 
     def update_shape(self):
         """Update the robot's map_obj.
@@ -220,193 +188,15 @@ class Robot(iRobotCreate):
                 self.map.add_cop(new_cop.map_obj)
                 self.known_cops[name] = new_cop
 
-    # <>TODO: Break out into Controller class
-    def translate_towards_goal(self, path=None):
-        """Move the robot's x,y positions towards a goal point.
-
-        :param path: a line representing the path to the goal.
-        :type path: LineString.
-
-        Parameters
-        ----------
-        path : LineString, optional
-            A movement path represented as a Shapely LineString.Defaults to
-            the robot's current path.
-        """
-
-        if not path:
-            path = self.path
-        next_point = path.interpolate(self.move_distance)
-        self.pose2D.x = next_point.x
-        self.pose2D.y = next_point.y
-        logging.debug("{} translated to {}"
-                      .format(self.name,
-                              ["{:.2f}".format(a) for a in self.pose2D.pose]))
-
-    def rotate_to_pose(self, theta=None):
-        """Rotate the robot about its centroid towards a goal angle.
-
-        Parameters
-        ----------
-        theta : float, optional
-            The goal angle in degrees for the robot to attempt to rotate
-            towards. Defaults to the robot's current goal pose angle.
-
-        """
-        if not theta:
-            theta = self.goal_pose[2]
-
-        # Rotate ccw or cw
-        angle_diff = theta - self.pose2D.pose[2]
-        rotate_ccw = (abs(angle_diff) < 180) and theta > self.pose2D.pose[2] or \
-                     (abs(angle_diff) > 180) and theta < self.pose2D.pose[2]
-        if rotate_ccw:
-            next_angle = min(self.rotate_distance, abs(angle_diff))
-        else:
-            next_angle = -min(self.rotate_distance, abs(angle_diff))
-        logging.debug('Next angle: {:.2f}'.format(next_angle))
-        self.pose2D.theta = (self.pose2D.theta + next_angle) % 360
-        logging.debug("{} rotated to {}"
-                      .format(self.name,
-                              ["{:.2f}".format(a) for a in self.pose2D.pose]))
-
-    def is_stuck(self):
-        """Check if the robot has not moved significantly.
-
-        Evaluated overover some n time steps. If the robot has not
-        existed for n time steps, it is assumed to not be stuck.
-        """
-
-        # Check the buffer
-        if self.stuck_buffer > 0:
-            self.stuck_buffer += -1
-            return False
-
-        self.distance_travelled = 0
-        last_poses = self.pose_history[-self.check_last_n:]
-        for i, pose in enumerate(last_poses):
-            if i < self.check_last_n-1:
-                dist = math.sqrt((last_poses[i+1][0] - pose[0]) ** 2 +
-                                 (last_poses[i+1][1] - pose[1]) ** 2)
-                self.distance_travelled += dist
-
-        # Update the buffer
-        self.stuck_buffer = 20
-
-        logging.debug('{} travelled {:.2f}m in last {}'
-                      .format(self.name, self.distance_travelled,
-                              self.check_last_n))
-        return self.distance_travelled < self.stuck_distance
-        
-    def has_new_goal(self):
-        """Check if the robot received a new goal from the planner.
-
-        Returns
-        -------
-        bool
-            True if the robot has a new goal, false otherwise.
-        """
-        # <>TODO: Validate this
-        return np.sum((self.pose_history[-1, :], -self.goal_pose[:])) > 0.1
-
-    def is_on_path(self):
-        """Check if the robot is on the correct path.
-
-        The robot will first rotate to the correct angle before translating
-        towards its goal.
-
-        Returns
-        -------
-        bool
-            True if the robot is pointing along the goal path, false otherwise.
-        """
-        if self.status[1] != 'rotating':
-            raise RuntimeError("*is_on_path* should not be called while the "
-                               "robot's status is anything but *rotating*.")
-
-        return abs(self.pose2D.pose[2] - self.path_theta) < self.rotation_allowance
-
-    def is_near_goal(self):
-        """Check if the robot is near its goal (in distance, not rotation).
-
-        The robot will only rotate to its final goal pose after it no longer
-        needs to translate to be close enough to its goal point. 'Close enough'
-        is given by a predetermined distance allowance.
-
-        Returns
-        -------
-        bool
-            True if the robot is near its goal, false otherwise.
-        """
-        if self.status[1] != 'on goal path':
-            raise RuntimeError("*is_near_goal* should not be called while the "
-                               "robot's status is anything but *on goal "
-                               "path*.")
-
-        goal_pt = Point(self.goal_pose[0:2])
-        approximation_circle = goal_pt.buffer(self.distance_allowance)
-        pose_pt = Point(self.pose2D.pose[0:2])
-        return approximation_circle.contains(pose_pt)
-
-    def is_at_goal(self):
-        """Check if the robot is near its goal in both distance and rotation.
-
-        Once the robot is near its goal, it rotates towards the final goal
-        pose. Once it reaches this goal pose (within some predetermined
-        rotation allowance), it is deemed to be at its goal.
-
-        Returns
-        -------
-        bool
-            True if the robot is at its goal, false otherwise.
-        """
-        if self.status[1] != 'near goal':
-            raise RuntimeError("*is_at_goal* should not be called while the "
-                               "robot's status is anything but *near goal*.")
-
-        return abs(self.pose2D.pose[2] - self.goal_pose[2]) < self.rotation_allowance
-
-    def update_movement_status(self):
-        """Define the robot's current movement status.
-
-        The robot can be:
-            1. stuck (hasn't moved recently)
-            2. at goal (reached its goal pose)
-            3. near goal (x and y are close to goal pose, but not theta)
-            4. on goal path (translating along its goal path)
-            5. rotating (turning to align with path segment)
-            6. without a goal (in need of a goal pose and path)
-        """
-
-        current_status = self.status[1]
-        new_status = current_status
-
-        if current_status == 'stuck':
-            new_status = 'without a goal'
-        elif current_status == 'without a goal':
-            # if self.has_new_goal():
-            new_status = 'rotating'
-        elif current_status == 'rotating':
-            if self.is_on_path():
-                new_status = 'on goal path'
-        elif current_status == 'on goal path':
-            if self.is_near_goal():
-                new_status = 'near goal'
-        elif current_status == 'near goal':
-            if self.is_at_goal():
-                new_status = 'at goal'
-        elif current_status == 'at goal':
-            if True:
-                new_status = 'without a goal'
-
-        # Always check if sttuck
-        if self.is_stuck() and new_status != 'without a goal':
-            new_status = 'stuck'
-
-        if current_status != new_status:
-            logging.debug("{}'s status changed from {} to {}."
-                          .format(self.name, current_status, new_status))
-        self.status[1] = new_status
+    def stop_all_movement(self):
+        self.goal_planner.goal_status = 'done'
+        try:
+            self.path_planner.planner_status = 'not planning'
+            self.controller.controller_status = 'waiting'
+        except:
+            logging.info('No planner or controller found')
+        logging.warn('{} has stopped'.format(self.name))
+        self.mission_status = 'stopped'
 
     def update(self, i=0):
         """Update all primary functionality of the robot.
@@ -425,59 +215,36 @@ class Robot(iRobotCreate):
             `None` if the robot does not generate an animation packet, or a
             tuple of all animation parameters otherwise.
         """
+        if self.mission_status is not 'stopped':
+            # Update statuses and planners
+            self.update_mission_status()
+            self.goal_planner.update()
+            if self.goal_planner.publish_to_ROS is False:
+                self.path_planner.update()
+                self.controller.update()
 
-        # If stationary or done, do absolutely nothing.
-        if self.status[0] in ('stationary', 'done'):
-            return
+            # Add to the pose history, update the map
+            self.pose_history = np.vstack((self.pose_history, self.pose2D.pose[:]))
+            self.update_shape()
 
-        # Generate new path and goal poses
-        if self.status[1] in ('without a goal'):
-            self.goal_pose = self.planner.find_goal_pose(self.fusion_engine)
+            # Update sensor and fusion information, if a cop
+            if self.role == 'cop':
+                # Try to visually spot a robber
+                for missing_robber in self.missing_robbers.values():
+                    self.sensors['camera'].detect_robber(missing_robber)
 
-        # If stuck, find goal simply
-        if self.status[1] in ('stuck'):
-            prev_type = self.planner.type
-            self.planner.type = 'simple'
-            self.goal_pose = self.planner.find_goal_pose(self.fusion_engine)
-            self.planner.type = prev_type
-            self.status[1] = 'rotating'
-
-        # Translate or rotate, depending on status
-        if self.pose2D.pose_source == 'python':
-            if self.status[1] == 'rotating':
-                self.rotate_to_pose(self.path_theta)
-            elif self.status[1] == 'on goal path':
-                self.translate_towards_goal()
-            elif self.status[1] == 'near goal':
-                self.rotate_to_pose(self.goal_pose[2])
-
-        self.path, self.path_theta = self.planner.update_path(self.pose2D.pose)
-
-        # Update sensor and fusion information, if a cop
-        if self.role == 'cop':
-            # Try to visually spot a robber
-            for missing_robber in self.missing_robbers.values():
-                self.sensors['camera'].detect_robber(missing_robber)
-
-            # Update probability model
-            self.fusion_engine.update(self.pose2D.pose, self.sensors,
-                                      self.missing_robbers)
-
-        # Add to the pose history, update the map and status
-        self.pose_history = np.vstack((self.pose_history, self.pose2D.pose[:]))
-        self.update_shape()
-        self.update_movement_status()
-        self.update_mission_status()
-
-        # Export the next animation stream
-        if self.role == 'cop' and self.show_animation:
-            packet = {}
-            if not self.map.combined_only:
-                for i, robber_name in enumerate(self.missing_robbers):
-                    packet[robber_name] = \
-                        self._form_animation_packet(robber_name)
-            packet['combined'] = self._form_animation_packet('combined')
-            return self.stream.send(packet)
+                # Update probability model
+                self.fusion_engine.update(self.pose2D.pose, self.sensors,
+                                          self.missing_robbers)
+            # Export the next animation stream
+            if self.role == 'cop' and self.show_animation:
+                packet = {}
+                if not self.map.combined_only:
+                    for i, robber_name in enumerate(self.missing_robbers):
+                        packet[robber_name] = \
+                            self._form_animation_packet(robber_name)
+                packet['combined'] = self._form_animation_packet('combined')
+                return self.stream.send(packet)
 
     def _form_animation_packet(self, robber_name):
         """Turn all important animation data into a tuple.
@@ -495,10 +262,10 @@ class Robot(iRobotCreate):
         """
         # Cop-related values
         cop_shape = self.map_obj.shape
-        if len(self.pose_history) < self.check_last_n:
+        if len(self.pose_history) < self.goal_planner.stuck_buffer:
             cop_path = np.hsplit(self.pose_history[:, 0:2], 2)
         else:
-            cop_path = np.hsplit(self.pose_history[-self.check_last_n:, 0:2],
+            cop_path = np.hsplit(self.pose_history[-self.goal_planner.stuck_buffer:, 0:2],
                                  2)
 
         camera_shape = self.sensors['camera'].viewcone.shape

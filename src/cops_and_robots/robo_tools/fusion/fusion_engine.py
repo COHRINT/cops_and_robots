@@ -126,15 +126,20 @@ class FusionEngine(object):
                                                  robber.pose2D.pose,
                                                  sensors['human'])
 
-                if robber.status == 'detected':
-                    logging.info('{} detected!'.format(robber.name))
+                if robber.mission_status == 'captured':
+                    logging.info('{} detected! Updating filter'
+                                 .format(robber.name))
                     self.filters[robber.name].robber_detected(robber.pose2D.pose)
 
             # Chop down list of missing robber names if one was captured
-            if robber.status == 'captured':
-                    logging.info('{} captured!'.format(robber.name))
+            if robber.mission_status == 'captured':
+                logging.debug('{} captured!'.format(robber.name))
+                try:
                     self.missing_robber_names.remove(robber.name)
-
+                    logging.info('{} removed from self.missing_robber_names'
+                                 .format(robber.name))
+                except:
+                    pass
         self._update_combined(sensors)
 
     def _update_combined(self, sensors):
@@ -165,4 +170,3 @@ class FusionEngine(object):
             # Reset the human sensor
             sensors['human'].utterance = ''
             sensors['human'].target = ''
-

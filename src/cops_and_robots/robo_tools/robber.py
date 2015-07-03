@@ -41,7 +41,7 @@ class Robber(Robot):
 
     Attributes
     ----------
-    mission_statuses : {'stationary', 'on the run', 'detected', 'captured'}
+    mission_statuses : {'on the run', 'captured'}
         The possible mission-level statuses of any robber, where:
             * `stationary` means the robber is holding its position;
             * `on the run` means the robber is moving around and avoiding the
@@ -52,12 +52,12 @@ class Robber(Robot):
                 is no longer moving.
 
     """
-    mission_statuses = ['stationary', 'on the run', 'detected', 'captured']
+    mission_statuses = ['on the run', 'captured']
 
     def __init__(self, name, **kwargs):
         super(Robber, self).__init__(name=name,
                                      role='robber',
-                                     planner_type='simple',
+                                     goal_planner_type='stationary',
                                      color_str='darkorange',
                                      **kwargs)
 
@@ -67,14 +67,9 @@ class Robber(Robot):
         # while not self.found:
         #     self.update()
 
-    def update_status(self):
+    def update_mission_status(self):
         """Update the robber's status
 
         """
-        immobile_statuses = ('stationary', 'captured')
-        if self.status not in immobile_statuses:
-            if self.status == 'detected' and self.time_since_detected < 50:
-                self.time_since_detected += 1
-            else:
-                self.time_since_detected = 0
-                self.status = 'on the run'
+        if self.mission_status is 'captured':
+            self.stop_all_movement()

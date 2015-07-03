@@ -136,7 +136,7 @@ class Camera(Sensor):
                                        rotation_pt=self.view_pose[0:2])
         self.viewcone.move_shape(transform, rotation_pt=self.view_pose[0:2])
         self.view_pose = pose
-        
+
     def _rescale_viewcone(self, robot_pose, shape_layer):
         """Rescale the viewcone based on intersecting map objects.
 
@@ -168,7 +168,7 @@ class Camera(Sensor):
 
     def detect_robber(self, robber):
         if self.viewcone.shape.contains(Point(robber.pose2D.pose)):
-            robber.status = 'detected'
+            robber.mission_status = 'captured'
 
     def detect(self, filter_type, particles=None):
         """Update a fusion engine's probability from camera detections.
@@ -194,18 +194,19 @@ class Camera(Sensor):
             The particle list, assuming [x,y,p], where x and y are position
             data and p is the particle's associated probability.
         """
-        #<>TODO: Get unit tests running
+        # <>TODO: Get unit tests running
         # Define rotation matrix
-        theta = 2 * np.pi - np.radians(self.viewcone.pose2D.pose[2])
+        theta = 2 * np.pi - np.radians(self.view_pose[2])
         R = np.array([[np.cos(theta), -np.sin(theta)],
-                      [np.sin(theta), np.cos(theta)],])
+                      [np.sin(theta), np.cos(theta)],
+                      ])
 
         # Update particle probabilities in view cone
         for i, particle in enumerate(particles):
             if self.viewcone.shape.contains(Point(particle[1:3])):
-                relative_pose = np.subtract(particle[1:3], self.viewcone.pose2D.pose[0:2])
+                relative_pose = np.subtract(particle[1:3], self.view_pose[0:2])
                 relative_pose = np.dot(R, relative_pose)
-                particles[i, 0] *= (1 - self.detection_model.probs_at_state(relative_pose[0:2],0))
+                particles[i, 0] *= (1 - self.detection_model.probs_at_state(relative_pose[0:2], 0))
 
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])
