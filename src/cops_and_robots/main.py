@@ -19,7 +19,8 @@ def main():
 
     # Pre-test config
     robber_model = 'static'
-    deckard = Cop(robber_model=robber_model, pose_source='odom')
+    deckard = Cop(robber_model=robber_model, pose_source='python',
+                  publish_to_ROS=False)
     deckard.map.combined_only = True
 
     # Describe simulation

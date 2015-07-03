@@ -62,6 +62,7 @@ class Pose(object):
 
         if pose_source != 'python':
             # <>TODO: Change listener to be more descriptive
+            # <>TODO: Move to Robot init, combine with pose node. Use namespaces.
             rospy.init_node('listener', anonymous=True)
             # <>TODO: Subscribe to namespace, i.e. /deckard/pose_source
             rospy.Subscriber(self.pose_source, Odometry, self.callback)
@@ -74,9 +75,9 @@ class Pose(object):
             [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
              msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
         self._pose = [x, y, np.rad2deg(theta)]
-        logging.info(self.pose)
-        print('Robot Pose')
-        print(self.pose)
+        # logging.info(self.pose)
+        # print('Robot Pose')
+        # print(self.pose)
 
     # <>TODO: why doesn't logging work here?
     @property

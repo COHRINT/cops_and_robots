@@ -936,8 +936,8 @@ if __name__ == '__main__':
     # sm = speed_model()
     # sm.plot()
 
-    sm = intrinsic_space_model()
-    sm.plot_class(1)
+    sm = camera_model_2D()
+    sm.plot()
     print sm.weights
     print sm.biases
 
