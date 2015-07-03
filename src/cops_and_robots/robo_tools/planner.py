@@ -140,11 +140,11 @@ class GoalPlanner(object):
 
         if self.use_target_as_goal:
             self.goal_pose = target_pose
-            logging.info("New goal: {}".format(["{:.2f}".format(a) for a in
+            logging.debug("New goal: {}".format(["{:.2f}".format(a) for a in
                                                 self.goal_pose]))
         else:
             self.goal_pose = self.view_goal(target_pose)
-            logging.info("New view goal ({}): {} to see {}"
+            logging.debug("New view goal ({}): {} to see {}"
                          .format(self.type,
                                  ["{:.2f}".format(a) for a in target_pose],
                                  ["{:.2f}".format(a) for a in self.goal_pose]))
@@ -398,10 +398,6 @@ class GoalPlanner(object):
             logging.debug("{}'s goal_status changed from {} to {}."
                           .format(self.robot.name, current_status, new_status))
         self.goal_status = new_status
-
-        if new_status != current_status:
-            logging.info('{}\'s goal status changed from {} to {}'
-                .format(self.robot.name, current_status, new_status))
 
 
 class PathPlanner(object):
