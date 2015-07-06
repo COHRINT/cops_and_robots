@@ -95,7 +95,7 @@ function checkSettings(){
 	var v_ports =[":9021", ":9023", ":9022", ":9024", ":9041", ":9042", ":9043"];
 	var v_topics = ["/camera/rgb/image_raw", "TOPIC", "TOPIC", "TOPIC", "TOPIC", "TOPIC", "TOPIC", "TOPIC"];
 	var g_ports =[":9011", ":9013", ":9012", ":9014", ":9031", ":9031", ":9033"];
-	var g_topics = ["deckard/camera/image_raw/theora", "pris/camera/image_raw/theora", "roy/camera/image_raw/theora", "zhora/camera/image_raw/theora", "/camera/image_raw/theora", "security_camera1/camera/image_raw/theora", "security_camera2/camera/image_raw/theora", "security_camera3/camera/image_raw/theora"]; 
+	var g_topics = ["deckard/camera/image_raw/theora", "pris/camera/image_raw/theora", "roy/camera/image_raw/theora", "zhora/camera/image_raw/theora", "security_camera1/camera/image_raw/theora", "security_camera2/camera/image_raw/theora", "security_camera3/camera/image_raw/theora"]; 
 	var ports = [v_ports, g_ports];
 	var topics =[v_topics, g_topics];
 	var ids = ["#deckard-camera-visual", "#pris-camera-visual", "#roy-camera-visual", "#zhora-camera-visual", "#camera1-visual", "#camera2-visual", "#camera3-visual"];
