@@ -377,32 +377,31 @@ def set_up_fleming():
     field = MapArea('Field', [field_w, field_w], has_spaces=False)
 
     # Make wall objects
-    l = 1.2192  # [m] wall length
+    l = 1.15  # [m] wall length
     w = 0.1524  # [m] wall width
     wall_shape = [l, w]
 
-    poses = np.array([[-5 + w/2, -1.5 - w/2, 1],
-                      [-5 + w/2, -2.5 - w/2, 1],
-                      [-4.5, -1, 0],
-                      [-3.5, -1, 0],
-                      [-2.5, -1, 0],
-                      [-1 + w/2, -1.5 - w/2, 1],
-                      [-0.5, -1, 0],
-                      [0.5, -1, 0],
-                      [1.5, -1, 0],
-                      [-6.5 - w/2, 0, 0],
-                      [-5.5 - w/2, 0, 0],
-                      [-4.5 - w/2, 0, 0],
-                      [-3.5 - w/2, 0, 0],
-                      [-2.5 - w/2, 0, 0],
-                      [-1.5 - w/2, 0, 0],
-                      [0.5 - w/2, 0, 0],
-                      [1.5 - w/2, 0, 0],
-                      [0, 0.5 + w/2, 1],
-                      [0, 1.5 + w/2, 1],
+    poses = np.array([[-7, -1.55, 1],
+                      [-7, -2.55, 1],
+                      [-7 + l/2 + w/2, -1, 0],
+                      [-7 + 3*l/2 + w/2, -1, 0],
+                      [-7 + 5*l/2 + w/2, -1, 0],
+                      [-.95, -1.55, 1],
+                      [-.95 + 1*l/2 + w/2, -1, 0],
+                      [-.95 + 3*l/2 + w/2, -1, 0],
+                      [-.95 + 5*l/2 +w/2, -1, 0],
+                      [-7.45 + 1*l/2 + w/2, 1.4, 0],
+                      [-7.45 + 3*l/2 + w/2, 1.4, 0],
+                      [-7.45 + 5*l/2 + w/2, 1.4, 0],
+                      [-7.45 + 7*l/2 + w/2, 1.4, 0],
+                      [-7.45 + 9*l/2 + w/2, 1.4, 0],
+                      [l/2 + w/2, 1.4, 0],
+                      [3*l/2 + w/2, 1.4, 0],
+                      [0, 1.4 + l/2, 1],
+                      [0, 1.4 + 3*l/2, 1],
                      ])
 
-    poses = poses * np.array([l, l, 90])
+    poses = poses * np.array([1, 1, 90])
 
     n_walls = poses.shape[0]
     walls = []
@@ -412,6 +411,7 @@ def set_up_fleming():
         wall = MapObject(name, wall_shape, pose=pose, color_str='sienna', has_spaces=False)
         walls.append(wall)
 
+    
     # Make landmark billiards
     poses = np.array([[2.2, 1.5, 0],
                       [1.2, 1, 0],
@@ -462,9 +462,10 @@ def set_up_fleming():
     shape_pts = Point(pose).buffer(0.2).exterior.coords
     landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
     landmarks.append(landmark)
+    
 
     # Create Fleming map
-    bounds = [-field_w * 1.5, -field_w / 2, field_w / 2, field_w / 2]
+    bounds = [-10, -3.33, 4, 4]
     fleming = Map('Fleming', bounds)
 
     # Add walls to map
@@ -480,12 +481,12 @@ def set_up_fleming():
               'Dining Room']
     colors = ['aquamarine','lightcoral', 'goldenrod', 'sage','cornflowerblue',
               'orchid']
-    points = np.array([[[-6.0, -4], [-6.0, -1.2], [-1.2, -1.2], [-1.2, -4]],
-                       [[-1.2, -4], [-1.2, -1.2],[4.0, -1.2], [4.0, -4]],
-                       [[-12.0, 0], [-12.0, 4],[0, 4], [0, 0]],
-                       [[0, 0], [0, 4],[4, 4], [4, 0]],
-                       [[-12, -1.2], [-12, 0],[4, 0], [4, -1.2]],
-                       [[-12, -4], [-12, -1.2],[-6, -1.2], [-6, -4]],
+    points = np.array([[[-7.0, -3.33], [-7.0, -1], [-1, -1], [-1, -3.33]],
+                       [[-1, -3.33], [-1, -1],[4.0, -1], [4.0, -3.33]],
+                       [[-10.0, 1.4], [-10.0, 4],[0, 4], [0, 1.4]],
+                       [[0, 1.4], [0, 4],[4, 4], [4, 1.4]],
+                       [[-10, -1], [-10, 1.4],[4, 1.4], [4, -1]],
+                       [[-10, -3.33], [-10, -1],[-7, -1], [-7, -3.33]],
                       ])
     for i, pts in enumerate(points):
         centroid = [pts[0,0] + np.abs(pts[2,0] - pts[0,0]) / 2,
@@ -501,4 +502,3 @@ def set_up_fleming():
 if __name__ == '__main__':
     fleming = set_up_fleming()
     fleming.plot(show_areas=True)
-
