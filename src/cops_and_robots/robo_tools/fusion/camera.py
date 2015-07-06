@@ -132,9 +132,9 @@ class Camera(Sensor):
         # Reset the view shape
         self.viewcone.shape = self.ideal_viewcone.shape
         transform = tuple(np.subtract(pose, self.view_pose))
-        self.ideal_viewcone.move_shape(transform,
-                                       rotation_pt=self.view_pose[0:2])
-        self.viewcone.move_shape(transform, rotation_pt=self.view_pose[0:2])
+        self.ideal_viewcone.move_relative(transform,
+                                          rotation_pt=self.view_pose[0:2])
+        self.viewcone.move_relative(transform, rotation_pt=self.view_pose[0:2])
         self.view_pose = pose
 
     def _rescale_viewcone(self, robot_pose, shape_layer):
@@ -165,10 +165,6 @@ class Camera(Sensor):
                                                  origin=self.view_pose[0:2])
         else:
             self.viewcone.shape = self.ideal_viewcone.shape
-
-    def detect_robber(self, robber):
-        if self.viewcone.shape.contains(Point(robber.pose2D.pose)):
-            robber.mission_status = 'captured'
 
     def detect(self, filter_type, particles=None):
         """Update a fusion engine's probability from camera detections.

@@ -14,13 +14,13 @@ goal pose is generated as the best location from which the robot
 can view its target.
 
 """
-__author__ = "Nick Sweet"
+__author__ = ["Matthew Aitken", "Nick Sweet"]
 __copyright__ = "Copyright 2015, Cohrint"
-__credits__ = ["Nick Sweet", "Nisar Ahmed"]
+__credits__ = ["Matthew Aitken", "Nick Sweet", "Nisar Ahmed"]
 __license__ = "GPL"
 __version__ = "1.0.0"
 __maintainer__ = "Nick Sweet"
-__email__ = "nick.sweet@colorado.edu"
+__email__ = "matthew@raitken.net"
 __status__ = "Development"
 
 import logging
@@ -34,11 +34,8 @@ from shapely.geometry import Point, LineString
 import rospy
 import tf
 from geometry_msgs.msg import PoseStamped
-# import actionlib
-# from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
 
-# <>TODO: Split Planner class into GoalPlanner class and PathPlanner class
 class GoalPlanner(object):
     """The GoalPlanner class generates goal poses for a robot.
 
@@ -53,7 +50,8 @@ class GoalPlanner(object):
             * a `simple` planner randomly picks a point in the feasible
             region.
             * a 'trajectory' planner uses a predefined trajectory to generate
-            goal poses.
+            goal poses. The trajectory is expected to be provided
+            by the mission_planner
             * a `particle` planner selects the particle with greatest
             probability (or randomly selects from the particles that share
             the greatest probability if more than one exists.)
@@ -126,28 +124,30 @@ class GoalPlanner(object):
 
         """
         if self.type == 'stationary':
-            self.goal_pose = None
-            self.goal_status = 'done'
-            return self.goal_pose
+            target_pose = None
         elif self.type == 'simple':
             target_pose = self.find_goal_simply()
         elif self.type == 'trajectory':
             target_pose = self.find_goal_from_trajectory()
         elif self.type == 'particle':
-            target_pose = self.find_goal_from_particles(self.robot.fusion_engine)
+            target_pose = self.find_goal_from_particles()
         elif self.type == 'MAP':
-            target_pose = self.find_goal_from_probability(self.robot.fusion_engine)
+            target_pose = self.find_goal_from_probability()
+
+        if target_pose is None:
+            return target_pose
 
         if self.use_target_as_goal:
-            self.goal_pose = target_pose
-            logging.debug("New goal: {}".format(["{:.2f}".format(a) for a in
-                                                self.goal_pose]))
+            goal_pose = target_pose
+            logging.info("New goal: {}".format(["{:.2f}".format(a) for a in
+                                                goal_pose]))
         else:
-            self.goal_pose = self.view_goal(target_pose)
-            logging.debug("New view goal ({}): {} to see {}"
+            goal_pose = self.view_goal(target_pose)
+            logging.info("New view goal ({}): {} to see {}"
                          .format(self.type,
-                                 ["{:.2f}".format(a) for a in target_pose],
-                                 ["{:.2f}".format(a) for a in self.goal_pose]))
+                                 ["{:.2f}".format(a) for a in goal_pose],
+                                 ["{:.2f}".format(a) for a in target_pose]))
+        return goal_pose
 
     def view_goal(self, target_pose):
         """Generate a goal as a view pose from which to see the target.
@@ -211,7 +211,7 @@ class GoalPlanner(object):
         goal_pose = [x, y, theta]
         return goal_pose
 
-    def find_goal_from_particles(self, fusion_engine):
+    def find_goal_from_particles(self):
         """Find a goal from the most likely particle(s).
 
         Find a goal pose taken from the particle with the greatest associated
@@ -229,12 +229,14 @@ class GoalPlanner(object):
             A pose as [x,y,theta] in [m,m,degrees].
 
         """
+        fusion_engine = self.robot.fusion_engine
         # <>TODO: @Nick Test this!
         if not next(fusion_engine.filters.iteritems()):
                 raise ValueError('The fusion_engine must have a '
                                  'particle_filter.')
 
         theta = random.uniform(0, 360)
+        logging.debug('New theta = {}'.format(theta))
 
         # If tracking multiple targets, use the combined particle filter
         if len(fusion_engine.filters) > 1:
@@ -252,7 +254,7 @@ class GoalPlanner(object):
 
         return goal_pose
 
-    def find_goal_from_probability(self, fusion_engine):
+    def find_goal_from_probability(self):
         """Find a goal pose from the point of highest probability (the
             Maximum A Posteriori, or MAP, point).
 
@@ -267,6 +269,7 @@ class GoalPlanner(object):
             A pose as [x,y,theta] in [m,m,degrees].
 
         """
+        fusion_engine = self.robot.fusion_engine
         # <>TODO: Implement this!
         pass
 
@@ -281,19 +284,42 @@ class GoalPlanner(object):
             A pose as [x,y,theta] in [m,m,degrees].
 
         """
-        # <>TODO: Implement this!
-        pass
+        trajectory = self.robot.mission_planner.trajectory
+        try:
+            next_goal = next(trajectory)
+        except NameError:
+            logging.warn('Trajectory not found')
+            return None
+        except StopIteration:
+            logging.info('The specified trajectory has ended')
+            return None
+        except:
+            logging.warn('Unknown Error in loading trajectory')
+            return None
+
+        if next_goal.size == 2:
+            # if theta is not specified, don't rotate
+            current_pose = self.robot.pose2D.pose[0:2]
+            theta = math.atan2(next_goal[1] - current_pose[1],
+                               next_goal[0] - current_pose[0])  # [rad]
+            theta = math.degrees(theta) % 360
+            goal_pose = np.append(next_goal, theta)
+        else:
+            goal_pose = next_goal
+
+        return goal_pose
 
     def is_stuck(self):
         """Check if the robot has not moved significantly.
 
-        Evaluated overover some n time steps. If the robot has not
+        Evaluated over some n time steps. If the robot has not
         existed for n time steps, it is assumed to not be stuck.
         """
 
         # Check the buffer
         if self.stuck_count > 0:
-            self.stuck_buffer += -1
+            self.stuck_count += -1
+            logging.debug('Stuck_count = {}'.format(self.stuck_count))
             return False
 
         self.distance_travelled = 0
@@ -307,8 +333,8 @@ class GoalPlanner(object):
         # Restart the counter
         self.stuck_count = self.stuck_buffer
         logging.debug('{} travelled {:.2f}m in last {}'
-                      .format(self.name, self.distance_travelled,
-                              self.check_last_n))
+                      .format(self.robot.name, self.distance_travelled,
+                              self.stuck_buffer))
         if self.distance_travelled < self.stuck_distance:
             logging.warn('{} got stuck!'.format(self.robot.name))
             return True
@@ -332,10 +358,14 @@ class GoalPlanner(object):
         approximation_circle = goal_pt.buffer(self.distance_allowance)
         pose_pt = Point(self.robot.pose2D.pose[0:2])
         position_bool = approximation_circle.contains(pose_pt)
+        logging.debug('Position is {}'.format(position_bool))
 
         degrees_to_goal = abs(self.robot.pose2D.pose[2] - self.goal_pose[2])
-        orientation_bool = degrees_to_goal < self.rotation_allowance
+        orientation_bool = (degrees_to_goal < self.rotation_allowance)
+        logging.debug('Orientation is {}'.format(orientation_bool))
 
+        logging.debug('is_at_goal = {}'.format((position_bool and
+                                                orientation_bool)))
         return position_bool and orientation_bool
 
     def create_ROS_goal_message(self):
@@ -367,23 +397,26 @@ class GoalPlanner(object):
         new_status = current_status
 
         if current_status == 'without a goal':
-            self.find_goal_pose()
-            if self.publish_to_ROS is True:
-                self.create_ROS_goal_message()
+            self.goal_pose = self.find_goal_pose()
+            if self.goal_pose is None:
+                new_status = 'done'
             else:
-                self.robot.path_planner.path_planner_status = 'planning'
-            new_status = 'moving to goal'
+                if self.publish_to_ROS is True:
+                    self.create_ROS_goal_message()
+                else:
+                    self.robot.path_planner.path_planner_status = 'planning'
+                new_status = 'moving to goal'
 
         elif current_status == 'moving to goal':
-            if self.is_at_goal():
-                new_status = 'at goal'
-            elif self.is_stuck():
+            if self.is_stuck():
                 new_status = 'stuck'
+            elif self.is_at_goal():
+                new_status = 'at goal'
 
         elif current_status == 'stuck':
             prev_type = self.type
-            self.goal_planner.type = 'simple'
-            self.goal_pose = self.find_goal_pose()
+            self.type = 'simple'
+            self.find_goal_pose()
             self.type = prev_type
             if self.publish_to_ROS is True:
                 self.create_ROS_goal_message()
@@ -395,8 +428,8 @@ class GoalPlanner(object):
             new_status = 'without a goal'
 
         if current_status != new_status:
-            logging.debug("{}'s goal_status changed from {} to {}."
-                          .format(self.robot.name, current_status, new_status))
+            logging.info("{}'s goal_status changed from {} to {}."
+                         .format(self.robot.name, current_status, new_status))
         self.goal_status = new_status
 
 
@@ -486,7 +519,7 @@ class PathPlanner(object):
 
         if new_status != current_status:
             logging.debug('{}\'s path planning status changed from {} to {}'
-                .format(self.robot.name, current_status, new_status))
+                          .format(self.robot.name, current_status, new_status))
 
 
 class Controller(object):
@@ -514,7 +547,8 @@ class Controller(object):
         self.robot.pose2D.pose[0:2] = (next_point.x, next_point.y)
         logging.debug("{} translated to {}"
                       .format(self.robot.name,
-                              ["{:.2f}".format(a) for a in self.robot.pose2D.pose]))
+                              ["{:.2f}".format(a) for a
+                               in self.robot.pose2D.pose]))
 
     def rotate_to_pose(self, theta):
         """Rotate the robot about its centroid towards a goal angle.
@@ -637,4 +671,4 @@ class Controller(object):
 
         if new_status != current_status:
             logging.debug('{}\'s controller status changed from {} to {}'
-                .format(self.robot.name, current_status, new_status))
+                          .format(self.robot.name, current_status, new_status))

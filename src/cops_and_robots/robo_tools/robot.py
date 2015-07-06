@@ -154,8 +154,9 @@ class Robot(iRobotCreate):
         """
 
         # <>TODO: refactor this
-        self.map_obj.move_shape((self.pose2D.pose -
-                                 self.pose_history[-2:, :]).tolist()[0])
+        # self.map_obj.move_relative((self.pose2D.pose -
+        #                             self.pose_history[-2:, :]).tolist()[0])
+        self.map_obj.move_absolute(self.pose2D.pose)
 
     def make_others(self):
         """Generate robot objects for all other robots.
