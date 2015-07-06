@@ -45,15 +45,15 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 
 	                <!-- Nav tabs -->
             		<ul class="nav nav-tabs" role="tablist">
-                   		 	<li role="presentation" class="active"><a href="#Deckard's Camera" aria-controls="Deckard's Camera" data-toggle="tab">Deckard's Camera</a></li>
+                   		 	<li class="active"><a href="#deckard_camera" aria-controls="deckard_camera" data-toggle="tab">Deckard's Camera</a></li>
                    		 	<li class="dropdown">
                    		 		<a href="#Robber Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Robber Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
-		                   		 		<li><a data-toggle="tab" href="#Pris's Camera" aria-controls="Pris's Camera" >Pris's Camera</a></li>
-		                   		 		<li><a data-toggle="tab" href="#Roy's Camera" aria-controls="Roy's Camera" >Roy's Camera</a></li>
-		                   		 		<li><a data-toggle="tab" href="#Zhora's Camera" aria-controls="Zhora's Camera" >Zhora's Camera</a></li>
-                   		 			</ul>
-                   		 	</li>
+		                    			<li><a data-toggle="tab" href="#pris_camera" aria-controls="pris_camera" >Pris's Camera</a></li>
+		                    			<li><a data-toggle="tab" href="#roy_camera" aria-controls="roy_camera" >Roy's Camera</a></li>
+		                    			<li><a data-toggle="tab" href="#zhora_camera" aria-controls="zhora_camera" >Zhora's Camera</a></li>
+		                    		</ul>
+		                    </li>
                    		 	<li class="dropdown">
                    		 		<a href="#Security Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Security Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
@@ -66,18 +66,19 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 
 		  			<!-- Tab panes -->
 	  				<div class="tab-content">
-	    					<div class="tab-pane active" id="Deckard's Camera"> 
-	    						<iframe  id="deckard-camera-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					<div class="tab-pane active" id="deckard_camera"> 
+	    						<iframe  id="deckard-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
 	    					</div>
-	    					<div class="tab-pane" id="Pris's Camera"> 
-	    						<iframe  id="pris-camera-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					<div class="tab-pane" id="pris_camera"> 
+	    						<iframe  id="pris-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
 	    					</div>
-	    					<div class="tab-pane" id="Roy's Camera"> 
-	    						<iframe  id="roy-camera-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					<div class="tab-pane" id="roy_camera"> 
+	    						<iframe  id="roy-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
 	    					</div>
-	    					<div class="tab-pane" id="Zhora's Camera"> 
-	    						<iframe  id="zhora-camera-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+	    					<div class="tab-pane" id="zhora_camera"> 
+	    						<iframe  id="zhora-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
 	    					</div>
+
 	    					<div class="tab-pane" id="Camera 1"> 
 	    						<iframe  id="camera1-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
 	    					</div>
