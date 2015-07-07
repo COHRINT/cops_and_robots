@@ -2,7 +2,7 @@
 	<!-- <>TODO: Make this file launch seperate node instances each time it is called, specific to the robot it is providing data from. Vicon Bridge only needs to be called once. -->
 
 
-	<arg name="model"              default="roy"         doc="Robot you want odom from"/>
+	<arg name="model"              default="deckard"         doc="Robot you want odom from"/>
 
     <!-- Add a identity transform between map and odom -->
     <node pkg="tf" type="static_transform_publisher" 
@@ -24,7 +24,7 @@
     	<rosparam param="mappings">
           - {old: "/world",
             new: "/odom"}
-          - {old: "/vicon/roy/roy",
+          - {old: "vicon/deckard/deckard",
             new: "/base_footprint"}
         </rosparam>
     </node>
