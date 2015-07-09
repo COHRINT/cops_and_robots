@@ -3,6 +3,7 @@
 
 """
 import logging
+import rospy
 
 import numpy as np
 from cops_and_robots.robo_tools.robot import Robot
@@ -17,10 +18,18 @@ def main():
                         )
     np.set_printoptions(precision=2, suppress=True)
 
+    publish_to_ROS = True
+
+    if publish_to_ROS:
+        rospy.init_node('python_node', log_level=rospy.DEBUG)
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter('[%(levelname)-7s] %(funcName)-30s %(message)s'))
+        logging.getLogger().addHandler(handler)
+
     # Pre-test config
     robber_model = 'static'
-    deckard = Cop(robber_model=robber_model, pose_source='python',
-                  publish_to_ROS=False)
+    deckard = Cop(robber_model=robber_model, pose_source='odom',
+                  publish_to_ROS=publish_to_ROS)
     deckard.map.combined_only = True
 
     # Describe simulation
@@ -34,6 +43,25 @@ def main():
                  .format(deckard.name, str_))
 
     deckard.animated_exploration()
+
+
+class ConnectPythonLoggingToROS(logging.Handler):
+
+    MAP = {
+        logging.DEBUG:rospy.logdebug,
+        logging.INFO:rospy.loginfo,
+        logging.WARNING:rospy.logwarn,
+        logging.ERROR:rospy.logerr,
+        logging.CRITICAL:rospy.logfatal
+    }
+
+    def emit(self, record):
+        try:
+            print('tried')
+            self.MAP[record.levelno]("%s: %s" % (record.name, record.msg))
+        except KeyError:
+            rospy.logerr("unknown log level %s LOG: %s: %s" % (record.levelno, record.name, record.msg))
+
 
 if __name__ == '__main__':
     main()

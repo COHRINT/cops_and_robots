@@ -61,10 +61,6 @@ class Pose(object):
         self.filename_for_recording = filename_for_recording
 
         if pose_source != 'python':
-            # <>TODO: Change listener to be more descriptive
-            # <>TODO: Move to Robot init, combine with pose node. Use namespaces.
-            rospy.init_node('listener', anonymous=True)
-            # <>TODO: Subscribe to namespace, i.e. /deckard/pose_source
             rospy.Subscriber(self.pose_source, Odometry, self.callback)
             # rospy.spin()
 

@@ -920,7 +920,7 @@ def intrinsic_space_model(poly=None):
 
     # <>TODO: If sides != 4, find a way to make it work!
 
-    labels = ['Inside', 'Front', 'Back', 'Left', 'Right']
+    labels = ['Inside', 'Front', 'Left', 'Back', 'Right']
     steepness = 3
     sm = Softmax(poly=poly, class_labels=labels, resolution=0.1,
                  steepness=steepness)
@@ -936,10 +936,8 @@ if __name__ == '__main__':
     # sm = speed_model()
     # sm.plot()
 
-    sm = camera_model_2D()
+    sm = distance_space_model()
     sm.plot()
-    print sm.weights
-    print sm.biases
 
     # x = [-3, -3, 3, 3]
     # y = [-1, 1, 1, -1]
