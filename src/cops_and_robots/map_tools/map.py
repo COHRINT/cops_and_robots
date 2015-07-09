@@ -411,7 +411,8 @@ def set_up_fleming():
         wall = MapObject(name, wall_shape, pose=pose, color_str='sienna', has_spaces=False)
         walls.append(wall)
 
-    
+    landmarks = []
+    """
     # Make landmark billiards
     poses = np.array([[2.2, 1.5, 0],
                       [1.2, 1, 0],
@@ -420,7 +421,6 @@ def set_up_fleming():
     colors = ['yellow', 'blue', 'red', 'purple', 'orange', 'green', 'brown',
               'black']
 
-    landmarks = []
     for i, pose in enumerate(poses):
         name = 'Ball ' + str(i)
         shape_pts = Point(pose).buffer(0.075).exterior.coords
@@ -438,17 +438,18 @@ def set_up_fleming():
         shape_pts = Point(pose).buffer(0.06).exterior.coords
         landmark = MapObject(name, shape_pts[:], pose=pose, has_spaces=False, color_str='grey')
         landmarks.append(landmark)
+    """
 
     # Make rectangular objects (desk, bookcase, etc)
-    poses = np.array([[0.5, -1.5, 0],
-                      [-5.0, -2.4, 0],
-                      [-9.0, -2.5, 0]
+    poses = np.array([[0, -1.2, 270],
+                      [-5.5, -2, 00],
+                      [3, -2, 180]
                      ])
     colors = ['sandybrown', 'sandybrown', 'brown']
-    labels = ['Bookcase', 'Desk', 'Table']
-    sizes = np.array([[1.3, 0.4],
-                      [0.8, 1.5],
-                      [1.6, 1.6]
+    labels = ['Bookcase', 'Desk', 'Chair']
+    sizes = np.array([[0.18, 0.38],
+                      [0.61, 0.99],
+                      [0.46, 0.41]
                      ])
     
     for i, pose in enumerate(poses):
@@ -456,16 +457,16 @@ def set_up_fleming():
         landmarks.append(landmark)
 
     # Make odd landmarks
-    landmark = MapObject('Box', [0.6, 0.8], pose=[-7.5, 1.8, 0], color_str='black')
+    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.3, 270], color_str='black')
     landmarks.append(landmark)
-    pose = [-9.5, 2.1, 0]
-    shape_pts = Point(pose).buffer(0.2).exterior.coords
-    landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
-    landmarks.append(landmark)
+    # pose = [-9.5, 2.1, 0]
+    # shape_pts = Point(pose).buffer(0.2).exterior.coords
+    # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
+    # landmarks.append(landmark)
     
 
     # Create Fleming map
-    bounds = [-10, -3.33, 4, 4]
+    bounds = [-9.5, -3.33, 4, 3.68]
     fleming = Map('Fleming', bounds)
 
     # Add walls to map
@@ -483,10 +484,10 @@ def set_up_fleming():
               'orchid']
     points = np.array([[[-7.0, -3.33], [-7.0, -1], [-2, -1], [-2, -3.33]],
                        [[-2, -3.33], [-2, -1],[4.0, -1], [4.0, -3.33]],
-                       [[-10.0, 1.4], [-10.0, 4],[0, 4], [0, 1.4]],
-                       [[0, 1.4], [0, 4],[4, 4], [4, 1.4]],
-                       [[-10, -1], [-10, 1.4],[4, 1.4], [4, -1]],
-                       [[-10, -3.33], [-10, -1],[-7, -1], [-7, -3.33]],
+                       [[-9.5, 1.4], [-9.5, 3.68],[0, 3.68], [0, 1.4]],
+                       [[0, 1.4], [0, 3.68],[4, 3.68], [4, 1.4]],
+                       [[-9.5, -1], [-9.5, 1.4],[4, 1.4], [4, -1]],
+                       [[-9.5, -3.33], [-9.5, -1],[-7, -1], [-7, -3.33]],
                       ])
     for i, pts in enumerate(points):
         centroid = [pts[0,0] + np.abs(pts[2,0] - pts[0,0]) / 2,
@@ -499,6 +500,8 @@ def set_up_fleming():
 
     return fleming
 
+
 if __name__ == '__main__':
     fleming = set_up_fleming()
     fleming.plot(show_areas=True)
+    fleming.feasible_layer.plot()

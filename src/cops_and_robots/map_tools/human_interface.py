@@ -70,6 +70,7 @@ class HumanInterface(object):
             self.relations = human_sensor.relations
             self.movement_types = human_sensor.movement_types
             self.movement_qualities = human_sensor.movement_qualities
+            logging.debug('using human_sensor values')
         else:
             self.certainties = ['think', 'know']
             self.targets = ['nothing',

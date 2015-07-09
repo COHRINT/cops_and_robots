@@ -97,20 +97,14 @@ class GoalPlanner(object):
         self.use_target_as_goal = use_target_as_goal
         self.publish_to_ROS = publish_to_ROS
         self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
-        self.stuck_buffer = 50  # time steps after being stuck before checking
+        self.stuck_buffer = 200  # time steps after being stuck before checking
         self.stuck_count = self.stuck_buffer
-        self.distance_allowance = 0.1  # [m] acceptable distance to a goal
+        self.distance_allowance = 0.15  # [m] acceptable distance to a goal
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
 
         if self.publish_to_ROS:
             self.pub = rospy.Publisher('move_base_simple/goal', PoseStamped,
                                        queue_size=10)
-            # <>TODO: Move to Robot init, combine w/ pose node, w/ namespaces.
-            try:
-                rospy.init_node('goal_publisher', anonymous=True)
-            except:
-                logging.warn('Could not initialize a ROS Node,'
-                             'ignore if pose is recieved from Vicon')
 
     def find_goal_pose(self):
         """Find a goal pose, agnostic of planner type.
@@ -178,8 +172,8 @@ class GoalPlanner(object):
         feasible_arc = self.feasible_layer\
             .pose_region.intersection(view_circle)
         pt = feasible_arc.representative_point()
-        theta = math.atan2(pt.y - target_pose[1],
-                           pt.x - target_pose[0])  # [rad]
+        theta = math.atan2(target_pose[1] - pt.y,
+                           target_pose[0] - pt.x)  # [rad]
         theta = math.degrees(theta) % 360
         goal_pose = pt.x, pt.y, theta
 
@@ -362,6 +356,8 @@ class GoalPlanner(object):
 
         degrees_to_goal = abs(self.robot.pose2D.pose[2] - self.goal_pose[2])
         orientation_bool = (degrees_to_goal < self.rotation_allowance)
+        if self.publish_to_ROS is True:
+            orientation_bool = True
         logging.debug('Orientation is {}'.format(orientation_bool))
 
         logging.debug('is_at_goal = {}'.format((position_bool and
@@ -416,7 +412,7 @@ class GoalPlanner(object):
         elif current_status == 'stuck':
             prev_type = self.type
             self.type = 'simple'
-            self.find_goal_pose()
+            self.goal_pose = self.find_goal_pose()
             self.type = prev_type
             if self.publish_to_ROS is True:
                 self.create_ROS_goal_message()
@@ -430,6 +426,7 @@ class GoalPlanner(object):
         if current_status != new_status:
             logging.info("{}'s goal_status changed from {} to {}."
                          .format(self.robot.name, current_status, new_status))
+
         self.goal_status = new_status
 
 
