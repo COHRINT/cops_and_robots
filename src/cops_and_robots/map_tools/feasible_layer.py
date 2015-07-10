@@ -77,7 +77,7 @@ class FeasibleLayer(Layer):
 
         feasible_space = box(*self.bounds)
         self.point_region = feasible_space
-        self.pose_region = feasible_space
+        self.pose_region = feasible_space.buffer(-self.max_robot_radius)
 
         for obj_ in shape_layer.shapes.values():
             self.point_region = self.point_region.difference(obj_.shape)

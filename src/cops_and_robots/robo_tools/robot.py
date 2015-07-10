@@ -174,8 +174,13 @@ class Robot(iRobotCreate):
         for name, role in self.other_robots.iteritems():
 
             # Randomly place the other robots
-            x = random.uniform(self.map.bounds[0], self.map.bounds[2])
-            y = random.uniform(self.map.bounds[1], self.map.bounds[3])
+            feasible_robber_generated = False
+            while not feasible_robber_generated:
+                x = random.uniform(self.map.bounds[0], self.map.bounds[2])
+                y = random.uniform(self.map.bounds[1], self.map.bounds[3])
+                if self.map.feasible_layer.pose_region.contains(Point([x, y])):
+                    feasible_robber_generated = True
+
             theta = random.uniform(0, 359)
             pose = [x, y, theta]
 
