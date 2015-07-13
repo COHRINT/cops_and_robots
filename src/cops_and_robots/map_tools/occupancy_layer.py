@@ -31,7 +31,7 @@ import logging
 from pylab import *
 import numpy as np
 import matplotlib.pyplot as plt
-from shapely.geometry import box
+from shapely.geometry import box, Point
 
 from cops_and_robots.map_tools.layer import Layer
 
@@ -53,8 +53,27 @@ class OccupancyLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, cell_size=0.05, **kwargs):
+    def __init__(self, feasible_layer, cell_size=0.1, **kwargs):
         super(OccupancyLayer, self).__init__(**kwargs)
+
+        self.feasible_layer = feasible_layer
+        self.bounds = self.feasible_layer.bounds
+        self.cell_size = cell_size
+
+        self.x_coords = np.arange(self.bounds[0], self.bounds[2], cell_size)
+        self.y_coords = np.arange(self.bounds[1], self.bounds[3], cell_size)
+
+        self.grid_occupancy = []
+        for x, i in enumerate(self.x_coords):
+            for y, j in enumerate(self.y_coords):
+                pt = Point([x, y])
+                if self.feasible_layer.pose_region.contains(pt):
+                    self.grid_occupancy[i][j] = 1
+                else:
+                    self.grid_occupancy[i][j] = 0
+
+
+        """
         self.cell_size = cell_size
 
         self.grid = []
@@ -74,6 +93,7 @@ class OccupancyLayer(Layer):
         self.n_cells = len(self.grid)
 
         self.grid_occupancy = 0.5 * np.ones((self.n_cells, 1), dtype=np.int)
+        """
 
     def add_obj(self, map_obj):
         """Fill the cells for a given map_obj.
