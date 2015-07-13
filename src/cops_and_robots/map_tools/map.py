@@ -73,7 +73,6 @@ class Map(object):
 
         # Define layers
         self.shape_layer = ShapeLayer(bounds=bounds)
-        self.occupancy_layer = OccupancyLayer(bounds=bounds)
         self.feasible_layer = FeasibleLayer(bounds=bounds)
         self.particle_layer = {}  # One per robber, plus one combined
         self.probability_layer = {}  # One per robber, plus one combined
