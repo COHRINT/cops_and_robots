@@ -26,9 +26,9 @@ import matplotlib.animation as animation
 from matplotlib.colors import cnames
 
 from cops_and_robots.robo_tools.robot import Robot
-from cops_and_robots.robo_tools.fusion.fusion_engine import FusionEngine
-from cops_and_robots.robo_tools.fusion.camera import Camera
-from cops_and_robots.robo_tools.fusion.human import Human
+from cops_and_robots.fusion.fusion_engine import FusionEngine
+from cops_and_robots.fusion.camera import Camera
+from cops_and_robots.fusion.human import Human
 
 
 class Cop(Robot):
@@ -45,7 +45,7 @@ class Cop(Robot):
         The cop's name (defaults to 'Deckard').
     pose : list of float, optional
         The cop's initial [x, y, theta] (defaults to [0, 0.5, 90]).
-    fusion_engine_type : {'discrete','continuous'}
+    fusion_engine_type : {'particle','gauss_sum'}
         For particle filters or gaussian mixture filters, respectively.
     planner_type: {'simple', 'particle', 'MAP'}
         The cop's own type of planner.
@@ -75,7 +75,7 @@ class Cop(Robot):
 
     def __init__(self,
                  name="Deckard",
-                 pose=[0, 0.5, 90],
+                 pose=[0, 0, 90],
                  fusion_engine_type='particle',
                  planner_type='particle',
                  cop_model='simple',
@@ -85,6 +85,7 @@ class Cop(Robot):
         super(Cop, self).__init__(name,
                                   pose=pose,
                                   role='cop',
+                                  map_display_type=fusion_engine_type,
                                   status=['searching', 'without a goal'],
                                   consider_others=True,
                                   color_str='darkgreen')

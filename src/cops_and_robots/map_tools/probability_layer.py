@@ -21,10 +21,13 @@ import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from scipy import stats
 from pylab import *
 
 from cops_and_robots.map_tools.layer import Layer
+from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+import itertools
 
 
 class ProbabilityLayer(Layer):
@@ -34,44 +37,96 @@ class ProbabilityLayer(Layer):
 
     Parameters
     ----------
-    cell_size : float, optional
+    grid_size : float, optional
         The side length for each square cell in discretized probability map's
         cells. Defaults to 0.2.
     **kwargs
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, cell_size=0.2, **kwargs):
-        super(ProbabilityLayer, self).__init__(**kwargs)
-        self.cell_size = cell_size  # in [m/cell]
+    def __init__(self, grid_size=0.2, z_levels=20, alpha=0.6,
+                 colorbar_visible=False,
+                 **kwargs):
+        super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)
+        self.grid_size = grid_size  # in [m/cell]
+        self.z_levels = z_levels
         self.colorbar_visible = colorbar_visible
 
-        xlin = np.linspace(bounds[0], bounds[2], 100)
-        ylin = np.linspace(bounds[1], bounds[3], 100)
-        self.X, self.Y = np.meshgrid(xlin, ylin)
+        self.X, self.Y = np.mgrid[self.bounds[0]:self.bounds[2]:self.grid_size,
+                                  self.bounds[1]:self.bounds[3]:self.grid_size]
         self.pos = np.empty(self.X.shape + (2,))
         self.pos[:, :, 0] = self.X
         self.pos[:, :, 1] = self.Y
 
-        self.MAP = [0, 0]  # [m] point of maximum a posteriori
+        # if colorbar_visible:
+        # generate new axis for colorbar
 
-        self.prob = stats.multivariate_normal([0, 0], [[10, 0], [0, 10]])
-
-    def plot(self, gauss_sum, **kwargs):
+    def plot(self, distribution=None, ax=None, **kwargs):
         """Plot the pseudo colormesh representation of probabilty.
 
         Parameters
         ----------
-        gauss_sum : GaussSum
-            A Gaussian sum distribution.
+        distribution : [multiple]
+            Any distribution with a 2D pdf.
 
         Returns
         -------
         QuadMesh
             The scatter pseudo colormesh data.
         """
-        p = plt.pcolormesh(self.X, self.Y, gauss_sum.prob.pdf(self.pos),
-                           cmap=self.cmap, alpha=self.alpha, **kwargs)
-        if colorbar_visible:
-            cb = plt.colorbar(p)
-        return p, cb
+        if distribution is None:
+            distribution = self.distribution
+
+        levels = np.linspace(0, np.max(distribution.pdf(self.pos)),
+                             self.z_levels)
+        self.contourf = self.ax.contourf(self.X, self.Y, distribution.pdf(self.pos),
+                           cmap=self.cmap, alpha=self.alpha, levels=levels, antialiased=True,
+                           **kwargs)
+        # if colorbar_visible:
+        #     self.cbar = plt.colorbar(p)
+
+    def update(self, i=0):
+        """Remove previous contour and replot new contour.
+        """
+        # Test stub for the call from __main__
+        if hasattr(self, 'distributions'):
+            self.distribution = next(self.distributions)
+
+        # Try to remove previous contourf and replot
+        self.remove()
+        self.plot()
+
+        # if colorbar_visible:
+        #    return self.contourf, self.cbar
+
+        return self.contourf
+
+    def remove(self):
+        if hasattr(self,'contourf'):
+            for collection in self.contourf.collections:
+                collection.remove()
+            del self.contourf
+
+if __name__ == '__main__':
+    
+    pl = ProbabilityLayer(z_levels=50)
+
+    distributions = []
+    distributions.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
+    distributions.append(GaussianMixture(1,[1, 1],[[1,0],[0,1]]))
+    distributions.append(GaussianMixture(1,[0, 2],[[1,0],[0,1]]))
+    distributions.append(GaussianMixture(1,[-1, 1],[[1,0],[0,1]]))
+    distributions.append(GaussianMixture(1,[-2, 0],[[1,0],[0,1]]))
+    distributions.append(GaussianMixture(1,[-1, -1],[[1,0],[0,1]]))
+    distributions.append(GaussianMixture(1,[0, -2],[[1,0],[0,1]]))
+    distributions.append(GaussianMixture(1,[1, -1],[[1,0],[0,1]]))
+    distributions.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
+    pl.distributions = itertools.cycle(distributions)
+
+    ani = animation.FuncAnimation(pl.fig, pl.update, 
+        frames=xrange(100), 
+        interval=100,
+        repeat=True,
+        blit=False)
+
+    plt.show()
