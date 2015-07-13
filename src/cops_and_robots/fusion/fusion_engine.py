@@ -125,19 +125,9 @@ class FusionEngine(object):
             if not self.filters[robber.name].finished:
                 self.filters[robber.name].update(sensors['camera'],
                                                  sensors['human'])
+        self._update_combined(sensors, robbers)
 
-                if robber.status == 'detected':
-                    logging.info('{} detected!'.format(robber.name))
-                    self.filters[robber.name].robber_detected(robber.pose)
-
-            # Chop down list of missing robber names if one was captured
-            if robber.status == 'captured':
-                    logging.info('{} captured!'.format(robber.name))
-                    self.missing_robber_names.remove(robber.name)
-
-        self._update_combined(sensors)
-
-    def _update_combined(self, sensors):
+    def _update_combined(self, sensors, robbers):
         """Update the `combined` filter.
 
         Parameters
@@ -152,12 +142,12 @@ class FusionEngine(object):
             self.filters['combined'].particles = np.zeros((1, 5))
 
             # Add all particles from missing robots to combined filter
-            for i, name in enumerate(self.missing_robber_names):
+            for robber in robbers.values():
                 self.filters['combined'].n_particles += \
-                    self.filters[name].n_particles
+                    self.filters[robber.name].n_particles
                 self.filters['combined'].particles = \
                     np.append(self.filters['combined'].particles,
-                              self.filters[name].particles,
+                              self.filters[robber.name].particles,
                               axis=0)
             self.filters['combined'].n_particles = \
                 len(self.filters['combined'].particles)
@@ -165,4 +155,3 @@ class FusionEngine(object):
             # Reset the human sensor
             sensors['human'].utterance = ''
             sensors['human'].target = ''
-

@@ -21,7 +21,6 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
-import logging
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import cnames
@@ -33,6 +32,7 @@ from cops_and_robots.fusion.softmax import (binary_range_model,
                                             binary_intrinsic_space_model,
                                             range_model,
                                             intrinsic_space_model)
+
 
 class MapElement(object):
     """Generate an element based on a geometric shape, plus spatial relations.
@@ -93,10 +93,41 @@ class MapElement(object):
             shape_pts = [(p[0] - x, p[1] - y) for p in shape_pts]
         self.shape = Polygon(shape_pts)
 
-        # Place the shape at the correct pose
-        self.move_shape(pose)
+        # Store polygon shape
+        self.base_shape = self.shape
 
-    def move_shape(self, pose, rotation_pt=None):
+        # Place the shape at the correct pose
+        self.move_relative(pose)
+
+    def move_absolute(self, pose):
+        """Moves shape to new pose"""
+        # Rotate about center
+        pts = self.base_shape.exterior.coords
+        center = self.base_shape.centroid
+        lines = []
+        for pt in pts:
+            line = LineString([center, pt])
+            lines.append(rotate(line, pose[2], origin=center))
+        pts = []
+        for line in lines:
+            pts.append(line.coords[1])
+        rotated_shape = Polygon(pts)
+
+        # Move shape to new pose
+        self.pose = pose
+        shape_pts = [(p[0] + pose[0], p[1] + pose[1])
+                     for p in rotated_shape.exterior.coords]
+        self.shape = Polygon(shape_pts)
+
+        # Redefine sides, points and and spaces
+        self.points = self.shape.exterior.coords
+        self.sides = []
+        self.spaces = []
+        self.spaces_by_label = {}
+        if self.has_spaces:
+            self.define_spaces()
+
+    def move_relative(self, pose, rotation_pt=None):
         """Translate and rotate the shape.
 
         The rotation is assumed to be about the element's centroid
@@ -189,6 +220,7 @@ class MapElement(object):
                            self.centroid['theta'],
                            )
 
+
 class MapObject(MapElement):
     """Physical object in the map.
 
@@ -197,12 +229,12 @@ class MapObject(MapElement):
 
     def __init__(self, name, shape_pts, color_str='darkseagreen', visible=True,
                  has_spaces=True, **kwargs):
-        super(MapObject, self).__init__(name, shape_pts, 
-                                      color_str=color_str,
-                                      visible=visible,
-                                      has_spaces=has_spaces,
-                                      **kwargs
-                                      )
+        super(MapObject, self).__init__(name, shape_pts,
+                                        color_str=color_str,
+                                        visible=visible,
+                                        has_spaces=has_spaces,
+                                        **kwargs
+                                        )
         if self.has_spaces:
             self.define_spaces()
 
@@ -222,12 +254,13 @@ class MapArea(MapElement):
     """short description of MapArea
 
     long description of MapArea
-    
+
     """
 
     def __init__(self, name, shape_pts, color_str='blanchedalmond',
-                 show_name=True, visible=False, has_spaces=True, *args, **kwargs):
-        super(MapArea, self).__init__(name, shape_pts, 
+                 show_name=True, visible=False, has_spaces=True,
+                 *args, **kwargs):
+        super(MapArea, self).__init__(name, shape_pts,
                                       color_str=color_str,
                                       visible=visible,
                                       has_spaces=has_spaces,
@@ -251,4 +284,3 @@ class MapArea(MapElement):
             if not ax:
                 ax = plt.gca()
             ax.annotate(self.name, self.pose[:2])
-

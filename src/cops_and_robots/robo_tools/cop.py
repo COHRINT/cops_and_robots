@@ -19,11 +19,13 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
-from pylab import *
 import logging
+import numpy as np
 
+import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import cnames
+from shapely.geometry import Point
 
 from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.fusion.fusion_engine import FusionEngine
@@ -63,37 +65,41 @@ class Cop(Robot):
         All robbers found so far.
     sensors : dict
         All sensors owned by the cop.
-    mission_statuses : {'searching', 'capturing', 'done'}
+    mission_statuses : {'searching', 'capturing', 'retired'}
         The possible mission-level statuses of any cop, where:
             * `searching` means the cop is exploring the environment;
-            * `capturing` means the cop has detected a robber and is moving 
+            * `capturing` means the cop has detected a robber and is moving
                 to capture it;
-            * `done` means all robbers have been captured.
+            * `retired` means all robbers have been captured.
 
     """
-    mission_statuses = ['searching', 'capturing', 'done']
+    mission_statuses = ['searching', 'capturing', 'retired']
 
     def __init__(self,
                  name="Deckard",
                  pose=[0, 0, 90],
+                 pose_source='python',
+                 publish_to_ROS=False,
                  fusion_engine_type='particle',
-                 planner_type='particle',
+                 goal_planner_type='particle',
                  cop_model='simple',
                  robber_model='random walk'):
 
         # Superclass and compositional attributes
         super(Cop, self).__init__(name,
                                   pose=pose,
+                                  pose_source=pose_source,
+                                  publish_to_ROS=publish_to_ROS,
                                   role='cop',
                                   map_display_type=fusion_engine_type,
-                                  status=['searching', 'without a goal'],
+                                  mission_status='searching',
                                   consider_others=True,
                                   color_str='darkgreen')
 
         # Tracking attributes
         self.found_robbers = {}
-        self.planner.use_target_as_goal = False
-        self.planner.type = planner_type
+        self.goal_planner.use_target_as_goal = False
+        self.goal_planner.type = goal_planner_type
 
         # Fusion and sensor attributes
         robber_names = [a.name for a in self.missing_robbers.values()]
@@ -118,37 +124,76 @@ class Cop(Robot):
         """Update the cop's high-level mission status.
 
         Update the cop's status from one of:
-            1. done (all robots have been captured)
-            2. capturing (moving to view pose to capture target)
-            3. searching (moving around to gather information)
+            1. retired (all robots have been captured)
+            2. searching (moving around to gather information)
 
         """
-        detected_robber = any(self.missing_robbers.values()).status[0] \
-            == 'detected'
+        if self.mission_status is 'searching':
+            if len(self.missing_robbers) is 0:
+                self.mission_status = 'retired'
+                self.stop_all_movement()
 
-        # <>TODO: Replace with a proper state machine
-        if set(self.status[0]) - set(['capturing', 'at goal']) == set([]):
-            captured_robber_names = [r.name for r in self.missing_robbers
-                                     .values() if r.status[0] == 'detected']
-            for robber_name in captured_robber_names:
-                self.missing_robbers[robber_name].status[0] = 'captured'
-                self.found_robbers = self.missing_robbers.pop(robber_name)
-            self.status[0] = 'searching'
-        elif len(self.missing_robbers) is 0:
-            self.status[0] = 'done'
-        elif detected_robber:
-            self.status[0] = 'capturing'
-        elif self.status[0] != 'capturing':
-            self.status[0] = 'searching'
+    def update(self, i=0):
+        super(Cop, self).update()
 
-        if self.status[1] is 'stuck':
-            logging.warn('{} is {} and {} (moved {}m in last {} time steps).'
-              .format(self.name, self.status[0], self.status[1],
-                      self.distance_travelled, self.check_last_n))
-        elif self.prev_status != self.status:
-            logging.info('{} is {} and {}.'.format(self.name, self.status[0],
-                                                   self.status[1]))
-        self.prev_status = self.status[:]
+        # Update sensor and fusion information
+        # Try to visually spot a robber
+        for robber in self.missing_robbers.values():
+            if self.sensors['camera'].viewcone.shape.contains(Point(robber.pose2D.pose)):
+                robber.mission_status = 'captured'
+                logging.info('{} captured!'.format(robber.name))
+                self.fusion_engine.filters[robber.name].robber_detected(robber.pose2D.pose)
+                self.found_robbers.update({robber.name: self.missing_robbers.pop(robber.name)})
+                self.map.rem_robber(robber.name)
+
+        # Update probability model
+        self.fusion_engine.update(self.pose2D.pose, self.sensors,
+                                  self.missing_robbers)
+        # Export the next animation stream
+        if self.role == 'cop' and self.show_animation:
+            packet = {}
+            if not self.map.combined_only:
+                for i, robber_name in enumerate(self.missing_robbers):
+                    packet[robber_name] = \
+                        self._form_animation_packet(robber_name)
+            packet['combined'] = self._form_animation_packet('combined')
+            return self.stream.send(packet)
+
+    def _form_animation_packet(self, robber_name):
+        """Turn all important animation data into a tuple.
+
+        Parameters
+        ----------
+        robber_name : str
+            The name of the robber (or 'combined') associated with this packet.
+
+        Returns
+        -------
+        tuple
+            All important animation parameters.
+
+        """
+        # Cop-related values
+        cop_shape = self.map_obj.shape
+        if len(self.pose_history) < self.goal_planner.stuck_buffer:
+            cop_path = np.hsplit(self.pose_history[:, 0:2], 2)
+        else:
+            cop_path = np.hsplit(self.pose_history[-self.goal_planner.stuck_buffer:, 0:2],
+                                 2)
+
+        camera_shape = self.sensors['camera'].viewcone.shape
+
+        # Robber-related values
+        particles = self.fusion_engine.filters[robber_name].particles
+        if robber_name == 'combined':
+            robber_shape = {name: robot.map_obj.shape for name, robot
+                            in self.missing_robbers.iteritems()}
+        else:
+            robber_shape = self.missing_robbers[robber_name].map_obj.shape
+
+        # Form and return packet to be sent
+        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles,)
+        return packet
 
     def animated_exploration(self):
         """Start the cop's exploration of the environment, while

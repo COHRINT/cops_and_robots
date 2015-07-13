@@ -83,21 +83,21 @@ class Camera(Sensor):
 
         # Set the ideal and actual viewcones
         self.ideal_viewcone = MapObject('Ideal viewcone',
-                                     viewcone_pts,
-                                     visible=False,
-                                     color_str='pink',
-                                     pose=robot_pose,
-                                     has_spaces=False,
-                                     centroid_at_origin=False,
-                                     )
+                                        viewcone_pts,
+                                        visible=False,
+                                        color_str='pink',
+                                        pose=robot_pose,
+                                        has_spaces=False,
+                                        centroid_at_origin=False,
+                                        )
         self.viewcone = MapObject('Viewcone',
-                               viewcone_pts,
-                               visible=True,
-                               color_str='lightyellow',
-                               pose=robot_pose,
-                               has_spaces=False,
-                               centroid_at_origin=False,
-                               )
+                                  viewcone_pts,
+                                  visible=True,
+                                  color_str='lightyellow',
+                                  pose=robot_pose,
+                                  has_spaces=False,
+                                  centroid_at_origin=False,
+                                  )
         self.view_pose = (0, 0, 0)
 
         # <>TODO: Add in and test an offset of (-0.1,-0.1)
@@ -137,9 +137,9 @@ class Camera(Sensor):
         # Reset the view shape
         self.viewcone.shape = self.ideal_viewcone.shape
         transform = tuple(np.subtract(pose, self.view_pose))
-        self.ideal_viewcone.move_shape(transform,
-                                       rotation_pt=self.view_pose[0:2])
-        self.viewcone.move_shape(transform, rotation_pt=self.view_pose[0:2])
+        self.ideal_viewcone.move_relative(transform,
+                                          rotation_pt=self.view_pose[0:2])
+        self.viewcone.move_relative(transform, rotation_pt=self.view_pose[0:2])
         self.view_pose = pose
 
     def _rescale_viewcone(self, robot_pose, shape_layer):
@@ -171,11 +171,7 @@ class Camera(Sensor):
         else:
             self.viewcone.shape = self.ideal_viewcone.shape
 
-    def detect_robber(self, robber):
-        if self.viewcone.shape.contains(Point(robber.pose)):
-            robber.status = 'detected'
-
-    def detect(self, filter_type, particles=None, prior=None):
+    def detect(self, filter_type, particles=None,prior=None):
         """Update a fusion engine's probability from camera detections.
 
         Parameters
@@ -201,12 +197,12 @@ class Camera(Sensor):
             data and p is the particle's associated probability.
         """
         # Translate detection model
+        # <>TODO: check this
         self.detection_model.move_relative(self.view_pose[0:2],self.view_pose[2])
 
         # Update particle probabilities in view cone frame
         for i, particle in enumerate(particles):
             if self.viewcone.shape.contains(Point(particle[1:3])):
-                logging.info(particle[1:3])
                 particles[i, 0] *= (1 - self.detection_model \
                     .classes['Detection'].probability(state=particle[1:3]) )
 
