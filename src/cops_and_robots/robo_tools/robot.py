@@ -29,8 +29,9 @@ import numpy as np
 
 from shapely.geometry import Point
 
+from cops_and_robots.robo_tools.pose import Pose
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
-from cops_and_robots.robo_tools.planner import Planner
+from cops_and_robots.robo_tools.planner import GoalPlanner, PathPlanner, Controller
 from cops_and_robots.map_tools.map import set_up_fleming
 from cops_and_robots.map_tools.map_elements import MapObject
 
@@ -70,18 +71,6 @@ class Robot(iRobotCreate):
     all_robots : dict
         A dictionary of all robot names (as the key) and their respective roles
         (as the value).
-    movement_statuses : {'stuck','at goal','near goal','on goal path',
-        'rotating','without a goal'}
-        The possible movement statuses of any robot, where:
-            * `stuck` means the robot hasn't moved recently;
-            * `at goal` means the robot has reached its goal pose;
-            * `near goal` means the robot has reached its goal pose in
-            cartesian distance, but has not rotated to the final pose;
-            * `on goal path` means the robot is translating along the goal
-            path;
-            * `rotating` means the robot is rotating to align itself with the
-            next path segment;
-            * `without a goal` means the robot has no movement goal.
 
     """
 
@@ -98,6 +87,7 @@ class Robot(iRobotCreate):
                   'Zhora': 'robber',
                   }
 
+<<<<<<< HEAD
     #<>TODO: set to path planner statuses
     movement_statuses = ['stuck',
                          'at goal',
@@ -107,16 +97,20 @@ class Robot(iRobotCreate):
                          'without a goal'
                          ]
 
+=======
+>>>>>>> origin/matt-dev
     def __init__(self,
                  name,
                  pose=[0, 0.5, 0],
+                 pose_source='python',
+                 publish_to_ROS=False,
                  map_name='fleming',
                  map_display_type='particle',
                  role='robber',
-                 status=['on the run', 'without a goal'],
-                 planner_type='simple',
+                 mission_status='on the run',
+                 goal_planner_type='simple',
+                 path_planner_type='direct',
                  consider_others=False,
-                 control_hardware=False,
                  **kwargs):
 
         # Check robot name
@@ -133,40 +127,37 @@ class Robot(iRobotCreate):
         else:
             self.other_robots = {}
 
-        # Initialize iRobot Create superclass only if controlling hardware
-        self.control_hardware = control_hardware
-        if self.control_hardware:
-            super(Robot, self).__init__()
-
-        # Class attributes
+        # Object attributes
         self.name = name
-        self.pose = pose
-        self.goal_pose = self.pose[:]
+        self.pose2D = Pose(pose, pose_source)
         self.role = role
-        self.status = status
+        self.num_goals = None  # number of goals to reach (None for infinite)
+        self.mission_status = mission_status
         if not map_name:
             self.map = None
         else:
+<<<<<<< HEAD
             self.map = set_up_fleming(map_display_type)
         self.planner = Planner(planner_type, self.map.feasible_layer)
+=======
+            self.map = set_up_fleming()
+        self.goal_planner = GoalPlanner(self,
+                                        publish_to_ROS,
+                                        type_=goal_planner_type)
+        if publish_to_ROS is False:
+            self.path_planner = PathPlanner(self, path_planner_type)
+            self.controller = Controller(self)
+>>>>>>> origin/matt-dev
         self.fusion_engine = None
 
         # Movement attributes
-        self.move_distance = 0.2  # [m] per time step
-        self.rotate_distance = 15  # [deg] per time step
-        self.pose_history = np.array(([0, 0, 0], self.pose))
-        self.check_last_n = 50  # number of poses to look at before stuck
-        self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
-        self.stuck_buffer = 20  # time steps after being stuck before checking
-        self.distance_allowance = 0.1  # [m] acceptable distance to a goal
-        self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
-        self.num_goals = None  # number of goals to reach (None for infinite)
+        self.pose_history = np.array(([0, 0, 0], self.pose2D.pose))
 
         # Define MapObject
         shape_pts = Point(pose[0:2]).buffer(iRobotCreate.DIAMETER / 2)\
             .exterior.coords
         self.map_obj = MapObject(self.name, shape_pts[:], has_spaces=False,
-                              **kwargs)
+                                 **kwargs)
         self.update_shape()
 
         # Add self and others to the map
@@ -176,17 +167,14 @@ class Robot(iRobotCreate):
             self.map.add_robber(self.map_obj)
         self.make_others()
 
-        # Start with a goal and a path
-        self.goal_pose = self.planner.find_goal_pose(self.fusion_engine)
-        self.path, self.path_theta = self.planner.update_path(self.pose)
-
     def update_shape(self):
         """Update the robot's map_obj.
         """
 
         # <>TODO: refactor this
-        self.map_obj.move_shape((self.pose -
-                                 self.pose_history[-2:, :]).tolist()[0])
+        # self.map_obj.move_relative((self.pose2D.pose -
+        #                             self.pose_history[-2:, :]).tolist()[0])
+        self.map_obj.move_absolute(self.pose2D.pose)
 
     def make_others(self):
         """Generate robot objects for all other robots.
@@ -204,8 +192,13 @@ class Robot(iRobotCreate):
         for name, role in self.other_robots.iteritems():
 
             # Randomly place the other robots
-            x = random.uniform(self.map.bounds[0], self.map.bounds[2])
-            y = random.uniform(self.map.bounds[1], self.map.bounds[3])
+            feasible_robber_generated = False
+            while not feasible_robber_generated:
+                x = random.uniform(self.map.bounds[0], self.map.bounds[2])
+                y = random.uniform(self.map.bounds[1], self.map.bounds[3])
+                if self.map.feasible_layer.pose_region.contains(Point([x, y])):
+                    feasible_robber_generated = True
+
             theta = random.uniform(0, 359)
             pose = [x, y, theta]
 
@@ -219,6 +212,7 @@ class Robot(iRobotCreate):
                 self.map.add_cop(new_cop.map_obj)
                 self.known_cops[name] = new_cop
 
+<<<<<<< HEAD
     # <>TODO: Break out into Controller class
     def translate_towards_goal(self, path=None):
         """Move the robot's x,y positions towards a goal point.
@@ -410,6 +404,19 @@ class Robot(iRobotCreate):
         self.status[1] = new_status
 
     def update(self, i=0):
+=======
+    def stop_all_movement(self):
+        self.goal_planner.goal_status = 'done'
+        try:
+            self.path_planner.planner_status = 'not planning'
+            self.controller.controller_status = 'waiting'
+        except:
+            logging.info('No planner or controller found')
+        logging.warn('{} has stopped'.format(self.name))
+        self.mission_status = 'stopped'
+
+    def update(self):
+>>>>>>> origin/matt-dev
         """Update all primary functionality of the robot.
 
         This includes planning and movement for both cops and robbers,
@@ -426,7 +433,19 @@ class Robot(iRobotCreate):
             `None` if the robot does not generate an animation packet, or a
             tuple of all animation parameters otherwise.
         """
+        if self.mission_status is not 'stopped':
+            # Update statuses and planners
+            self.update_mission_status()
+            self.goal_planner.update()
+            if self.goal_planner.publish_to_ROS is False:
+                self.path_planner.update()
+                self.controller.update()
 
+            # Add to the pose history, update the map
+            self.pose_history = np.vstack((self.pose_history, self.pose2D.pose[:]))
+            self.update_shape()
+
+<<<<<<< HEAD
         # If stationary or done, do absolutely nothing.
         if self.status[0] in ('stationary', 'done'):
             return
@@ -519,6 +538,8 @@ class Robot(iRobotCreate):
         # Form and return packet to be sent
         packet = (cop_shape, cop_path, camera_shape, robber_shape, particles, distribution)
         return packet
+=======
+>>>>>>> origin/matt-dev
 
 # Import statements left to the bottom because of subclass circular dependency
 import cops_and_robots.robo_tools.cop as cop_module

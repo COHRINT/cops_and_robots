@@ -84,7 +84,7 @@ class ParticleFilter(object):
             feasible_particle_generated = False
             while not feasible_particle_generated:
                 point = Point(pt[0], pt[1])
-                if self.feasible_layer.point_region.contains(point):
+                if self.feasible_layer.pose_region.contains(point):
                     feasible_particle_generated = True
                 else:
                     pt[0] = np.random.uniform(bounds[0], bounds[2])

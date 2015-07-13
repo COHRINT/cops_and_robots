@@ -153,7 +153,7 @@ class Map(object):
         robber_name : str
             Name of the robber.
         """
-        self.shape_layer.rem_obj(robber_name)
+        # self.shape_layer.rem_obj(robber_name)
         del self.robbers[robber_name]
         if self.display_type == 'particle':
             del self.particle_layer[robber_name]
@@ -402,32 +402,31 @@ def set_up_fleming(display_type='particle'):
     field = MapArea('Field', [field_w, field_w], has_spaces=False)
 
     # Make wall objects
-    l = 1.2192  # [m] wall length
+    l = 1.15  # [m] wall length
     w = 0.1524  # [m] wall width
     wall_shape = [l, w]
 
-    poses = np.array([[-5 + w/2, -1.5 - w/2, 1],
-                      [-5 + w/2, -2.5 - w/2, 1],
-                      [-4.5, -1, 0],
-                      [-3.5, -1, 0],
-                      [-2.5, -1, 0],
-                      [-1 + w/2, -1.5 - w/2, 1],
-                      [-0.5, -1, 0],
-                      [0.5, -1, 0],
-                      [1.5, -1, 0],
-                      [-6.5 - w/2, 0, 0],
-                      [-5.5 - w/2, 0, 0],
-                      [-4.5 - w/2, 0, 0],
-                      [-3.5 - w/2, 0, 0],
-                      [-2.5 - w/2, 0, 0],
-                      [-1.5 - w/2, 0, 0],
-                      [0.5 - w/2, 0, 0],
-                      [1.5 - w/2, 0, 0],
-                      [0, 0.5 + w/2, 1],
-                      [0, 1.5 + w/2, 1],
+    poses = np.array([[-7, -1.55, 1],
+                      [-7, -2.55, 1],
+                      [-7 + l/2 + w/2, -1, 0],
+                      [-7 + 3*l/2 + w/2, -1, 0],
+                      [-7 + 5*l/2 + w/2, -1, 0],
+                      [-2, -1.55, 1],
+                      [-2 + 1*l/2 + w/2, -1, 0],
+                      [-2 + 3*l/2 + w/2, -1, 0],
+                      [-2 + 5*l/2 +w/2, -1, 0],
+                      [-7.45 + 1*l/2 + w/2, 1.4, 0],
+                      [-7.45 + 3*l/2 + w/2, 1.4, 0],
+                      [-7.45 + 5*l/2 + w/2, 1.4, 0],
+                      [-7.45 + 7*l/2 + w/2, 1.4, 0],
+                      [-7.45 + 9*l/2 + w/2, 1.4, 0],
+                      [l/2 + w/2, 1.4, 0],
+                      [3*l/2 + w/2, 1.4, 0],
+                      [0, 1.4 + l/2, 1],
+                      [0, 1.4 + 3*l/2, 1],
                      ])
 
-    poses = poses * np.array([l, l, 90])
+    poses = poses * np.array([1, 1, 90])
 
     n_walls = poses.shape[0]
     walls = []
@@ -438,6 +437,8 @@ def set_up_fleming(display_type='particle'):
                          has_spaces=False)
         walls.append(wall)
 
+    landmarks = []
+    """
     # Make landmark billiards
     poses = np.array([[2.2, 1.5, 0],
                       [1.2, 1, 0],
@@ -446,7 +447,6 @@ def set_up_fleming(display_type='particle'):
     colors = ['yellow', 'blue', 'red', 'purple', 'orange', 'green', 'brown',
               'black']
 
-    landmarks = []
     for i, pose in enumerate(poses):
         name = 'Ball ' + str(i)
         shape_pts = Point(pose).buffer(0.075).exterior.coords
@@ -466,17 +466,18 @@ def set_up_fleming(display_type='particle'):
         landmark = MapObject(name, shape_pts[:], pose=pose, has_spaces=False,
                              color_str='grey')
         landmarks.append(landmark)
+    """
 
     # Make rectangular objects (desk, bookcase, etc)
-    poses = np.array([[0.5, -1.5, 0],
-                      [-5.0, -2.4, 0],
-                      [-9.0, -2.5, 0]
+    poses = np.array([[0, -1.2, 270],
+                      [-5.5, -2, 00],
+                      [3, -2, 180]
                      ])
     colors = ['sandybrown', 'sandybrown', 'brown']
-    labels = ['Bookcase', 'Desk', 'Table']
-    sizes = np.array([[1.3, 0.4],
-                      [0.8, 1.5],
-                      [1.6, 1.6]
+    labels = ['Bookcase', 'Desk', 'Chair']
+    sizes = np.array([[0.18, 0.38],
+                      [0.61, 0.99],
+                      [0.46, 0.41]
                      ])
     
     for i, pose in enumerate(poses):
@@ -485,18 +486,17 @@ def set_up_fleming(display_type='particle'):
         landmarks.append(landmark)
 
     # Make odd landmarks
-    landmark = MapObject('Box', [0.6, 0.8], pose=[-7.5, 1.8, 0],
-                         color_str='black')
+    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.3, 270], color_str='black')
     landmarks.append(landmark)
-    pose = [-9.5, 2.1, 0]
-    shape_pts = Point(pose).buffer(0.2).exterior.coords
-    landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False,
-                         color_str='slategrey')
-    landmarks.append(landmark)
+    # pose = [-9.5, 2.1, 0]
+    # shape_pts = Point(pose).buffer(0.2).exterior.coords
+    # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
+    # landmarks.append(landmark)
+    
 
     # Create Fleming map
-    bounds = [-field_w * 1.5, -field_w / 2, field_w / 2, field_w / 2]
-    fleming = Map('Fleming', bounds, display_type=display_type)
+    bounds = [-9.5, -3.33, 4, 3.68]
+    fleming = Map('Fleming', bounds)
 
     # Add walls to map
     for wall in walls:
@@ -511,12 +511,12 @@ def set_up_fleming(display_type='particle'):
               'Dining Room']
     colors = ['aquamarine','lightcoral', 'goldenrod', 'sage','cornflowerblue',
               'orchid']
-    points = np.array([[[-6.0, -4], [-6.0, -1.2], [-1.2, -1.2], [-1.2, -4]],
-                       [[-1.2, -4], [-1.2, -1.2],[4.0, -1.2], [4.0, -4]],
-                       [[-12.0, 0], [-12.0, 4],[0, 4], [0, 0]],
-                       [[0, 0], [0, 4],[4, 4], [4, 0]],
-                       [[-12, -1.2], [-12, 0],[4, 0], [4, -1.2]],
-                       [[-12, -4], [-12, -1.2],[-6, -1.2], [-6, -4]],
+    points = np.array([[[-7.0, -3.33], [-7.0, -1], [-2, -1], [-2, -3.33]],
+                       [[-2, -3.33], [-2, -1],[4.0, -1], [4.0, -3.33]],
+                       [[-9.5, 1.4], [-9.5, 3.68],[0, 3.68], [0, 1.4]],
+                       [[0, 1.4], [0, 3.68],[4, 3.68], [4, 1.4]],
+                       [[-9.5, -1], [-9.5, 1.4],[4, 1.4], [4, -1]],
+                       [[-9.5, -3.33], [-9.5, -1],[-7, -1], [-7, -3.33]],
                       ])
     for i, pts in enumerate(points):
         centroid = [pts[0,0] + np.abs(pts[2,0] - pts[0,0]) / 2,
@@ -529,7 +529,8 @@ def set_up_fleming(display_type='particle'):
 
     return fleming
 
+
 if __name__ == '__main__':
     fleming = set_up_fleming()
     fleming.plot(show_areas=True)
-
+    fleming.feasible_layer.plot()
