@@ -68,6 +68,7 @@ class Robber(Robot):
         #     self.update()
 
     def update_mission_status(self):
+        # <>TODO: Replace with MissionPlanner
         """Update the robber's status
 
         """

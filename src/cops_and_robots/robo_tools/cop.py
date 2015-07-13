@@ -120,6 +120,7 @@ class Cop(Robot):
         self.prev_status = []
 
     def update_mission_status(self):
+        # <>TODO: Replace with MissionPlanner
         """Update the cop's high-level mission status.
 
         Update the cop's status from one of:
@@ -130,7 +131,7 @@ class Cop(Robot):
         if self.mission_status is 'searching':
             if len(self.missing_robbers) is 0:
                 self.mission_status = 'retired'
-                self.stop_all_movement()
+                self.mission_planner.stop_all_movement()
 
     def update(self, i=0):
         super(Cop, self).update()

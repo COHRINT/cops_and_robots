@@ -19,7 +19,7 @@ __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Matthew Aitken", "Nick Sweet", "Nisar Ahmed"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Nick Sweet"
+__maintainer__ = "Matthew Aitken"
 __email__ = "matthew@raitken.net"
 __status__ = "Development"
 
@@ -34,6 +34,49 @@ from shapely.geometry import Point, LineString
 import rospy
 import tf
 from geometry_msgs.msg import PoseStamped
+
+import cops_and_robots.robo_tools.a_star as a_star
+
+
+class MissionPlanner(object):
+    """The MissionPlanner is responsible for high level planning.
+
+
+    """
+    def __init__(self, robot, publish_to_ROS=False):
+        self.robot = robot
+        self.trajectory = self.test_trajectory()
+        self.mission_status = 'Moving'
+        self.publish_to_ROS = publish_to_ROS
+
+    def stop_all_movement(self):
+        self.robot.goal_planner.goal_status = 'done'
+        if self.publish_to_ROS:
+            self.robot.goal_planner.goal_pose = self.robot.pose2D.pose[:]
+            self.robot.goal_planner.create_ROS_goal_message()
+        else:
+            self.robot.path_planner.planner_status = 'not planning'
+            self.robot.controller.controller_status = 'waiting'
+
+        logging.warn('{} has stopped'.format(self.robot.name))
+        self.mission_status = 'stopped'
+
+    def test_trajectory(self):
+        test_trajectory = iter(np.array([[0, 0], [3.3, 0], [3.3, 2.5],
+                                         [3.3, -3], [-6, -3], [-3, -3],
+                                         [-3, 0], [-8, 0], [-8, -3],
+                                         [-8, 2.5], [-1, 2.5], [-1, 0],
+                                         [0, 0]]))
+        return test_trajectory
+
+    def update(self):
+        """Updates the MissionPlanner.
+
+        This will usually be overwritten when the MissionPlanner is subclassed.
+
+        """
+        pass
+
 
 
 class GoalPlanner(object):
@@ -268,7 +311,9 @@ class GoalPlanner(object):
         pass
 
     def find_goal_from_trajectory(self):
-        """Find a goal pose from a set trajectory
+        """Find a goal pose from a set trajectory, defined by the
+            mission_planner.
+            Trajectory must be a iterated numpy array
 
         Parameters
         ----------
@@ -496,6 +541,15 @@ class PathPlanner(object):
         # Implement later
         current_pose = self.robot.pose2D.pose[0:2]
         goal_pose = self.robot.goal_planner.goal_pose[0:2]
+
+        dirs = 8  # number of possible directions to move on the map
+        if dirs == 4:
+            dx = [1, 0, -1, 0]
+            dy = [0, 1, 0, -1]
+        elif dirs == 8:
+            dx = [1, 1, 0, -1, -1, -1, 0, 1]
+            dy = [0, 1, 1, 1, 0, -1, -1, -1]
+
         pass
 
     def update(self):

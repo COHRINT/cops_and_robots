@@ -18,7 +18,7 @@ def main():
                         )
     np.set_printoptions(precision=2, suppress=True)
 
-    publish_to_ROS = True
+    publish_to_ROS = False
 
     if publish_to_ROS:
         rospy.init_node('python_node', log_level=rospy.DEBUG)
@@ -28,7 +28,7 @@ def main():
 
     # Pre-test config
     robber_model = 'static'
-    deckard = Cop(robber_model=robber_model, pose_source='odom',
+    deckard = Cop(robber_model=robber_model, pose_source='python',
                   publish_to_ROS=publish_to_ROS)
     deckard.map.combined_only = True
 
