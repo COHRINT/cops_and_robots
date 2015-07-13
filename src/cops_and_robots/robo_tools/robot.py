@@ -98,6 +98,7 @@ class Robot(iRobotCreate):
                   'Zhora': 'robber',
                   }
 
+    #<>TODO: set to path planner statuses
     movement_statuses = ['stuck',
                          'at goal',
                          'near goal',
@@ -110,6 +111,7 @@ class Robot(iRobotCreate):
                  name,
                  pose=[0, 0.5, 0],
                  map_name='fleming',
+                 map_display_type='particle',
                  role='robber',
                  status=['on the run', 'without a goal'],
                  planner_type='simple',
@@ -145,7 +147,7 @@ class Robot(iRobotCreate):
         if not map_name:
             self.map = None
         else:
-            self.map = set_up_fleming()
+            self.map = set_up_fleming(map_display_type)
         self.planner = Planner(planner_type, self.map.feasible_layer)
         self.fusion_engine = None
 
@@ -239,6 +241,7 @@ class Robot(iRobotCreate):
                       .format(self.name,
                               ["{:.2f}".format(a) for a in self.pose]))
 
+    # <>TODO: Break out into Controller class
     def rotate_to_pose(self, theta=None):
         """Rotate the robot about its centroid towards a goal angle.
 
@@ -501,7 +504,12 @@ class Robot(iRobotCreate):
         camera_shape = self.sensors['camera'].viewcone.shape
 
         # Robber-related values
-        particles = self.fusion_engine.filters[robber_name].particles
+        if self.fusion_engine.filter_type == 'particle':
+            particles = self.fusion_engine.filters[robber_name].particles
+            distribution = None
+        else:
+            distribution = self.fusion_engine.filters[robber_name].probability
+            particles = None
         if robber_name == 'combined':
             robber_shape = {name: robot.map_obj.shape for name, robot
                             in self.missing_robbers.iteritems()}
@@ -509,7 +517,7 @@ class Robot(iRobotCreate):
             robber_shape = self.missing_robbers[robber_name].map_obj.shape
 
         # Form and return packet to be sent
-        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles,)
+        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles, distribution)
         return packet
 
 # Import statements left to the bottom because of subclass circular dependency

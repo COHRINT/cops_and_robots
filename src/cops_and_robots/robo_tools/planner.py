@@ -269,5 +269,23 @@ class Planner(object):
             A pose as [x,y,theta] in [m,m,degrees].
 
         """
-        # <>TODO: Implement this!
-        pass
+        # <>TODO: @Nick Test this!
+        if not next(fusion_engine.filters.iteritems()):
+                raise ValueError('The fusion_engine must have a '
+                                 'particle_filter.')
+
+        theta = random.uniform(0, 360)
+
+        # If tracking multiple targets, use the combined particle filter
+        if len(fusion_engine.filters) > 1:
+            posterior = fusion_engine.filters['combined'].probability
+        else:
+            posterior = next(fusion_engine.filters.iteritems()).probability
+
+        bounds = self.feasible_layer.bounds
+        MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
+
+        # Select randomly from max_particles
+        goal_pose = np.append(MAP_point, theta)
+
+        return goal_pose

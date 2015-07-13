@@ -17,6 +17,7 @@ def main():
     np.set_printoptions(precision=2, suppress=True)
 
     # Pre-test config
+    # <>TODO create a configuration file
     robber_model = 'static'
     deckard = Cop(robber_model=robber_model)
     deckard.map.combined_only = True
