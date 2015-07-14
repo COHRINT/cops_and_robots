@@ -499,14 +499,73 @@ class Softmax(object):
         # <>TODO: implement this!
         pass
 
-    def move_relative(self, translation=None, rotation=None,
-                      rotation_point=None, rotation_unit='degrees',
-                      reversed_translation=True, rotate_ccw=True):
+    def move(self, new_pose=None, translation=None, rotation=None,
+             *args, **kwargs):
+        # Make sure to save original weights & biases
+        if not hasattr(self, 'original_weights'):
+            self.original_weights = np.copy(self.weights)
+            self.original_biases = np.copy(self.biases)
+
+        # If first 2 positional arguments specified, assume relative movement
+        if not (new_pose is None) and not (translation is None):
+            logging.debug('Assuming relative movement of softmax distribution.')
+            rotation = translation
+            translation = new_pose
+            new_pose = None
+
+        # Move relative or absolute, depending on the input
+        if new_pose is None:
+            self._move_relative(translation, rotation, *args, **kwargs)
+        else:
+            self._move_absolute(new_pose, *args, **kwargs)
+
+    def _move_absolute(self, new_pose, rotation_unit='degrees'):
+
+        # Validate inputs
+        new_pose = np.array(new_pose).astype('float')
+        if new_pose.size < 2 or new_pose.size > 3:
+            raise ValueError('Pose should have 2 or 3 values. {} was given.'
+                             .format(new_pose))
+        elif new_pose.size == 2:
+            # Assume theta is 0
+            new_pose = np.hstack((new_pose, np.zeros(1)))
+
+        # Convert theta to radians
+        if rotation_unit == 'degrees':
+                new_pose[2] = np.deg2rad(new_pose[2])
+
+        # Convert scalar rotation to rotation matrix
+        r = -new_pose[2]  # ccw rotation
+        rotation = np.array([[np.cos(r), -np.sin(r)],
+                            [np.sin(r), np.cos(r)]
+                            ])
+
+        # Create translation (inverted) 
+        translation = -new_pose[0:2]
+
+        # <>TODO: add rotation point
+        # Rotate about the origin
+        for i, weights in enumerate(self.original_weights):
+            self.weights[i] = weights.dot(rotation)
+
+        # Translate
+        self.biases = self.original_biases + self.weights .dot (translation)
+
+        # Redefine softmax classes
+        if hasattr(self,'probs'):
+            del self.probs
+        if hasattr(self,'subclass_probs'):
+            del self.subclass_probs
+        self._combine_mms()
+
+    def _move_relative(self, translation=None, rotation=None,
+                       rotation_point=None, rotation_unit='degrees',
+                       reversed_translation=True, rotate_ccw=True):
 
         # Validate inputs
         if rotation_point is None:
             rotation_point = np.zeros(self.weights.shape[1])
-        if translation is None:
+        if translation is None: 
             translation = np.zeros(self.weights.shape[1])
         if rotation is None:
             rotation = np.eye(self.weights.shape[1])
@@ -637,35 +696,6 @@ class Softmax(object):
             subclass.weights = self.weights[i]
             subclass.bias = self.biases[i]
             self.classes[label].add_subclass(subclass)
-
-
-        # for label, subclass in self.subclasses.iteritems():
-        #     print label
-
-        #     # Get rid of the subclass' number suffix
-        #     suffix_i = label.find('__')
-        #     if suffix_i != -1:
-        #         label = label[:suffix_i]
-        #     j = self.num_classes
-
-        #     # Create new class if this subclass hasn't yet been seen
-        #     if label not in self.classes:
-
-        #          self.class_labels.append(label)
-        #          self.classes[label] = SoftmaxClass(id_=j,
-        #                                             label=label,
-        #                                             weights=self.weights[j],
-        #                                             bias=self.biases[j],
-        #                                             color=self.class_colors[j],
-        #                                             cmap=self.class_cmaps[j],
-        #                                             softmax_collection=self,
-        #                                             )
-        #          self.num_classes += 1
-
-        #     # Add subclass to each class object
-        #     subclass.weights = self.weights[subclass.id]
-        #     subclass.bias = self.biases[subclass.id]
-        #     self.classes[label].add_subclass(subclass)
 
     def _define_state(self, state_spec, res):
         """Create a numeric state vector from a specification.
@@ -1487,41 +1517,41 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     np.set_printoptions(precision=10, suppress=True)
 
-    # Regular Softmax models #################################################
+    # # Regular Softmax models #################################################
 
-    # Speed model
-    sm = speed_model()
-    sm.plot(plot_3D=False)
+    # # Speed model
+    # sm = speed_model()
+    # sm.plot(plot_3D=False)
 
-    # Pentagon Model
-    pm = pentagon_model()
-    pm.plot()
+    # # Pentagon Model
+    # pm = pentagon_model()
+    # pm.plot()
 
-    # Range model
-    rm = intrinsic_space_model()
-    rm.plot()
+    # # Range model
+    # rm = intrinsic_space_model()
+    # rm.plot()
 
     # Multimodal softmax models ##############################################
 
-    # Range model (irregular poly)
-    x = [-2, 0, 2, 2]
-    y = [-3, -1, -1, -3]
-    pts = zip(x,y)
-    poly = Polygon(pts)
-    rm = range_model(poly)
-    rm.plot()
+    # # Range model (irregular poly)
+    # x = [-2, 0, 2, 2]
+    # y = [-3, -1, -1, -3]
+    # pts = zip(x,y)
+    # poly = Polygon(pts)
+    # rm = range_model(poly)
+    # rm.plot()
 
-    print rm.weights
-    for label, sc in rm.subclasses.iteritems():
-        print label
-        print sc.weights
-
-    # # Camera model (with movement)
-    # cm = camera_model_2D()
-    # cm.move_relative([-1,0], 0)
+    # Camera model (with movement)
+    cm = camera_model_2D()
+    # cm.plot(class_='Detection')
+    # cm.move([-1,0], 0)
+    # cm.plot(class_='Detection')
+    # cm.move([0,0], 90, rotation_point=[-1, 0])
     # cm.plot()
-    # cm.move_relative([0,0], 90, rotation_point=[-1, 0])
-    # cm.plot()
+    cm.move([-4,-2,90])
+    cm.plot(class_='Detection')
+    cm.move([-5,-2,90])
+    cm.plot(class_='Detection')
 
     # # Binary softmax models ##################################################
 

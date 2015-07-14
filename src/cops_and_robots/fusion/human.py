@@ -263,7 +263,7 @@ class Human(Sensor):
 
             for i, particle in enumerate(particles):
                 state = particle[1:3]
-                particle[0] *= self.grounding.spaces.probs_at_state(state, label)
+                particle[0] *= self.grounding.spaces.probability(state=state, class_=label)
 
         elif self.detection_type == 'movement':
             label = self.movement
@@ -274,7 +274,7 @@ class Human(Sensor):
 
             for i, particle in enumerate(particles):
                 state = np.sqrt(particle[3] ** 2 + particle[4] ** 2)
-                particle[0] *= self.speed_model.probs_at_state(state, label)
+                particle[0] *= self.speed_model.probability(state=state, class_=label)
 
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])

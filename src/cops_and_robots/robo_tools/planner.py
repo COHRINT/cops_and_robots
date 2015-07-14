@@ -31,10 +31,6 @@ from itertools import chain
 import numpy as np
 from shapely.geometry import Point, LineString
 
-import rospy
-import tf
-from geometry_msgs.msg import PoseStamped
-
 
 class GoalPlanner(object):
     """The GoalPlanner class generates goal poses for a robot.
@@ -103,6 +99,9 @@ class GoalPlanner(object):
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
 
         if self.publish_to_ROS:
+            import rospy
+            import tf
+            from geometry_msgs.msg import PoseStamped
             self.pub = rospy.Publisher('move_base_simple/goal', PoseStamped,
                                        queue_size=10)
 
@@ -263,6 +262,8 @@ class GoalPlanner(object):
             A pose as [x,y,theta] in [m,m,degrees].
 
         """
+        fusion_engine = self.robot.fusion_engine
+
         # <>TODO: @Nick Test this!
         if not next(fusion_engine.filters.iteritems()):
                 raise ValueError('The fusion_engine must have a '
@@ -687,4 +688,3 @@ class Controller(object):
         if new_status != current_status:
             logging.debug('{}\'s controller status changed from {} to {}'
                           .format(self.robot.name, current_status, new_status))
->>>>>>> origin/matt-dev

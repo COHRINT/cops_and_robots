@@ -184,7 +184,14 @@ class Cop(Robot):
         camera_shape = self.sensors['camera'].viewcone.shape
 
         # Robber-related values
-        particles = self.fusion_engine.filters[robber_name].particles
+        if self.fusion_engine.filter_type == 'particle':
+            particles = self.fusion_engine.filters[robber_name].particles
+            distribution = None
+        else:
+            distribution = self.fusion_engine.filters[robber_name].probability
+            logging.info(self.fusion_engine.filters)
+            logging.info(distribution.means)
+            particles = None
         if robber_name == 'combined':
             robber_shape = {name: robot.map_obj.shape for name, robot
                             in self.missing_robbers.iteritems()}
@@ -192,7 +199,7 @@ class Cop(Robot):
             robber_shape = self.missing_robbers[robber_name].map_obj.shape
 
         # Form and return packet to be sent
-        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles,)
+        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles, distribution)
         return packet
 
     def animated_exploration(self):

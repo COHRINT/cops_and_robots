@@ -46,6 +46,7 @@ class GaussianMixture(object):
         attr_description
 
     """
+    max_num_mixands = 20
 
     def __init__(self, weights=1, means=0, covariances=1, ellipse_color='red'):
         self.weights = np.asarray(weights)
@@ -189,11 +190,46 @@ class GaussianMixture(object):
             ellipses.append(ellipse)
         return ellipses
 
-        def entropy(self):
-            """
-            """
-            # <>TODO: figure this out. Look at papers!
-            # http://www-personal.acfr.usyd.edu.au/tbailey/papers/mfi08_huber.pdf
+    def entropy(self):
+        """
+        """
+        # <>TODO: figure this out. Look at papers!
+        # http://www-personal.acfr.usyd.edu.au/tbailey/papers/mfi08_huber.pdf
+        pass
+
+    def _merge(self, max_num_mixands=None):
+        """
+        """
+        # <>TODO
+        if max_num_mixands:
+            self.max_num_mixands = max_num_mixands
+
+        num_mixands = self.weights.size
+        if num_mixands <= max_num_mixands:
+            logging.info('No need to merge {} mixands.'.format(num_mixands))
+            return
+        else:
+            logging.info('Merging {} mixands down to {}.'.format(num_mixands,
+                         self.max_num_mixands))
+
+        # Create dissimilarity matrix B
+        B = np.zeros((self.num_mixands, self.num_mixands))
+        for i in range(self.num_mixands):
+            for j in range(i):
+                if i == j:
+                    continue
+                w_ij = self.weights[i] + self.weights[j]
+                w_i_ij = self.weights[i] / (self.weights[i] + self.weights[j])
+                w_j_ij = self.weights[j] / (self.weights[i] + self.weights[j])
+                mu_ij = w_i_ij * self.means[i] + w_j_ij * self.means[j]
+
+                outer_term = np.outer(self.means[i] - self.means[j],
+                                      self.means[i] - self.means[j])
+                P_ij = w_i_ij * self.covariances[i] + w_j_ij * self.covariances[j] \
+                    + w_i_ij * w_j_ij * outer_term
+
+        # Keep merging until we get the right number of mixands
+        while num_mixands > max_num_mixands:
             pass
 
     def _input_check(self):

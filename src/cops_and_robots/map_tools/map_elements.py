@@ -243,8 +243,8 @@ class MapObject(MapElement):
 
             Defaults to: 'Front', 'Back', 'Left', and 'Right'.
             """
-            self.spaces = intrinsic_space_model(self.shape)
-            # self.spaces = binary_intrinsic_space_model(self.shape)
+            # self.spaces = intrinsic_space_model(self.shape)
+            self.spaces = binary_intrinsic_space_model(self.shape)
 
     def plot(self, ax=None, alpha=0.9, **kwargs):
             super(MapObject, self).plot(ax=ax, alpha=alpha, **kwargs)
