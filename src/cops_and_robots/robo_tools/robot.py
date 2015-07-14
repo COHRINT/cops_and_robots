@@ -96,7 +96,7 @@ class Robot(iRobotCreate):
                  role='robber',
                  mission_status='on the run',
                  goal_planner_type='simple',
-                 path_planner_type='direct',
+                 path_planner_type='a_star',
                  consider_others=False,
                  **kwargs):
 

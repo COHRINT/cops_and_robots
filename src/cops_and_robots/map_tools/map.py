@@ -21,7 +21,7 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
-from pylab import *
+
 import logging
 import math
 import numpy as np
@@ -198,8 +198,8 @@ class Map(object):
             self.ax_list['combined'] = ax
 
         # Define generic plot elements
-        movement_path = Line2D((0, 0), (0, 0), linewidth=2, alpha=0.4,
-                               color=cnames['green'])
+        movement_path = plt.Line2D((0, 0), (0, 0), linewidth=2, alpha=0.4,
+                                    color=cnames['green'])
         simple_poly = Point((0, 0)).buffer(0.01)
         arbitrary_particle_layer = next(self.particle_layer.itervalues())
         init_particles = np.zeros((arbitrary_particle_layer.n_particles, 3))
