@@ -28,7 +28,10 @@ from shapely.geometry import box, Polygon, LineString
 from shapely.affinity import rotate
 from descartes.patch import PolygonPatch
 
-from cops_and_robots.robo_tools.fusion.binary_softmax import binary_distance_space_model, binary_intrinsic_space_model
+from cops_and_robots.fusion.softmax import (binary_range_model,
+                                            binary_intrinsic_space_model,
+                                            range_model,
+                                            intrinsic_space_model)
 
 
 class MapElement(object):
@@ -240,6 +243,7 @@ class MapObject(MapElement):
 
             Defaults to: 'Front', 'Back', 'Left', and 'Right'.
             """
+            # self.spaces = intrinsic_space_model(self.shape)
             self.spaces = binary_intrinsic_space_model(self.shape)
 
     def plot(self, ax=None, alpha=0.9, **kwargs):
@@ -271,7 +275,8 @@ class MapArea(MapElement):
 
         Defaults to: 'Inside', 'Near', and 'Outside'.
         """
-        self.spaces = binary_distance_space_model(self.shape)
+        self.spaces = range_model(self.shape)
+        # self.spaces = binary_range_model(self.shape)
 
     def plot(self, ax=None, alpha=0.2, **kwargs):
         super(MapArea, self).plot(ax=ax, alpha=alpha, **kwargs)

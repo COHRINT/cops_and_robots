@@ -35,9 +35,8 @@ import numpy as np
 
 from shapely.geometry import Point
 
-from cops_and_robots.robo_tools.fusion.sensor import Sensor
-from cops_and_robots.robo_tools.fusion.softmax import Softmax, speed_model
-from cops_and_robots.robo_tools.fusion.binary_softmax import binary_speed_model
+from cops_and_robots.fusion.sensor import Sensor
+from cops_and_robots.fusion.softmax import Softmax, speed_model, binary_speed_model
 
 
 
@@ -65,6 +64,7 @@ class Human(Sensor):
         self.update_rate = None
         self.has_physical_dimensions = False
         self.speed_model = speed_model()
+        # self.speed_model = binary_speed_model()
 
         self.no_detection_chance = 0.01
         super(Human, self).__init__(self.update_rate,
@@ -263,7 +263,7 @@ class Human(Sensor):
 
             for i, particle in enumerate(particles):
                 state = particle[1:3]
-                particle[0] *= self.grounding.spaces.probs_at_state(state, label)
+                particle[0] *= self.grounding.spaces.probability(state=state, class_=label)
 
         elif self.detection_type == 'movement':
             label = self.movement
@@ -274,7 +274,7 @@ class Human(Sensor):
 
             for i, particle in enumerate(particles):
                 state = np.sqrt(particle[3] ** 2 + particle[4] ** 2)
-                particle[0] *= self.speed_model.probs_at_state(state, label)
+                particle[0] *= self.speed_model.probability(state=state, class_=label)
 
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])

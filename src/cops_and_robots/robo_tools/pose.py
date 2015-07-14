@@ -14,10 +14,6 @@ __status__ = "Development"
 import logging
 import numpy as np
 
-import rospy
-import tf
-from nav_msgs.msg import Odometry
-
 
 class Pose(object):
     """
@@ -61,6 +57,11 @@ class Pose(object):
         self.filename_for_recording = filename_for_recording
 
         if pose_source != 'python':
+            # Lazy imports
+            import rospy
+            import tf
+            from nav_msgs.msg import Odometry
+
             rospy.Subscriber(self.pose_source, Odometry, self.callback)
             # rospy.spin()
 

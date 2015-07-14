@@ -92,7 +92,7 @@ class ParticleFilter(object):
         probs = np.ones(self.n_particles) / self.n_particles
         self.particles = np.column_stack((probs, pts))
 
-    def update(self, camera, target_pose, human_sensor=None):
+    def update(self, camera, human_sensor=None):
         """Move particles (if mobile) and update probabilities.
 
         Parameters
@@ -100,8 +100,6 @@ class ParticleFilter(object):
         camera : Camera
             A camera sensor object to update the particle weights and
             probabilities.
-        target_pose : array_like
-            The target's current [x, y, theta] in [m,m,degrees].
         human : Human, optional
             A human sensor object to update the particle weights and
             probabilities. Default is `None` for no update.

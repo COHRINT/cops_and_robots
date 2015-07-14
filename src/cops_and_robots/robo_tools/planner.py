@@ -146,6 +146,9 @@ class GoalPlanner(object):
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
 
         if self.publish_to_ROS:
+            import rospy
+            import tf
+            from geometry_msgs.msg import PoseStamped
             self.pub = rospy.Publisher('move_base_simple/goal', PoseStamped,
                                        queue_size=10)
 
@@ -307,8 +310,28 @@ class GoalPlanner(object):
 
         """
         fusion_engine = self.robot.fusion_engine
-        # <>TODO: Implement this!
-        pass
+
+        # <>TODO: @Nick Test this!
+        if not next(fusion_engine.filters.iteritems()):
+                raise ValueError('The fusion_engine must have a '
+                                 'particle_filter.')
+
+        theta = random.uniform(0, 360)
+
+        # If tracking multiple targets, use the combined particle filter
+        if len(fusion_engine.filters) > 1:
+            posterior = fusion_engine.filters['combined'].probability
+        else:
+            posterior = next(fusion_engine.filters.iteritems()).probability
+
+        bounds = self.feasible_layer.bounds
+        MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
+
+        # Select randomly from max_particles
+        goal_pose = np.append(MAP_point, theta)
+
+        return goal_pose
+
 
     def find_goal_from_trajectory(self):
         """Find a goal pose from a set trajectory, defined by the

@@ -43,7 +43,10 @@ class Layer(object):
 
     """
     def __init__(self, bounds=[-5, -5, 5, 5], visible=True, target='',
-                 ax=None, alpha=0.8, cmap_str='jet'):
+                 fig=None, ax=None, alpha=0.8, cmap_str='jet'):
+        if fig is None:
+            fig = plt.gcf()
+        self.fig = fig
         if ax is None:
             ax = plt.gca()
         self.ax = ax
