@@ -76,14 +76,14 @@ class FusionEngine(object):
         self.missing_robber_names = missing_robber_names
         self.shape_layer = shape_layer
 
-        # <>TODO: rename 'filters' to 'particle filters' and test
         n = len(missing_robber_names)
-        if n > 1:
-            particles_per_filter = int(total_particles / (n + 1))
-        else:
-            particles_per_filter = total_particles
 
         if self.filter_type == 'particle':
+            if n > 1:
+                particles_per_filter = int(total_particles / (n + 1))
+            else:
+                particles_per_filter = total_particles
+
             for i, name in enumerate(missing_robber_names):
                 self.filters[name] = ParticleFilter(name,
                                                     feasible_layer,
@@ -95,10 +95,8 @@ class FusionEngine(object):
                                                       particles_per_filter)
         elif self.filter_type == 'gauss sum':
             for i, name in enumerate(missing_robber_names):
-                self.filters[name] = GaussSumFilter(name,
-                                                              feasible_layer)
-            self.filters['combined'] = GaussSumFilter('combined',
-                                                                feasible_layer)
+                self.filters[name] = GaussSumFilter(name, feasible_layer)
+            self.filters['combined'] = GaussSumFilter('combined', feasible_layer)
         else:
             raise ValueError("FusionEngine must be of type 'particle' or "
                              "'gauss sum'.")
@@ -155,3 +153,5 @@ class FusionEngine(object):
             # Reset the human sensor
             sensors['human'].utterance = ''
             sensors['human'].target = ''
+        else:
+            self.filters['combined'].probability = self.filters['Roy'].probability

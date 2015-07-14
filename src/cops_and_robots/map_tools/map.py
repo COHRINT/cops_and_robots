@@ -390,6 +390,7 @@ class Map(object):
                     self.particle_scat[robber_name].set_offsets(particles[:, 1:3])
                 else:
                     self.probability_layer[robber_name].distribution = distribution
+                    logging.info(distribution.means)
                     self.probability_layer[robber_name].update()
 
 
@@ -496,7 +497,7 @@ def set_up_fleming(display_type='particle'):
 
     # Create Fleming map
     bounds = [-9.5, -3.33, 4, 3.68]
-    fleming = Map('Fleming', bounds)
+    fleming = Map('Fleming', bounds, display_type=display_type)
 
     # Add walls to map
     for wall in walls:

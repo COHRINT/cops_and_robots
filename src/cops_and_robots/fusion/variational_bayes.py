@@ -274,20 +274,26 @@ class VariationalBayes(object):
 
     def vbis_update(self, measurement, likelihood, prior,
                     init_mean=0, init_var=1, init_alpha=0.5, init_xi=1,
-                    num_samples=None):
+                    num_samples=None,  use_LWIS=False):
         """VB update with importance sampling for Gaussian and Softmax.
         """
         if num_samples is None:
             num_samples = self.num_importance_samples
-        mu_VB, var_VB, log_c_hat = self.vb_update(measurement, likelihood,
-                                                  prior,
-                                                  init_mean, init_var,
-                                                  init_alpha, init_xi)
 
-        prior_var = np.asarray(prior.covariances[0])
+        if use_LWIS:
+            q_mu = np.asarray(prior.means[0])
+            log_c_hat = np.nan
+        else:
+            # Use VB update
+            q_mu, var_VB, log_c_hat = self.vb_update(measurement, likelihood,
+                                                      prior,
+                                                      init_mean, init_var,
+                                                      init_alpha, init_xi)
+
+        q_var = np.asarray(prior.covariances[0])
 
         # Importance distribution
-        q = GaussianMixture(1, mu_VB, prior_var)
+        q = GaussianMixture(1, q_mu, q_var)
 
         # Importance sampling correction
         w = np.zeros(num_samples)  # Importance weights
@@ -305,7 +311,7 @@ class VariationalBayes(object):
         mu_hat = np.sum(x.T * w, axis=-1)
 
         # <>TODO: optimize this
-        var_hat = np.zeros_like(np.asarray(var_VB))
+        var_hat = np.zeros_like(np.asarray(q_var))
         for i in range(num_samples):
             x_i = np.asarray(x[i])
             var_hat = var_hat + w[i] * np.outer(x_i, x_i) 
@@ -388,17 +394,15 @@ class VariationalBayes(object):
                 p_hat_ru_samples = subclass.probability(state=mixand_samples)
                 p_hat_ru_sampled = np.sum(p_hat_ru_samples) / self.num_mixand_samples
 
-                if use_LWIS:
-                    mu_vbis, var_vbis, log_c_hat = \
-                        self.lwis_update(label, subclass.softmax_collection,
-                                         mixand)    
-                else:
-                    mu_vbis, var_vbis, log_c_hat = \
-                        self.vbis_update(label, subclass.softmax_collection,
-                                         mixand)
+                mu_vbis, var_vbis, log_c_hat = \
+                    self.vbis_update(label, subclass.softmax_collection,
+                                     mixand, use_LWIS=use_LWIS)
 
                 # Compute log odds of r given u
-                log_p_hat_ru = np.max((log_c_hat, np.log(p_hat_ru_sampled)))
+                if np.isnan(log_c_hat):  # from LWIS update
+                    log_p_hat_ru = np.log(p_hat_ru_sampled)
+                else:
+                    log_p_hat_ru = np.max((log_c_hat, np.log(p_hat_ru_sampled)))
 
                 # Find log of P(u,r|D_k) \approxequal \hat{B}_{ur}
                 log_beta_vbis = np.log(mixand_weight) + log_p_hat_ru
@@ -431,15 +435,6 @@ class VariationalBayes(object):
 
     def _lambda(self, xi_c):
         return 1 / (2 * xi_c) * ( (1 / (1 + np.exp(-xi_c))) - 0.5)
-
-
-    def _cluster(self, max_num_mixands=None):
-        """
-        """
-        # <>TODO
-        if max_num_mixands:
-            self.max_num_mixands = max_num_mixands
-
 
 
     def _check_inputs(self, likelihood, init_mean, init_var, init_alpha, init_xi, prior):
@@ -668,7 +663,7 @@ def gmm_sm_test(measurement='Outside'):
     # Do a VBIS update
     logging.info('Starting VB update...')
     vb = VariationalBayes()
-    mu_hat, var_hat, beta_hat = vb.update(measurement, brm, prior)
+    mu_hat, var_hat, beta_hat = vb.update(measurement, brm, prior, use_LWIS=True)
     vbis_posterior = GaussianMixture(weights=beta_hat, means=mu_hat, covariances=var_hat)
 
     # Define gridded space for graphing

@@ -155,7 +155,6 @@ class Camera(Sensor):
         """
         all_shapes = shape_layer.all_shapes.buffer(0)  # bit of a hack!
         if self.viewcone.shape.intersects(all_shapes):
-
             # <>TODO: Use shadows instead of rescaling viewcone
             # calculate shadows for all shapes touching viewcone
             # origin = self.viewcone.project(map_object.shape)
@@ -186,7 +185,9 @@ class Camera(Sensor):
         if filter_type == 'particle':
             self._detect_particles(particles)
         else:
+            logging.info(prior.means)
             posterior = self._detect_probability(prior)
+            logging.info(posterior.means)
             return posterior
 
     def _detect_particles(self, particles):
@@ -198,26 +199,26 @@ class Camera(Sensor):
         """
         # Translate detection model
         # <>TODO: check this
-        self.detection_model.move_relative(self.view_pose[0:2],self.view_pose[2])
+        self.detection_model.move(self.view_pose)
 
         # Update particle probabilities in view cone frame
         for i, particle in enumerate(particles):
             if self.viewcone.shape.contains(Point(particle[1:3])):
                 particles[i, 0] *= (1 - self.detection_model \
-                    .classes['Detection'].probability(state=particle[1:3]) )
+                    .probability(state=particle[1:3], class_='Detection') )
 
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])
 
     def _detect_probability(self, prior):
-        measurement = 'Detection'
 
         # Translate detection model
-        self.detection_model.move_relative(self.view_pose[0:2],self.view_pose[2])
+        self.detection_model.move(self.view_pose)
 
-        mu, sigma, beta = self.vb.update(measurement=measurement,
+        mu, sigma, beta = self.vb.update(measurement='No Detection',
                                          likelihood=self.detection_model,
                                          prior=prior,
+                                         use_LWIS=False
                                          )
         return GaussianMixture(beta, mu, sigma)
 
