@@ -28,7 +28,6 @@ __status__ = "Development"
 
 import logging
 
-from pylab import *
 import numpy as np
 import matplotlib.pyplot as plt
 from shapely.geometry import box, Point
@@ -57,98 +56,98 @@ class OccupancyLayer(Layer):
         super(OccupancyLayer, self).__init__(**kwargs)
 
         self.feasible_layer = feasible_layer
-        self.bounds = self.feasible_layer.bounds
         self.cell_size = cell_size
 
         self.x_coords = np.arange(self.bounds[0], self.bounds[2], cell_size)
         self.y_coords = np.arange(self.bounds[1], self.bounds[3], cell_size)
 
-        self.grid_occupancy = []
-        for x, i in enumerate(self.x_coords):
-            for y, j in enumerate(self.y_coords):
+        self.occupancy_grid = []
+        for i, y in enumerate(self.y_coords):
+            self.occupancy_grid.append([])
+            for j, x in enumerate(self.x_coords):
                 pt = Point([x, y])
                 if self.feasible_layer.pose_region.contains(pt):
-                    self.grid_occupancy[i][j] = 1
+                    self.occupancy_grid[i].append(0)
                 else:
-                    self.grid_occupancy[i][j] = 0
+                    self.occupancy_grid[i].append(1)
 
 
-        """
-        self.cell_size = cell_size
 
-        self.grid = []
-        x, y = self.bounds[0], self.bounds[1]
-        c = self.cell_size
+    #     self.cell_size = cell_size
 
-        # <>TODO: @Matt Redo grid cell generation (it's too slow!)
-        # Create cells with grid centered on (0,0)
-        while x + c <= self.bounds[2]:
-            while y + c <= self.bounds[3]:
-                cell = box(x, y, x + c, y + c)
-                self.grid.append(cell)
-                y = y + c
-            x = x + c
-            y = self.bounds[1]
+    #     self.grid = []
+    #     x, y = self.bounds[0], self.bounds[1]
+    #     c = self.cell_size
 
-        self.n_cells = len(self.grid)
+    #     # <>TODO: @Matt Redo grid cell generation (it's too slow!)
+    #     # Create cells with grid centered on (0,0)
+    #     while x + c <= self.bounds[2]:
+    #         while y + c <= self.bounds[3]:
+    #             cell = box(x, y, x + c, y + c)
+    #             self.grid.append(cell)
+    #             y = y + c
+    #         x = x + c
+    #         y = self.bounds[1]
 
-        self.grid_occupancy = 0.5 * np.ones((self.n_cells, 1), dtype=np.int)
-        """
+    #     self.n_cells = len(self.grid)
 
-    def add_obj(self, map_obj):
-        """Fill the cells for a given map_obj.
+    #     self.grid_occupancy = 0.5 * np.ones((self.n_cells, 1), dtype=np.int)
 
-        Parameters
-        ----------
-        map_obj : MapObj
-            The object to be added.
-        """
-        for i, cell in enumerate(self.grid):
-            if map_obj.shape.intersects(cell):
-                self.grid_occupancy[i] = 1
+    # def add_obj(self, map_obj):
+    #     """Fill the cells for a given map_obj.
 
-    def rem_obj(self, map_obj):
-        """Empty the cells for a given map_obj.
+    #     Parameters
+    #     ----------
+    #     map_obj : MapObj
+    #         The object to be added.
+    #     """
+    #     for i, cell in enumerate(self.grid):
+    #         if map_obj.shape.intersects(cell):
+    #             self.grid_occupancy[i] = 1
 
-        Parameters
-        ----------
-        map_obj : MapObj
-            The object to be removed.
-        """
-        for i, cell in enumerate(self.grid):
-            if map_obj.shape.intersects(cell):
-                self.grid_occupancy[i] = 0
+    # def rem_obj(self, map_obj):
+    #     """Empty the cells for a given map_obj.
 
-    def occupancy_from_shape_layer(self, shape_layer):
-        """Create an occupancy grid from an entire shape layer.
+    #     Parameters
+    #     ----------
+    #     map_obj : MapObj
+    #         The object to be removed.
+    #     """
+    #     for i, cell in enumerate(self.grid):
+    #         if map_obj.shape.intersects(cell):
+    #             self.grid_occupancy[i] = 0
 
-        Parameters
-        ----------
-        shape_layer : ShapeLayer, optional
-            The shape layer from which to generate the feasible regions. If
-            no layer is provided, the entire map is deemed feasible.
+    # def occupancy_from_shape_layer(self, shape_layer):
+    #     """Create an occupancy grid from an entire shape layer.
 
-        Note
-        ----
-        Not yet implemented.
-        """
-        pass
+    #     Parameters
+    #     ----------
+    #     shape_layer : ShapeLayer, optional
+    #         The shape layer from which to generate the feasible regions. If
+    #         no layer is provided, the entire map is deemed feasible.
 
-    def plot(self):
-        """Plot the occupancy grid as a pseudo colormesh.
+    #     Note
+    #     ----
+    #     Not yet implemented.
+    #     """
+    #     pass
 
-        Returns
-        -------
-        QuadMesh
-            The scatter pseudo colormesh data.
+    # def plot(self):
+    #     """Plot the occupancy grid as a pseudo colormesh.
 
-        """
-        xsize = self.bounds[2] - self.bounds[0]
-        ysize = self.bounds[3] - self.bounds[1]
-        grid = self.grid_occupancy.reshape(xsize / self.cell_size,
-                                           ysize / self.cell_size)
-        X, Y = np.mgrid[0:grid.shape[0]:1, 0:grid.shape[1]:1]
-        X, Y = (X * self.cell_size, Y * self.cell_size)
-        p = plt.pcolormesh(X, Y, grid, cmap=cm.Greys)
-        # <>TODO: add in cell borders!
-        return p
+    #     Returns
+    #     -------
+    #     QuadMesh
+    #         The scatter pseudo colormesh data.
+
+    #     """
+    #     xsize = self.bounds[2] - self.bounds[0]
+    #     ysize = self.bounds[3] - self.bounds[1]
+    #     grid = self.grid_occupancy.reshape(xsize / self.cell_size,
+    #                                        ysize / self.cell_size)
+    #     X, Y = np.mgrid[0:grid.shape[0]:1, 0:grid.shape[1]:1]
+    #     X, Y = (X * self.cell_size, Y * self.cell_size)
+    #     p = plt.pcolormesh(X, Y, grid, cmap=cm.Greys)
+    #     # <>TODO: add in cell borders!
+    #     return p
+
