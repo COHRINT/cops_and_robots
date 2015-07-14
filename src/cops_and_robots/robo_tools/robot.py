@@ -93,6 +93,7 @@ class Robot(iRobotCreate):
                  pose_source='python',
                  publish_to_ROS=False,
                  map_name='fleming',
+                 map_display_type='particle',
                  role='robber',
                  mission_status='on the run',
                  goal_planner_type='simple',
@@ -120,11 +121,13 @@ class Robot(iRobotCreate):
         self.role = role
         self.num_goals = None  # number of goals to reach (None for infinite)
         self.mission_status = mission_status
-        if not map_name:
+        if map_name is None:
             self.map = None
         else:
             self.map = set_up_fleming()
+
         self.mission_planner = MissionPlanner(self, publish_to_ROS=publish_to_ROS)
+
         self.goal_planner = GoalPlanner(self,
                                         publish_to_ROS,
                                         type_=goal_planner_type)
@@ -220,7 +223,6 @@ class Robot(iRobotCreate):
             # Add to the pose history, update the map
             self.pose_history = np.vstack((self.pose_history, self.pose2D.pose[:]))
             self.update_shape()
-
 
 # Import statements left to the bottom because of subclass circular dependency
 import cops_and_robots.robo_tools.cop as cop_module

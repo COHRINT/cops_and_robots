@@ -30,8 +30,10 @@ from matplotlib.colors import cnames
 from shapely.geometry import Point
 from shapely import affinity
 
-from cops_and_robots.robo_tools.fusion.sensor import Sensor
-from cops_and_robots.robo_tools.fusion.softmax import camera_model_2D
+from cops_and_robots.fusion.sensor import Sensor
+from cops_and_robots.fusion.softmax import camera_model_2D
+from cops_and_robots.fusion.variational_bayes import VariationalBayes
+from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 
 # <>TODO: Remove test stub
 from cops_and_robots.map_tools.map_elements import MapObject
@@ -102,6 +104,9 @@ class Camera(Sensor):
         self.offset = (0, 0, 0)  # [m] offset (x,y,theta) from center of robot
         self._move_viewcone(robot_pose)
 
+        # Set up the VB fusion parameters
+        self.vb = VariationalBayes()
+
     def update_viewcone(self, robot_pose, shape_layer):
         """Update the camera's viewcone position and scale.
 
@@ -150,7 +155,6 @@ class Camera(Sensor):
         """
         all_shapes = shape_layer.all_shapes.buffer(0)  # bit of a hack!
         if self.viewcone.shape.intersects(all_shapes):
-
             # <>TODO: Use shadows instead of rescaling viewcone
             # calculate shadows for all shapes touching viewcone
             # origin = self.viewcone.project(map_object.shape)
@@ -166,7 +170,7 @@ class Camera(Sensor):
         else:
             self.viewcone.shape = self.ideal_viewcone.shape
 
-    def detect(self, filter_type, particles=None):
+    def detect(self, filter_type, particles=None,prior=None):
         """Update a fusion engine's probability from camera detections.
 
         Parameters
@@ -181,7 +185,10 @@ class Camera(Sensor):
         if filter_type == 'particle':
             self._detect_particles(particles)
         else:
-            self._detect_probability()
+            logging.info(prior.means)
+            posterior = self._detect_probability(prior)
+            logging.info(posterior.means)
+            return posterior
 
     def _detect_particles(self, particles):
         """Update particles based on sensor model.
@@ -190,25 +197,30 @@ class Camera(Sensor):
             The particle list, assuming [x,y,p], where x and y are position
             data and p is the particle's associated probability.
         """
-        # <>TODO: Get unit tests running
-        # Define rotation matrix
-        theta = 2 * np.pi - np.radians(self.view_pose[2])
-        R = np.array([[np.cos(theta), -np.sin(theta)],
-                      [np.sin(theta), np.cos(theta)],
-                      ])
+        # Translate detection model
+        # <>TODO: check this
+        self.detection_model.move(self.view_pose)
 
-        # Update particle probabilities in view cone
+        # Update particle probabilities in view cone frame
         for i, particle in enumerate(particles):
             if self.viewcone.shape.contains(Point(particle[1:3])):
-                relative_pose = np.subtract(particle[1:3], self.view_pose[0:2])
-                relative_pose = np.dot(R, relative_pose)
-                particles[i, 0] *= (1 - self.detection_model.probs_at_state(relative_pose[0:2], 0))
+                particles[i, 0] *= (1 - self.detection_model \
+                    .probability(state=particle[1:3], class_='Detection') )
 
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])
 
-    def _detect_probability(self):
-        pass
+    def _detect_probability(self, prior):
+
+        # Translate detection model
+        self.detection_model.move(self.view_pose)
+
+        mu, sigma, beta = self.vb.update(measurement='No Detection',
+                                         likelihood=self.detection_model,
+                                         prior=prior,
+                                         use_LWIS=False
+                                         )
+        return GaussianMixture(beta, mu, sigma)
 
 
 if __name__ == '__main__':
@@ -251,8 +263,6 @@ if __name__ == '__main__':
     for point in goal_points:
         # kinect.update_viewcone(point,shape_layer,particle_filter,target_pose)
         kinect.update_viewcone(point, shape_layer)
-        print('preplot', kinect.viewcone.pose2D.pose)
-        print('self.view_pose', kinect.view_pose)
         kinect.viewcone.plot(color=cnames['yellow'],
                              alpha=0.5
                              )

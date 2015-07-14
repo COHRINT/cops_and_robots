@@ -28,9 +28,9 @@ from matplotlib.colors import cnames
 from shapely.geometry import Point
 
 from cops_and_robots.robo_tools.robot import Robot
-from cops_and_robots.robo_tools.fusion.fusion_engine import FusionEngine
-from cops_and_robots.robo_tools.fusion.camera import Camera
-from cops_and_robots.robo_tools.fusion.human import Human
+from cops_and_robots.fusion.fusion_engine import FusionEngine
+from cops_and_robots.fusion.camera import Camera
+from cops_and_robots.fusion.human import Human
 
 
 class Cop(Robot):
@@ -47,7 +47,7 @@ class Cop(Robot):
         The cop's name (defaults to 'Deckard').
     pose : list of float, optional
         The cop's initial [x, y, theta] (defaults to [0, 0.5, 90]).
-    fusion_engine_type : {'discrete','continuous'}
+    fusion_engine_type : {'particle','gauss_sum'}
         For particle filters or gaussian mixture filters, respectively.
     planner_type: {'simple', 'particle', 'MAP'}
         The cop's own type of planner.
@@ -91,6 +91,7 @@ class Cop(Robot):
                                   pose_source=pose_source,
                                   publish_to_ROS=publish_to_ROS,
                                   role='cop',
+                                  map_display_type=fusion_engine_type,
                                   mission_status='searching',
                                   consider_others=True,
                                   color_str='darkgreen')
@@ -184,7 +185,14 @@ class Cop(Robot):
         camera_shape = self.sensors['camera'].viewcone.shape
 
         # Robber-related values
-        particles = self.fusion_engine.filters[robber_name].particles
+        if self.fusion_engine.filter_type == 'particle':
+            particles = self.fusion_engine.filters[robber_name].particles
+            distribution = None
+        else:
+            distribution = self.fusion_engine.filters[robber_name].probability
+            logging.info(self.fusion_engine.filters)
+            logging.info(distribution.means)
+            particles = None
         if robber_name == 'combined':
             robber_shape = {name: robot.map_obj.shape for name, robot
                             in self.missing_robbers.iteritems()}
@@ -192,7 +200,7 @@ class Cop(Robot):
             robber_shape = self.missing_robbers[robber_name].map_obj.shape
 
         # Form and return packet to be sent
-        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles,)
+        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles, distribution)
         return packet
 
     def animated_exploration(self):
