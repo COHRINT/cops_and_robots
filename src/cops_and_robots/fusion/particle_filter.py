@@ -20,7 +20,7 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
-from pylab import *
+import matplotlib.pyplot as plt
 
 import logging
 import math

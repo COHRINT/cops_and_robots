@@ -45,7 +45,5 @@ def main():
 
     deckard.animated_exploration()
 
-
-
 if __name__ == '__main__':
     main()
