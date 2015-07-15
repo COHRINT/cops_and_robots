@@ -390,7 +390,6 @@ class Map(object):
                     self.particle_scat[robber_name].set_offsets(particles[:, 1:3])
                 else:
                     self.probability_layer[robber_name].distribution = distribution
-                    logging.info(distribution.means)
                     self.probability_layer[robber_name].update()
 
 

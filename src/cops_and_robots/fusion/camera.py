@@ -121,6 +121,9 @@ class Camera(Sensor):
         self._move_viewcone(robot_pose)
         self._rescale_viewcone(robot_pose, shape_layer)
 
+        # Translate detection model
+        self.detection_model.move(self.view_pose)
+
     def _move_viewcone(self, robot_pose):
         """Move the viewcone based on the robot's pose
 
@@ -185,9 +188,7 @@ class Camera(Sensor):
         if filter_type == 'particle':
             self._detect_particles(particles)
         else:
-            logging.info(prior.means)
             posterior = self._detect_probability(prior)
-            logging.info(posterior.means)
             return posterior
 
     def _detect_particles(self, particles):
@@ -197,9 +198,6 @@ class Camera(Sensor):
             The particle list, assuming [x,y,p], where x and y are position
             data and p is the particle's associated probability.
         """
-        # Translate detection model
-        # <>TODO: check this
-        self.detection_model.move(self.view_pose)
 
         # Update particle probabilities in view cone frame
         for i, particle in enumerate(particles):
@@ -212,13 +210,10 @@ class Camera(Sensor):
 
     def _detect_probability(self, prior):
 
-        # Translate detection model
-        self.detection_model.move(self.view_pose)
-
         mu, sigma, beta = self.vb.update(measurement='No Detection',
                                          likelihood=self.detection_model,
                                          prior=prior,
-                                         use_LWIS=False
+                                         use_LWIS=True
                                          )
         return GaussianMixture(beta, mu, sigma)
 

@@ -25,7 +25,9 @@ from cops_and_robots.fusion.softmax import (speed_model,
                                             intrinsic_space_model,
                                             binary_speed_model,
                                             range_model,
-                                            binary_range_model)
+                                            binary_range_model,
+                                            camera_model_2D)
+
 
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 
@@ -59,7 +61,7 @@ class VariationalBayes(object):
                  num_importance_samples=500,
                  num_mixand_samples=500,
                  weight_threshold=None,
-                 mix_sm_corr_thresh=0.9,
+                 mix_sm_corr_thresh=0.95,
                  max_num_mixands=50):
         self.num_EM_convergence_loops = num_EM_convergence_loops
         self.EM_convergence_tolerance = EM_convergence_tolerance
@@ -362,15 +364,12 @@ class VariationalBayes(object):
                 mixand = GaussianMixture(1, prior.means[u],
                                           prior.covariances[u])
                 mixand_samples = mixand.rvs(self.num_mixand_samples)
-                p_hat_ru_sampled = 0
-                for mixand_sample in mixand_samples:
-                    p_hat_ru_sampled += subclass.probability(state=mixand_sample)
-
-                p_hat_ru_sampled = p_hat_ru_sampled / self.num_mixand_samples
+                p_hat_ru_samples = subclass.probability(state=mixand_samples)
+                p_hat_ru_sampled = np.sum(p_hat_ru_samples) / self.num_mixand_samples
                 mix_sm_corr += p_hat_ru_sampled
 
             if mix_sm_corr > self.mix_sm_corr_thresh:
-                logging.info('Mixand {}\'s correspondence with {}\'s subclasses'
+                logging.debug('Mixand {}\'s correspondence with {}\'s subclasses'
                              ' was {}, above the threshold of {}, so VBIS was '
                              'skipped.'.format(u, measurement, mix_sm_corr,
                                                self.mix_sm_corr_thresh))
@@ -410,11 +409,12 @@ class VariationalBayes(object):
                 # Symmetrize var_vbis
                 var_vbis = 0.5 * (var_vbis.T + var_vbis)
 
+                # 
+
                 # Update estimate values
                 log_beta_hat[h] = log_beta_vbis
                 mu_hat[h,:] = mu_vbis
                 var_hat[h,:] = var_vbis
-
                 h += 1
 
         # Renormalize and truncate (based on weight threshold)
@@ -426,7 +426,6 @@ class VariationalBayes(object):
         beta_hat = beta_hat[beta_hat > self.weight_threshold]
 
         # Shrink mu, var and beta if necessary
-        h = beta_hat.size
         beta_hat = beta_hat[:h]
         mu_hat = mu_hat[:h]
         var_hat = var_hat[:h]
@@ -766,9 +765,65 @@ def compare_to_matlab(measurement='Near'):
         np.savetxt(file_, np.atleast_2d(flat), delimiter=',')
     file_.close()
 
-def gmm_merge_test(max_num_mixands=None):
-    if max_num_mixands is not None:
-        self.max_num_mixands = max_num_mixands
+def camera_test():
+    # Define gridded space for graphing
+    min_x, max_x = -5, 5
+    min_y, max_y = -5, 5
+    res = 100
+    x_space, y_space = np.mgrid[min_x:max_x:1/res,
+                                min_y:max_y:1/res]
+    pos = np.empty(x_space.shape + (2,))
+    pos[:, :, 0] = x_space; pos[:, :, 1] = y_space;
+
+    # Plot setup
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    levels_res = 50
+    levels = np.linspace(0, 1, levels_res)
+
+    prior = GaussianMixture(weights=[1, 1, 1, 1, 1],
+                            means=[[-2, -4],  # GM1 mean
+                                   [-1, -2],  # GM2 mean
+                                   [0, 0],  # GM3 mean
+                                   [1, -2],  # GM4 mean
+                                   [2, -4],  # GM5 mean
+                                   ],
+                            covariances=[[[0.1, 0],  # GM1 mean
+                                          [0, 0.1]
+                                          ],
+                                         [[0.2, 0],  # GM2 mean
+                                          [0, 0.2]
+                                          ],
+                                         [[0.3, 0],  # GM3 mean
+                                          [0, 0.3]
+                                          ],
+                                         [[0.2, 0],  # GM4 mean
+                                          [0, 0.2]
+                                          ],
+                                         [[0.1, 0],  # GM5 mean
+                                          [0, 0.1]],
+                                         ])
+
+    min_view_dist = 0.3  # [m]
+    max_view_dist = 1.0  # [m]
+    detection_model = camera_model_2D(min_view_dist, max_view_dist)
+    vb = VariationalBayes()
+
+    # Do a VBIS update
+    pose = np.array([0,0,90])
+    logging.info('Moving to pose {}.'.format(pose))
+    mu, sigma, beta = vb.update(measurement='No Detection',
+                                likelihood=detection_model,
+                                prior=prior,
+                                use_LWIS=True
+                                )
+    posterior = GaussianMixture(weights=beta, means=mu, covariances=sigma)
+    posterior_c = ax.contourf(x_space, y_space, posterior.pdf(pos),
+                                        levels=levels)
+    plt.colorbar(posterior_c)
+
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -778,5 +833,7 @@ if __name__ == '__main__':
     # comparison_1d()
 
     # comparison_2d()
-    gmm_sm_test('Near')
+    # gmm_sm_test('Near')
     # compare_to_matlab()
+
+    camera_test()

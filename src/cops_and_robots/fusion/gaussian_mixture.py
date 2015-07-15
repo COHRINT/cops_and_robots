@@ -46,13 +46,14 @@ class GaussianMixture(object):
         attr_description
 
     """
-    max_num_mixands = 20
 
-    def __init__(self, weights=1, means=0, covariances=1, ellipse_color='red'):
+    def __init__(self, weights=1, means=0, covariances=1, ellipse_color='red',
+                 max_num_mixands=20):
         self.weights = np.asarray(weights)
         self.means = np.asarray(means)
         self.covariances = np.asarray(covariances)
         self.ellipse_color = ellipse_color
+        self.max_num_mixands = max_num_mixands
         self._input_check()
 
     def pdf(self, x):
@@ -197,41 +198,6 @@ class GaussianMixture(object):
         # http://www-personal.acfr.usyd.edu.au/tbailey/papers/mfi08_huber.pdf
         pass
 
-    def _merge(self, max_num_mixands=None):
-        """
-        """
-        # <>TODO
-        if max_num_mixands:
-            self.max_num_mixands = max_num_mixands
-
-        num_mixands = self.weights.size
-        if num_mixands <= max_num_mixands:
-            logging.info('No need to merge {} mixands.'.format(num_mixands))
-            return
-        else:
-            logging.info('Merging {} mixands down to {}.'.format(num_mixands,
-                         self.max_num_mixands))
-
-        # Create dissimilarity matrix B
-        B = np.zeros((self.num_mixands, self.num_mixands))
-        for i in range(self.num_mixands):
-            for j in range(i):
-                if i == j:
-                    continue
-                w_ij = self.weights[i] + self.weights[j]
-                w_i_ij = self.weights[i] / (self.weights[i] + self.weights[j])
-                w_j_ij = self.weights[j] / (self.weights[i] + self.weights[j])
-                mu_ij = w_i_ij * self.means[i] + w_j_ij * self.means[j]
-
-                outer_term = np.outer(self.means[i] - self.means[j],
-                                      self.means[i] - self.means[j])
-                P_ij = w_i_ij * self.covariances[i] + w_j_ij * self.covariances[j] \
-                    + w_i_ij * w_j_ij * outer_term
-
-        # Keep merging until we get the right number of mixands
-        while num_mixands > max_num_mixands:
-            pass
-
     def _input_check(self):
         # Check if weights sum are normalized
         try:
@@ -288,6 +254,18 @@ class GaussianMixture(object):
                                   ' \n{}'.format(mean, var))
                 raise e
 
+        # Ensure all variances are positive
+        for i, var in enumerate(self.covariances):
+            self.covariances[i] = np.abs(var)
+
+        #<>TODO: remove this!
+        # Fix covariance if too close to 0
+        for i, var in enumerate(self.covariances):
+            tol = 10 ** -10
+            if var.sum() < tol:
+                logging.warn('Covariance nearly zero: \n{}\n'.format(var))
+                self.covariances[i] = np.eye(var.shape[0]) * tol
+
         # Check if covariances are positive semidefinite
         for var in self.covariances:
             try:
@@ -308,6 +286,128 @@ class GaussianMixture(object):
                                   .format(var))
                 raise e
 
+
+        # Merge if necessary
+        self._merge()
+
+    def _merge(self, max_num_mixands=None):
+        """
+        """
+        if max_num_mixands is None:
+            max_num_mixands = self.max_num_mixands
+
+        # Check if merging is useful
+        num_mixands = self.weights.size
+        if num_mixands <= max_num_mixands:
+            logging.debug('No need to merge {} mixands.'
+                          .format(num_mixands))
+            return
+        else:
+            logging.debug('Merging {} mixands down to {}.'
+                          .format(num_mixands, self.max_num_mixands))
+
+        # Create lower-triangle of dissimilarity matrix B
+        B = np.zeros((num_mixands, num_mixands))
+        for i in range(num_mixands):
+            mix_i = (self.weights[i], self.means[i], self.covariances[i])
+            for j in range(i):
+                if i == j:
+                    continue
+                mix_j = (self.weights[j], self.means[j], self.covariances[j])
+                B[i,j] = mixand_dissimilarity(mix_i, mix_j)
+
+        # Keep merging until we get the right number of mixands
+        deleted_mixands = []
+        while num_mixands > max_num_mixands:
+            # Find most similar mixands
+            try:
+                min_B = B[B>0].min()
+            except ValueError, e:
+                logging.error('Could not find a minimum value in B: \n{}'
+                              .format(B))
+                raise e
+            ind = np.where(B==min_B)
+            i, j = ind[0][0], ind[1][0]
+
+            # Get merged mixand
+            mix_i = (self.weights[i], self.means[i], self.covariances[i])
+            mix_j = (self.weights[j], self.means[j], self.covariances[j])
+            w_ij, mu_ij, P_ij = merge_mixands(mix_i, mix_j)
+
+            # Replace mixand i with merged mixand
+            ij = i
+            self.weights[ij] = w_ij
+            self.means[ij] = mu_ij
+            self.covariances[ij] = P_ij
+
+            # Fill mixand i's B values with new mixand's B values
+            mix_ij = (w_ij, mu_ij, P_ij)
+            deleted_mixands.append(j)
+            for k in range(B.shape[0]):
+                if k == ij or k in deleted_mixands:
+                    continue
+
+                # Only fill lower triangle
+                mix_k = (self.weights[k], self.means[k], self.covariances[k])
+                if k < i:
+                    B[ij,k] = mixand_dissimilarity(mix_k, mix_ij)
+                else:
+                    B[k,ij] = mixand_dissimilarity(mix_k, mix_ij)
+
+            # Remove mixand j from B
+            B[j,:] = 0
+            B[:,j] = 0
+            num_mixands -= 1
+
+        # Delete removed mixands from parameter arrays
+        self.weights = np.delete(self.weights, deleted_mixands, axis=0)
+        self.means = np.delete(self.means, deleted_mixands, axis=0)
+        self.covariances = np.delete(self.covariances, deleted_mixands, axis=0)
+
+def merge_mixands(mix_i, mix_j):
+    """Use moment-preserving merge (0th, 1st, 2nd moments) to combine mixands.
+    """
+    # Unpack mixands
+    w_i, mu_i, P_i = mix_i
+    w_j, mu_j, P_j = mix_j
+
+    # Merge weights
+    w_ij = w_i + w_j
+    w_i_ij = w_i / (w_i + w_j)
+    w_j_ij = w_j / (w_i + w_j)
+
+    # Merge means
+    mu_ij = w_i_ij * mu_i + w_j_ij * mu_j
+
+    # Merge covariances
+    P_ij = w_i_ij * P_i + w_j_ij * P_j + \
+        w_i_ij * w_j_ij * np.outer(mu_i - mu_j, mu_i - mu_j)
+
+    return w_ij, mu_ij, P_ij
+
+def mixand_dissimilarity(mix_i, mix_j):
+    """Calculate KL descriminiation-based dissimilarity between mixands.
+    """
+    # Get covariance of moment-preserving merge
+    w_i, mu_i, P_i = mix_i
+    w_j, mu_j, P_j = mix_j
+    _, _, P_ij = merge_mixands(mix_i, mix_j)
+
+    # Use slogdet to prevent over/underflow
+    _, logdet_P_ij = np.linalg.slogdet(P_ij)
+    _, logdet_P_i = np.linalg.slogdet(P_i)
+    _, logdet_P_j = np.linalg.slogdet(P_j)
+    
+    # <>TODO: check to see if anything's happening upstream
+    if np.isinf(logdet_P_ij):
+        logdet_P_ij = 0
+    if np.isinf(logdet_P_i):
+        logdet_P_i = 0
+    if np.isinf(logdet_P_j):
+        logdet_P_j = 0
+
+    b = 0.5 * ((w_i + w_j) * logdet_P_ij - w_i * logdet_P_i - w_j * logdet_P_j)
+    return b
 
 def pdf_test():
     fig = plt.figure()
@@ -338,7 +438,6 @@ def pdf_test():
 
     # 2D Gaussian probs
     states = [[0,0],[1,1],[3,3],[4,4]]
-    print gauss_2d.pdf(states)
 
     levels = np.linspace(0, np.max(gauss_2d.pdf(pos)), 50)
     ax.contourf(xx, yy, gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
@@ -536,11 +635,55 @@ def fleming_prior():
     ax.set_title('2D Gaussian PDF')
     plt.show()
 
+
+def merge_test(num_mixands=10, max_num_mixands=5):
+
+    weights = np.random.uniform(size=num_mixands)
+    means = np.random.randn(num_mixands, 2) * 3
+    covariances = np.abs(np.random.randn(num_mixands,2, 2))
+    for i, covariance in enumerate(covariances):
+        s = np.sort(covariance, axis=None)
+        covariance[0,1] = s[0]
+        covariance[1,0] = s[1]
+        if int(s[3] * 100000) % 2:
+            covariance[0,0] = s[3]
+            covariance[1,1] = s[2]
+        else:
+            covariance[0,0] = s[2]
+            covariance[1,1] = s[3]
+        covariances[i] = (covariance + covariance.T)/2
+
+    unmerged_gauss_2d = GaussianMixture(weights, means, covariances,
+                                        max_num_mixands=len(weights))
+    merged_gauss_2d = GaussianMixture(weights, means, covariances,
+                                      max_num_mixands=max_num_mixands)
+
+    # Setup spaces
+    xx, yy = np.mgrid[-10:10:1 / 10,
+                      -10:10:1 / 10]
+    pos = np.empty(xx.shape + (2,))
+    pos[:, :, 0] = xx
+    pos[:, :, 1] = yy
+
+    fig = plt.figure()
+    ax = fig.add_subplot(121)
+    levels = np.linspace(0, np.max(unmerged_gauss_2d.pdf(pos)), 50)
+    ax.contourf(xx, yy, unmerged_gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
+    ax.set_title('Unmerged GM')
+
+    ax = fig.add_subplot(122)
+    levels = np.linspace(0, np.max(merged_gauss_2d.pdf(pos)), 50)
+    ax.contourf(xx, yy, merged_gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
+    ax.set_title('Merged GM')
+
+    plt.show()
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     # pdf_test()
     # rv_test()
-    fleming_prior()
+    # fleming_prior()
     # ellipses_test(2)
+    merge_test(80, 20)
 
