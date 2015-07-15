@@ -80,8 +80,8 @@ class Cop(Robot):
                  pose=[0, 0, 90],
                  pose_source='python',
                  publish_to_ROS=False,
-                 fusion_engine_type='particle',
-                 goal_planner_type='particle',
+                 fusion_engine_type='gauss sum',
+                 goal_planner_type='MAP',
                  cop_model='simple',
                  robber_model='random walk'):
 
@@ -189,8 +189,6 @@ class Cop(Robot):
             distribution = None
         else:
             distribution = self.fusion_engine.filters[robber_name].probability
-            logging.info(self.fusion_engine.filters)
-            logging.info(distribution.means)
             particles = None
         if robber_name == 'combined':
             robber_shape = {name: robot.map_obj.shape for name, robot
