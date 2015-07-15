@@ -23,7 +23,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from scipy import stats
-from pylab import *
 
 from cops_and_robots.map_tools.layer import Layer
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture

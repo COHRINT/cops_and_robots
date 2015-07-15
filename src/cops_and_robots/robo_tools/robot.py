@@ -31,7 +31,7 @@ from shapely.geometry import Point
 
 from cops_and_robots.robo_tools.pose import Pose
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
-from cops_and_robots.robo_tools.planner import GoalPlanner, PathPlanner, Controller
+from cops_and_robots.robo_tools.planner import MissionPlanner, GoalPlanner, PathPlanner, Controller
 from cops_and_robots.map_tools.map import set_up_fleming
 from cops_and_robots.map_tools.map_elements import MapObject
 
@@ -97,7 +97,7 @@ class Robot(iRobotCreate):
                  role='robber',
                  mission_status='on the run',
                  goal_planner_type='simple',
-                 path_planner_type='direct',
+                 path_planner_type='a_star',
                  consider_others=False,
                  **kwargs):
 
@@ -124,7 +124,10 @@ class Robot(iRobotCreate):
         if map_name is None:
             self.map = None
         else:
-            self.map = set_up_fleming(map_display_type)
+            self.map = set_up_fleming()
+
+        self.mission_planner = MissionPlanner(self, publish_to_ROS=publish_to_ROS)
+
         self.goal_planner = GoalPlanner(self,
                                         publish_to_ROS,
                                         type_=goal_planner_type)
@@ -153,10 +156,6 @@ class Robot(iRobotCreate):
     def update_shape(self):
         """Update the robot's map_obj.
         """
-
-        # <>TODO: refactor this
-        # self.map_obj.move_relative((self.pose2D.pose -
-        #                             self.pose_history[-2:, :]).tolist()[0])
         self.map_obj.move_absolute(self.pose2D.pose)
 
     def make_others(self):
@@ -172,6 +171,7 @@ class Robot(iRobotCreate):
 
         self.missing_robbers = {}  # all are missing to begin with!
         self.known_cops = {}
+
         for name, role in self.other_robots.iteritems():
 
             # Randomly place the other robots
@@ -195,16 +195,6 @@ class Robot(iRobotCreate):
                 self.map.add_cop(new_cop.map_obj)
                 self.known_cops[name] = new_cop
 
-    def stop_all_movement(self):
-        self.goal_planner.goal_status = 'done'
-        try:
-            self.path_planner.planner_status = 'not planning'
-            self.controller.controller_status = 'waiting'
-        except:
-            logging.info('No planner or controller found')
-        logging.warn('{} has stopped'.format(self.name))
-        self.mission_status = 'stopped'
-
     def update(self):
         """Update all primary functionality of the robot.
 
@@ -222,7 +212,7 @@ class Robot(iRobotCreate):
             `None` if the robot does not generate an animation packet, or a
             tuple of all animation parameters otherwise.
         """
-        if self.mission_status is not 'stopped':
+        if self.mission_planner.mission_status is not 'stopped':
             # Update statuses and planners
             self.update_mission_status()
             self.goal_planner.update()

@@ -19,7 +19,7 @@ __copyright__ = "Copyright 2015, Cohrint"
 __credits__ = ["Matthew Aitken", "Nick Sweet", "Nisar Ahmed"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Nick Sweet"
+__maintainer__ = "Matthew Aitken"
 __email__ = "matthew@raitken.net"
 __status__ = "Development"
 
@@ -30,6 +30,53 @@ from itertools import chain
 
 import numpy as np
 from shapely.geometry import Point, LineString
+
+import rospy
+import tf
+from geometry_msgs.msg import PoseStamped
+
+import cops_and_robots.robo_tools.a_star as a_star
+from cops_and_robots.map_tools.occupancy_layer import OccupancyLayer
+
+
+class MissionPlanner(object):
+    """The MissionPlanner is responsible for high level planning.
+
+
+    """
+    def __init__(self, robot, publish_to_ROS=False):
+        self.robot = robot
+        self.trajectory = self.test_trajectory()
+        self.mission_status = 'Moving'
+        self.publish_to_ROS = publish_to_ROS
+
+    def stop_all_movement(self):
+        self.robot.goal_planner.goal_status = 'done'
+        if self.publish_to_ROS:
+            self.robot.goal_planner.goal_pose = self.robot.pose2D.pose[:]
+            self.robot.goal_planner.create_ROS_goal_message()
+        else:
+            self.robot.path_planner.planner_status = 'not planning'
+            self.robot.controller.controller_status = 'waiting'
+
+        logging.warn('{} has stopped'.format(self.robot.name))
+        self.mission_status = 'stopped'
+
+    def test_trajectory(self):
+        test_trajectory = iter(np.array([[0, 0], [3.3, 0], [3.3, 2.5],
+                                         [3.3, -3], [-6, -3], [-3, -3],
+                                         [-3, 0], [-8, 0], [-8, -3],
+                                         [-8, 2.5], [-1, 2.5], [-1, 0],
+                                         [0, 0]]))
+        return test_trajectory
+
+    def update(self):
+        """Updates the MissionPlanner.
+
+        This will usually be overwritten when the MissionPlanner is subclassed.
+
+        """
+        pass
 
 
 class GoalPlanner(object):
@@ -287,7 +334,9 @@ class GoalPlanner(object):
 
 
     def find_goal_from_trajectory(self):
-        """Find a goal pose from a set trajectory
+        """Find a goal pose from a set trajectory, defined by the
+            mission_planner.
+            Trajectory must be a iterated numpy array
 
         Parameters
         ----------
@@ -482,6 +531,14 @@ class PathPlanner(object):
         self.robot = robot
         self.path_planner_status = 'not planning'
 
+        if self.type is 'a_star':
+            self.cell_size = 0.1
+            # Generate Occupancy Grid from feasible layer
+            self.occupancy_layer = OccupancyLayer(
+                cell_size=self.cell_size,
+                feasible_layer=self.robot.map.feasible_layer,
+                bounds=self.robot.map.feasible_layer.bounds)
+
     def find_path(self):
         """Find path to a goal_pose, agnostic of planner type.
 
@@ -504,18 +561,73 @@ class PathPlanner(object):
         """Finds a path directly to the goal
 
         """
-        current_pose = self.robot.pose2D.pose[0:2]
-        goal_pose = self.robot.goal_planner.goal_pose[:]
-        goal_path = LineString((current_pose, goal_pose))
+        current_pose = np.array(self.robot.pose2D.pose[0:2])
+        goal_pose = np.array(self.robot.goal_planner.goal_pose[:])
+        goal_path = np.array([current_pose, goal_pose])
 
-        final_theta = goal_pose[2] % 360  # degrees
+        final_theta = np.array([goal_pose[2] % 360])  # degrees
         return goal_path, final_theta
 
     def find_path_from_a_star(self):
-        # Implement later
-        current_pose = self.robot.pose2D.pose[0:2]
-        goal_pose = self.robot.goal_planner.goal_pose[0:2]
-        pass
+        """Finds a path using the A* search algorithm
+
+            a_star takes an occupancy_grid[y][x] where 1 is an obstacle, 0
+            is a feasible area. y and x are integer indexes, so the resulting
+            points must be translated to corresponding floating positions.
+
+            dirs allows for a choice between moving in 90 degree steps or
+            45 degree steps.
+
+        """
+        current_point = self.robot.pose2D.pose[0:2]
+        goal_point = self.robot.goal_planner.goal_pose[0:2]
+        final_theta = np.array([self.robot.goal_planner.goal_pose[2] % 360])
+
+        dirs = 8  # number of possible directions to move on the map
+        if dirs == 4:
+            dx = [1, 0, -1, 0]
+            dy = [0, 1, 0, -1]
+        elif dirs == 8:
+            dx = [1, 1, 0, -1, -1, -1, 0, 1]
+            dy = [0, 1, 1, 1, 0, -1, -1, -1]
+
+        n = len(self.occupancy_layer.x_coords)
+        m = len(self.occupancy_layer.y_coords)
+
+        # Return the index of the closest discretized value to current_point
+        start = []
+        end = []
+        start = [np.abs(self.occupancy_layer.x_coords - current_point[0]).argmin(),
+                 np.abs(self.occupancy_layer.y_coords - current_point[1]).argmin()]
+        end = [np.abs(self.occupancy_layer.x_coords - goal_point[0]).argmin(),
+               np.abs(self.occupancy_layer.y_coords - goal_point[1]).argmin()]
+
+        # Find a route (a series of direction choices) using A*
+        route = a_star.pathFind(self.occupancy_layer.occupancy_grid, n, m,
+                                dirs, dx, dy, start[0], start[1],
+                                end[0], end[1])
+
+        # Convert to a list of points
+        x = start[0]
+        y = start[1]
+        path = []
+        for i in range(len(route)):
+            j = int(route[i])
+            x += dx[j]
+            y += dy[j]
+            path.append([x, y])
+
+        # Convert to a list of coordinates
+        path = np.array(path)
+        print self.occupancy_layer.bounds[0:2]
+        path = (path * self.occupancy_layer.cell_size
+                + np.array(self.occupancy_layer.bounds[0:2]))
+
+        current_point = np.array([current_point])
+        goal_point = np.array([goal_point])
+        goal_path = np.concatenate((current_point, path, goal_point))
+
+        return goal_path, final_theta
 
     def update(self):
         current_status = self.path_planner_status
@@ -525,8 +637,8 @@ class PathPlanner(object):
             # Find new path
             self.find_path()
             # Update controller
-            self.robot.controller.goal_path = np.array(self.goal_path.coords)
-            self.robot.controller.final_theta = np.array([self.final_theta])
+            self.robot.controller.goal_path = self.goal_path
+            self.robot.controller.final_theta = self.final_theta
             self.robot.controller.controller_status = 'updating path'
             # Update Status
             new_status = 'not_planning'
@@ -637,7 +749,7 @@ class Controller(object):
         # With no error, self.waypoint = self.next_waypoint
         self.waypoint = self.robot.pose2D.pose[0:2]
         self.next_waypoint = next(self.waypoint_path)
-        if self.next_waypoint.ndim is 0:
+        if self.next_waypoint.size is 1:
             self.theta = self.next_waypoint
         else:
             opposite = self.next_waypoint[1] - self.waypoint[1]
@@ -669,7 +781,7 @@ class Controller(object):
 
         elif self.controller_status == 'rotating':
             if self.is_near_theta():
-                if self.next_waypoint.ndim is 0:
+                if self.next_waypoint.size is 1:
                     new_status = 'waiting'
                 else:
                     new_status = 'translating'
