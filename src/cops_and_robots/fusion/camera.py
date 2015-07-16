@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from matplotlib.colors import cnames
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon, MultiPolygon
 from shapely import affinity
 
 from cops_and_robots.fusion.sensor import Sensor
@@ -59,7 +59,10 @@ class Camera(Sensor):
 
     """
     def __init__(self, robot_pose=(0, 0, 0), visible=True,
-                 default_color=cnames['yellow']):
+                 default_color=cnames['yellow'], blocking_shapes=Polygon()):
+        # Define blocking shapes (updated in shapelayer,
+        #   if update_blocking_shapes is true)
+        self.blocking_shapes = blocking_shapes
         # Define nominal viewcone
         self.min_view_dist = 0.3  # [m]
         self.max_view_dist = 1.0  # [m]
@@ -85,6 +88,7 @@ class Camera(Sensor):
         self.ideal_viewcone = MapObject('Ideal viewcone',
                                         viewcone_pts,
                                         visible=False,
+                                        blocks_camera=False,
                                         color_str='pink',
                                         pose=robot_pose,
                                         has_spaces=False,
@@ -93,6 +97,7 @@ class Camera(Sensor):
         self.viewcone = MapObject('Viewcone',
                                   viewcone_pts,
                                   visible=True,
+                                  blocks_camera=False,
                                   color_str='lightyellow',
                                   pose=robot_pose,
                                   has_spaces=False,
@@ -118,8 +123,9 @@ class Camera(Sensor):
             A layer object providing all the shapes in the map for the camera
             to rescale its viewcone.
         """
+        self.blocking_shapes = shape_layer.blocking_shapes
         self._move_viewcone(robot_pose)
-        self._rescale_viewcone(robot_pose, shape_layer)
+        self._rescale_viewcone(robot_pose)
 
     def _move_viewcone(self, robot_pose):
         """Move the viewcone based on the robot's pose
@@ -142,7 +148,7 @@ class Camera(Sensor):
         self.viewcone.move_relative(transform, rotation_pt=self.view_pose[0:2])
         self.view_pose = pose
 
-    def _rescale_viewcone(self, robot_pose, shape_layer):
+    def _rescale_viewcone(self, robot_pose):
         """Rescale the viewcone based on intersecting map objects.
 
         Parameters
@@ -153,15 +159,14 @@ class Camera(Sensor):
             A layer object providing all the shapes in the map for the camera
             to rescale its viewcone.
         """
-        all_shapes = shape_layer.all_shapes.buffer(0)  # bit of a hack!
-        if self.viewcone.shape.intersects(all_shapes):
+        if self.viewcone.shape.intersects(self.blocking_shapes):
             # <>TODO: Use shadows instead of rescaling viewcone
             # calculate shadows for all shapes touching viewcone
             # origin = self.viewcone.project(map_object.shape)
             # shadow = affinity.scale(...) #map portion invisible to the view
             # self.viewcone = self.viewcone.difference(shadow)
 
-            distance = Point(self.view_pose[0:2]).distance(all_shapes)
+            distance = Point(self.view_pose[0:2]).distance(self.blocking_shapes)
             scale = distance / self.max_view_dist * 1.3  # <>TODO: why the 1.3?
             self.viewcone.shape = affinity.scale(self.ideal_viewcone.shape,
                                                  xfact=scale,
@@ -170,7 +175,7 @@ class Camera(Sensor):
         else:
             self.viewcone.shape = self.ideal_viewcone.shape
 
-    def detect(self, filter_type, particles=None,prior=None):
+    def detect(self, filter_type, particles=None, prior=None):
         """Update a fusion engine's probability from camera detections.
 
         Parameters
@@ -204,8 +209,8 @@ class Camera(Sensor):
         # Update particle probabilities in view cone frame
         for i, particle in enumerate(particles):
             if self.viewcone.shape.contains(Point(particle[1:3])):
-                particles[i, 0] *= (1 - self.detection_model \
-                    .probability(state=particle[1:3], class_='Detection') )
+                particles[i, 0] *= (1 - self.detection_model
+                    .probability(state=particle[1:3], class_='Detection'))
 
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])

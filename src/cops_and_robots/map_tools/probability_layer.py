@@ -43,10 +43,11 @@ class ProbabilityLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, grid_size=0.2, z_levels=20, alpha=0.6,
+    def __init__(self, distribution, grid_size=0.2, z_levels=20, alpha=0.6,
                  colorbar_visible=False,
                  **kwargs):
         super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)
+        self.distribution = distribution
         self.grid_size = grid_size  # in [m/cell]
         self.z_levels = z_levels
         self.colorbar_visible = colorbar_visible
@@ -60,7 +61,7 @@ class ProbabilityLayer(Layer):
         # if colorbar_visible:
         # generate new axis for colorbar
 
-    def plot(self, distribution=None, ax=None, **kwargs):
+    def plot(self, distribution=None, **kwargs):
         """Plot the pseudo colormesh representation of probabilty.
 
         Parameters
@@ -88,8 +89,8 @@ class ProbabilityLayer(Layer):
         """Remove previous contour and replot new contour.
         """
         # Test stub for the call from __main__
-        if hasattr(self, 'distributions'):
-            self.distribution = next(self.distributions)
+        if hasattr(self, 'test_distributions'):
+            self.distribution = next(self.test_distributions)
 
         # Try to remove previous contourf and replot
         self.remove()
@@ -101,29 +102,30 @@ class ProbabilityLayer(Layer):
         return self.contourf
 
     def remove(self):
-        if hasattr(self,'contourf'):
+        if hasattr(self, 'contourf'):
             for collection in self.contourf.collections:
                 collection.remove()
             del self.contourf
 
 if __name__ == '__main__':
-    
-    pl = ProbabilityLayer(z_levels=50)
 
-    distributions = []
-    distributions.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
-    distributions.append(GaussianMixture(1,[1, 1],[[1,0],[0,1]]))
-    distributions.append(GaussianMixture(1,[0, 2],[[1,0],[0,1]]))
-    distributions.append(GaussianMixture(1,[-1, 1],[[1,0],[0,1]]))
-    distributions.append(GaussianMixture(1,[-2, 0],[[1,0],[0,1]]))
-    distributions.append(GaussianMixture(1,[-1, -1],[[1,0],[0,1]]))
-    distributions.append(GaussianMixture(1,[0, -2],[[1,0],[0,1]]))
-    distributions.append(GaussianMixture(1,[1, -1],[[1,0],[0,1]]))
-    distributions.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
-    pl.distributions = itertools.cycle(distributions)
+    d = GaussianMixture(1,[0, 0],[[1,0],[0,1]])
+    pl = ProbabilityLayer(d, z_levels=50)
 
-    ani = animation.FuncAnimation(pl.fig, pl.update, 
-        frames=xrange(100), 
+    test_distributions = []
+    test_distributions.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
+    test_distributions.append(GaussianMixture(1,[1, 1],[[1,0],[0,1]]))
+    test_distributions.append(GaussianMixture(1,[0, 2],[[1,0],[0,1]]))
+    test_distributions.append(GaussianMixture(1,[-1, 1],[[1,0],[0,1]]))
+    test_distributions.append(GaussianMixture(1,[-2, 0],[[1,0],[0,1]]))
+    test_distributions.append(GaussianMixture(1,[-1, -1],[[1,0],[0,1]]))
+    test_distributions.append(GaussianMixture(1,[0, -2],[[1,0],[0,1]]))
+    test_distributions.append(GaussianMixture(1,[1, -1],[[1,0],[0,1]]))
+    test_distributions.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
+    pl.test_distributions = itertools.cycle(test_distributions)
+
+    ani = animation.FuncAnimation(pl.fig, pl.update,
+        frames=xrange(100),
         interval=100,
         repeat=True,
         blit=False)

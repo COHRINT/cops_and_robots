@@ -63,7 +63,7 @@ class FeasibleLayer(Layer):
         self.pose_region = None
         # self.define_feasible_regions()
 
-    def define_feasible_regions(self, shape_layer=None):
+    def define_feasible_regions(self, static_elements):
         """Generate the feasible regions from a given shape layer.
 
         Parameters
@@ -72,17 +72,14 @@ class FeasibleLayer(Layer):
             The shape layer from which to generate the feasible regions. If
             no layer is provided, the entire map is deemed feasible.
         """
-        if shape_layer is None:
-            shape_layer = ShapeLayer(bounds=self.bounds)
-
         feasible_space = box(*self.bounds)
         self.point_region = feasible_space
         self.pose_region = feasible_space.buffer(-self.max_robot_radius)
 
-        for obj_ in shape_layer.shapes.values():
-            self.point_region = self.point_region.difference(obj_.shape)
+        for element in static_elements:
+            self.point_region = self.point_region.difference(element.shape)
 
-            buffered_shape = obj_.shape.buffer(self.max_robot_radius)
+            buffered_shape = element.shape.buffer(self.max_robot_radius)
             self.pose_region = self.pose_region.difference(buffered_shape)
 
     def plot(self, type_="pose", ax=None, alpha=0.5, plot_spaces=False, **kwargs):
