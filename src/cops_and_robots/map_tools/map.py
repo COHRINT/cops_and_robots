@@ -74,8 +74,15 @@ class Map(object):
         self.cops = {}
         self.robbers = {}
 
+        self.dynamic_elements = []
+        self.static_elements = []
+        self.information_elements = []
+        self.element_dict = {'dynamic': self.dynamic_elements,
+                             'static': self.static_elements,
+                             'information': self.information_elements}
+
         # Define layers
-        self.shape_layer = ShapeLayer(bounds=bounds)
+        self.shape_layer = ShapeLayer(self.element_dict, bounds=bounds)
         self.feasible_layer = FeasibleLayer(bounds=bounds)
         if self.display_type is 'particle':
             self.particle_layer = {}  # One per robber, plus one combined
@@ -95,26 +102,27 @@ class Map(object):
             The object to be added.
         """
         self.objects[map_obj.name] = map_obj
-        # self.occupancy_layer.add_obj(map_obj)
-        self.shape_layer.add_obj(map_obj)
-        self.feasible_layer.define_feasible_regions(self.shape_layer)
+        self.static_elements.append(map_obj)
+        self.feasible_layer.define_feasible_regions(self.static_elements)
 
-    def rem_obj(self, map_obj_name):
-        """Remove a ``MapObj`` from the Map by its name.
+    def rem_obj(self, map_obj):
+        """Remove a ``MapObj`` from the Map.
 
-        map_obj_name : str
-            Name of the map object.
+        map_obj : map_obj
+            Map object to remove.
         """
-        self.shape_layer.rem_obj(map_obj_name)
-        self.feasible_layer.define_feasible_regions(self.shape_layer)
-        # self.occupancy_layer.rem_obj(self.objects[map_obj_name])
-        del self.objects[map_obj_name]
+        self.static_elements.remove(map_obj)
+        self.feasible_layer.define_feasible_regions(self.static_elements)
+        del self.objects[map_obj.name]
 
-    def add_area(self, label, area):
-        self.areas[label] = area
+    def add_area(self, area):
+        self.areas[area.name] = area
+        self.static_elements.append(area)
 
-    def rem_area(self, label):
-        del self.areas[label]
+    def rem_area(self, area):
+        self.static_elements.remove(area)
+        self.feasible_layer.define_feasible_regions(self.static_elements)
+        del self.areas[area.name]
 
     def add_cop(self, cop_obj):
         """Add a dynamic ``Robot`` cop from the Map
@@ -122,17 +130,17 @@ class Map(object):
         cop_obj : Cop
             The full cop object.
         """
-        # self.shape_layer.add_obj(cop)
+        self.dynamic_elements.append(cop_obj)
         self.cops[cop_obj.name] = cop_obj
 
-    def rem_cop(self, cop_name):
-        """Remove a dynamic ``Robot`` cop from the Map by its name.
+    def rem_cop(self, cop_obj):
+        """Remove a dynamic ``Robot`` cop
 
-        cop_name : str
-            Name of the cop.
+        cop_obj :
+            Cop
         """
-        # self.shape_layer.rem_obj(cop_name)
-        del self.cops[cop_name]
+        self.dynamic_elements.remove(cop_obj)
+        del self.cops[cop_obj.name]
 
     def add_robber(self, robber):
         """Add a dynamic ``Robot`` robber from the Map.
@@ -140,24 +148,25 @@ class Map(object):
         robber_obj : Robber
             The full robber object.
         """
+        self.dynamic_elements.append(robber)
         self.robbers[robber.name] = robber
         if self.display_type == 'particle':
             self.particle_layer[robber.name] = ParticleLayer(bounds=self.bounds)
         else:
             self.probability_layer[robber.name] = ProbabilityLayer(fig=self.fig, bounds=self.bounds)
 
-    def rem_robber(self, robber_name):
+    def rem_robber(self, robber):
         """Remove a dynamic ``Robot`` robber from the Map by its name.
 
         robber_name : str
             Name of the robber.
         """
-        # self.shape_layer.rem_obj(robber_name)
-        del self.robbers[robber_name]
+        self.dynamic_elements.remove(robber)
+        del self.robbers[robber.name]
         if self.display_type == 'particle':
-            del self.particle_layer[robber_name]
+            del self.particle_layer[robber.name]
         else:
-            del self.probability_layer[robber_name]
+            del self.probability_layer[robber.name]
 
     def plot(self, show_areas=False):
         """Plot the static map.
@@ -206,7 +215,7 @@ class Map(object):
 
         # Define generic plot elements
         movement_path = plt.Line2D((0, 0), (0, 0), linewidth=2, alpha=0.4,
-                                    color=cnames['green'])
+                                   color=cnames['green'])
         simple_poly = Point((0, 0)).buffer(0.01)
         if self.display_type == 'particle':
             arbitrary_particle_layer = next(self.particle_layer.itervalues())
@@ -326,6 +335,15 @@ class Map(object):
         data and yields nothing.
 
         """
+        # for ax in axes:
+        #     if fusion_engine.type == 'probability'
+        #         probability_layer[robber_name].update()
+        #     else:
+        #         particle_layer[robber_name].update()
+        #     shape_layer.update()
+        #     extras_layer.update()
+
+
         while True:
             packet = yield
             for robber_name, pkt in packet.iteritems():
@@ -381,6 +399,7 @@ class Map(object):
                         .add_patch(self.robber_patch[robber_name])
 
                 # Update Filter
+
                 if particles is not None:
                     colors = particles[:, 0]\
                         * next(self.particle_layer.itervalues()).color_gain
@@ -523,10 +542,11 @@ def set_up_fleming(display_type='particle'):
                     pts[0,1] + np.abs(pts[1,1] - pts[0,1]) / 2, 0 ]
         area = MapArea(name=labels[i], shape_pts=pts, pose=centroid,
                        color_str=colors[i])
-        fleming.add_area(labels[i], area)
+        fleming.add_area(area)
 
     # <>TODO: Include area demarcations
 
+    fleming.feasible_layer.define_feasible_regions(fleming.static_elements)
     return fleming
 
 
