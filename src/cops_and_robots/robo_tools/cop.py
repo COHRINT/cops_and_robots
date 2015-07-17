@@ -21,12 +21,14 @@ __status__ = "Development"
 
 import logging
 import numpy as np
+import random
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import cnames
 from shapely.geometry import Point
 
+import cops_and_robots.robo_tools.robber as robber_module
 from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.fusion.fusion_engine import FusionEngine
 from cops_and_robots.fusion.camera import Camera
@@ -102,7 +104,7 @@ class Cop(Robot):
         self.goal_planner.type = goal_planner_type
 
         # Fusion and sensor attributes
-        robber_names = [a.name for a in self.missing_robbers.values()]
+        robber_names = [a for a in self.other_robots.keys()]
         self.fusion_engine = FusionEngine(fusion_engine_type,
                                           robber_names,
                                           self.map.feasible_layer,
@@ -113,12 +115,53 @@ class Cop(Robot):
         self.sensors['human'] = Human(self.map, robber_names)
         self.map.add_human_sensor(self.sensors['human'])
 
+        # Make others
+        self.make_others()
+
         # Animation attributes
         self.update_rate = 1  # [Hz]
         self.show_animation = False
-        self.stream = self.map.animation_stream()
 
         self.prev_status = []
+
+    def make_others(self):
+        """Generate robot objects for all other robots.
+
+        Create personal belief (not necessarily true!) of other robots,
+        largely regarding their map positions. Their positions are
+        known to the 'self' robot, but this function will be expanded
+        in the future to include registration between robots: i.e.,
+        optional pose and information sharing instead of predetermined
+        sharing.
+        """
+
+        self.missing_robbers = {}  # all are missing to begin with!
+        self.known_cops = {}
+
+        for name, role in self.other_robots.iteritems():
+
+            # Randomly place the other robots
+            feasible_robber_generated = False
+            while not feasible_robber_generated:
+                x = random.uniform(self.map.bounds[0], self.map.bounds[2])
+                y = random.uniform(self.map.bounds[1], self.map.bounds[3])
+                if self.map.feasible_layer.pose_region.contains(Point([x, y])):
+                    feasible_robber_generated = True
+
+            theta = random.uniform(0, 359)
+            pose = [x, y, theta]
+
+            # Add other robots to the map
+            if role == 'robber':
+                new_robber = robber_module.Robber(name, pose=pose)
+                # <>TODO: Allow Guass
+                self.map.add_robber(new_robber.map_obj, self.fusion_engine.filters[name].particles)
+                self.missing_robbers[name] = new_robber
+            else:
+                new_cop = cop_module.Cop(name, pose=pose)
+                self.map.add_cop(new_cop.map_obj)
+                self.known_cops[name] = new_cop
+            logging.debug('{} added'.format(name))
 
     def update_mission_status(self):
         # <>TODO: Replace with MissionPlanner
@@ -151,57 +194,8 @@ class Cop(Robot):
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
                                   self.missing_robbers)
         # Export the next animation stream
-        if self.role == 'cop' and self.show_animation:
-            packet = {}
-            if not self.map.combined_only:
-                for i, robber_name in enumerate(self.missing_robbers):
-                    packet[robber_name] = \
-                        self._form_animation_packet(robber_name)
-            packet['combined'] = self._form_animation_packet('combined')
-            return self.stream.send(packet)
-
-    def _form_animation_packet(self, robber_name):
-        """Turn all important animation data into a tuple.
-
-        Parameters
-        ----------
-        robber_name : str
-            The name of the robber (or 'combined') associated with this packet.
-
-        Returns
-        -------
-        tuple
-            All important animation parameters.
-
-        """
-        # Cop-related values
-        cop_shape = self.map_obj.shape
-        if len(self.pose_history) < self.goal_planner.stuck_buffer:
-            cop_path = np.hsplit(self.pose_history[:, 0:2], 2)
-        else:
-            cop_path = np.hsplit(self.pose_history[-self.goal_planner.stuck_buffer:, 0:2],
-                                 2)
-
-        camera_shape = self.sensors['camera'].viewcone.shape
-
-        # Robber-related values
-        if self.fusion_engine.filter_type == 'particle':
-            particles = self.fusion_engine.filters[robber_name].particles
-            distribution = None
-        else:
-            distribution = self.fusion_engine.filters[robber_name].probability
-            logging.info(self.fusion_engine.filters)
-            logging.info(distribution.means)
-            particles = None
-        if robber_name == 'combined':
-            robber_shape = {name: robot.map_obj.shape for name, robot
-                            in self.missing_robbers.iteritems()}
-        else:
-            robber_shape = self.missing_robbers[robber_name].map_obj.shape
-
-        # Form and return packet to be sent
-        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles, distribution)
-        return packet
+        if self.show_animation:
+            self.map.update()
 
     def animated_exploration(self):
         """Start the cop's exploration of the environment, while
@@ -214,7 +208,5 @@ class Cop(Robot):
                                            self.update,
                                            frames=self.num_goals,
                                            interval=5,
-                                           init_func=self.map.setup_plot,
                                            blit=False)
-        next(self.stream)  # advance the generator once so we can send to it
         plt.show()

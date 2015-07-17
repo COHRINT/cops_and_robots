@@ -143,7 +143,7 @@ class Robot(iRobotCreate):
         shape_pts = Point(pose[0:2]).buffer(iRobotCreate.DIAMETER / 2)\
             .exterior.coords
         self.map_obj = MapObject(self.name, shape_pts[:], has_spaces=False,
-                                 **kwargs)
+                                 blocks_camera=False, **kwargs)
         self.update_shape()
 
         # Add self and others to the map
@@ -151,49 +151,11 @@ class Robot(iRobotCreate):
             self.map.add_cop(self.map_obj)
         else:
             self.map.add_robber(self.map_obj)
-        self.make_others()
 
     def update_shape(self):
         """Update the robot's map_obj.
         """
         self.map_obj.move_absolute(self.pose2D.pose)
-
-    def make_others(self):
-        """Generate robot objects for all other robots.
-
-        Create personal belief (not necessarily true!) of other robots,
-        largely regarding their map positions. Their positions are
-        known to the 'self' robot, but this function will be expanded
-        in the future to include registration between robots: i.e.,
-        optional pose and information sharing instead of predetermined
-        sharing.
-        """
-
-        self.missing_robbers = {}  # all are missing to begin with!
-        self.known_cops = {}
-
-        for name, role in self.other_robots.iteritems():
-
-            # Randomly place the other robots
-            feasible_robber_generated = False
-            while not feasible_robber_generated:
-                x = random.uniform(self.map.bounds[0], self.map.bounds[2])
-                y = random.uniform(self.map.bounds[1], self.map.bounds[3])
-                if self.map.feasible_layer.pose_region.contains(Point([x, y])):
-                    feasible_robber_generated = True
-
-            theta = random.uniform(0, 359)
-            pose = [x, y, theta]
-
-            # Add other robots to the map
-            if role == 'robber':
-                new_robber = robber_module.Robber(name, pose=pose)
-                self.map.add_robber(new_robber.map_obj)
-                self.missing_robbers[name] = new_robber
-            else:
-                new_cop = cop_module.Cop(name, pose=pose)
-                self.map.add_cop(new_cop.map_obj)
-                self.known_cops[name] = new_cop
 
     def update(self):
         """Update all primary functionality of the robot.
