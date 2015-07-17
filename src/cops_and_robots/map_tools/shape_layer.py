@@ -84,8 +84,9 @@ class ShapeLayer(Layer):
                 if element.plot_spaces:
                     pass
                 # Update blocking_shapes for Camera
-                if self.update_blocking_shapes:
+                if self.update_blocking_shapes and element.blocks_camera:
                     blocking_shapes.append(element.shape)
+                    print element.name
 
         for element in self.elements['dynamic']:
             # Remove old elements
@@ -99,15 +100,18 @@ class ShapeLayer(Layer):
             if element.plot_spaces:
                 pass
             # Update blocking_shapes for Camera
-            if self.update_blocking_shapes:
+            if self.update_blocking_shapes and element.blocks_camera:
                 blocking_shapes.append(element.shape)
+                print element.name
 
         for element in self.elements['information']:
             # Add text and paths
             pass
 
         if self.update_blocking_shapes:
+            print blocking_shapes
             self.blocking_shapes = MultiPolygon(blocking_shapes)
+            # print self.blocking_shapes
 
     def update(self, i=0):
         """Remove dynamic elements and replot.

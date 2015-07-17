@@ -142,7 +142,8 @@ class Map(object):
         self.dynamic_elements.remove(cop_obj)
         del self.cops[cop_obj.name]
 
-    def add_robber(self, robber):
+    def add_robber(self, robber, particles=None):
+        # <>TODO: Make generic imaginary robbers
         """Add a dynamic ``Robot`` robber from the Map.
 
         robber_obj : Robber
@@ -151,7 +152,7 @@ class Map(object):
         self.dynamic_elements.append(robber)
         self.robbers[robber.name] = robber
         if self.display_type == 'particle':
-            self.particle_layer[robber.name] = ParticleLayer(bounds=self.bounds)
+            self.particle_layer[robber.name] = ParticleLayer(particles)
         else:
             self.probability_layer[robber.name] = ProbabilityLayer(fig=self.fig, bounds=self.bounds)
 
@@ -188,228 +189,24 @@ class Map(object):
     def setup_plot(self):
         """Create the initial plot for the animation.
         """
-        self.ax_list = {}
-        if len(self.robbers) == 1:
-            self.ax_list[self.robbers] = self.fig.add_subplot(111)
-        elif self.combined_only:
-            self.ax_list['combined'] = self.fig.add_subplot(111)
-        else:
-            num_axes = len(self.robbers) + 1
-            num_rows = int(math.ceil(num_axes / 2))
-
-            for i, robber in enumerate(self.robbers):
-                ax = plt.subplot2grid((num_rows, 4),
-                                      (int(math.floor(i / 2)), (i % 2) * 2),
-                                      colspan=2
-                                      )
-                self.ax_list[robber] = ax
-
-            # Add a plot for the combined estimate
-            if (num_axes % 2) == 0:
-                ax = plt.subplot2grid((num_rows, 4), (num_rows - 1, 2),
-                                      colspan=2)
-            else:
-                ax = plt.subplot2grid((num_rows, 4), (num_rows - 1, 1),
-                                      colspan=2)
-            self.ax_list['combined'] = ax
-
+        self.ax = self.fig.add_subplot(111)
         # Define generic plot elements
         movement_path = plt.Line2D((0, 0), (0, 0), linewidth=2, alpha=0.4,
                                    color=cnames['green'])
         simple_poly = Point((0, 0)).buffer(0.01)
-        if self.display_type == 'particle':
-            arbitrary_particle_layer = next(self.particle_layer.itervalues())
-            init_particles = np.zeros((arbitrary_particle_layer.n_particles, 3))
-            self.particle_scat = {}
-        else:
-            init_distribution = GaussianMixture(1,[0,0],[[1,0],[0,1]])
-            self.prob_plot = {}
-
-        self.cop_patch = {}
-        self.movement_path = {}
-        self.camera_patch = {}
-        self.robber_patch = {}
-
-        # Set up all robber plots
-        if (not self.combined_only) or (len(self.robbers) == 1):
-            for robber in self.robbers:
-                ax = self.ax_list[robber]
-                ax.set_xlim([self.bounds[0], self.bounds[2]])
-                ax.set_ylim([self.bounds[1], self.bounds[3]])
-                ax.set_title('Tracking {}.'.format(robber))
-
-                # Plot static elements
-                self.shape_layer.plot(plot_spaces=False, ax=ax)
-
-                # Define cop path
-                self.cop_patch[robber] = PolygonPatch(simple_poly)
-                ax.add_patch(self.cop_patch[robber])
-
-                # Define cop movement path
-                self.movement_path[robber] = movement_path
-                ax.add_line(self.movement_path[robber])
-
-                # Define camera patch
-                self.camera_patch[robber] = PolygonPatch(simple_poly)
-                ax.add_patch(self.camera_patch[robber])
-
-                # Define robber patch
-                self.robber_patch[robber] = PolygonPatch(simple_poly)
-                ax.add_patch(self.robber_patch[robber])
-
-                if self.display_type == 'particle':
-                    # Define particle scatter plot
-                    self.particle_scat[robber] = \
-                        ax.scatter(init_particles[:, 0],
-                                   init_particles[:, 1],
-                                   c=init_particles[:, 2],
-                                   cmap=arbitrary_particle_layer.cmap,
-                                   s=arbitrary_particle_layer.particle_size,
-                                   lw=arbitrary_particle_layer.line_weight,
-                                   alpha=arbitrary_particle_layer.alpha,
-                                   marker='.',
-                                   vmin=0,
-                                   vmax=1
-                                   )
-                else:
-                    # Define probability contour plot
-                    self.probability_layer[robber].ax = ax
-                    # self.probability_layer[robber].plot(init_distribution)
-
-        # Set up combined plot
-        if (len(self.ax_list) > 1) or self.combined_only:
-            ax = self.ax_list['combined']
-            # Plot setup
-            ax.set_xlim([self.bounds[0], self.bounds[2]])
-            ax.set_ylim([self.bounds[1], self.bounds[3]])
-            ax.set_title('Combined tracking of all '
-                                               'remaining targets.')
-
-            # Static elements
-            self.shape_layer.plot(plot_spaces=False,
-                                  ax=ax)
-
-            # Dynamic elements
-            self.cop_patch['combined'] = PolygonPatch(simple_poly)
-            self.movement_path['combined'] = movement_path
-            self.camera_patch['combined'] = PolygonPatch(simple_poly)
-
-            ax.add_patch(self.cop_patch['combined'])
-            ax.add_line(self.movement_path['combined'])
-            ax.add_patch(self.camera_patch['combined'])
-
-            self.robber_patch['combined'] = {}
-            for robber in self.robbers:
-                self.robber_patch['combined'][robber] = \
-                    PolygonPatch(simple_poly)
-                ax\
-                    .add_patch(self.robber_patch['combined'][robber])
-
-            if self.display_type == 'particle':
-                init_combined_particles = init_particles.repeat(3, axis=0)
-                self.particle_scat['combined'] = ax\
-                    .scatter(init_combined_particles[:, 0],
-                             init_combined_particles[:, 1],
-                             c=init_combined_particles[:, 2],
-                             cmap=arbitrary_particle_layer.cmap,
-                             s=arbitrary_particle_layer.particle_size,
-                             lw=arbitrary_particle_layer.line_weight,
-                             alpha=arbitrary_particle_layer.alpha,
-                             marker='.',
-                             vmin=0,
-                             vmax=1
-                             )
-            else:
-                self.probability_layer['combined'] \
-                    = ProbabilityLayer(fig=self.fig, ax=ax, bounds=self.bounds)
-
 
         # Set up the human interface
         if self.human_sensor:
             HumanInterface(self.fig, self.human_sensor)
 
-    def animation_stream(self):
-        """Update the animated plot.
-
-        This is a generator function that takes in packets of animation
-        data and yields nothing.
-
-        """
-        # for ax in axes:
-        #     if fusion_engine.type == 'probability'
-        #         probability_layer[robber_name].update()
-        #     else:
-        #         particle_layer[robber_name].update()
-        #     shape_layer.update()
-        #     extras_layer.update()
-
-
-        while True:
-            packet = yield
-            for robber_name, pkt in packet.iteritems():
-                logging.debug("Updating {}'s animation frame."
-                              .format(robber_name))
-
-                (cop_shape, cop_path, camera_shape, robber_shape, particles, distribution)\
-                    = pkt
-
-                # Update cop patch
-                self.cop_patch[robber_name].remove()
-                self.cop_patch[robber_name] = \
-                    PolygonPatch(cop_shape,
-                                 facecolor=cnames['green'],
-                                 alpha=0.9,
-                                 zorder=2)
-                self.ax_list[robber_name]\
-                    .add_patch(self.cop_patch[robber_name])
-
-                # Update movement path
-                # <>TODO: Figure out why this doesn't work for multiple plots
-                self.movement_path[robber_name].set_data(cop_path)
-
-                # Update sensor patch
-                self.camera_patch[robber_name].remove()
-                self.camera_patch[robber_name] = \
-                    PolygonPatch(camera_shape,
-                                 facecolor=cnames['yellow'],
-                                 alpha=0.3,
-                                 zorder=2)
-                self.ax_list[robber_name]\
-                    .add_patch(self.camera_patch[robber_name])
-
-                # Update robber patch
-                if robber_name == 'combined':
-                    for robber in self.robbers:
-                        self.robber_patch['combined'][robber].remove()
-                        self.robber_patch['combined'][robber] = \
-                            PolygonPatch(robber_shape[robber],
-                                         facecolor=cnames['orange'],
-                                         alpha=0.9,
-                                         zorder=2)
-                        self.ax_list['combined']\
-                            .add_patch(self.robber_patch['combined'][robber])
-                else:
-                    self.robber_patch[robber_name].remove()
-                    self.robber_patch[robber_name] = \
-                        PolygonPatch(robber_shape,
-                                     facecolor=cnames['orange'],
-                                     alpha=0.9,
-                                     zorder=2)
-                    self.ax_list[robber_name]\
-                        .add_patch(self.robber_patch[robber_name])
-
-                # Update Filter
-
-                if particles is not None:
-                    colors = particles[:, 0]\
-                        * next(self.particle_layer.itervalues()).color_gain
-
-                    self.particle_scat[robber_name].set_array(colors)
-                    self.particle_scat[robber_name].set_offsets(particles[:, 1:3])
-                else:
-                    self.probability_layer[robber_name].distribution = distribution
-                    logging.info(distribution.means)
-                    self.probability_layer[robber_name].update()
+    def update(self):
+        self.shape_layer.update()
+        if self.display_type is 'particle':
+            for robber_particles in self.particle_layer.values():
+                robber_particles.update()
+        else:
+            # Do stuff for probability
+            pass
 
 
 def set_up_fleming(display_type='particle'):
@@ -426,7 +223,7 @@ def set_up_fleming(display_type='particle'):
     wall_shape = [l, w]
 
     poses = np.array([[-7, -1.55, 1],
-                      [-7, -2.55, 1],
+                      [-7, -1.55 - l, 1],
                       [-7 + l/2 + w/2, -1, 0],
                       [-7 + 3*l/2 + w/2, -1, 0],
                       [-7 + 5*l/2 + w/2, -1, 0],
@@ -505,7 +302,7 @@ def set_up_fleming(display_type='particle'):
         landmarks.append(landmark)
 
     # Make odd landmarks
-    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.3, 270], color_str='black')
+    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.38, 270], color_str='black')
     landmarks.append(landmark)
     # pose = [-9.5, 2.1, 0]
     # shape_pts = Point(pose).buffer(0.2).exterior.coords
@@ -552,5 +349,5 @@ def set_up_fleming(display_type='particle'):
 
 if __name__ == '__main__':
     fleming = set_up_fleming()
-    fleming.plot(show_areas=True)
+#    fleming.plot(show_areas=True)
     fleming.feasible_layer.plot()

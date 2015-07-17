@@ -31,7 +31,7 @@ import logging
 from shapely.geometry import box
 
 from cops_and_robots.map_tools.layer import Layer
-from cops_and_robots.map_tools.shape_layer import ShapeLayer
+from cops_and_robots.map_tools.map_elements import MapObject
 from descartes.patch import PolygonPatch
 import matplotlib.pyplot as plt
 from matplotlib.colors import cnames
@@ -77,10 +77,11 @@ class FeasibleLayer(Layer):
         self.pose_region = feasible_space.buffer(-self.max_robot_radius)
 
         for element in static_elements:
-            self.point_region = self.point_region.difference(element.shape)
+            if isinstance(element, MapObject):
+                self.point_region = self.point_region.difference(element.shape)
 
-            buffered_shape = element.shape.buffer(self.max_robot_radius)
-            self.pose_region = self.pose_region.difference(buffered_shape)
+                buffered_shape = element.shape.buffer(self.max_robot_radius)
+                self.pose_region = self.pose_region.difference(buffered_shape)
 
     def plot(self, type_="pose", ax=None, alpha=0.5, plot_spaces=False, **kwargs):
         """Plot either the pose or point feasible regions.
