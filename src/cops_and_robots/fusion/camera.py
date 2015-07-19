@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from matplotlib.colors import cnames
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon, MultiPolygon
 from shapely import affinity
 
 from cops_and_robots.fusion.sensor import Sensor
@@ -59,8 +59,9 @@ class Camera(Sensor):
 
     """
     def __init__(self, robot_pose=(0, 0, 0), visible=True,
-                 default_color=cnames['yellow'], min_view_dist=0.3,
-                 max_view_dist=1.0):
+                 default_color=cnames['yellow'], element_dict={},
+                 min_view_dist=0.3, max_view_dist=1.0):
+        self.element_dict = element_dict
         # Define nominal viewcone
         self.min_view_dist = min_view_dist  # [m]
         self.max_view_dist = max_view_dist  # [m]
@@ -86,6 +87,7 @@ class Camera(Sensor):
         self.ideal_viewcone = MapObject('Ideal viewcone',
                                         viewcone_pts,
                                         visible=False,
+                                        blocks_camera=False,
                                         color_str='pink',
                                         pose=robot_pose,
                                         has_spaces=False,
@@ -93,7 +95,9 @@ class Camera(Sensor):
                                         )
         self.viewcone = MapObject('Viewcone',
                                   viewcone_pts,
+                                  alpha=0.2,
                                   visible=True,
+                                  blocks_camera=False,
                                   color_str='lightyellow',
                                   pose=robot_pose,
                                   has_spaces=False,
@@ -108,7 +112,7 @@ class Camera(Sensor):
         # Set up the VB fusion parameters
         self.vb = VariationalBayes()
 
-    def update_viewcone(self, robot_pose, shape_layer):
+    def update_viewcone(self, robot_pose):
         """Update the camera's viewcone position and scale.
 
         Parameters
@@ -120,7 +124,7 @@ class Camera(Sensor):
             to rescale its viewcone.
         """
         self._move_viewcone(robot_pose)
-        self._rescale_viewcone(robot_pose, shape_layer)
+        self._rescale_viewcone(robot_pose)
 
         # Translate detection model
         self.detection_model.move(self.view_pose)
@@ -146,35 +150,53 @@ class Camera(Sensor):
         self.viewcone.move_relative(transform, rotation_pt=self.view_pose[0:2])
         self.view_pose = pose
 
-    def _rescale_viewcone(self, robot_pose, shape_layer):
+    def _rescale_viewcone(self, robot_pose):
         """Rescale the viewcone based on intersecting map objects.
 
         Parameters
         ----------
         robot_pose : array_like, optional
             The robot's currentl [x, y, theta].
-        shape_layer : ShapeLayer
-            A layer object providing all the shapes in the map for the camera
-            to rescale its viewcone.
         """
-        all_shapes = shape_layer.all_shapes.buffer(0)  # bit of a hack!
-        if self.viewcone.shape.intersects(all_shapes):
-            # <>TODO: Use shadows instead of rescaling viewcone
-            # calculate shadows for all shapes touching viewcone
-            # origin = self.viewcone.project(map_object.shape)
-            # shadow = affinity.scale(...) #map portion invisible to the view
-            # self.viewcone = self.viewcone.difference(shadow)
+        scale = self.max_view_dist
 
-            distance = Point(self.view_pose[0:2]).distance(all_shapes)
-            scale = distance / self.max_view_dist * 1.3  # <>TODO: why the 1.3?
-            self.viewcone.shape = affinity.scale(self.ideal_viewcone.shape,
-                                                 xfact=scale,
-                                                 yfact=scale,
-                                                 origin=self.view_pose[0:2])
-        else:
-            self.viewcone.shape = self.ideal_viewcone.shape
+        blocking_shapes = []
+        possible_elements = []
 
-    def detect(self, filter_type, particles=None,prior=None):
+        try:
+            possible_elements += self.element_dict['static']
+        except:
+            logging.debug('No static elements')
+        try:
+            possible_elements += self.element_dict['dynamic']
+        except:
+            logging.debug('No dynamic elements')
+
+        for element in possible_elements:
+            if element.blocks_camera:
+                blocking_shapes.append(element.shape)
+
+        for shape in blocking_shapes:
+            if self.viewcone.shape.intersects(shape):
+                # <>TODO: Use shadows instead of rescaling viewcone
+                # calculate shadows for all shapes touching viewcone
+                # origin = self.viewcone.project(map_object.shape)
+                # shadow = affinity.scale(...) #map portion invisible to the view
+                # self.viewcone = self.viewcone.difference(shadow)
+
+                distance = Point(self.view_pose[0:2]).distance(shape)
+                scale_ = distance / self.max_view_dist * 1.3  # <>TODO: why the 1.3?
+                if scale_ < scale:
+                    scale = scale_
+
+        self.viewcone.shape = affinity.scale(self.ideal_viewcone.shape,
+                                             xfact=scale,
+                                             yfact=scale,
+                                             origin=self.view_pose[0:2])
+        # else:
+        #     self.viewcone.shape = self.ideal_viewcone.shape
+
+    def detect(self, filter_type, particles=None, prior=None):
         """Update a fusion engine's probability from camera detections.
 
         Parameters
@@ -203,8 +225,8 @@ class Camera(Sensor):
         # Update particle probabilities in view cone frame
         for i, particle in enumerate(particles):
             if self.viewcone.shape.contains(Point(particle[1:3])):
-                particles[i, 0] *= (1 - self.detection_model \
-                    .probability(state=particle[1:3], class_='Detection') )
+                particles[i, 0] *= (1 - self.detection_model
+                    .probability(state=particle[1:3], class_='Detection'))
 
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])
