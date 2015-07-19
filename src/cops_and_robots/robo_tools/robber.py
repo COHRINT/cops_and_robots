@@ -59,6 +59,8 @@ class Robber(Robot):
                                      role='robber',
                                      goal_planner_type='stationary',
                                      color_str='darkorange',
+                                     consider_others=False,
+                                     map_name='fleming',
                                      **kwargs)
 
         self.found = False

@@ -1,0 +1,37 @@
+# YAML
+main:
+  logging_level: INFO  #['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+  numpy_print_precision: 2
+
+cops:
+  Deckard:
+    robber_model: static  # ['static','clockwise','counterclockwise','random walk']
+    pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
+    goal_planner:
+      type: particle  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
+    camera:
+      max_view_dist: 1.0
+      min_view_dist: 0.3
+    map:
+      combined_only: True
+      name: fleming
+
+robbers:
+  Roy:
+    pose_source: python  # ['python' or a ros topic string like '/roy/odom']
+    goal_planner:
+      type: stationary  # ['stationary', 'simple', 'trajectory']
+  Pris:
+    pose_source: python  # ['python' or a ros topic string like '/pris/odom']
+    goal_planner:
+      type: stationary  # ['stationary', 'simple', 'trajectory']
+  Zhora:
+    pose_source: python  # ['python' or a ros topic string like '/zhora/odom']
+    goal_planner:
+      type: stationary  # ['stationary', 'simple', 'trajectory']
+
+human_interface:
+  measurement_types:
+    velocity: False
+    area: True
+    object: True

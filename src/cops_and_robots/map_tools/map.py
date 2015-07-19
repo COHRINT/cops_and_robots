@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
+from cops_and_robots.helpers.config import load_config
 from cops_and_robots.map_tools.map_elements import MapObject, MapArea
 from cops_and_robots.map_tools.shape_layer import ShapeLayer
 from cops_and_robots.map_tools.occupancy_layer import OccupancyLayer
@@ -59,6 +60,9 @@ class Map(object):
     """
     def __init__(self, mapname, bounds, display_type='particle',
                  combined_only=True):
+
+        self.human_cfg = load_config()['human_interface']
+
         # Define map properties
         self.mapname = mapname
         self.bounds = bounds  # [x_min,y_min,x_max,y_max] in [m] useful area
@@ -317,7 +321,7 @@ class Map(object):
 
         # Set up the human interface
         if self.human_sensor:
-            HumanInterface(self.fig, self.human_sensor)
+            HumanInterface(self.fig, self.human_sensor, **self.human_cfg)
 
     def animation_stream(self):
         """Update the animated plot.
@@ -436,62 +440,25 @@ def set_up_fleming(display_type='particle'):
                          has_spaces=False)
         walls.append(wall)
 
-    landmarks = []
-    """
-    # Make landmark billiards
-    poses = np.array([[2.2, 1.5, 0],
-                      [1.2, 1, 0],
-                      [1.2, 2.75, 0]
-                     ])
-    colors = ['yellow', 'blue', 'red', 'purple', 'orange', 'green', 'brown',
-              'black']
-
-    for i, pose in enumerate(poses):
-        name = 'Ball ' + str(i)
-        shape_pts = Point(pose).buffer(0.075).exterior.coords
-        landmark = MapObject(name, shape_pts[:], pose=pose, has_spaces=False,
-                             color_str=colors[i])
-        landmarks.append(landmark)
-
-    # Make landmark glasses
-    poses = np.array([[-4.7, 2.3, 0],
-                      [-4.8, 2.45, 0],
-                      [-4.5, 2.35, 0]
-                     ])
-
-    for i, pose in enumerate(poses):
-        name = 'Glass ' + str(i)
-        shape_pts = Point(pose).buffer(0.06).exterior.coords
-        landmark = MapObject(name, shape_pts[:], pose=pose, has_spaces=False,
-                             color_str='grey')
-        landmarks.append(landmark)
-    """
-
     # Make rectangular objects (desk, bookcase, etc)
+    labels = ['Bookcase', 'Desk', 'Chair', 'Filing Cabinet']
+    colors = ['sandybrown', 'sandybrown', 'brown', 'black']
     poses = np.array([[0, -1.2, 270],
                       [-5.5, -2, 00],
-                      [3, -2, 180]
+                      [3, -2, 180],
+                      [-4, -1.3, 270]
                      ])
-    colors = ['sandybrown', 'sandybrown', 'brown']
-    labels = ['Bookcase', 'Desk', 'Chair']
     sizes = np.array([[0.18, 0.38],
                       [0.61, 0.99],
-                      [0.46, 0.41]
+                      [0.46, 0.41],
+                      [0.5, 0.37],
                      ])
-    
+
+    landmarks = []
     for i, pose in enumerate(poses):
         landmark = MapObject(labels[i], sizes[i], pose=pose,
                              color_str=colors[i])
         landmarks.append(landmark)
-
-    # Make odd landmarks
-    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.3, 270], color_str='black')
-    landmarks.append(landmark)
-    # pose = [-9.5, 2.1, 0]
-    # shape_pts = Point(pose).buffer(0.2).exterior.coords
-    # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
-    # landmarks.append(landmark)
-    
 
     # Create Fleming map
     bounds = [-9.5, -3.33, 4, 3.68]
