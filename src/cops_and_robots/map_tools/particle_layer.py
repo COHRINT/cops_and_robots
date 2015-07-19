@@ -76,9 +76,12 @@ class ParticleLayer(Layer):
         if particles is None:
             particles = self.particles
 
+        if particles == 'Finished':
+            print ' also done'
+
         self.scatter = self.ax.scatter(particles[:, 1],
                                        particles[:, 2],
-                                       c=particles[:, 0],
+                                       c=particles[:, 0] * self.color_gain,
                                        cmap=self.cmap,
                                        s=self.particle_size,
                                        lw=self.line_weight,
@@ -106,7 +109,6 @@ class ParticleLayer(Layer):
             self.scatter.remove()
             del self.scatter
 
-
 def main():
     x = np.random.uniform(0, 10, 100)
     y = np.random.uniform(0, 10, 100)
@@ -115,6 +117,7 @@ def main():
     particles = np.column_stack((probs, pts))
 
     pal = ParticleLayer(particles, bounds=[0, 0, 10, 10])
+    pal.color_gain = 1
 
     test_particles = {}
     for i in range(10):
@@ -122,8 +125,12 @@ def main():
         y = np.random.uniform(0, 10, 100)
         pts = np.column_stack((x, y))
         probs = np.random.uniform(0, 1, 100)
+        # probs = np.ones(100) * .5
         particles = np.column_stack((probs, pts))
         test_particles['{}'.format(i)] = particles
+    for i in range(10):
+        i = i + 10
+        test_particles['{}'.format(i)] = np.column_stack(([],[],[]))
 
     pal.test_particles = itertools.cycle(test_particles.values())
 

@@ -151,6 +151,7 @@ class Robot(iRobotCreate):
             self.map.add_cop(self.map_obj)
         else:
             self.map.add_robber(self.map_obj)
+            self.map_obj.visible = False
 
     def update_shape(self):
         """Update the robot's map_obj.

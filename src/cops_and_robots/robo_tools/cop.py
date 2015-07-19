@@ -108,15 +108,17 @@ class Cop(Robot):
         self.fusion_engine = FusionEngine(fusion_engine_type,
                                           robber_names,
                                           self.map.feasible_layer,
-                                          self.map.shape_layer,
                                           robber_model)
         self.sensors = {}
-        self.sensors['camera'] = Camera((0, 0, 0))
-        self.sensors['human'] = Human(self.map, robber_names)
-        self.map.add_human_sensor(self.sensors['human'])
+        self.sensors['camera'] = Camera((0, 0, 0), element_dict=self.map.element_dict)
+        self.map.dynamic_elements.append(self.sensors['camera'].viewcone)
 
         # Make others
         self.make_others()
+
+        # Add human sensor after robbers have been made
+        self.sensors['human'] = Human(self.map)
+        self.map.add_human_sensor(self.sensors['human'])
 
         # Animation attributes
         self.update_rate = 1  # [Hz]
@@ -186,16 +188,22 @@ class Cop(Robot):
             if self.sensors['camera'].viewcone.shape.contains(Point(robber.pose2D.pose)):
                 robber.mission_status = 'captured'
                 logging.info('{} captured!'.format(robber.name))
-                self.fusion_engine.filters[robber.name].robber_detected(robber.pose2D.pose)
+                self.fusion_engine.filters[robber.name].robber_detected()
+                # self.map.rem_robber(robber.map_obj)
+                self.map.found_robber(robber.map_obj)
                 self.found_robbers.update({robber.name: self.missing_robbers.pop(robber.name)})
-                self.map.rem_robber(robber.name)
 
         # Update probability model
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
                                   self.missing_robbers)
+
+        # print id(self.fusion_engine.filters['Zhora'].particles)
+        # if self.fusion_engine.filters['Zhora'].particles == 'Finished':
+        #     print 'done'
+
         # Export the next animation stream
         if self.show_animation:
-            self.map.update()
+            self.map.update(i)
 
     def animated_exploration(self):
         """Start the cop's exploration of the environment, while
@@ -206,6 +214,7 @@ class Cop(Robot):
         self.show_animation = True
         self.ani = animation.FuncAnimation(self.map.fig,
                                            self.update,
+                                           init_func=self.map.setup_plot,
                                            frames=self.num_goals,
                                            interval=5,
                                            blit=False)
