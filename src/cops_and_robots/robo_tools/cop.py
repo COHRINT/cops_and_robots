@@ -24,9 +24,9 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.colors import cnames
 from shapely.geometry import Point
 
+from cops_and_robots.helpers.config import load_config
 from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.fusion.fusion_engine import FusionEngine
 from cops_and_robots.fusion.camera import Camera
@@ -51,8 +51,6 @@ class Cop(Robot):
         For particle filters or gaussian mixture filters, respectively.
     planner_type: {'simple', 'particle', 'MAP'}
         The cop's own type of planner.
-    cop_model: {'stationary', 'random walk', 'clockwise', 'counterclockwise'}
-        The type of planner this cop believes other cops use.
     robber_model: {'stationary', 'random walk', 'clockwise',
       'counterclockwise'}
         The type of planner this cop believes robbers use.
@@ -80,10 +78,22 @@ class Cop(Robot):
                  pose=[0, 0, 90],
                  pose_source='python',
                  publish_to_ROS=False,
-                 fusion_engine_type='gauss sum',
                  goal_planner_type='MAP',
-                 cop_model='simple',
-                 robber_model='random walk'):
+                 robber_model='static'):
+
+        # Load configuration for elements owned by cop
+        cfg = load_config()['cops'][name]
+        goal_planner_cfg = cfg['goal_planner']
+        camera_cfg = cfg['camera']
+        map_cfg = cfg['map']
+
+        # Configure fusion and map based on goal planner
+        if goal_planner_cfg['type'] == 'particle':
+            fusion_engine_type = 'particle'
+            map_display_type = 'particle'
+        elif goal_planner_cfg['type'] == 'MAP':
+            fusion_engine_type = 'gauss sum'
+            map_display_type = 'probability'
 
         # Superclass and compositional attributes
         super(Cop, self).__init__(name,
@@ -91,7 +101,7 @@ class Cop(Robot):
                                   pose_source=pose_source,
                                   publish_to_ROS=publish_to_ROS,
                                   role='cop',
-                                  map_display_type=fusion_engine_type,
+                                  map_display_type=map_display_type,
                                   mission_status='searching',
                                   consider_others=True,
                                   color_str='darkgreen')
@@ -99,7 +109,7 @@ class Cop(Robot):
         # Tracking attributes
         self.found_robbers = {}
         self.goal_planner.use_target_as_goal = False
-        self.goal_planner.type = goal_planner_type
+        self.goal_planner.type = goal_planner_cfg['type']
 
         # Fusion and sensor attributes
         robber_names = [a.name for a in self.missing_robbers.values()]
@@ -109,7 +119,7 @@ class Cop(Robot):
                                           self.map.shape_layer,
                                           robber_model)
         self.sensors = {}
-        self.sensors['camera'] = Camera((0, 0, 0))
+        self.sensors['camera'] = Camera((0, 0, 0), **camera_cfg)
         self.sensors['human'] = Human(self.map, robber_names)
         self.map.add_human_sensor(self.sensors['human'])
 
@@ -174,7 +184,7 @@ class Cop(Robot):
             All important animation parameters.
 
         """
-        # Cop-related values
+        # Cop-related values 
         cop_shape = self.map_obj.shape
         if len(self.pose_history) < self.goal_planner.stuck_buffer:
             cop_path = np.hsplit(self.pose_history[:, 0:2], 2)

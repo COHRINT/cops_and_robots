@@ -52,7 +52,7 @@ class OccupancyLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, feasible_layer, cell_size=0.1, **kwargs):
+    def __init__(self, feasible_layer, cell_size=1.0, **kwargs):
         super(OccupancyLayer, self).__init__(**kwargs)
 
         self.feasible_layer = feasible_layer

@@ -29,6 +29,7 @@ import numpy as np
 
 from shapely.geometry import Point
 
+from cops_and_robots.helpers.config import load_config
 from cops_and_robots.robo_tools.pose import Pose
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
 from cops_and_robots.robo_tools.planner import MissionPlanner, GoalPlanner, PathPlanner, Controller
@@ -89,7 +90,7 @@ class Robot(iRobotCreate):
 
     def __init__(self,
                  name,
-                 pose=[0, 0.5, 0],
+                 pose=[0, 0, 0],
                  pose_source='python',
                  publish_to_ROS=False,
                  map_name='fleming',
@@ -121,10 +122,10 @@ class Robot(iRobotCreate):
         self.role = role
         self.num_goals = None  # number of goals to reach (None for infinite)
         self.mission_status = mission_status
-        if map_name is None:
-            self.map = None
+        if map_name == 'fleming':
+            self.map = set_up_fleming(map_display_type)  # <>TODO: make a generic 'setup map' function
         else:
-            self.map = set_up_fleming()
+            self.map = None
 
         self.mission_planner = MissionPlanner(self, publish_to_ROS=publish_to_ROS)
 
@@ -168,6 +169,10 @@ class Robot(iRobotCreate):
         optional pose and information sharing instead of predetermined
         sharing.
         """
+
+        # Import here to guard against circular dependencies
+        import cops_and_robots.robo_tools.cop as cop_module
+        import cops_and_robots.robo_tools.robber as robber_module
 
         self.missing_robbers = {}  # all are missing to begin with!
         self.known_cops = {}
@@ -223,7 +228,3 @@ class Robot(iRobotCreate):
             # Add to the pose history, update the map
             self.pose_history = np.vstack((self.pose_history, self.pose2D.pose[:]))
             self.update_shape()
-
-# Import statements left to the bottom because of subclass circular dependency
-import cops_and_robots.robo_tools.cop as cop_module
-import cops_and_robots.robo_tools.robber as robber_module

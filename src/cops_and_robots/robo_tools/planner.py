@@ -31,10 +31,6 @@ from itertools import chain
 import numpy as np
 from shapely.geometry import Point, LineString
 
-import rospy
-import tf
-from geometry_msgs.msg import PoseStamped
-
 import cops_and_robots.robo_tools.a_star as a_star
 from cops_and_robots.map_tools.occupancy_layer import OccupancyLayer
 
@@ -53,6 +49,9 @@ class MissionPlanner(object):
     def stop_all_movement(self):
         self.robot.goal_planner.goal_status = 'done'
         if self.publish_to_ROS:
+            import rospy
+            import tf
+            from geometry_msgs.msg import PoseStamped
             self.robot.goal_planner.goal_pose = self.robot.pose2D.pose[:]
             self.robot.goal_planner.create_ROS_goal_message()
         else:

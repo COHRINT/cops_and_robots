@@ -48,12 +48,20 @@ class HumanInterface(object):
         The type of human interface to generate.
 
     """
-    types = ['radio_buttons', 'textbox']
+    input_types = ['radio_buttons', 'textbox']
+    measurement_types = {'velocity': False,
+                         'area': True,
+                         'object': True
+                         }
 
-    def __init__(self, fig, human_sensor=None, type_='radio_buttons'):
+    def __init__(self, fig, human_sensor=None, input_type='radio_buttons',
+                 measurement_types=None):
+        if measurement_types is None:
+            measurement_types = HumanInterface.measurement_types
+
         # General interface parameters
         self.fig = fig
-        self.type = type_
+        self.input_type = input_type
         self.utterance = ''
         self.radio = {}
 
@@ -123,10 +131,10 @@ class HumanInterface(object):
 
         self.fig.subplots_adjust(bottom=0.32)
         self.set_helpers()
-        if self.type == 'radio_buttons':
+        if self.input_type == 'radio_buttons':
             self.current_dialog = 'position (object)'
             self.make_dialog()
-        elif self.type == 'textbox':
+        elif self.input_type == 'textbox':
             self.make_textbox()
 
     def make_dialog(self):
