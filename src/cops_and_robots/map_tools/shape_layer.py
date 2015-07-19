@@ -39,15 +39,12 @@ class ShapeLayer(Layer):
         Arguments for the ``Layer`` superclass.
 
     """
-    def __init__(self, elements, invisible_elements=[],
-                 update_blocking_shapes=True, **kwargs):
+    def __init__(self, elements, invisible_elements=[], **kwargs):
         super(ShapeLayer, self).__init__(**kwargs)
 
         self.elements = elements
         self.invisible_elements = invisible_elements
         self.update_static = False
-        self.update_blocking_shapes = update_blocking_shapes
-        self.blocking_shapes = Polygon()
 
     def update_plot(self, elements=None, update_static=None, **kwargs):
         """Plot all visible map objects (and their spaces, if visible).
@@ -68,9 +65,6 @@ class ShapeLayer(Layer):
         if update_static is None:
             update_static = self.update_static
 
-        if self.update_blocking_shapes:
-            blocking_shapes = []
-
         if update_static:
             for element in self.elements['static']:
                 # Remove old elements
@@ -83,10 +77,6 @@ class ShapeLayer(Layer):
                 # Get element's softmax spaces to plot.
                 if element.plot_spaces:
                     pass
-                # Update blocking_shapes for Camera
-                if self.update_blocking_shapes and element.blocks_camera:
-                    blocking_shapes.append(element.shape)
-                    print element.name
 
         for element in self.elements['dynamic']:
             # Remove old elements
@@ -99,19 +89,10 @@ class ShapeLayer(Layer):
             # Get element's softmax spaces to plot.
             if element.plot_spaces:
                 pass
-            # Update blocking_shapes for Camera
-            if self.update_blocking_shapes and element.blocks_camera:
-                blocking_shapes.append(element.shape)
-                print element.name
 
         for element in self.elements['information']:
             # Add text and paths
             pass
-
-        if self.update_blocking_shapes:
-            print blocking_shapes
-            self.blocking_shapes = MultiPolygon(blocking_shapes)
-            # print self.blocking_shapes
 
     def update(self, i=0):
         """Remove dynamic elements and replot.

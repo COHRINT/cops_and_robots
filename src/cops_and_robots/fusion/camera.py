@@ -59,10 +59,10 @@ class Camera(Sensor):
 
     """
     def __init__(self, robot_pose=(0, 0, 0), visible=True,
-                 default_color=cnames['yellow'], blocking_shapes=Polygon()):
+                 default_color=cnames['yellow'], element_dict={}):
         # Define blocking shapes (updated in shapelayer,
         #   if update_blocking_shapes is true)
-        self.blocking_shapes = blocking_shapes
+        self.element_dict = element_dict
         # Define nominal viewcone
         self.min_view_dist = 0.3  # [m]
         self.max_view_dist = 1.0  # [m]
@@ -96,6 +96,7 @@ class Camera(Sensor):
                                         )
         self.viewcone = MapObject('Viewcone',
                                   viewcone_pts,
+                                  alpha=0.2,
                                   visible=True,
                                   blocks_camera=False,
                                   color_str='lightyellow',
@@ -112,7 +113,7 @@ class Camera(Sensor):
         # Set up the VB fusion parameters
         self.vb = VariationalBayes()
 
-    def update_viewcone(self, robot_pose, shape_layer):
+    def update_viewcone(self, robot_pose):
         """Update the camera's viewcone position and scale.
 
         Parameters
@@ -123,7 +124,6 @@ class Camera(Sensor):
             A layer object providing all the shapes in the map for the camera
             to rescale its viewcone.
         """
-        self.blocking_shapes = shape_layer.blocking_shapes
         self._move_viewcone(robot_pose)
         self._rescale_viewcone(robot_pose)
 
@@ -155,25 +155,44 @@ class Camera(Sensor):
         ----------
         robot_pose : array_like, optional
             The robot's currentl [x, y, theta].
-        shape_layer : ShapeLayer
-            A layer object providing all the shapes in the map for the camera
-            to rescale its viewcone.
         """
-        if self.viewcone.shape.intersects(self.blocking_shapes):
-            # <>TODO: Use shadows instead of rescaling viewcone
-            # calculate shadows for all shapes touching viewcone
-            # origin = self.viewcone.project(map_object.shape)
-            # shadow = affinity.scale(...) #map portion invisible to the view
-            # self.viewcone = self.viewcone.difference(shadow)
+        scale = self.max_view_dist
 
-            distance = Point(self.view_pose[0:2]).distance(self.blocking_shapes)
-            scale = distance / self.max_view_dist * 1.3  # <>TODO: why the 1.3?
-            self.viewcone.shape = affinity.scale(self.ideal_viewcone.shape,
-                                                 xfact=scale,
-                                                 yfact=scale,
-                                                 origin=self.view_pose[0:2])
-        else:
-            self.viewcone.shape = self.ideal_viewcone.shape
+        blocking_shapes = []
+        possible_elements = []
+
+        try:
+            possible_elements += self.element_dict['static']
+        except:
+            logging.debug('No static elements')
+        try:
+            possible_elements += self.element_dict['dynamic']
+        except:
+            logging.debug('No dynamic elements')
+
+        for element in possible_elements:
+            if element.blocks_camera:
+                blocking_shapes.append(element.shape)
+
+        for shape in blocking_shapes:
+            if self.viewcone.shape.intersects(shape):
+                # <>TODO: Use shadows instead of rescaling viewcone
+                # calculate shadows for all shapes touching viewcone
+                # origin = self.viewcone.project(map_object.shape)
+                # shadow = affinity.scale(...) #map portion invisible to the view
+                # self.viewcone = self.viewcone.difference(shadow)
+
+                distance = Point(self.view_pose[0:2]).distance(shape)
+                scale_ = distance / self.max_view_dist * 1.3  # <>TODO: why the 1.3?
+                if scale_ < scale:
+                    scale = scale_
+
+        self.viewcone.shape = affinity.scale(self.ideal_viewcone.shape,
+                                             xfact=scale,
+                                             yfact=scale,
+                                             origin=self.view_pose[0:2])
+        # else:
+        #     self.viewcone.shape = self.ideal_viewcone.shape
 
     def detect(self, filter_type, particles=None, prior=None):
         """Update a fusion engine's probability from camera detections.

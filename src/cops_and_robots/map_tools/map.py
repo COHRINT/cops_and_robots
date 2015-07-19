@@ -121,7 +121,6 @@ class Map(object):
 
     def rem_area(self, area):
         self.static_elements.remove(area)
-        self.feasible_layer.define_feasible_regions(self.static_elements)
         del self.areas[area.name]
 
     def add_cop(self, cop_obj):
@@ -156,30 +155,35 @@ class Map(object):
         else:
             self.probability_layer[robber.name] = ProbabilityLayer(fig=self.fig, bounds=self.bounds)
 
+    # <>TODO: Add a function found_robber(self, robber)
     def rem_robber(self, robber):
         """Remove a dynamic ``Robot`` robber from the Map by its name.
 
         robber_name : str
             Name of the robber.
         """
+        robber.patch.remove()
         self.dynamic_elements.remove(robber)
         del self.robbers[robber.name]
         if self.display_type == 'particle':
+            self.particle_layer[robber.name].remove()
             del self.particle_layer[robber.name]
         else:
             del self.probability_layer[robber.name]
 
-    def plot(self, show_areas=False):
+    def found_robber(self, robber):
+        robber.visible = True
+        if self.display_type == 'particle':
+            self.particle_layer[robber.name].remove()
+            del self.particle_layer[robber.name]
+
+    def plot(self):
         """Plot the static map.
 
         """
         fig = plt.figure(1, figsize=(12, 10))
         ax = fig.add_subplot(111)
-        self.shape_layer.plot(plot_spaces=False, ax=ax)
-
-        if show_areas:
-            for _, area in self.areas.iteritems():
-                area.plot()
+        self.shape_layer.update_plot(update_static=True)
 
         ax.set_xlim([self.bounds[0], self.bounds[2]])
         ax.set_ylim([self.bounds[1], self.bounds[3]])
@@ -190,20 +194,18 @@ class Map(object):
         """Create the initial plot for the animation.
         """
         self.ax = self.fig.add_subplot(111)
-        # Define generic plot elements
-        movement_path = plt.Line2D((0, 0), (0, 0), linewidth=2, alpha=0.4,
-                                   color=cnames['green'])
-        simple_poly = Point((0, 0)).buffer(0.01)
+        self.ax.set_xlim([self.bounds[0], self.bounds[2]])
+        self.ax.set_ylim([self.bounds[1], self.bounds[3]])
 
         # Set up the human interface
         if self.human_sensor:
             HumanInterface(self.fig, self.human_sensor)
 
-    def update(self):
-        self.shape_layer.update()
+    def update(self, i):
+        self.shape_layer.update(i=i)
         if self.display_type is 'particle':
             for robber_particles in self.particle_layer.values():
-                robber_particles.update()
+                robber_particles.update(i=i)
         else:
             # Do stuff for probability
             pass
@@ -349,5 +351,5 @@ def set_up_fleming(display_type='particle'):
 
 if __name__ == '__main__':
     fleming = set_up_fleming()
-#    fleming.plot(show_areas=True)
+    fleming.plot()
     fleming.feasible_layer.plot()
