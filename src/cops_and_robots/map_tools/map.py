@@ -279,8 +279,6 @@ def set_up_fleming(display_type='particle'):
                              color_str=colors[i])
         landmarks.append(landmark)
 
-<<<<<<< HEAD
-=======
     # Make odd landmarks
     landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.38, 270], color_str='black')
     landmarks.append(landmark)
@@ -288,9 +286,7 @@ def set_up_fleming(display_type='particle'):
     # shape_pts = Point(pose).buffer(0.2).exterior.coords
     # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
     # landmarks.append(landmark)
-    
 
->>>>>>> matt-dev
     # Create Fleming map
     bounds = [-9.5, -3.33, 4, 3.68]
     fleming = Map('Fleming', bounds, display_type=display_type)
