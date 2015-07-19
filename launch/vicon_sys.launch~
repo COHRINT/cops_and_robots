@@ -1,0 +1,41 @@
+<launch>
+	<!-- <>TODO: Make this file launch seperate node instances each time it is called, specific to the robot it is providing data from. Vicon Bridge only needs to be called once. -->
+
+
+	<arg name="model"              default="deckard"         doc="Robot you want odom from"/>
+
+    <!-- Add a identity transform between map and odom -->
+    <node pkg="tf" type="static_transform_publisher" 
+        name="tf_identity" args="0 0 0 0 0 0 /map /odom 30"/> 
+
+	<!-- Run vicon_bridge -->
+    <!-- <>TODO: Set the transform frame_id and child_frame_id as an arg -->
+	<node pkg="vicon_bridge" type="vicon_bridge" name="vicon_bridge" output="screen">
+		<param name="stream_mode" value="ClientPull" type="str" />
+		<param name="datastream_hostport" value="192.168.20.100:801" type="str" />
+		<!--param name="datastream_hostport" value="vicon:80" type="str" -->
+		<param name="tf_ref_frame_id" value="/world" type="str" />
+	    <remap from="/tf" to="/tf_old"/>
+    </node>
+
+	<!-- Run tf_remap node to remap frame_id's. -->	
+	<!-- <>TODO: Remove after vicon_bridge has been modified to take frames as args -->
+    <node pkg="tf" type="tf_remap" name="tf_remap_vicon" output="screen">
+    	<rosparam param="mappings">
+          - {old: "/world",
+            new: "/odom"}
+          - {old: "/vicon/deckard/deckard",
+            new: "/base_footprint"}
+        </rosparam>
+    </node>
+
+    <!-- Run vicon vicon_odom node to provide odometry data -->
+    <node pkg="vicon_odom" type="vicon_odom" name="$(arg model)" output="screen">
+        <param name="vicon_fps" value="100.0"/>
+        <param name="max_accel" value="5.0"/>
+        <param name="child_frame_id" value="/base_footprint" type="str"/>
+        <param name="frame_id" value="/odom" type="str"/> 
+        <remap from="/vicon" to="/vicon/$(arg model)/$(arg model)"/>
+        <remap from="/odom" to="/odom"/>
+    </node>
+</launch>
