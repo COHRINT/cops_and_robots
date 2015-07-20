@@ -21,6 +21,9 @@ $pos_area = array($certainties, $targets, $positivities, $area_relations, $areas
 $Id_area = array("area_certainties","area_targets", "area_positivities", "area_relation", "area");
 $move = array($certainties, $targets, $positivities, $movement_types, $movement_qualities);
 $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "mv_qualities");
+// $questions= array("Under table?", "Next to bookcase?", "Above fridge?", "In kitchen?", "Drinking tea?");
+$question_weights = array("50%", "50%", "50%", "50%", "50%");
+$progress_values = array("40", "30", "10", "10", "10");
 ?>
 
 <div class="container">
@@ -41,8 +44,6 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		<!-- Camera Options -->
 		        <div role="tabpanel">
 
-
-
 	                <!-- Nav tabs -->
             		<ul class="nav nav-tabs" role="tablist">
                    		 	<li class="active"><a href="#deckard_camera" aria-controls="deckard_camera" data-toggle="tab">Deckard's Camera</a></li>
@@ -57,39 +58,37 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
                    		 	<li class="dropdown">
                    		 		<a href="#Security Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Security Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
-		                    			<li><a data-toggle="tab" href="#Camera 1" aria-controls="Camera 1" >Camera 1</a></li>
-		                    			<li><a data-toggle="tab" href="#Camera 2" aria-controls="Camera 2" >Camera 2</a></li>
-		                    			<li><a data-toggle="tab" href="#Camera 3" aria-controls="Camera 3" >Camera 3</a></li>
+		                    			<li><a data-toggle="tab" href="#camera_1" aria-controls="camera_1" >Camera 1</a></li>
+		                    			<li><a data-toggle="tab" href="#camera_2" aria-controls="camera_2" >Camera 2</a></li>
+		                    			<li><a data-toggle="tab" href="#camera_3" aria-controls="camera_3" >Camera 3</a></li>
 		                    		</ul>
 		                    </li>
             		</ul>
 
 		  			<!-- Tab panes -->
-	  				<div class="tab-content">
-	    					<div class="tab-pane active" id="deckard_camera"> 
-	    						<iframe  id="deckard-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div>
-	    					<div class="tab-pane" id="pris_camera"> 
-	    						<iframe  id="pris-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div>
-	    					<div class="tab-pane" id="roy_camera"> 
-	    						<iframe  id="roy-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div>
-	    					<div class="tab-pane" id="zhora_camera"> 
-	    						<iframe  id="zhora-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div>
-
-	    					<div class="tab-pane" id="Camera 1"> 
-	    						<iframe  id="camera1-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div>
-	    					<div class="tab-pane" id="Camera 2"> 
-	    						<iframe  id="camera2-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div>
-	    					<div class="tab-pane" id="Camera 3"> 
-	    						<iframe  id="camera3-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-	    					</div>
-	  				</div>
-
+	  				<div class="tab-content embed-responsive embed-responsive-4by3">
+    					<div class="tab-pane active" id="deckard_camera"> 
+    						<iframe id="deckard-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+    					</div>
+    					<div class="tab-pane" id="pris_camera"> 
+    						<iframe id="pris-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+    					</div>
+    					<div class="tab-pane" id="roy_camera"> 
+    						<iframe id="roy-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+    					</div>
+    					<div class="tab-pane" id="zhora_camera"> 
+    						<iframe id="zhora-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+    					</div>
+    					<div class="tab-pane" id="camera_1"> 
+    						<iframe id="camera1-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+    					</div>
+    					<div class="tab-pane" id="camera_2"> 
+    						<iframe id="camera2-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+    					</div>
+    					<div class="tab-pane" id="camera_3"> 
+    						<iframe id="camera3-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+    					</div>
+					</div>
 				</div>
 
 		</div><!-- /#visual -->
@@ -263,16 +262,54 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 			</div>
 		</div><!-- /#codeBox -->
 
-		<div id="codeHistory" class="col-md-6">
+		<!-- Questions/History -->
+		<div id="robo_updates" class="col-md-6">
+
 			<div class="panel panel-default" style="margin-top:6px;">
 				<div class="panel-heading">
-			    	<h2 class="panel-title" align="center">Input History</h2>
+			    	<h2 class="panel-title" align="center">Robot Updates</h2>
 				</div>
-				<div class="panel-body" id="codeHistoryBody" style="height:183px; overflow-y:scroll;"></div>
-			</div><!-- /.panel -->
-		</div><!-- /.codeHistory -->
+
+				<div class="panel-body form-inline" id="code" >
+				
+				<div role="tabpanel" >
+
+					<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active">
+							<a href="#robotQuestions" aria-controls="robotQuestions" role= "tab" data-toggle="tab">Robot Questions</a>
+						</li>
+						<li role="presentation">
+							<a href="#codeHistoryBody" aria-controls="codeHistoryBody" role= "tab" data-toggle="tab">Input History</a>
+						</li> 
+					</ul>
+
+					<div class="tab-content">
+						<div class="tab-plane row" id="robotQuestions"> 
+							<?php for($i = 0; $i < 5; $i++){ ?>
+									<div id="question_<?php echo $i; ?>" class="questionContainer col-md-9" >
+									    <div class=" questionProgess progress-bar progress-bar-info" style="width:100%" role="progress" aria-valuemin="30" aria-valuemax="100">
+									        <p class="questionText" align="center"></p> 
+									        <!--<span class="sr-only">questions</span> -->
+									    </div> <!-- /.questionProgress -->
+									</div> <!--/questionContainer -->
+									<div class="btn-group col-md-3" role="group" aria-label="...">
+								  	    <button type="button" class="btn btn-success">Yes</button>
+								  	    <button type="button" class="btn btn-danger">No</button>
+								    </div>
+							<?php } ?>
+						</div> <!-- /#robotQuestions -->
+
+						<div class="tab-plane" id="codeHistoryBody" style="height:183px; overflow-y:scroll;"></div>
+
+					</div><!-- /.tabContent -->
+				
+				</div><!-- /.tabpanel -->
+			</div><!-- /.panelBody -->
+		</div><!-- /.robo_updates -->
+	
 	</div> <!-- /.row -->
 </div> <!-- /.container -->
+
 
 
 <!-- PHP function -->
@@ -319,6 +356,6 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="bootstrap-3.3.4-dist/bootstrap.min.js"></script>
 <script type="text/javascript" src="js/keyboardteleopquadrotor.js"></script>
+<script type="text/javascript" src="bundle.js"></script>
 <script type="text/javascript" src="js/interface.js"></script>
-
 
