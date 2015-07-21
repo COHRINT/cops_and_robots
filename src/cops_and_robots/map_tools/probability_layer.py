@@ -44,8 +44,8 @@ class ProbabilityLayer(Layer):
 
     """
     def __init__(self, grid_size=0.2, z_levels=100, alpha=0.6,
-                 colorbar_visible=False,
-                 **kwargs):
+                 colorbar_visible=False, show_ellipses=True,
+                **kwargs):
         super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)
         self.grid_size = grid_size  # in [m/cell]
         self.z_levels = z_levels
@@ -56,6 +56,7 @@ class ProbabilityLayer(Layer):
         self.pos = np.empty(self.X.shape + (2,))
         self.pos[:, :, 0] = self.X
         self.pos[:, :, 1] = self.Y
+        self.show_ellipses = show_ellipses
 
         # if colorbar_visible:
         # generate new axis for colorbar
@@ -78,9 +79,17 @@ class ProbabilityLayer(Layer):
 
         levels = np.linspace(0, np.max(distribution.pdf(self.pos)),
                              self.z_levels)
-        self.contourf = self.ax.contourf(self.X, self.Y, distribution.pdf(self.pos),
+        self.contourf = self.ax.contourf(self.X, self.Y, self.distribution.pdf(self.pos),
                            cmap=self.cmap, alpha=self.alpha, levels=levels, antialiased=True,
                            **kwargs)
+
+        if self.show_ellipses:
+            if hasattr(self.distribution, 'camera_viewcone'):
+                poly = self.distribution.camera_viewcone
+            else:
+                poly = None
+            self.ellipse_patches = distribution.plot_ellipses(ax=self.ax,
+                                                              poly=poly)
         # if colorbar_visible:
         #     self.cbar = plt.colorbar(p)
 
@@ -106,6 +115,11 @@ class ProbabilityLayer(Layer):
                 collection.remove()
             del self.contourf
 
+        if hasattr(self, 'ellipse_patches'):
+            for patch in self.ellipse_patches:
+                patch.remove()
+            del self.ellipse_patches
+
 if __name__ == '__main__':
     
     pl = ProbabilityLayer(z_levels=50)
@@ -124,7 +138,7 @@ if __name__ == '__main__':
 
     ani = animation.FuncAnimation(pl.fig, pl.update, 
         frames=xrange(100), 
-        interval=100,
+        interval=1,
         repeat=True,
         blit=False)
 

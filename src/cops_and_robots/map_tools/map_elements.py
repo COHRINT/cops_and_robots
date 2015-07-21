@@ -161,6 +161,7 @@ class MapElement(object):
         self.spaces = []
         self.spaces_by_label = {}
         if self.has_spaces:
+            #<>TODO: Change this to move_absolute
             self.define_spaces()
 
     def rotate_poly(self, angle, rotation_point):
@@ -186,7 +187,8 @@ class MapElement(object):
 
         self.shape = Polygon(pts)
 
-    def plot(self, ax=None, alpha=0.5, plot_spaces=False, **kwargs):
+    def plot(self, ax=None, alpha=0.5, plot_spaces=False,
+             facecolor=None, **kwargs):
         """Plot the map_element as a polygon patch.
 
         plot_spaces : bool, optional
@@ -203,10 +205,11 @@ class MapElement(object):
             The spaces can be plotted without the shape if the shape's
             ``visible`` attribute is False, but ``plot_spaces`` is True.
         """
-        if not ax:
+        if ax is None:
             ax = plt.gca()
-
-        patch = PolygonPatch(self.shape, facecolor=self.default_color,
+        if facecolor is None:
+            facecolor = self.default_color
+        patch = PolygonPatch(self.shape, facecolor=facecolor,
                              alpha=alpha, zorder=2, **kwargs)
         ax.add_patch(patch)
 
@@ -247,8 +250,8 @@ class MapObject(MapElement):
             self.spaces = binary_intrinsic_space_model(self.shape)
 
     def plot(self, ax=None, alpha=0.9, **kwargs):
-            super(MapObject, self).plot(ax=ax, alpha=alpha, **kwargs)
-
+        return super(MapObject, self).plot(ax=ax, alpha=alpha, **kwargs)
+        
 
 class MapArea(MapElement):
     """short description of MapArea

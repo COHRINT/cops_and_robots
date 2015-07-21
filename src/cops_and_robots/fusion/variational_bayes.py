@@ -16,10 +16,13 @@ __status__ = "Development"
 
 
 import logging
+import itertools
 
 import numpy as np
 from numpy.linalg import inv, det
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from descartes.patch import PolygonPatch
 
 from cops_and_robots.fusion.softmax import (speed_model,
                                             intrinsic_space_model,
@@ -27,9 +30,11 @@ from cops_and_robots.fusion.softmax import (speed_model,
                                             range_model,
                                             binary_range_model,
                                             camera_model_2D)
-
-
-from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+from cops_and_robots.fusion.gaussian_mixture import (GaussianMixture,
+                                                     fleming_prior,
+                                                     uniform_prior
+                                                     )
+from cops_and_robots.map_tools.map_elements import MapObject
 
 
 class VariationalBayes(object):
@@ -61,7 +66,7 @@ class VariationalBayes(object):
                  num_importance_samples=500,
                  num_mixand_samples=500,
                  weight_threshold=None,
-                 mix_sm_corr_thresh=0.95,
+                 mix_sm_corr_thresh=0.98,
                  max_num_mixands=50):
         self.num_EM_convergence_loops = num_EM_convergence_loops
         self.EM_convergence_tolerance = EM_convergence_tolerance
@@ -273,7 +278,6 @@ class VariationalBayes(object):
 
         return mu_lwis, var_lwis, log_c_hat
 
-
     def vbis_update(self, measurement, likelihood, prior,
                     init_mean=0, init_var=1, init_alpha=0.5, init_xi=1,
                     num_samples=None,  use_LWIS=False):
@@ -334,16 +338,56 @@ class VariationalBayes(object):
 
         return mu_post_vbis, var_post_vbis, log_c_hat
 
-    def update(self, measurement, likelihood, prior, use_LWIS=False):
+    def update(self, measurement, likelihood, prior, use_LWIS=False,
+               poly=None, num_std=1):
         """VB update using Gaussian mixtures and multimodal softmax.
 
         This uses Variational Bayes with Importance Sampling (VBIS) for
         each mixand-softmax pair available.
         """
+        # If we have a polygon, update only the mixands intersecting with it
+        if poly is None:
+            update_intersections_only = False
+        else:
+            update_intersections_only = True
 
         h = 0
         relevant_subclasses = likelihood.classes[measurement].subclasses
         num_relevant_subclasses = len(relevant_subclasses)
+
+        # Use intersecting priors only
+        if update_intersections_only:
+            other_priors = prior.copy()
+            weights = []
+            means = []
+            covariances = []
+            mixand_ids = []
+            ellipses = prior.std_ellipses(num_std)
+
+            for i, ellipse in enumerate(ellipses):
+                if poly.intersects(ellipse):
+                    # Get parameters for intersecting priors
+                    mixand_ids.append(i)
+                    weights.append(prior.weights[i])
+                    means.append(prior.means[i])
+                    covariances.append(prior.covariances[i])
+
+            # Remove these from the other priors
+            other_priors.weights = \
+                np.delete(other_priors.weights, mixand_ids, axis=0)
+            other_priors.means = \
+                np.delete(other_priors.means, mixand_ids, axis=0)
+            other_priors.covariances = \
+                np.delete(other_priors.covariances, mixand_ids, axis=0)
+
+            # Retain total weight of intersection weights for renormalization
+            max_intersecion_weight = sum(weights)
+
+            # Create new prior
+            prior = GaussianMixture(weights, means, covariances)
+            logging.info('Using only mixands {} for VBIS fusion. Total weight {}'
+                         .format(mixand_ids, max_intersecion_weight))
+
 
         # Parameters for all new mixands
         K = num_relevant_subclasses * prior.weights.size
@@ -354,25 +398,18 @@ class VariationalBayes(object):
 
         for u, mixand_weight in enumerate(prior.weights):
             mix_sm_corr = 0
-            
-            # Check to see if the mixand is completely contained within
-            # the softmax subclasses (i.e. doesn't need an update)
 
-            # <>TODO: check prob of class instead of looping over subclasses
-            for label, subclass in relevant_subclasses.iteritems():
-                # Compute \hat{P}_s(r|u)
-                mixand = GaussianMixture(1, prior.means[u],
-                                          prior.covariances[u])
-                mixand_samples = mixand.rvs(self.num_mixand_samples)
-                p_hat_ru_samples = subclass.probability(state=mixand_samples)
-                p_hat_ru_sampled = np.sum(p_hat_ru_samples) / self.num_mixand_samples
-                mix_sm_corr += p_hat_ru_sampled
+            # Check to see if the mixand is completely contained within
+            # the softmax class (i.e. doesn't need an update)
+            mixand = GaussianMixture(1, prior.means[u], prior.covariances[u])
+            mixand_samples = mixand.rvs(self.num_mixand_samples)
+            p_hat_ru_samples = likelihood.classes[measurement].probability(state=mixand_samples)
+            mix_sm_corr = np.sum(p_hat_ru_samples) / self.num_mixand_samples
 
             if mix_sm_corr > self.mix_sm_corr_thresh:
-                logging.debug('Mixand {}\'s correspondence with {}\'s subclasses'
-                             ' was {}, above the threshold of {}, so VBIS was '
-                             'skipped.'.format(u, measurement, mix_sm_corr,
-                                               self.mix_sm_corr_thresh))
+                logging.debug('Mixand {}\'s correspondence with {} was {},'
+                             'above the threshold of {}, so VBIS was skipped.'
+                             .format(u, measurement, mix_sm_corr, self.mix_sm_corr_thresh))
 
                 # Append the prior's parameters to the mixand parameter lists
                 mu_hat[h, :] = prior.means[u]
@@ -387,8 +424,6 @@ class VariationalBayes(object):
             for label, subclass in ordered_subclasses:
 
                 # Compute \hat{P}_s(r|u)
-                mixand = GaussianMixture(1, prior.means[u],
-                                         prior.covariances[u])
                 mixand_samples = mixand.rvs(self.num_mixand_samples)
                 p_hat_ru_samples = subclass.probability(state=mixand_samples)
                 p_hat_ru_sampled = np.sum(p_hat_ru_samples) / self.num_mixand_samples
@@ -409,8 +444,6 @@ class VariationalBayes(object):
                 # Symmetrize var_vbis
                 var_vbis = 0.5 * (var_vbis.T + var_vbis)
 
-                # 
-
                 # Update estimate values
                 log_beta_hat[h] = log_beta_vbis
                 mu_hat[h,:] = mu_vbis
@@ -419,22 +452,41 @@ class VariationalBayes(object):
 
         # Renormalize and truncate (based on weight threshold)
         log_beta_hat = log_beta_hat - np.max(log_beta_hat)
+        unnormalized_beta_hats = np.exp(log_beta_hat)
         beta_hat = np.exp(log_beta_hat) / np.sum(np.exp(log_beta_hat))
 
+        # Reattach untouched prior values
+        if update_intersections_only:
+            beta_hat = unnormalized_beta_hats * max_intersecion_weight
+            beta_hat = np.hstack((other_priors.weights, beta_hat))
+            mu_hat = np.vstack((other_priors.means, mu_hat))
+            var_hat = np.concatenate((other_priors.covariances, var_hat))
+
+            # Shrink mu, var and beta if necessary
+            h += other_priors.weights.size
+            beta_hat = beta_hat[:h]
+            mu_hat = mu_hat[:h]
+            var_hat = var_hat[:h]
+
+            beta_hat /= beta_hat.sum()
+        else:
+            # Shrink mu, var and beta if necessary
+            beta_hat = beta_hat[:h]
+            mu_hat = mu_hat[:h]
+            var_hat = var_hat[:h]
+
+        # Threshold based on weights
         mu_hat = mu_hat[beta_hat > self.weight_threshold, :]
         var_hat = var_hat[beta_hat > self.weight_threshold, :]
         beta_hat = beta_hat[beta_hat > self.weight_threshold]
 
-        # Shrink mu, var and beta if necessary
-        beta_hat = beta_hat[:h]
-        mu_hat = mu_hat[:h]
-        var_hat = var_hat[:h]
+        # Renormalize beta_hat
+        beta_hat /= beta_hat.sum()
 
         return mu_hat, var_hat, beta_hat
 
     def _lambda(self, xi_c):
         return 1 / (2 * xi_c) * ( (1 / (1 + np.exp(-xi_c))) - 0.5)
-
 
     def _check_inputs(self, likelihood, init_mean, init_var, init_alpha, init_xi, prior):
         # Make sure inputs are numpy arrays
@@ -765,69 +817,140 @@ def compare_to_matlab(measurement='Near'):
         np.savetxt(file_, np.atleast_2d(flat), delimiter=',')
     file_.close()
 
-def camera_test():
-    # Define gridded space for graphing
-    min_x, max_x = -5, 5
-    min_y, max_y = -5, 5
-    res = 100
-    x_space, y_space = np.mgrid[min_x:max_x:1/res,
-                                min_y:max_y:1/res]
-    pos = np.empty(x_space.shape + (2,))
-    pos[:, :, 0] = x_space; pos[:, :, 1] = y_space;
 
-    # Plot setup
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
-    levels_res = 50
-    levels = np.linspace(0, 1, levels_res)
-
-    prior = GaussianMixture(weights=[1, 1, 1, 1, 1],
-                            means=[[-2, -4],  # GM1 mean
-                                   [-1, -2],  # GM2 mean
-                                   [0, 0],  # GM3 mean
-                                   [1, -2],  # GM4 mean
-                                   [2, -4],  # GM5 mean
-                                   ],
-                            covariances=[[[0.1, 0],  # GM1 mean
-                                          [0, 0.1]
-                                          ],
-                                         [[0.2, 0],  # GM2 mean
-                                          [0, 0.2]
-                                          ],
-                                         [[0.3, 0],  # GM3 mean
-                                          [0, 0.3]
-                                          ],
-                                         [[0.2, 0],  # GM4 mean
-                                          [0, 0.2]
-                                          ],
-                                         [[0.1, 0],  # GM5 mean
-                                          [0, 0.1]],
-                                         ])
+def camera_test(num_std=1, time_interval=1):
+    # prior = fleming_prior()
+    # prior = uniform_prior()
+    # prior = GaussianMixture(1, np.zeros(2), np.eye(2))
+    prior = GaussianMixture([1, 1, 1],
+                            np.array([[-7, 0],
+                                      [-3, 0],
+                                      [1,0],
+                                      ]),
+                            np.eye(2)[None,:].repeat(3, axis=0)
+                            )
+    bounds = [-12.5, -3.5, 2.5, 3.5]
 
     min_view_dist = 0.3  # [m]
     max_view_dist = 1.0  # [m]
     detection_model = camera_model_2D(min_view_dist, max_view_dist)
-    vb = VariationalBayes()
 
-    # Do a VBIS update
-    pose = np.array([0,0,90])
-    logging.info('Moving to pose {}.'.format(pose))
-    mu, sigma, beta = vb.update(measurement='No Detection',
-                                likelihood=detection_model,
-                                prior=prior,
-                                use_LWIS=True
-                                )
-    posterior = GaussianMixture(weights=beta, means=mu, covariances=sigma)
-    posterior_c = ax.contourf(x_space, y_space, posterior.pdf(pos),
-                                        levels=levels)
-    plt.colorbar(posterior_c)
+    trajectory = np.zeros((20,2))
+    ls = np.linspace(-10, 3, 20)
+    trajectory = np.hstack((ls[:, None], trajectory))
+
+
+    class camera_tester(object):
+        """docstring for merged_gm"""
+        def __init__(self, prior, detection_model, trajectory, num_std=1, bounds=None):
+            self.fig = plt.figure(figsize=(16,8))
+            self.gm = prior
+            self.detection_model = detection_model
+            self.trajectory = itertools.cycle(trajectory)
+            self.vb = VariationalBayes()
+            self.num_std = num_std
+            if bounds is None:
+                self.bounds = [-5, -5, 5, 5]
+            else:
+                self.bounds = bounds
+
+        def update(self,i=0):
+            self.camera_pose = next(self.trajectory)
+            logging.info('Moving to pose {}.'.format(self.camera_pose))
+            self.detection_model.move(self.camera_pose)
+
+            # Do a VBIS update
+            mu, sigma, beta = self.vb.update(measurement='No Detection',
+                                        likelihood=detection_model,
+                                        prior=self.gm,
+                                        use_LWIS=True,
+                                        poly=detection_model.poly,
+                                        num_std=self.num_std
+                                        )
+            self.gm = GaussianMixture(weights=beta, means=mu, covariances=sigma)
+            # Log what's going on
+            logging.info(self.gm)
+            logging.info('Weight sum: {}'.format(beta.sum()))
+
+            self.remove()
+            self.plot()
+
+        def plot(self):
+            levels_res = 50
+            self.levels = np.linspace(0, np.max(self.gm.pdf(self.pos)), levels_res)
+            self.contourf = self.ax.contourf(self.xx, self.yy,
+                                               self.gm.pdf(self.pos),
+                                               levels=self.levels,
+                                               cmap=plt.get_cmap('jet')
+                                               )
+            # Plot camera
+            self.cam_patch = PolygonPatch(self.detection_model.poly, facecolor='none',
+                                          linewidth=2, edgecolor='white')
+            self.ax.add_patch(self.cam_patch)
+
+            # Plot ellipses
+            self.ellipse_patches = self.gm.plot_ellipses(poly=self.detection_model.poly)
+
+        def plot_setup(self):
+            # Define gridded space for graphing
+            min_x, max_x = self.bounds[0], self.bounds[2]
+            min_y, max_y = self.bounds[1], self.bounds[3]
+            res = 30
+            self.xx, self.yy = np.mgrid[min_x:max_x:1/res,
+                                        min_y:max_y:1/res]
+            pos = np.empty(self.xx.shape + (2,))
+            pos[:, :, 0] = self.xx; pos[:, :, 1] = self.yy;
+            self.pos = pos
+
+            # Plot setup
+            self.ax = self.fig.add_subplot(111)
+
+            self.ax.set_title('VBIS with camera detection test')
+            plt.axis('scaled')
+            self.ax.set_xlim([min_x, max_x])
+            self.ax.set_ylim([min_y, max_y])
+
+            levels_res = 50
+            self.levels = np.linspace(0, np.max(self.gm.pdf(self.pos)), levels_res)
+            cax = self.contourf = self.ax.contourf(self.xx, self.yy,
+                                               self.gm.pdf(self.pos),
+                                               levels=self.levels,
+                                               cmap=plt.get_cmap('jet')
+                                               )
+            self.fig.colorbar(cax)
+
+        def remove(self):
+            if hasattr(self, 'cam_patch'):
+                self.cam_patch.remove()
+                del self.cam_patch
+
+            if hasattr(self, 'ellipse_patches'):
+                for patch in self.ellipse_patches:
+                    patch.remove()
+                del self.ellipse_patches
+
+            if hasattr(self,'contourf'):
+                for collection in self.contourf.collections:
+                    collection.remove()
+                del self.contourf
+
+    gm = camera_tester(prior, detection_model, trajectory, num_std, bounds)
+    logging.info('Initial GM:')
+    logging.info(prior)
+
+    ani = animation.FuncAnimation(gm.fig, gm.update, 
+        interval=time_interval,
+        repeat=True,
+        blit=False,
+        init_func=gm.plot_setup
+        )
 
     plt.show()
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logger_format = '[%(levelname)-7s] %(funcName)-30s %(message)s'
+    logging.basicConfig(format=logger_format, level=logging.DEBUG)
     np.set_printoptions(precision=10, suppress=True)
 
     # comparison_1d()
@@ -836,4 +959,4 @@ if __name__ == '__main__':
     # gmm_sm_test('Near')
     # compare_to_matlab()
 
-    camera_test()
+    camera_test(num_std=1, time_interval=1000)  #[ms]
