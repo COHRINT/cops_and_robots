@@ -43,11 +43,11 @@ class ProbabilityLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, distribution, grid_size=0.2, z_levels=100, alpha=0.6,
+    def __init__(self, filter_, grid_size=0.2, z_levels=100, alpha=0.6,
                  colorbar_visible=False, show_ellipses=False,
                 **kwargs):
         super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)
-        self.distribution = distribution
+        self.filter = filter_
         self.grid_size = grid_size  # in [m/cell]
         self.z_levels = z_levels
         self.colorbar_visible = colorbar_visible
@@ -62,44 +62,45 @@ class ProbabilityLayer(Layer):
         # if colorbar_visible:
         # generate new axis for colorbar
 
-    def plot(self, distribution=None, **kwargs):
+    def plot(self, probability=None, **kwargs):
         """Plot the pseudo colormesh representation of probabilty.
 
         Parameters
         ----------
-        distribution : [multiple]
-            Any distribution with a 2D pdf.
+        probability : [multiple]
+            Any probability with a 2D pdf.
 
         Returns
         -------
         QuadMesh
             The scatter pseudo colormesh data.
         """
-        if distribution is None:
-            distribution = self.distribution
+        if probability is None:
+            probability = self.filter.probability
 
-        levels = np.linspace(0, np.max(distribution.pdf(self.pos)),
+        levels = np.linspace(0, np.max(probability.pdf(self.pos)),
                              self.z_levels)
-        self.contourf = self.ax.contourf(self.X, self.Y, self.distribution.pdf(self.pos),
+        self.contourf = self.ax.contourf(self.X, self.Y, probability.pdf(self.pos),
                            cmap=self.cmap, alpha=self.alpha, levels=levels, antialiased=True,
                            **kwargs)
 
         if self.show_ellipses:
-            if hasattr(self.distribution, 'camera_viewcone'):
-                poly = self.distribution.camera_viewcone
+            if hasattr(self.filter.probability, 'camera_viewcone'):
+                poly = self.filter.probability.camera_viewcone
             else:
                 poly = None
-            self.ellipse_patches = distribution.plot_ellipses(ax=self.ax,
-                                                              poly=poly)
+            self.ellipse_patches = probability.plot_ellipses(ax=self.ax,
+                                                             poly=poly)
         # if colorbar_visible:
         #     self.cbar = plt.colorbar(p)
 
     def update(self, i=0):
         """Remove previous contour and replot new contour.
         """
+        logging.debug('Probability Layer update {}'.format(i))
         # Test stub for the call from __main__
-        if hasattr(self, 'test_distributions'):
-            self.distribution = next(self.test_distributions)
+        if hasattr(self, 'test_probability'):
+            self.filter.probability = next(self.test_probability)
 
         # Try to remove previous contourf and replot
         self.remove()
@@ -122,21 +123,21 @@ class ProbabilityLayer(Layer):
             del self.ellipse_patches
 
 if __name__ == '__main__':
-
     d = GaussianMixture(1,[0, 0],[[1,0],[0,1]])
+    filter_ = type('test', (object,), {'probability': d})()
     pl = ProbabilityLayer(d, z_levels=50, alpha=1.0)
 
-    test_distributions = []
-    test_distributions.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
-    test_distributions.append(GaussianMixture(1,[1, 1],[[1,0],[0,1]]))
-    test_distributions.append(GaussianMixture(1,[0, 2],[[1,0],[0,1]]))
-    test_distributions.append(GaussianMixture(1,[-1, 1],[[1,0],[0,1]]))
-    test_distributions.append(GaussianMixture(1,[-2, 0],[[1,0],[0,1]]))
-    test_distributions.append(GaussianMixture(1,[-1, -1],[[1,0],[0,1]]))
-    test_distributions.append(GaussianMixture(1,[0, -2],[[1,0],[0,1]]))
-    test_distributions.append(GaussianMixture(1,[1, -1],[[1,0],[0,1]]))
-    test_distributions.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
-    pl.test_distributions = itertools.cycle(test_distributions)
+    test_probability = []
+    test_probability.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[1, 1],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[0, 2],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[-1, 1],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[-2, 0],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[-1, -1],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[0, -2],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[1, -1],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
+    pl.test_probability = itertools.cycle(test_probability)
 
     ani = animation.FuncAnimation(pl.fig, pl.update,
         frames=xrange(100),

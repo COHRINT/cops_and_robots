@@ -196,7 +196,7 @@ class ParticleFilter(object):
         self.particle_probs = [1 / self.n_particles
                                for i in range(0, self.n_particles)]
 
-    def robber_detected(self):
+    def robber_detected(self, robber_pose):
         """Update the particle filter for a detected robber.
         """
 

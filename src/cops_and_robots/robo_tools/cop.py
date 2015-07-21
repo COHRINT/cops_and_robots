@@ -164,14 +164,9 @@ class Cop(Robot):
                                                            has_spaces=False,
                                                            blocks_camera=False,
                                                            color_str='none')
-            if self.fusion_engine.filter_type == 'gauss sum':
-                prob_ref = self.fusion_engine.filters[name].probability
-            elif self.fusion_engine.filter_type == 'particle':
-                prob_ref = self.fusion_engine.filters[name].particles
-            else:
-                prob_ref = None
+            # <>TODO: allow no display individually for each robber
             self.map.add_robber(self.missing_robbers[name].map_obj,
-                                prob_ref)
+                                self.fusion_engine.filters[name])
             # All will be at 0,0,0 until actually pose is given.
             # init_pose =
             # self.missing_robbers[name].map_obj.move_absolute(init_pose)
@@ -201,7 +196,7 @@ class Cop(Robot):
             if self.sensors['camera'].viewcone.shape.contains(point):
                 self.map.found_robber(irobber.map_obj)
                 logging.info('{} captured!'.format(irobber.name))
-                self.fusion_engine.filters[irobber.name].robber_detected()
+                self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose)
                 self.found_robbers.update({irobber.name:
                                            self.missing_robbers.pop(irobber.name)})
             # Update robber's shapes

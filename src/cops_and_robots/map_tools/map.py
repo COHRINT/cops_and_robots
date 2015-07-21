@@ -157,7 +157,7 @@ class Map(object):
         self.dynamic_elements.remove(cop_obj)
         del self.cops[cop_obj.name]
 
-    def add_robber(self, robber, prob_ref):
+    def add_robber(self, robber, filter_):
         # <>TODO: Make generic imaginary robbers
         """Add a dynamic ``Robot`` robber from the Map.
 
@@ -173,10 +173,10 @@ class Map(object):
         self.robbers[robber.name] = robber
 
         if self.display_type == 'particle':
-            self.particle_layer[robber.name] = ParticleLayer(prob_ref)
+            self.particle_layer[robber.name] = ParticleLayer(filter_)
         elif self.display_type == 'probability':
             self.probability_layer[robber.name] = \
-                ProbabilityLayer(prob_ref, fig=self.fig, bounds=self.bounds)
+                ProbabilityLayer(filter_, fig=self.fig, bounds=self.bounds)
 
     def rem_robber(self, robber):
         """Remove a dynamic ``Robot`` robber.
