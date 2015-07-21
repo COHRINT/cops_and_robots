@@ -86,7 +86,10 @@ class MapElement(object):
         self.visible = visible
         self.blocks_camera = blocks_camera
         self.space_resolution = space_resolution
-        self.color = cnames[color_str]
+        if color_str == 'none':
+            self.color = color_str
+        else:
+            self.color = cnames[color_str]
         self.pose = pose
         self.alpha = alpha
 
