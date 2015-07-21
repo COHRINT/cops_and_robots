@@ -40,18 +40,14 @@ class MissionPlanner(object):
 
 
     """
-    def __init__(self, robot, publish_to_ROS=False):
+    def __init__(self, robot):
         self.robot = robot
         self.trajectory = self.test_trajectory()
         self.mission_status = 'Moving'
-        self.publish_to_ROS = publish_to_ROS
 
     def stop_all_movement(self):
         self.robot.goal_planner.goal_status = 'done'
-        if self.publish_to_ROS:
-            import rospy
-            import tf
-            from geometry_msgs.msg import PoseStamped
+        if self.robot.publish_to_ROS:
             self.robot.goal_planner.goal_pose = self.robot.pose2D.pose[:]
             self.robot.goal_planner.create_ROS_goal_message()
         else:
@@ -113,8 +109,6 @@ class GoalPlanner(object):
     use_target_as_goal : bool, optional
         Use the target location as a goal, rather than using a view pose as
         the goal.
-    publish_to_ROS : bool, optional
-        Publishes the goal pose to ROS if True
 
     """
     types = ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
@@ -125,31 +119,31 @@ class GoalPlanner(object):
                      'done'
                      ]
 
-    def __init__(self, robot, publish_to_ROS, type_='stationary',
-                 view_distance=0.3, use_target_as_goal=True):
+    def __init__(self, robot, type_='stationary', view_distance=0.3,
+                 use_target_as_goal=True):
         if type_ not in GoalPlanner.types:
             raise ValueError('{} is not a type from the list '
                              'of acceptable types: {}'
                              .format(type_, GoalPlanner.types))
-        self.goal_status = 'without a goal'
+
         self.robot = robot
+        if self.robot.publish_to_ROS:
+            import tf
+            import rospy
+            from geometry_msgs.msg import PoseStamped
+            self.pub = rospy.Publisher('move_base_simple/goal', PoseStamped,
+                                       queue_size=10)
+
+        self.goal_status = 'without a goal'
         self.type = type_
         self.feasible_layer = robot.map.feasible_layer
         self.view_distance = view_distance
         self.use_target_as_goal = use_target_as_goal
-        self.publish_to_ROS = publish_to_ROS
         self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
         self.stuck_buffer = 200  # time steps after being stuck before checking
         self.stuck_count = self.stuck_buffer
         self.distance_allowance = 0.15  # [m] acceptable distance to a goal
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
-
-        if self.publish_to_ROS:
-            import rospy
-            import tf
-            from geometry_msgs.msg import PoseStamped
-            self.pub = rospy.Publisher('move_base_simple/goal', PoseStamped,
-                                       queue_size=10)
 
     def find_goal_pose(self):
         """Find a goal pose, agnostic of planner type.
@@ -331,7 +325,6 @@ class GoalPlanner(object):
 
         return goal_pose
 
-
     def find_goal_from_trajectory(self):
         """Find a goal pose from a set trajectory, defined by the
             mission_planner.
@@ -423,7 +416,8 @@ class GoalPlanner(object):
 
         degrees_to_goal = abs(self.robot.pose2D.pose[2] - self.goal_pose[2])
         orientation_bool = (degrees_to_goal < self.rotation_allowance)
-        if self.publish_to_ROS is True:
+        # <>TODO: Replace with ros goal message check
+        if self.robot.publish_to_ROS is True:
             orientation_bool = True
         logging.debug('Orientation is {}'.format(orientation_bool))
 
@@ -464,7 +458,7 @@ class GoalPlanner(object):
             if self.goal_pose is None:
                 new_status = 'done'
             else:
-                if self.publish_to_ROS is True:
+                if self.robot.publish_to_ROS is True:
                     self.create_ROS_goal_message()
                 else:
                     self.robot.path_planner.path_planner_status = 'planning'
@@ -481,7 +475,7 @@ class GoalPlanner(object):
             self.type = 'simple'
             self.goal_pose = self.find_goal_pose()
             self.type = prev_type
-            if self.publish_to_ROS is True:
+            if self.robot.publish_to_ROS is True:
                 self.create_ROS_goal_message()
             else:
                 self.robot.path_planner.path_planner_status = 'planning'
