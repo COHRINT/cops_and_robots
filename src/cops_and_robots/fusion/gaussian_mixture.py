@@ -15,9 +15,14 @@ __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
 import logging
+import os
+import time
+from copy import deepcopy
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 from scipy.stats import multivariate_normal, norm
 from descartes.patch import PolygonPatch
@@ -26,14 +31,25 @@ from shapely.geometry import Polygon
 
 # <>TODO: test for greater than 2D mixtures
 class GaussianMixture(object):
-    """short description of GaussianMixture
+    """A collection of weighted multivariate normal distributions.
 
-    long description of GaussianMixture
+    A Gaussian mixture is a collection of mixands: individual multivariate 
+    normals. It takes the form:
+
+    .. math::
+
+        f(\\mathbf{x}) = \\sum_{i=1}^n \\frac{w_i}
+            {\\sqrt{(2\\pi)^d \\vert \\mathbf{P}_i \\vert}}
+            \\exp{\\left[-\\frac{1}{2}(\\mathbf{x} - \\mathbf{\\mu}_i)^T
+            \\mathbf{P}_i^{-1} (\\mathbf{x} - \\mathbf{\\mu}_i) \\right]}
+
+    Where `d` is the dimensionality of the state vector `x`, and each mixand 
+    `i` has weight, mean and covariances `w`, `mu` and `P`.
 
     Parameters
     ----------
-    param : param_type, optional
-        param_description
+    weights : array_like, optional
+        Scaling factor for each mixand.
 
     Attributes
     ----------
@@ -55,6 +71,18 @@ class GaussianMixture(object):
         self.ellipse_color = ellipse_color
         self.max_num_mixands = max_num_mixands
         self._input_check()
+
+    def __str__(self):
+        d = {}
+        for i, weight in enumerate(self.weights):
+            d['Mixand {}'.format(i)] = np.hstack((weight,
+                                                  self.means[i],
+                                                  self.covariances[i].flatten()
+                                                  ))
+        ind = ['Weight'] + ['Mean'] * self.ndims + ['Variance'] * self.ndims ** 2
+        df = pd.DataFrame(d, index=ind)
+        return '\n' + df.to_string()
+            
 
     def pdf(self, x):
         """Probability density function at state x.
@@ -130,7 +158,10 @@ class GaussianMixture(object):
         MAP_prob = prob[MAP_i]
         return MAP_point, MAP_prob
 
-    def std_ellipses(self, num_std=2, resolution=50):
+    def copy(self):
+        return deepcopy(self)
+
+    def std_ellipses(self, num_std=1, resolution=20):
         """
         Generates `num_std` sigma error ellipses for each mixand.
 
@@ -190,6 +221,27 @@ class GaussianMixture(object):
 
             ellipses.append(ellipse)
         return ellipses
+
+    def plot_ellipses(self, ax=None, lw=20, poly=None, **kwargs):
+        if ax is None:
+            ax = plt.gca()
+
+        ellipses = self.std_ellipses(**kwargs)
+        ellipse_patches = []
+        for i, ellipse in enumerate(ellipses):
+            if poly is not None:
+                if poly.intersects(ellipse):
+                    ec = 'white'
+                else:
+                    ec = 'black'
+            else:
+                ec = 'black'
+            patch = PolygonPatch(ellipse, facecolor='none', edgecolor=ec,
+                                 linewidth=self.weights[i] * lw,
+                                 zorder=15)
+            ax.add_patch(patch)
+            ellipse_patches.append(patch)
+        return ellipse_patches
 
     def entropy(self):
         """
@@ -258,22 +310,14 @@ class GaussianMixture(object):
         for i, var in enumerate(self.covariances):
             self.covariances[i] = np.abs(var)
 
-        #<>TODO: remove this!
-        # Fix covariance if too close to 0
-        for i, var in enumerate(self.covariances):
-            tol = 10 ** -10
-            if var.sum() < tol:
-                logging.warn('Covariance nearly zero: \n{}\n'.format(var))
-                self.covariances[i] = np.eye(var.shape[0]) * tol
-
         # Check if covariances are positive semidefinite
         for var in self.covariances:
             try:
-                assert np.all(np.linalg.eigvals(var) >= 0)
+                assert np.all(np.linalg.det(var) > 0)
             except AssertionError, e:
-                logging.exception('Following variance is not positive '
+                logging.warn('Following variance is not positive '
                                   'semidefinite: \n{}'.format(var))
-                raise e
+                var = np.eye(self.ndims) * 10 ** -3
 
         # Check if covariances are symmetric
         for var in self.covariances:
@@ -285,7 +329,6 @@ class GaussianMixture(object):
                 logging.exception('Following variance is not symmetric: \n{} '
                                   .format(var))
                 raise e
-
 
         # Merge if necessary
         self._merge()
@@ -307,6 +350,7 @@ class GaussianMixture(object):
                           .format(num_mixands, self.max_num_mixands))
 
         # Create lower-triangle of dissimilarity matrix B
+        #<>TODO: this is O(n ** 2) and very slow. Speed it up! parallelize?
         B = np.zeros((num_mixands, num_mixands))
         for i in range(num_mixands):
             mix_i = (self.weights[i], self.means[i], self.covariances[i])
@@ -321,6 +365,7 @@ class GaussianMixture(object):
         while num_mixands > max_num_mixands:
             # Find most similar mixands
             try:
+                #<>TODO: replace with infinities, not 0
                 min_B = B[B>0].min()
             except ValueError, e:
                 logging.error('Could not find a minimum value in B: \n{}'
@@ -355,8 +400,8 @@ class GaussianMixture(object):
                     B[k,ij] = mixand_dissimilarity(mix_k, mix_ij)
 
             # Remove mixand j from B
-            B[j,:] = 0
-            B[:,j] = 0
+            B[j,:] = np.inf
+            B[:,j] = np.inf
             num_mixands -= 1
 
         # Delete removed mixands from parameter arrays
@@ -385,6 +430,7 @@ def merge_mixands(mix_i, mix_j):
 
     return w_ij, mu_ij, P_ij
 
+
 def mixand_dissimilarity(mix_i, mix_j):
     """Calculate KL descriminiation-based dissimilarity between mixands.
     """
@@ -408,6 +454,7 @@ def mixand_dissimilarity(mix_i, mix_j):
 
     b = 0.5 * ((w_i + w_j) * logdet_P_ij - w_i * logdet_P_i - w_j * logdet_P_j)
     return b
+
 
 def pdf_test():
     fig = plt.figure()
@@ -586,17 +633,7 @@ def ellipses_test(num_std=2):
 
 
 def fleming_prior():
-    fig = plt.figure()
-
-    # Setup spaces
-    xx, yy = np.mgrid[-12.5:2.5:1 / 100,
-                      -3.5:3.5:1 / 100]
-    pos = np.empty(xx.shape + (2,))
-    pos[:, :, 0] = xx
-    pos[:, :, 1] = yy
-
-    # 2D Gaussian
-    gauss_2d = GaussianMixture(weights=[32,
+    return GaussianMixture(weights=[32,
                                         14,
                                         15,
                                         14,
@@ -629,17 +666,90 @@ def fleming_prior():
                                               ],
                                              ])
 
+
+def uniform_prior(num_mixands=10, bounds=None):
+    if bounds is None:
+        bounds = [-5, -5, 5, 5]
+
+    n = np.int(np.sqrt(num_mixands))
+    num_mixands = n ** 2
+    weights = np.ones(num_mixands)
+    mu_x = np.linspace(bounds[0], bounds[2], num=n)
+    mu_y = np.linspace(bounds[1], bounds[3], num=n)
+    mu_xx, mu_yy = np.meshgrid(mu_x, mu_y)
+    means = np.dstack((mu_xx, mu_yy)).reshape(-1,2)
+    covariances = np.ones((num_mixands,2,2)) * 1000
+    for i, cov in enumerate(covariances):
+        covariances[i] = cov - np.roll(np.eye(2), 1, axis=0) * 1000
+
+    return GaussianMixture(weights, means, covariances)
+
+
+def fleming_prior_test():
+    fig = plt.figure()
+
+    bounds = [-12.5, -3.5, 2.5, 3.5]
+    # Setup spaces
+    res = 1/100
+    xx, yy = np.mgrid[bounds[0]:bounds[2]:res,
+                      bounds[1]:bounds[3]:res,
+                      ]
+    pos = np.empty(xx.shape + (2,))
+    pos[:, :, 0] = xx
+    pos[:, :, 1] = yy
+
+    # 2D Gaussian
+    gauss_2d = fleming_prior()
     ax = fig.add_subplot(111)
     levels = np.linspace(0, np.max(gauss_2d.pdf(pos)), 50)
-    ax.contourf(xx, yy, gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
+    cax = ax.contourf(xx, yy, gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
     ax.set_title('2D Gaussian PDF')
+    fig.colorbar(cax)
+
+    plt.axis('scaled')
+    ax.set_xlim(bounds[0:3:2])
+    ax.set_ylim(bounds[1:4:2])
+    plt.show()
+    print os.system("say '{}'".format(gauss_2d))
+
+
+def uniform_prior_test(num_mixands=10, bounds=None):
+    if bounds is None:
+        bounds = [-5, -5, 5, 5]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    # Setup spaces
+    res = 1/100
+    xx, yy = np.mgrid[bounds[0]:bounds[2]:res,
+                      bounds[1]:bounds[3]:res,
+                      ]
+    pos = np.empty(xx.shape + (2,))
+    pos[:, :, 0] = xx
+    pos[:, :, 1] = yy
+
+    gauss_2d = uniform_prior()
+    levels = np.linspace(0, np.max(gauss_2d.pdf(pos)), 50)
+    cax = ax.contourf(xx, yy, gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
+    ax.set_title('2D Gaussian PDF')
+    fig.colorbar(cax)
+
+    plt.axis('scaled')
+    ax.set_xlim(bounds[0:3:2])
+    ax.set_ylim(bounds[1:4:2])
     plt.show()
 
 
-def merge_test(num_mixands=10, max_num_mixands=5):
+def merge_test(num_mixands=10, max_num_mixands=None, spread=4, speak=False):
+    if max_num_mixands is None:
+        animate = True
+        max_num_mixands = num_mixands
+    else:
+        animate = False
 
     weights = np.random.uniform(size=num_mixands)
-    means = np.random.randn(num_mixands, 2) * 3
+    means = np.random.randn(num_mixands, 2) * spread
     covariances = np.abs(np.random.randn(num_mixands,2, 2))
     for i, covariance in enumerate(covariances):
         s = np.sort(covariance, axis=None)
@@ -665,25 +775,96 @@ def merge_test(num_mixands=10, max_num_mixands=5):
     pos[:, :, 0] = xx
     pos[:, :, 1] = yy
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(14,6))
     ax = fig.add_subplot(121)
-    levels = np.linspace(0, np.max(unmerged_gauss_2d.pdf(pos)), 50)
-    ax.contourf(xx, yy, unmerged_gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
-    ax.set_title('Unmerged GM')
+    max_prob = np.maximum(np.max(unmerged_gauss_2d.pdf(pos)),
+                          np.max(merged_gauss_2d.pdf(pos)))
 
-    ax = fig.add_subplot(122)
-    levels = np.linspace(0, np.max(merged_gauss_2d.pdf(pos)), 50)
-    ax.contourf(xx, yy, merged_gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
-    ax.set_title('Merged GM')
+    levels = np.linspace(0, max_prob * 1.2, 50)
+    c = ax.contourf(xx, yy, unmerged_gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
+    ax.set_title('Unmerged GM ({} mixands)'.format(unmerged_gauss_2d.weights.size))
+
+    fig.subplots_adjust(right=0.85)
+    cbar_ax = fig.add_axes([0.875, 0.1, 0.025, 0.8])
+    fig.colorbar(c, cax=cbar_ax)
+
+    class merged_gm(object):
+        """docstring for merged_gm"""
+        def __init__(self, ax, max_num_mixands, xx, yy, pos, levels,
+                     weights,means,covariances, rate=2, speak=False):
+            self.ax = ax
+            self.xx = xx
+            self.yy = yy
+            self.pos = pos
+            self.levels = levels
+            self.max_num_mixands = max_num_mixands
+            self.num_mixands = 1
+            self.weights = weights
+            self.means = means
+            self.covariances = covariances
+            self.rate = rate
+            self.speak = speak
+    
+        def update(self,i=0):
+            self.gm = GaussianMixture(self.weights, self.means, self.covariances,
+                                 max_num_mixands=self.num_mixands)
+            self.remove()
+            if self.speak:
+                os.system("say '{}'".format(self.num_mixands))
+            self.plot()
+            
+            if self.num_mixands == self.max_num_mixands:
+                self.num_mixands = 1
+            elif np.int(self.num_mixands * self.rate) < self.max_num_mixands:
+                self.num_mixands = np.int(self.num_mixands * self.rate)
+            else:
+                self.num_mixands = self.max_num_mixands
+
+        def plot(self):
+            self.contourf = self.ax.contourf(self.xx, self.yy,
+                                               self.gm.pdf(pos),
+                                               levels=self.levels,
+                                               cmap=plt.get_cmap('jet')
+                                               )
+            self.ax.set_title('Merged GM ({} mixands)'
+                              .format(self.num_mixands))
+
+        def remove(self):
+            if hasattr(self,'contourf'):
+                for collection in self.contourf.collections:
+                    collection.remove()
+                del self.contourf
+
+    if animate:
+        ax = fig.add_subplot(122)
+        gm = merged_gm(ax, max_num_mixands, xx, yy, pos, levels,
+                       weights,means,covariances,speak=speak)
+        ani = animation.FuncAnimation(fig, gm.update, 
+            interval=1,
+            repeat=True,
+            blit=False,
+            )
+    else:
+        ax = fig.add_subplot(122)
+        gm = merged_gm(ax, max_num_mixands, xx, yy, pos, levels,
+                       weights,means,covariances,speak=False)
+        gm.update()
+        gm.plot()
 
     plt.show()
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     # pdf_test()
     # rv_test()
-    # fleming_prior()
+    # fleming_prior_test()
+    
+    # fp = fleming_prior()
+    # new_fp = fp.copy()
+    # new_fp.weights = np.ones(6)
+    # print fp
     # ellipses_test(2)
-    merge_test(80, 20)
-
+    merge_test(120, speak=False)
+    # uniform_prior_test()

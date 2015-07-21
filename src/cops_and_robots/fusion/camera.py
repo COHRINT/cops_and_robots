@@ -214,9 +214,12 @@ class Camera(Sensor):
         mu, sigma, beta = self.vb.update(measurement='No Detection',
                                          likelihood=self.detection_model,
                                          prior=prior,
-                                         use_LWIS=True
+                                         use_LWIS=True,
+                                         poly=self.detection_model.poly
                                          )
-        return GaussianMixture(beta, mu, sigma)
+        gm = GaussianMixture(beta, mu, sigma)
+        gm.camera_viewcone = self.detection_model.poly
+        return gm
 
 
 if __name__ == '__main__':

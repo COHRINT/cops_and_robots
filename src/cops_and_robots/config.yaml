@@ -8,7 +8,7 @@ cops:
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
     goal_planner:
-      type: particle  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
+      type: MAP  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
     camera:
       max_view_dist: 1.0
       min_view_dist: 0.3
