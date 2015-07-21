@@ -58,19 +58,26 @@ class Map(object):
         for each robber, plus one combined plot). Defaults to `True`.
 
     """
-    def __init__(self, mapname, bounds, display_type='particle',
-                 combined_only=True):
+    def __init__(self, map_name='fleming', bounds=[-5, -5, 5, 5],
+                 plot_robbers=True, map_display_type='particle'):
 
+        # <>TODO: Move to main?
         self.human_cfg = load_config()['human_interface']
 
         # Define map properties
-        self.mapname = mapname
-        self.bounds = bounds  # [x_min,y_min,x_max,y_max] in [m] useful area
+        self.map_name = map_name
+        # <>TODO: Clean this up- add seperate map creation function?
+        if self.map_name == 'fleming':
+            self.bounds = [-9.5, -3.33, 4, 3.68]
+        else:
+            self.bounds = bounds  # [x_min,y_min,x_max,y_max] in [m] useful area
+
+        self.plot_robbers = plot_robbers
         self.outer_bounds = [i * 1.1 for i in self.bounds]
         self.origin = [0, 0]  # in [m]
         self.fig = plt.figure(1, figsize=(12, 10))
-        self.display_type = display_type
-        self.combined_only = combined_only
+        # <>TODO: Make display type relative to each robber
+        self.display_type = map_display_type
 
         # Define map elements
         self.objects = {}  # For dynamic/static map objects (not robbers/cops)
@@ -86,12 +93,17 @@ class Map(object):
                              'information': self.information_elements}
 
         # Define layers
-        self.shape_layer = ShapeLayer(self.element_dict, bounds=bounds)
-        self.feasible_layer = FeasibleLayer(bounds=bounds)
-        if self.display_type is 'particle':
-            self.particle_layer = {}  # One per robber, plus one combined
+        self.shape_layer = ShapeLayer(self.element_dict, bounds=self.bounds)
+        self.feasible_layer = FeasibleLayer(bounds=self.bounds)
+
+        self.particle_layer = {}  # One per robber, plus one combined
+        self.probability_layer = {}  # One per robber, plus one combined
+
+        # Set up map
+        if self.map_name == 'fleming':
+            set_up_fleming(self)  # <>TODO: make a generic 'setup map' function
         else:
-            self.probability_layer = {}  # One per robber, plus one combined
+            pass
 
     def add_human_sensor(self, human_sensor):
         # Add human sensor for the human interface
@@ -152,19 +164,25 @@ class Map(object):
         robber_obj : Robber
             The full robber object.
         """
+        if self.plot_robbers is True:
+            robber.visible = True
+        elif self.plot_robbers is False or robber.name not in self.plot_robbers:
+            robber.visible = False
+
         self.dynamic_elements.append(robber)
         self.robbers[robber.name] = robber
+
         if self.display_type == 'particle':
             self.particle_layer[robber.name] = ParticleLayer(particles)
-        else:
-            self.probability_layer[robber.name] = ProbabilityLayer(fig=self.fig, bounds=self.bounds)
+        elif self.display_type == 'probability':
+            self.probability_layer[robber.name] = ProbabilityLayer(
+                fig=self.fig, bounds=self.bounds)
 
-    # <>TODO: Add a function found_robber(self, robber)
     def rem_robber(self, robber):
-        """Remove a dynamic ``Robot`` robber from the Map by its name.
+        """Remove a dynamic ``Robot`` robber.
 
-        robber_name : str
-            Name of the robber.
+        robber : obj
+            The robber.
         """
         robber.patch.remove()
         self.dynamic_elements.remove(robber)
@@ -172,11 +190,15 @@ class Map(object):
         if self.display_type == 'particle':
             self.particle_layer[robber.name].remove()
             del self.particle_layer[robber.name]
-        else:
+        elif self.display_type == 'probability':
             del self.probability_layer[robber.name]
 
     def found_robber(self, robber):
+        """Make the robber visible, remove it's particles.
+
+        """
         robber.visible = True
+        robber.color = 'darkorange'
         if self.display_type == 'particle':
             self.particle_layer[robber.name].remove()
             del self.particle_layer[robber.name]
@@ -185,6 +207,7 @@ class Map(object):
         """Plot the static map.
 
         """
+        # <>TODO: Needs rework
         fig = plt.figure(1, figsize=(12, 10))
         ax = fig.add_subplot(111)
         self.shape_layer.update_plot(update_static=True)
@@ -197,6 +220,7 @@ class Map(object):
     def setup_plot(self):
         """Create the initial plot for the animation.
         """
+        logging.info('Setting up plot')
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlim([self.bounds[0], self.bounds[2]])
         self.ax.set_ylim([self.bounds[1], self.bounds[3]])
@@ -206,16 +230,18 @@ class Map(object):
             HumanInterface(self.fig, self.human_sensor, **self.human_cfg)
 
     def update(self, i):
+        """
+        """
         self.shape_layer.update(i=i)
-        if self.display_type is 'particle':
+        if self.display_type == 'particle':
             for robber_particles in self.particle_layer.values():
                 robber_particles.update(i=i)
-        else:
-            # Do stuff for probability
-            pass
+        elif self.display_type == 'probability':
+            for robber_probability in self.probability_layer.values():
+                robber_probability.update(i=i)
 
 
-def set_up_fleming(display_type='particle'):
+def set_up_fleming(map_):
     """Set up a map as the generic Fleming space configuration.
 
     """
@@ -287,20 +313,16 @@ def set_up_fleming(display_type='particle'):
     # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
     # landmarks.append(landmark)
 
-    # Create Fleming map
-    bounds = [-9.5, -3.33, 4, 3.68]
-    fleming = Map('Fleming', bounds, display_type=display_type)
-
     # Add walls to map
     for wall in walls:
-        fleming.add_obj(wall)
+        map_.add_obj(wall)
 
     # Add landmarks to map
     for landmark in landmarks:
-        fleming.add_obj(landmark)
+        map_.add_obj(landmark)
 
     # Create areas
-    labels = ['Study', 'Library', 'Kitchen', 'Billiard Room', 'Hallway', 
+    labels = ['Study', 'Library', 'Kitchen', 'Billiard Room', 'Hallway',
               'Dining Room']
     colors = ['aquamarine','lightcoral', 'goldenrod', 'sage','cornflowerblue',
               'orchid']
@@ -316,12 +338,10 @@ def set_up_fleming(display_type='particle'):
                     pts[0,1] + np.abs(pts[1,1] - pts[0,1]) / 2, 0 ]
         area = MapArea(name=labels[i], shape_pts=pts, pose=centroid,
                        color_str=colors[i])
-        fleming.add_area(area)
+        map_.add_area(area)
 
     # <>TODO: Include area demarcations
-
-    fleming.feasible_layer.define_feasible_regions(fleming.static_elements)
-    return fleming
+    map_.feasible_layer.define_feasible_regions(map_.static_elements)
 
 
 if __name__ == '__main__':

@@ -2,33 +2,36 @@
 main:
   logging_level: INFO  #['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
   numpy_print_precision: 2
+  use_ROS: False # True if any robot is in the real world
+  ROS_node_name: 'Python_Node'
 
 cops:
   Deckard:
+    pose: [0, 0, 90]  # [x(meters), y(meters), theta(degrees)]
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
-    goal_planner:
-      type: particle  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
-    camera:
+    goal_planner_cfg:
+      type_: particle  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
+    camera_cfg:
       max_view_dist: 1.0
       min_view_dist: 0.3
-    map:
-      combined_only: True
-      name: fleming
+    map_cfg:
+      plot_robbers: True #True for all, False for none, or list of robbers to plot
+      map_name: fleming
 
 robbers:
   Roy:
     pose_source: python  # ['python' or a ros topic string like '/roy/odom']
-    goal_planner:
-      type: stationary  # ['stationary', 'simple', 'trajectory']
+    goal_planner_cfg:
+      type_: simple  # ['stationary', 'simple', 'trajectory']
   Pris:
     pose_source: python  # ['python' or a ros topic string like '/pris/odom']
-    goal_planner:
-      type: stationary  # ['stationary', 'simple', 'trajectory']
+    goal_planner_cfg:
+      type_: trajectory  # ['stationary', 'simple', 'trajectory']
   Zhora:
     pose_source: python  # ['python' or a ros topic string like '/zhora/odom']
-    goal_planner:
-      type: stationary  # ['stationary', 'simple', 'trajectory']
+    goal_planner_cfg:
+      type_: stationary  # ['stationary', 'simple', 'trajectory']
 
 human_interface:
   measurement_types:
