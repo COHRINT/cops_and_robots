@@ -53,7 +53,7 @@ class ParticleFilter(object):
 
     """
     def __init__(self, target_name, feasible_layer, motion_model='stationary',
-                 n_particles=500, state_spec='x y x_dot y_dot', 
+                 n_particles=500, state_spec='x y x_dot y_dot',
                  v_params=[0, 0.1]):
         self.target_name = target_name
         self.bounds = feasible_layer.bounds
@@ -196,7 +196,7 @@ class ParticleFilter(object):
         self.particle_probs = [1 / self.n_particles
                                for i in range(0, self.n_particles)]
 
-    def robber_detected(self, robber_pose):
+    def robber_detected(self):
         """Update the particle filter for a detected robber.
         """
 
@@ -213,10 +213,12 @@ class ParticleFilter(object):
         # self.particles[:, 2] = 0
         # self.particles[index] = 1
 
-        if self.state_spec == 'x y x_dot y_dot':
-            self.particles = np.zeros((1,5))
-        else:
-            self.particles = np.zeros((1,3))
+        # self.particles = np.column_stack(([],[],[]))
+        # self.particles = 'Finished'
+        # if self.state_spec == 'x y x_dot y_dot':
+        #     self.particles = np.zeros((1,5))
+        # else:
+        #     self.particles = np.zeros((1,3))
         self.finished = True
 
 

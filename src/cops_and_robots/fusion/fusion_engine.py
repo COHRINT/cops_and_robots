@@ -50,9 +50,6 @@ class FusionEngine(object):
     feasible_layer : FeasibleLayer
         A layer object providing both permissible point regions for any object
         and permissible pose regions for any robot with physical dimensions.
-    shape_layer : ShapeLayer
-        A layer object providing all the shapes in the map so that the human
-        sensor can ground its statements.
     motion_model : {'stationary','clockwise','counterclockwise','random walk'},
         optional
         The motion model used to update the filter.
@@ -66,7 +63,6 @@ class FusionEngine(object):
                  filter_type,
                  missing_robber_names,
                  feasible_layer,
-                 shape_layer,
                  motion_model='stationary',
                  total_particles=2000):
         super(FusionEngine, self).__init__()
@@ -74,7 +70,6 @@ class FusionEngine(object):
         self.filter_type = filter_type
         self.filters = {}
         self.missing_robber_names = missing_robber_names
-        self.shape_layer = shape_layer
 
         n = len(missing_robber_names)
 
@@ -116,7 +111,7 @@ class FusionEngine(object):
         # Update camera values (viewcone, selected zone, etc.)
         for sensorname, sensor in sensors.iteritems():
             if sensorname == 'camera':
-                sensor.update_viewcone(robot_pose, self.shape_layer)
+                sensor.update_viewcone(robot_pose)
 
         # Update probabilities (particle and/or GMM)
         for robber in robbers.values():
