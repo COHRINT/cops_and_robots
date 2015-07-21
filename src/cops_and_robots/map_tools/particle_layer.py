@@ -45,11 +45,11 @@ class ParticleLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, particles, particle_size=200,
+    def __init__(self, filter_, particle_size=200,
                  colorbar_visible=False, alpha=0.3,
                  **kwargs):
         super(ParticleLayer, self).__init__(alpha=alpha, **kwargs)
-        self.particles = particles
+        self.filter = filter_
         self.particle_size = particle_size
         self.colorbar_visible = colorbar_visible
         self.line_weight = 0
@@ -74,7 +74,7 @@ class ParticleLayer(Layer):
 
         """
         if particles is None:
-            particles = self.particles
+            particles = self.filter.particles
 
         if particles == 'Finished':
             print ' also done'
@@ -98,7 +98,7 @@ class ParticleLayer(Layer):
         """
         # Test stub for the call from __main__
         if hasattr(self, 'test_particles'):
-            self.particles = next(self.test_particles)
+            self.filter.particles = next(self.test_particles)
 
         # Remove previous scatter plot and replot
         self.remove()
@@ -115,8 +115,9 @@ def main():
     pts = np.column_stack((x, y))
     probs = np.ones(100) / 100
     particles = np.column_stack((probs, pts))
+    filter_ = type('test', (object,), {'particles': particles})()
 
-    pal = ParticleLayer(particles, bounds=[0, 0, 10, 10])
+    pal = ParticleLayer(filter_, bounds=[0, 0, 10, 10])
     pal.color_gain = 1
 
     test_particles = {}

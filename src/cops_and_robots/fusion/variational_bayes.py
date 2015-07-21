@@ -385,7 +385,7 @@ class VariationalBayes(object):
 
             # Create new prior
             prior = GaussianMixture(weights, means, covariances)
-            logging.info('Using only mixands {} for VBIS fusion. Total weight {}'
+            logging.debug('Using only mixands {} for VBIS fusion. Total weight {}'
                          .format(mixand_ids, max_intersecion_weight))
 
 

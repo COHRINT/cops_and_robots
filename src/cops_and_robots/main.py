@@ -80,6 +80,8 @@ def main():
 
     # Create Visualization
     def update(i=0):
+        logging.debug('Main update {}'.format(i))
+
         for cop_name, cop in cops.iteritems():
             cop.update(i)
 
