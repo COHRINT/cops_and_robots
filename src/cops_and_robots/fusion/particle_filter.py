@@ -126,7 +126,7 @@ class ParticleFilter(object):
         """
         rotational_scale_factor = 5
 
-        # Add states to each particle - xdot and ydot. human sensor update should modify the 
+        # Add states to each particle - xdot and ydot. human sensor update should modify the
         if self.motion_model == 'random walk':
             for particle in self.particles:
                 if particle[1] < self.bounds[0] or particle[1] > self.bounds[2]:

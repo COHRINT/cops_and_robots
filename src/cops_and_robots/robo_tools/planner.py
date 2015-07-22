@@ -120,7 +120,7 @@ class GoalPlanner(object):
                      ]
 
     def __init__(self, robot, type_='stationary', view_distance=0.3,
-                 use_target_as_goal=True):
+                 use_target_as_goal=True, goal_pose_topic=None):
         if type_ not in GoalPlanner.types:
             raise ValueError('{} is not a type from the list '
                              'of acceptable types: {}'
@@ -131,7 +131,11 @@ class GoalPlanner(object):
             import tf
             import rospy
             from geometry_msgs.msg import PoseStamped
-            self.pub = rospy.Publisher('move_base_simple/goal', PoseStamped,
+            self.goal_pose_topic = goal_pose_topic
+            if self.goal_pose_topic is None:
+                self.goal_pose_topic = '/' + self.robot.name.lower() + \
+                                       '/move_base_simple/goal'
+            self.pub = rospy.Publisher(self.goal_pose_topic, PoseStamped,
                                        queue_size=10)
 
         self.goal_status = 'without a goal'
