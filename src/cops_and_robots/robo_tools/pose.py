@@ -59,13 +59,13 @@ class Pose(object):
         if pose_source != 'python':
             # Lazy imports
             import rospy
-            import tf
             from nav_msgs.msg import Odometry
 
             rospy.Subscriber(self.pose_source, Odometry, self.callback)
             # rospy.spin()
 
     def callback(self, msg):
+        import tf
         x = msg.pose.pose.position.x
         y = msg.pose.pose.position.y
         (_, _, theta) = tf.transformations.euler_from_quaternion(
