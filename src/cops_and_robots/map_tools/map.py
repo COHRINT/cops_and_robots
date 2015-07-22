@@ -96,8 +96,8 @@ class Map(object):
         self.shape_layer = ShapeLayer(self.element_dict, bounds=self.bounds)
         self.feasible_layer = FeasibleLayer(bounds=self.bounds)
 
-        self.particle_layer = {}  # One per robber, plus one combined
-        self.probability_layer = {}  # One per robber, plus one combined
+        self.particle_layers = {}  # One per robber, plus one combined
+        self.probability_layers = {}  # One per robber, plus one combined
 
         # Set up map
         if self.map_name == 'fleming':
@@ -173,10 +173,9 @@ class Map(object):
         self.robbers[robber.name] = robber
 
         if self.display_type == 'particle':
-            self.particle_layer[robber.name] = ParticleLayer(filter_)
+            self.add_particle_layer(robber.name, filter_)
         elif self.display_type == 'probability':
-            self.probability_layer[robber.name] = \
-                ProbabilityLayer(filter_, fig=self.fig, bounds=self.bounds)
+            self.add_probability_layer(robber.name, filter_)
 
     def rem_robber(self, robber):
         """Remove a dynamic ``Robot`` robber.
@@ -188,10 +187,9 @@ class Map(object):
         self.dynamic_elements.remove(robber)
         del self.robbers[robber.name]
         if self.display_type == 'particle':
-            self.particle_layer[robber.name].remove()
-            del self.particle_layer[robber.name]
+            self.rem_particle_layer(robber.name)
         elif self.display_type == 'probability':
-            del self.probability_layer[robber.name]
+            self.rem_probability_layer(robber.name)
 
     def found_robber(self, robber):
         """Make the robber visible, remove it's particles.
@@ -200,8 +198,25 @@ class Map(object):
         robber.visible = True
         robber.color = 'darkorange'
         if self.display_type == 'particle':
-            self.particle_layer[robber.name].remove()
-            del self.particle_layer[robber.name]
+            self.rem_particle_layer(robber.name)
+        elif self.display_type == 'probability':
+            self.rem_probability_layer(robber.name)
+
+    def add_particle_layer(self, name, filter_):
+        self.particle_layers[name] = ParticleLayer(filter_)
+
+    def rem_particle_layer(self, name):
+        self.particle_layers[name].remove()
+        del self.particle_layers[name]
+
+    def add_probability_layer(self, name, filter_):
+        self.probability_layers[name] = ProbabilityLayer(filter_,
+                                                         fig=self.fig,
+                                                         bounds=self.bounds)
+
+    def rem_probability_layer(self, name):
+        self.probability_layers[name].remove()
+        del self.probability_layers[name]
 
     def plot(self):
         """Plot the static map.
@@ -234,11 +249,11 @@ class Map(object):
         """
         self.shape_layer.update(i=i)
         if self.display_type == 'particle':
-            for robber_particles in self.particle_layer.values():
-                robber_particles.update(i=i)
+            for particle_layer in self.particle_layers.values():
+                particle_layer.update(i=i)
         elif self.display_type == 'probability':
-            for robber_probability in self.probability_layer.values():
-                robber_probability.update(i=i)
+            for probability_layer in self.probability_layers.values():
+                probability_layer.update(i=i)
 
 
 def set_up_fleming(map_):
