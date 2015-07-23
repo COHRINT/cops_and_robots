@@ -80,8 +80,8 @@ class Cop(Robot):
                  pose=[0, 0, 90],
                  pose_source='python',
                  publish_to_ROS=False,
-                 fusion_engine_type='gauss sum',
-                 goal_planner_type='MAP',
+                 fusion_engine_type='particle',
+                 goal_planner_type='particle',
                  cop_model='simple',
                  robber_model='random walk'):
 

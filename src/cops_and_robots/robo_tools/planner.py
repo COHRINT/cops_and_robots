@@ -31,8 +31,6 @@ from itertools import chain
 import numpy as np
 from shapely.geometry import Point, LineString
 
-import rospy
-import tf
 from geometry_msgs.msg import PoseStamped
 
 import cops_and_robots.robo_tools.a_star as a_star
