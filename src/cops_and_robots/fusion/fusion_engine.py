@@ -31,6 +31,7 @@ import numpy as np
 from cops_and_robots.fusion.particle_filter import ParticleFilter
 from cops_and_robots.fusion.gauss_sum_filter import \
     GaussSumFilter
+from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 
 
 class FusionEngine(object):
@@ -50,9 +51,6 @@ class FusionEngine(object):
     feasible_layer : FeasibleLayer
         A layer object providing both permissible point regions for any object
         and permissible pose regions for any robot with physical dimensions.
-    shape_layer : ShapeLayer
-        A layer object providing all the shapes in the map so that the human
-        sensor can ground its statements.
     motion_model : {'stationary','clockwise','counterclockwise','random walk'},
         optional
         The motion model used to update the filter.
@@ -66,7 +64,6 @@ class FusionEngine(object):
                  filter_type,
                  missing_robber_names,
                  feasible_layer,
-                 shape_layer,
                  motion_model='stationary',
                  total_particles=2000):
         super(FusionEngine, self).__init__()
@@ -74,7 +71,6 @@ class FusionEngine(object):
         self.filter_type = filter_type
         self.filters = {}
         self.missing_robber_names = missing_robber_names
-        self.shape_layer = shape_layer
 
         n = len(missing_robber_names)
 
@@ -116,7 +112,7 @@ class FusionEngine(object):
         # Update camera values (viewcone, selected zone, etc.)
         for sensorname, sensor in sensors.iteritems():
             if sensorname == 'camera':
-                sensor.update_viewcone(robot_pose, self.shape_layer)
+                sensor.update_viewcone(robot_pose)
 
         # Update probabilities (particle and/or GMM)
         for robber in robbers.values():
@@ -154,4 +150,28 @@ class FusionEngine(object):
             sensors['human'].utterance = ''
             sensors['human'].target = ''
         else:
-            self.filters['combined'].probability = self.filters['Roy'].probability
+            # Pre-allocate parameter arrays
+            num_mixands = 0
+            for label, filter_ in self.filters.iteritems():
+                if label == 'combined':
+                    continue
+                num_mixands += filter_.probability.num_mixands
+                ndims = filter_.probability.ndims
+            weights = np.empty((num_mixands))
+            means = np.empty((num_mixands, ndims))
+            covariances = np.empty((num_mixands, ndims, ndims))
+
+            # Load parameter arrays
+            i = 0
+            for label, filter_ in self.filters.iteritems():
+                if label == 'combined':
+                    continue
+                size = filter_.probability.num_mixands
+                weights[i:i + size] = filter_.probability.weights
+                means[i:i + size] = filter_.probability.means
+                covariances[i:i + size] = filter_.probability.covariances
+                i += size
+
+            combined_gm = GaussianMixture(weights,means,covariances,
+                                          max_num_mixands=num_mixands)
+            self.filters['combined'].probability = combined_gm

@@ -8,3 +8,4 @@ docutils>=0.3
 #catkin_pkg
 #catkin_tools
 pyserial
+pandas

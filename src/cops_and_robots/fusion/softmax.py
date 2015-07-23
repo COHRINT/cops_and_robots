@@ -558,6 +558,13 @@ class Softmax(object):
             del self.subclass_probs
         self._combine_mms()
 
+        # Move polygon
+        if hasattr(self,'poly'):
+            from cops_and_robots.map_tools.map_elements import MapObject
+            mo = MapObject('', self.poly.exterior.coords[:], pose=new_pose)
+            self.poly = mo.shape
+
+
     def _move_relative(self, translation=None, rotation=None,
                        rotation_point=None, rotation_unit='degrees',
                        reversed_translation=True, rotate_ccw=True):
@@ -807,10 +814,10 @@ class Softmax(object):
             self.weights = self.normals
             self.biases = self.offsets
 
-        logging.debug("Weights generated from normals:\n {}"
-                     .format(self.weights))
-        logging.debug("Biases generated from normals:\n {}"
-                     .format(self.biases))
+        # logging.debug("Weights generated from normals:\n {}"
+        #              .format(self.weights))
+        # logging.debug("Biases generated from normals:\n {}"
+        #              .format(self.biases))
 
     def _define_classes(self, labels=None):
         """Sets labels and colors for all classes.
@@ -1082,9 +1089,6 @@ def normals_from_polygon(polygon):
 
         # Use SVD to find nullspace (normals)
         u, s, v = np.linalg.svd(P)
-        logging.debug('u:\n{}'.format(u))
-        logging.debug('s:\n{}'.format(s))
-        logging.debug('v:\n{}'.format(v))
 
         # <>TODO: look for degenerate cases
         tolerance = 10 ** -6
@@ -1096,8 +1100,8 @@ def normals_from_polygon(polygon):
         if np.sum(np.dot(P, v[j, :])) > tolerance:
             logging.warning('Not a well-defined nullspace!')
 
-    logging.debug("Normals generated via SVD: \n{}".format(normals))
-    logging.debug("Offsets generated via SVD: {}".format(offsets))
+    # logging.debug("Normals generated via SVD: \n{}".format(normals))
+    # logging.debug("Offsets generated via SVD: {}".format(offsets))
 
     return normals, offsets
 

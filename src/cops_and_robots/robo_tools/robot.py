@@ -31,8 +31,11 @@ from shapely.geometry import Point
 
 from cops_and_robots.robo_tools.pose import Pose
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
-from cops_and_robots.robo_tools.planner import MissionPlanner, GoalPlanner, PathPlanner, Controller
-from cops_and_robots.map_tools.map import set_up_fleming
+from cops_and_robots.robo_tools.planner import (MissionPlanner,
+                                                GoalPlanner,
+                                                PathPlanner,
+                                                Controller)
+from cops_and_robots.map_tools.map import Map
 from cops_and_robots.map_tools.map_elements import MapObject
 
 
@@ -61,141 +64,69 @@ class Robot(iRobotCreate):
     consider_others : bool, optional
         Whether this robot generates other robot models (e.g. the primary cop
         will imagine other robots moving around.) Defaults to false.
-    control_hardware : bool, optional
-        Whether this robot controls physical hardware. Defaults to false.
     **kwargs
         Arguments passed to the ``MapObject`` attribute.
 
-    Attributes
-    ----------
-    all_robots : dict
-        A dictionary of all robot names (as the key) and their respective roles
-        (as the value).
-
     """
-
-    # all_robots = {'Deckard': 'cop',
-    #               'Roy': 'robber',
-    #               'Leon': 'robber',
-    #               'Pris': 'robber',
-    #               'Zhora': 'robber',
-    #               }
-
-    all_robots = {'Deckard': 'cop',
-                  'Roy': 'robber',
-                  'Pris': 'robber',
-                  'Zhora': 'robber',
-                  }
 
     def __init__(self,
                  name,
-                 pose=[0, 0.5, 0],
+                 pose=None,
                  pose_source='python',
-                 publish_to_ROS=False,
-                 map_name='fleming',
-                 map_display_type='particle',
-                 role='robber',
+                 color_str='darkorange',
                  mission_status='on the run',
-                 goal_planner_type='simple',
-                 path_planner_type='a_star',
-                 consider_others=False,
+                 map_cfg={},
+                 goal_planner_cfg={},
+                 path_planner_cfg={},
                  **kwargs):
-
-        # Check robot name
-        name = name.capitalize()
-        if name not in Robot.all_robots:
-            raise ValueError('{} is not a robot name from the list '
-                             'of acceptable robots: {}'
-                             .format(name, Robot.all_robots))
-
-        # Figure out which robots to consider
-        if consider_others:
-            self.other_robots = Robot.all_robots
-            del self.other_robots[name]
-        else:
-            self.other_robots = {}
 
         # Object attributes
         self.name = name
+
+        # Setup map
+        self.map = Map(**map_cfg)
+
+        # If pose is not given, randomly place in feasible layer.
+        feasible_robot_generated = False
+        if pose is None:
+            while not feasible_robot_generated:
+                x = random.uniform(self.map.bounds[0], self.map.bounds[2])
+                y = random.uniform(self.map.bounds[1], self.map.bounds[3])
+                if self.map.feasible_layer.pose_region.contains(Point([x, y])):
+                    feasible_robot_generated = True
+            theta = random.uniform(0, 359)
+            pose = [x, y, theta]
+
         self.pose2D = Pose(pose, pose_source)
-        self.role = role
-        self.num_goals = None  # number of goals to reach (None for infinite)
-        self.mission_status = mission_status
-        if map_name is None:
-            self.map = None
-        else:
-            self.map = set_up_fleming()
-
-        self.mission_planner = MissionPlanner(self, publish_to_ROS=publish_to_ROS)
-
-        self.goal_planner = GoalPlanner(self,
-                                        publish_to_ROS,
-                                        type_=goal_planner_type)
-        if publish_to_ROS is False:
-            self.path_planner = PathPlanner(self, path_planner_type)
-            self.controller = Controller(self)
-        self.fusion_engine = None
-
-        # Movement attributes
         self.pose_history = np.array(([0, 0, 0], self.pose2D.pose))
+        if pose_source == 'python':
+            self.publish_to_ROS = False
+        else:
+            self.publish_to_ROS = True
+
+        # Setup planners
+        self.mission_status = mission_status
+        self.mission_planner = MissionPlanner(self)
+        self.goal_planner = GoalPlanner(self,
+                                        **goal_planner_cfg)
+        # If pose_source is python, this robot is just in simulation
+        if not self.publish_to_ROS:
+            self.path_planner = PathPlanner(self, **path_planner_cfg)
+            self.controller = Controller(self)
 
         # Define MapObject
-        shape_pts = Point(pose[0:2]).buffer(iRobotCreate.DIAMETER / 2)\
+        shape_pts = Point([0, 0]).buffer(iRobotCreate.DIAMETER / 2)\
             .exterior.coords
         self.map_obj = MapObject(self.name, shape_pts[:], has_spaces=False,
-                                 **kwargs)
+                                 blocks_camera=False, color_str=color_str)
         self.update_shape()
-
-        # Add self and others to the map
-        if self.role == 'cop':
-            self.map.add_cop(self.map_obj)
-        else:
-            self.map.add_robber(self.map_obj)
-        self.make_others()
 
     def update_shape(self):
         """Update the robot's map_obj.
         """
         self.map_obj.move_absolute(self.pose2D.pose)
 
-    def make_others(self):
-        """Generate robot objects for all other robots.
-
-        Create personal belief (not necessarily true!) of other robots,
-        largely regarding their map positions. Their positions are
-        known to the 'self' robot, but this function will be expanded
-        in the future to include registration between robots: i.e.,
-        optional pose and information sharing instead of predetermined
-        sharing.
-        """
-
-        self.missing_robbers = {}  # all are missing to begin with!
-        self.known_cops = {}
-
-        for name, role in self.other_robots.iteritems():
-
-            # Randomly place the other robots
-            feasible_robber_generated = False
-            while not feasible_robber_generated:
-                x = random.uniform(self.map.bounds[0], self.map.bounds[2])
-                y = random.uniform(self.map.bounds[1], self.map.bounds[3])
-                if self.map.feasible_layer.pose_region.contains(Point([x, y])):
-                    feasible_robber_generated = True
-
-            theta = random.uniform(0, 359)
-            pose = [x, y, theta]
-
-            # Add other robots to the map
-            if role == 'robber':
-                new_robber = robber_module.Robber(name, pose=pose)
-                self.map.add_robber(new_robber.map_obj)
-                self.missing_robbers[name] = new_robber
-            else:
-                new_cop = cop_module.Cop(name, pose=pose)
-                self.map.add_cop(new_cop.map_obj)
-                self.known_cops[name] = new_cop
-
-    def update(self):
+    def update(self, i=0):
         """Update all primary functionality of the robot.
 
         This includes planning and movement for both cops and robbers,
@@ -216,14 +147,11 @@ class Robot(iRobotCreate):
             # Update statuses and planners
             self.update_mission_status()
             self.goal_planner.update()
-            if self.goal_planner.publish_to_ROS is False:
+            if self.publish_to_ROS is False:
                 self.path_planner.update()
                 self.controller.update()
 
             # Add to the pose history, update the map
-            self.pose_history = np.vstack((self.pose_history, self.pose2D.pose[:]))
+            self.pose_history = np.vstack((self.pose_history,
+                                           self.pose2D.pose[:]))
             self.update_shape()
-
-# Import statements left to the bottom because of subclass circular dependency
-import cops_and_robots.robo_tools.cop as cop_module
-import cops_and_robots.robo_tools.robber as robber_module
