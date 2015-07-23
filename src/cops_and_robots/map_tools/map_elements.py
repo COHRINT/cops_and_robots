@@ -21,6 +21,7 @@ __maintainer__ = "Nick Sweet"
 __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
+import logging
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import cnames
@@ -60,8 +61,12 @@ class MapElement(object):
     pose : array_like, optional
         The map element's initial [x, y, theta] in [m,m,degrees] (defaults to
         [0, 0, 0]).
-    has_spaces : bool, optional
-        Whether or not the map element has demarcating spaces around it.
+    visible : bool, optional
+        Whether the element will be visibile to the human.
+        Default True
+    blocks_camera : bool, optional
+        Whether the element will interfere with the camera.
+        Default True
     centroid_at_origin : bool, optional
         Whether the element's centroid is placed at the map origin (as opposed
         to placing the element's lower-left corner at the map origin). Default
@@ -71,15 +76,22 @@ class MapElement(object):
 
     """
     def __init__(self, name, shape_pts, pose=[0, 0, 0], visible=True,
-                 centroid_at_origin=True, has_spaces=True,
-                 space_resolution=0.1, color_str='darkblue'):
+                 show_name=False, has_spaces=False, plot_spaces=False,
+                 blocks_camera=True, centroid_at_origin=True,
+                 space_resolution=0.1, color_str='darkblue', alpha=0.5):
         # Define basic MapElement properties
+        self.has_spaces = has_spaces
+        self.plot_spaces = plot_spaces
         self.name = name
         self.visible = visible
-        self.has_spaces = has_spaces
+        self.blocks_camera = blocks_camera
         self.space_resolution = space_resolution
-        self.default_color = cnames[color_str]
+        if color_str == 'none':
+            self.color = color_str
+        else:
+            self.color = cnames[color_str]
         self.pose = pose
+        self.alpha = alpha
 
         # If shape has only length and width, convert to point-based poly
         if len(shape_pts) == 2:
@@ -161,6 +173,7 @@ class MapElement(object):
         self.spaces = []
         self.spaces_by_label = {}
         if self.has_spaces:
+            #<>TODO: Change this to move_absolute
             self.define_spaces()
 
     def rotate_poly(self, angle, rotation_point):
@@ -186,8 +199,15 @@ class MapElement(object):
 
         self.shape = Polygon(pts)
 
+    def get_patch(self, **kwargs):
+        """Returns a polygon patch of the object for plotting purposes"""
+        patch = PolygonPatch(self.shape, facecolor=self.color,
+                             alpha=self.alpha, zorder=2, **kwargs)
+        return patch
+
     def plot(self, ax=None, alpha=0.5, plot_spaces=False, **kwargs):
-        """Plot the map_element as a polygon patch.
+        """DO NOT USE
+        Plot the map_element as a polygon patch.
 
         plot_spaces : bool, optional
             Plot the map element's spaces if true. Defaults to `False`.
@@ -202,14 +222,17 @@ class MapElement(object):
         ----
             The spaces can be plotted without the shape if the shape's
             ``visible`` attribute is False, but ``plot_spaces`` is True.
+
+            DO NOT USE, use get_patch and plot using the shapelayer
         """
         if not ax:
             ax = plt.gca()
 
-        patch = PolygonPatch(self.shape, facecolor=self.default_color,
+        patch = PolygonPatch(self.shape, facecolor=self.color,
                              alpha=alpha, zorder=2, **kwargs)
         ax.add_patch(patch)
 
+        logging.warn('You should use get_patch instead of plot')
         return patch
 
     def __str___(self):
@@ -227,16 +250,23 @@ class MapObject(MapElement):
     long description of MapObject
     """
 
-    def __init__(self, name, shape_pts, color_str='darkseagreen', visible=True,
-                 has_spaces=True, **kwargs):
+    def __init__(self, name, shape_pts, color_str='darkseagreen', alpha=0.9,
+                 visible=True, blocks_camera=True, has_spaces=True,
+                 plot_spaces=False, **kwargs):
         super(MapObject, self).__init__(name, shape_pts,
                                         color_str=color_str,
                                         visible=visible,
+                                        blocks_camera=blocks_camera,
                                         has_spaces=has_spaces,
+                                        plot_spaces=plot_spaces,
+                                        alpha=alpha,
                                         **kwargs
                                         )
         if self.has_spaces:
             self.define_spaces()
+            self.plot_spaces = plot_spaces
+        else:
+            plot_spaces = False
 
     def define_spaces(self):
             """Create a multimodal softmax model of spatial relationships.
@@ -246,8 +276,6 @@ class MapObject(MapElement):
             # self.spaces = intrinsic_space_model(self.shape)
             self.spaces = binary_intrinsic_space_model(self.shape)
 
-    def plot(self, ax=None, alpha=0.9, **kwargs):
-            super(MapObject, self).plot(ax=ax, alpha=alpha, **kwargs)
 
 
 class MapArea(MapElement):
@@ -257,18 +285,23 @@ class MapArea(MapElement):
 
     """
 
-    def __init__(self, name, shape_pts, color_str='blanchedalmond',
-                 show_name=True, visible=False, has_spaces=True,
-                 *args, **kwargs):
+    def __init__(self, name, shape_pts, color_str='blanchedalmond', alpha=0.9,
+                 visible=False, blocks_camera=False, has_spaces=True,
+                 plot_spaces=False, **kwargs):
         super(MapArea, self).__init__(name, shape_pts,
                                       color_str=color_str,
                                       visible=visible,
+                                      blocks_camera=blocks_camera,
                                       has_spaces=has_spaces,
+                                      plot_spaces=plot_spaces,
+                                      alpha=alpha,
                                       **kwargs
                                       )
-        self.show_name = show_name
         if self.has_spaces:
             self.define_spaces()
+            self.plot_spaces = plot_spaces
+        else:
+            self.plot_spaces = False
 
     def define_spaces(self):
         """Create a multimodal softmax model of spatial relationships.
@@ -278,9 +311,10 @@ class MapArea(MapElement):
         self.spaces = range_model(self.shape)
         # self.spaces = binary_range_model(self.shape)
 
-    def plot(self, ax=None, alpha=0.2, **kwargs):
-        super(MapArea, self).plot(ax=ax, alpha=alpha, **kwargs)
-        if self.show_name:
-            if not ax:
-                ax = plt.gca()
-            ax.annotate(self.name, self.pose[:2])
+    # Handle with Information
+    # def plot(self, ax=None, alpha=0.2, **kwargs):
+    #     super(MapArea, self).plot(ax=ax, alpha=alpha, **kwargs)
+    #     if self.show_name:
+    #         if not ax:
+    #             ax = plt.gca()
+    #         ax.annotate(self.name, self.pose[:2])

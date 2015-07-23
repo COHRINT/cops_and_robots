@@ -3,15 +3,22 @@
 */
 
 //Set up primary ROS master
-var rosurl =  'ws://fleming.recuv.org'; //commonly at 128.138.157.84
+// var rosurl =  'ws://fleming.recuv.org'; //commonly at 128.138.157.84
+// var rosMaster = new ROSLIB.Ros({
+//   url : rosurl + ':9090'
+// });
+
+
+var rosurl =  'ws://127.0.0.1'; //commonly at 128.138.157.84
 var rosMaster = new ROSLIB.Ros({
   url : rosurl + ':9090'
 });
 
 
+
 //Set up robot objects
 var settings = [];
-var robotNames = ['deckard','roy','pris','zhora','leon'];
+var robotNames = ['deckard','roy','pris','zhora'];
 var robotPorts = [':9091',':9092',':9093',':9094'];
 
 var robots = []
@@ -37,12 +44,74 @@ for (i = 0;  i < robotNames.length; i++){
 * Output to time-stamped interface console
 * @param {String} str
 */
+
+
+/*
+* Publishes a message to the input history console
+*/
 function consoleOut(str){
+ 	var history = jQuery("#codeHistoryBody");
 	var dt = new Date();
 	var time = dt.getHours() + ":" + dt.getMinutes() + ":" + dt.getSeconds();
+
 	jQuery("<code>[" + time + "] " + str + "</code> <br />").appendTo("#codeHistoryBody");
 	jQuery("#codeHistoryBody").scrollTop(jQuery("#codeHistoryBody")[0].scrollHeight);
 }
+
+/*
+* Subscribes to question topic and sets up the robot updates panel
+*/
+function robotUpdateSetup(){
+
+	var questioner = new ROSLIB.Topic({
+		ros : rosMaster,
+		name: '/questions',
+		messageType : 'cops_and_robots_ros/Question'
+	});	
+
+
+	questioner.subscribe(function(message) {
+	  updateRobotQuestions(message.questions, message.weights);
+	});
+}
+robotUpdateSetup();
+/*
+* Updates the robot question panel based on ROS messages
+*/
+function updateRobotQuestions(publishedQuestions, questionValues){
+	
+	// Check if we get the right number and type/value of questions
+	for(i = 0; i<questionValues.length; i++){
+		if((questionValues.length != 5) || (questionValues[i] > 1) || (questionValues[i] < 0)){
+			console.log("Not getting properly formed questions.");
+			return;
+		}
+	}
+
+	// Turn them all into precentages
+	for(i = 0; i < questionValues.length; i++){
+		questionValues[i] = questionValues[i] *100;
+	}
+
+	var values = questionValues.slice();	
+	var questions = publishedQuestions;
+
+	//Send to pct_weights and robo_questions to index.php to be published in progress bars
+
+	// Set text and weight for questions
+	for(i = 0; i < 5; i++){
+		$('#question_' + i + ' div p').html(questions[i]);
+		$('#question_' + i + ' div').attr("aria-valuenow", values[i].toString());
+		$('#question_' + i + ' div').css("width", values[i].toString() + "%");
+		console.log('#question_' + i + ' div p')
+		console.log(questions[i]);
+		console.log(values[i]);
+		
+	}
+	
+
+}
+
 
 
 /**
@@ -54,7 +123,7 @@ function selectControl(robot){
     	if (robot === robots[i].nicename){
 	    	robots[i].control = true;
     	    settings.commandTopic = robots[i].commandTopic;
-    	} else{
+    	} else {
 	    	robots[i].control = false;
     	}
     }
@@ -62,7 +131,6 @@ function selectControl(robot){
     var str = "Controlling " + robot + "." ;
     consoleOut(str);
 }
-
 
 /**
 * Select either Deckard's real camera or the view of any simulated robot
@@ -91,27 +159,24 @@ function checkSettings(){
 
  	var vicon = jQuery("#setting-source-vicon");
 	var gazebo= jQuery("#setting-source-gazebo");
-	var diff_settings = [vicon, gazebo];
-	var v_ports =[":9021", ":9023", ":9022", ":9024", ":9041", ":9042", ":9043"];
-	var v_topics = ["/camera/rgb/image_raw", "TOPIC", "TOPIC", "TOPIC", "TOPIC", "TOPIC", "TOPIC", "TOPIC"];
-	var g_ports =[":9011", ":9013", ":9012", ":9014", ":9031", ":9031", ":9033"];
-	var g_topics = ["deckard/camera/image_raw/theora", "pris/camera/image_raw/theora", "roy/camera/image_raw/theora", "zhora/camera/image_raw/theora", "security_camera1/camera/image_raw/theora", "security_camera2/camera/image_raw/theora", "security_camera3/camera/image_raw/theora"]; 
-	var ports = [v_ports, g_ports];
-	var topics =[v_topics, g_topics];
-	var ids = ["#deckard-camera-visual", "#pris-camera-visual", "#roy-camera-visual", "#zhora-camera-visual", "#camera1-visual", "#camera2-visual", "#camera3-visual"];
+	var diffSettings = [vicon, gazebo];
+	var vPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
+	var vTopics = ["/camera/rgb/image_raw", "TOPIC", "TOPIC", "TOPIC", "usb_cam1/image_raw", "usb_cam2/image_raw", "usb_cam3/image_raw"];
+	var gPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
+	var gTopics = ["deckard/camera/image_raw", "pris/camera/image_raw", "roy/camera/image_raw", "zhora/camera/image_raw", "security_camera1/camera/image_raw", "security_camera2/camera/image_raw", "security_camera3/camera/image_raw"]; 
+	var ports = [vPorts, gPorts];
+	var topics =[vTopics, gTopics];
+	var ids = ["#deckard-visual", "#pris-visual", "#roy-visual", "#zhora-visual", "#camera1-visual", "#camera2-visual", "#camera3-visual"];
 
-    for(i = 0; i<diff_settings.length; i++){
-    	if(diff_settings[i].parent().hasClass('active') == true){
+    for(i = 0; i<diffSettings.length; i++){
+    	if(diffSettings[i].parent().hasClass('active') == true){
 	      for(j=0; j<ports[i].length; j++){
-	      $(ids[j]).attr("src", "http://flemming.recov.org"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
+	      	// $(ids[j]).attr("src", "http://flemming.recov.org"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
+	      	$(ids[j]).attr("src", "http://127.0.0.1"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
 	  	  }
 	  	  break;	 
 		}
     }
-
-
-
-
 
 	consoleOut('Data source: ' + settings.dataSource );
 	
@@ -161,63 +226,63 @@ function init() {
 	//Toggle velocity fields
 		//Toggle velocity fields
 
-	var pos_obj = jQuery("#Position_obj");
-	var pos_area = jQuery("#position_area");
+	var posObj = jQuery("#Position_obj");
+	var posArea = jQuery("#position_area");
 	var moving = jQuery("#Movement");
 
-	var certainties_obj = document.getElementById("obj_certainties");
-	var targets_obj = document.getElementById("obj_targets");
-	var positivities_obj = document.getElementById("obj_positivities");
-	var object_relations = document.getElementById("obj_relations");
+	var certaintiesObj = document.getElementById("obj_certainties");
+	var targetsObj = document.getElementById("obj_targets");
+	var positivitiesObj = document.getElementById("obj_positivities");
+	var objectRelations = document.getElementById("obj_relations");
 	var objects = document.getElementById("obj");
-	var certainties_area = document.getElementById("area_certainties");
-	var targets_area = document.getElementById("area_targets");
-	var positivities_area = document.getElementById("area_positivities")
-	var area_relations = document.getElementById("area_relation");
+	var certaintiesArea = document.getElementById("area_certainties");
+	var targetsArea = document.getElementById("area_targets");
+	var positivitiesArea = document.getElementById("area_positivities");
+	var areaRelations = document.getElementById("area_relation");
 	var areas = document.getElementById("area");
-	var certainties_mv = document.getElementById("mv_certainties");
-	var targets_mv = document.getElementById("mv_targets");
-	var positivities_mv = document.getElementById("mv_positivities")
-	var movement_types = document.getElementById("mv_types");
-	var movement_qualities = document.getElementById("mv_qualities");
+	var certaintiesMv = document.getElementById("mv_certainties");
+	var targetsMv = document.getElementById("mv_targets");
+	var positivitiesMv = document.getElementById("mv_positivities");
+	var movementTypes = document.getElementById("mv_types");
+	var movementQualities = document.getElementById("mv_qualities");
 
-	var tabs = [pos_obj, pos_area, moving];
-	var certainty_cases = [certainties_obj, certainties_area, certainties_mv];
-	var target_cases = [targets_obj, targets_area, targets_mv];
-	var positivity_cases = [positivities_obj, positivities_area, positivities_mv];
-	var discribers = [object_relations, area_relations, movement_types];
-	var specifications = [objects, areas, movement_qualities];
+	var tabs = [posObj, posArea, moving];
+	var certaintyCases = [certaintiesObj, certaintiesArea, certaintiesMv];
+	var targetCases = [targetsObj, targetsArea, targetsMv];
+	var positivityCases = [positivitiesObj, positivitiesArea, positivitiesMv];
+	var discribers = [objectRelations, areaRelations, movementTypes];
+	var specifications = [objects, areas, movementQualities];
 	
 	
-	targets_obj.onchange = function(){
-		if(targets_obj.value == "nothing"){
-			positivities_obj.options[1].style.display="none";
+	targetsObj.onchange = function(){
+		if(targetsObj.value == "nothing"){
+			positivitiesObj.options[1].style.display="none";
 		}else{
-			positivities_obj.options[1].style.display="inline";
+			positivitiesObj.options[1].style.display="inline";
 		}
 	}
 
-	targets_area.onchange = function(){
-		if(targets_area.value == "nothing"){
-			positivities_area.options[1].style.display="none";
+	targetsArea.onchange = function(){
+		if(targetsArea.value == "nothing"){
+			positivitiesArea.options[1].style.display="none";
 		}else{
-			positivities_area.options[1].style.display="inline";
+			positivitiesArea.options[1].style.display="inline";
 		}
 	}
 
-	targets_mv.onchange = function(){
-		if(targets_mv.value == "nothing"){
-			positivities_mv.options[1].style.display="none";
+	targetsMv.onchange = function(){
+		if(targetsMv.value == "nothing"){
+			positivitiesMv.options[1].style.display="none";
 		}else{
-			positivities_mv.options[1].style.display="inline";
+			positivitiesMv.options[1].style.display="inline";
 		}
 	}
 
-	movement_types.onchange = function(){
-		if(movement_types.value == "stopped"){
-			movement_qualities.style.display="none";
+	movementTypes.onchange = function(){
+		if(movementTypes.value == "stopped"){
+			movementQualities.style.display="none";
 		}else{
-			movement_qualities.style.display="inline";
+			movementQualities.style.display="inline";
 		}
 	}
 
@@ -228,9 +293,9 @@ function init() {
 	    var s = [];
 	    for(i = 0; i<tabs.length; i++){
 	    	if(tabs[i].hasClass('active') == true){
-	    		s[1] = certainty_cases[i];
-			    s[2] = target_cases[i];
-			    s[3] = positivity_cases[i];
+	    		s[1] = certaintyCases[i];
+			    s[2] = targetCases[i];
+			    s[3] = positivityCases[i];
 			    s[4] = discribers[i];
 			    s[5] = specifications[i];
 	    		break;
@@ -249,7 +314,7 @@ function init() {
 		     }
 	    }
 	    
-		var str = 	["" 		+ return_str[1],
+		var str = 	[""         + return_str[1],
 				  	" " 		+ return_str[2],
 				  	" " 		+ return_str[3],
 				  	" " 		+ return_str[4],
@@ -329,6 +394,22 @@ function init() {
 	console.log('Received message on ' + poseListener.name + ': ' + message.translation);
 	});
 */	
+}
+
+/**
+* Uses ajax to call bash script
+*/
+function callScript(arg){
+    jQuery.ajax({ 
+    	type: "POST",
+        url: "/bash/start_stop.sh",
+        dataType: "script",
+        data:{setting: arg},  
+        async: true,
+        success: function(body){  
+            alert('response received: ' + arg);              
+        } 
+    }); 
 
 }
 
@@ -348,11 +429,50 @@ jQuery(document).ready(function(){
 jQuery('#settings-save').click(function(){
 	checkSettings();
 	$('#settings').modal('hide');
-})
+});
 
 jQuery('#start-stop').click(function(){
+
+	var vicon = jQuery("#setting-source-vicon");
+	var gazebo= jQuery("#setting-source-gazebo");
+	var diffSettings = [vicon, gazebo];
+	var activeSet = ['vicon', 'gazebo'];
+
     jQuery(this).toggleClass("btn-success");
     jQuery(this).toggleClass("btn-danger");			        
     jQuery(this).children("span").toggleClass("glyphicon-play");
-    jQuery(this).children("span").toggleClass("glyphicon-stop");			        
+    jQuery(this).children("span").toggleClass("glyphicon-stop");	
+
+    var setting = '';
+    for(i = 0; i<diffSettings.length; i++){
+    	if(diffSettings[i].parent().hasClass('active') == true){
+    		setting = activeSet[i];
+    		break;
+    	}
+    }
+
+    callScript(setting);
+
+	// var childExec = require('child_process');
+	// console.log(childExec);
+	// console.log(childExec.execFile);
+	// function getMethods(obj) {
+	//   var result = [];
+	//   for (var id in obj) {
+	//     try {
+	//       if (typeof(obj[id]) == "function") {
+	//         result.push(id + ": " + obj[id].toString());
+	//       }
+	//     } catch (err) {
+	//       result.push(id + ": inaccessible");
+	//     }
+	//   }
+	//   return result;
+	// }
+	// console.log(getMethods(childExec));
+
+	// childExec.execFile('./bash/start_stop.sh', [setting], {}, function (error, stdout, stderr) {
+	// 	console.log('Hi!!')
+	// });
+         
 });

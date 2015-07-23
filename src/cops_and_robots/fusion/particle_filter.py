@@ -53,7 +53,7 @@ class ParticleFilter(object):
 
     """
     def __init__(self, target_name, feasible_layer, motion_model='stationary',
-                 n_particles=500, state_spec='x y x_dot y_dot', 
+                 n_particles=500, state_spec='x y x_dot y_dot',
                  v_params=[0, 0.1]):
         self.target_name = target_name
         self.bounds = feasible_layer.bounds
@@ -126,7 +126,7 @@ class ParticleFilter(object):
         """
         rotational_scale_factor = 5
 
-        # Add states to each particle - xdot and ydot. human sensor update should modify the 
+        # Add states to each particle - xdot and ydot. human sensor update should modify the
         if self.motion_model == 'random walk':
             for particle in self.particles:
                 if particle[1] < self.bounds[0] or particle[1] > self.bounds[2]:
@@ -213,10 +213,12 @@ class ParticleFilter(object):
         # self.particles[:, 2] = 0
         # self.particles[index] = 1
 
-        if self.state_spec == 'x y x_dot y_dot':
-            self.particles = np.zeros((1,5))
-        else:
-            self.particles = np.zeros((1,3))
+        # self.particles = np.column_stack(([],[],[]))
+        # self.particles = 'Finished'
+        # if self.state_spec == 'x y x_dot y_dot':
+        #     self.particles = np.zeros((1,5))
+        # else:
+        #     self.particles = np.zeros((1,3))
         self.finished = True
 
 

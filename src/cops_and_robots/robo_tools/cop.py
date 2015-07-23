@@ -22,15 +22,15 @@ __status__ = "Development"
 import logging
 import numpy as np
 
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib.colors import cnames
 from shapely.geometry import Point
 
+from cops_and_robots.robo_tools.robber import ImaginaryRobber
 from cops_and_robots.robo_tools.robot import Robot
+from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
 from cops_and_robots.fusion.fusion_engine import FusionEngine
 from cops_and_robots.fusion.camera import Camera
 from cops_and_robots.fusion.human import Human
+from cops_and_robots.map_tools.map_elements import MapObject
 
 
 class Cop(Robot):
@@ -51,8 +51,6 @@ class Cop(Robot):
         For particle filters or gaussian mixture filters, respectively.
     planner_type: {'simple', 'particle', 'MAP'}
         The cop's own type of planner.
-    cop_model: {'stationary', 'random walk', 'clockwise', 'counterclockwise'}
-        The type of planner this cop believes other cops use.
     robber_model: {'stationary', 'random walk', 'clockwise',
       'counterclockwise'}
         The type of planner this cop believes robbers use.
@@ -74,51 +72,103 @@ class Cop(Robot):
 
     """
     mission_statuses = ['searching', 'capturing', 'retired']
+    goal_planner_defaults = {'type_': 'particle',
+                             'use_target_as_goal': False}
 
     def __init__(self,
-                 name="Deckard",
+                 name,
                  pose=[0, 0, 90],
                  pose_source='python',
-                 publish_to_ROS=False,
-                 fusion_engine_type='particle',
-                 goal_planner_type='particle',
-                 cop_model='simple',
-                 robber_model='random walk'):
+                 missing_robber_names=[],
+                 other_cop_names=[],
+                 robber_model='static',
+                 map_cfg={},
+                 goal_planner_cfg={},
+                 camera_cfg={},
+                 **kwargs):
+        # Use class defaults for kwargs not included
+        gp_cfg = Cop.goal_planner_defaults.copy()
+        gp_cfg.update(goal_planner_cfg)
+
+        # Configure fusion and map based on goal planner
+        if gp_cfg['type_'] == 'particle':
+            fusion_engine_type = 'particle'
+            map_display_type = 'particle'
+        elif gp_cfg['type_'] == 'MAP':
+            fusion_engine_type = 'gauss sum'
+            map_display_type = 'probability'
+        # TODO: Refrence in yaml instead?
+        map_cfg.update({'map_display_type': map_display_type})
 
         # Superclass and compositional attributes
         super(Cop, self).__init__(name,
                                   pose=pose,
                                   pose_source=pose_source,
-                                  publish_to_ROS=publish_to_ROS,
-                                  role='cop',
-                                  map_display_type=fusion_engine_type,
+                                  goal_planner_cfg=gp_cfg,
+                                  map_cfg=map_cfg,
                                   mission_status='searching',
-                                  consider_others=True,
                                   color_str='darkgreen')
 
         # Tracking attributes
+        self.other_cop_names = other_cop_names
+        self.missing_robber_names = missing_robber_names
         self.found_robbers = {}
-        self.goal_planner.use_target_as_goal = False
-        self.goal_planner.type = goal_planner_type
 
         # Fusion and sensor attributes
-        robber_names = [a.name for a in self.missing_robbers.values()]
+        # <>TODO: Fusion Engine owned and refrenced from imaginary robber?
         self.fusion_engine = FusionEngine(fusion_engine_type,
-                                          robber_names,
+                                          self.missing_robber_names,
                                           self.map.feasible_layer,
-                                          self.map.shape_layer,
                                           robber_model)
         self.sensors = {}
-        self.sensors['camera'] = Camera((0, 0, 0))
-        self.sensors['human'] = Human(self.map, robber_names)
+        self.sensors['camera'] = Camera((0, 0, 0),
+                                        element_dict=self.map.element_dict,
+                                        **camera_cfg)
+        self.map.dynamic_elements.append(self.sensors['camera'].viewcone)
+
+        # Add self to map
+        self.map.add_cop(self.map_obj)
+
+        # Make others
+        self.make_others()
+
+        # Add human sensor after robbers have been made
+        self.sensors['human'] = Human(self.map)
         self.map.add_human_sensor(self.sensors['human'])
 
-        # Animation attributes
-        self.update_rate = 1  # [Hz]
-        self.show_animation = False
-        self.stream = self.map.animation_stream()
+    def make_others(self):
+        # <>TODO: Make generic, so each robot has an idea of all others
+        # <>TODO: Move to back to Robot
+        """Generate robot objects for all other robots.
 
-        self.prev_status = []
+        Create personal belief (not necessarily true!) of other robots,
+        largely regarding their map positions. Their positions are
+        known to the 'self' robot, but this function will be expanded
+        in the future to include registration between robots: i.e.,
+        optional pose and information sharing instead of predetermined
+        sharing.
+
+        """
+
+        # Robot  MapObject
+        shape_pts = Point([0, 0, 0]).buffer(iRobotCreate.DIAMETER / 2)\
+            .exterior.coords
+
+        # <>TODO: Implement imaginary class for more robust models
+        self.missing_robbers = {}
+        for name in self.missing_robber_names:
+            self.missing_robbers[name] = ImaginaryRobber(name)
+            # Add robber objects to map
+            self.missing_robbers[name].map_obj = MapObject(name,
+                                                           shape_pts[:],
+                                                           has_spaces=False,
+                                                           blocks_camera=False,
+                                                           color_str='none')
+            # <>TODO: allow no display individually for each robber
+            self.map.add_robber(self.missing_robbers[name].map_obj)
+            # All will be at 0,0,0 until actually pose is given.
+            # init_pose =
+            # self.missing_robbers[name].map_obj.move_absolute(init_pose)
 
     def update_mission_status(self):
         # <>TODO: Replace with MissionPlanner
@@ -135,84 +185,26 @@ class Cop(Robot):
                 self.mission_planner.stop_all_movement()
 
     def update(self, i=0):
-        super(Cop, self).update()
+        super(Cop, self).update(i=i)
 
         # Update sensor and fusion information
-        # Try to visually spot a robber
-        for robber in self.missing_robbers.values():
-            if self.sensors['camera'].viewcone.shape.contains(Point(robber.pose2D.pose)):
-                robber.mission_status = 'captured'
-                logging.info('{} captured!'.format(robber.name))
-                self.fusion_engine.filters[robber.name].robber_detected(robber.pose2D.pose)
-                self.found_robbers.update({robber.name: self.missing_robbers.pop(robber.name)})
-                self.map.rem_robber(robber.name)
+        # irobber - Imaginary robber
+        for irobber in self.missing_robbers.values():
+            point = Point(irobber.pose[0:2])
+            # Try to visually spot a robber
+            if self.sensors['camera'].viewcone.shape.contains(point):
+                self.map.found_robber(irobber.map_obj)
+                logging.info('{} captured!'.format(irobber.name))
+                self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose)
+                self.found_robbers.update({irobber.name:
+                                           self.missing_robbers.pop(irobber.name)})
+            # Update robber's shapes
+            else:
+                self.missing_robbers[irobber.name].map_obj.move_absolute(irobber.pose)
+            # except:
+            #     logging.warn('{} has no pose, and can\'t be detected'
+            #                  .format(irobber.name))
 
         # Update probability model
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
                                   self.missing_robbers)
-        # Export the next animation stream
-        if self.role == 'cop' and self.show_animation:
-            packet = {}
-            if not self.map.combined_only:
-                for i, robber_name in enumerate(self.missing_robbers):
-                    packet[robber_name] = \
-                        self._form_animation_packet(robber_name)
-            packet['combined'] = self._form_animation_packet('combined')
-            return self.stream.send(packet)
-
-    def _form_animation_packet(self, robber_name):
-        """Turn all important animation data into a tuple.
-
-        Parameters
-        ----------
-        robber_name : str
-            The name of the robber (or 'combined') associated with this packet.
-
-        Returns
-        -------
-        tuple
-            All important animation parameters.
-
-        """
-        # Cop-related values
-        cop_shape = self.map_obj.shape
-        if len(self.pose_history) < self.goal_planner.stuck_buffer:
-            cop_path = np.hsplit(self.pose_history[:, 0:2], 2)
-        else:
-            cop_path = np.hsplit(self.pose_history[-self.goal_planner.stuck_buffer:, 0:2],
-                                 2)
-
-        camera_shape = self.sensors['camera'].viewcone.shape
-
-        # Robber-related values
-        if self.fusion_engine.filter_type == 'particle':
-            particles = self.fusion_engine.filters[robber_name].particles
-            distribution = None
-        else:
-            distribution = self.fusion_engine.filters[robber_name].probability
-            particles = None
-        if robber_name == 'combined':
-            robber_shape = {name: robot.map_obj.shape for name, robot
-                            in self.missing_robbers.iteritems()}
-        else:
-            robber_shape = self.missing_robbers[robber_name].map_obj.shape
-
-        # Form and return packet to be sent
-        packet = (cop_shape, cop_path, camera_shape, robber_shape, particles, distribution)
-        return packet
-
-    def animated_exploration(self):
-        """Start the cop's exploration of the environment, while
-        animating the world from the cop's perspective.
-
-        """
-        # <>TODO fix frames (i.e. stop animation once done)
-        self.show_animation = True
-        self.ani = animation.FuncAnimation(self.map.fig,
-                                           self.update,
-                                           frames=self.num_goals,
-                                           interval=5,
-                                           init_func=self.map.setup_plot,
-                                           blit=False)
-        next(self.stream)  # advance the generator once so we can send to it
-        plt.show()

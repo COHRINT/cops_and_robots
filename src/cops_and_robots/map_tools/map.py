@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
+from cops_and_robots.helpers.config import load_config
 from cops_and_robots.map_tools.map_elements import MapObject, MapArea
 from cops_and_robots.map_tools.shape_layer import ShapeLayer
 from cops_and_robots.map_tools.occupancy_layer import OccupancyLayer
@@ -57,15 +58,27 @@ class Map(object):
         for each robber, plus one combined plot). Defaults to `True`.
 
     """
-    def __init__(self, mapname, bounds, display_type='particle',
+    def __init__(self, map_name='fleming', bounds=[-5, -5, 5, 5],
+                 plot_robbers=True, map_display_type='particle',
                  combined_only=True):
+
+        # <>TODO: Move to main?
+        self.human_cfg = load_config()['human_interface']
+
         # Define map properties
-        self.mapname = mapname
-        self.bounds = bounds  # [x_min,y_min,x_max,y_max] in [m] useful area
+        self.map_name = map_name
+        # <>TODO: Clean this up- add seperate map creation function?
+        if self.map_name == 'fleming':
+            self.bounds = [-9.5, -3.33, 4, 3.68]
+        else:
+            self.bounds = bounds  # [x_min,y_min,x_max,y_max] in [m] useful area
+
+        self.plot_robbers = plot_robbers
         self.outer_bounds = [i * 1.1 for i in self.bounds]
         self.origin = [0, 0]  # in [m]
-        self.fig = plt.figure(1, figsize=(12, 10))
-        self.display_type = display_type
+        self.fig = plt.figure(1, figsize=(14, 10))
+        # <>TODO: Make display type relative to each robber
+        self.display_type = map_display_type
         self.combined_only = combined_only
 
         # Define map elements
@@ -74,13 +87,25 @@ class Map(object):
         self.cops = {}
         self.robbers = {}
 
+        self.dynamic_elements = []
+        self.static_elements = []
+        self.information_elements = []
+        self.element_dict = {'dynamic': self.dynamic_elements,
+                             'static': self.static_elements,
+                             'information': self.information_elements}
+
         # Define layers
-        self.shape_layer = ShapeLayer(bounds=bounds)
-        self.feasible_layer = FeasibleLayer(bounds=bounds)
-        if self.display_type is 'particle':
-            self.particle_layer = {}  # One per robber, plus one combined
+        self.shape_layer = ShapeLayer(self.element_dict, bounds=self.bounds)
+        self.feasible_layer = FeasibleLayer(bounds=self.bounds)
+
+        self.particle_layers = {}  # One per robber, plus one combined
+        self.probability_layers = {}  # One per robber, plus one combined
+
+        # Set up map
+        if self.map_name == 'fleming':
+            set_up_fleming(self)  # <>TODO: make a generic 'setup map' function
         else:
-            self.probability_layer = {}  # One per robber, plus one combined
+            pass
 
     def add_human_sensor(self, human_sensor):
         # Add human sensor for the human interface
@@ -95,26 +120,26 @@ class Map(object):
             The object to be added.
         """
         self.objects[map_obj.name] = map_obj
-        # self.occupancy_layer.add_obj(map_obj)
-        self.shape_layer.add_obj(map_obj)
-        self.feasible_layer.define_feasible_regions(self.shape_layer)
+        self.static_elements.append(map_obj)
+        self.feasible_layer.define_feasible_regions(self.static_elements)
 
-    def rem_obj(self, map_obj_name):
-        """Remove a ``MapObj`` from the Map by its name.
+    def rem_obj(self, map_obj):
+        """Remove a ``MapObj`` from the Map.
 
-        map_obj_name : str
-            Name of the map object.
+        map_obj : map_obj
+            Map object to remove.
         """
-        self.shape_layer.rem_obj(map_obj_name)
-        self.feasible_layer.define_feasible_regions(self.shape_layer)
-        # self.occupancy_layer.rem_obj(self.objects[map_obj_name])
-        del self.objects[map_obj_name]
+        self.static_elements.remove(map_obj)
+        self.feasible_layer.define_feasible_regions(self.static_elements)
+        del self.objects[map_obj.name]
 
-    def add_area(self, label, area):
-        self.areas[label] = area
+    def add_area(self, area):
+        self.areas[area.name] = area
+        self.static_elements.append(area)
 
-    def rem_area(self, label):
-        del self.areas[label]
+    def rem_area(self, area):
+        self.static_elements.remove(area)
+        del self.areas[area.name]
 
     def add_cop(self, cop_obj):
         """Add a dynamic ``Robot`` cop from the Map
@@ -122,78 +147,118 @@ class Map(object):
         cop_obj : Cop
             The full cop object.
         """
-        # self.shape_layer.add_obj(cop)
+        self.dynamic_elements.append(cop_obj)
         self.cops[cop_obj.name] = cop_obj
 
-    def rem_cop(self, cop_name):
-        """Remove a dynamic ``Robot`` cop from the Map by its name.
+    def rem_cop(self, cop_obj):
+        """Remove a dynamic ``Robot`` cop
 
-        cop_name : str
-            Name of the cop.
+        cop_obj :
+            Cop
         """
-        # self.shape_layer.rem_obj(cop_name)
-        del self.cops[cop_name]
+        self.dynamic_elements.remove(cop_obj)
+        del self.cops[cop_obj.name]
 
     def add_robber(self, robber):
+        # <>TODO: Make generic imaginary robbers
         """Add a dynamic ``Robot`` robber from the Map.
 
         robber_obj : Robber
             The full robber object.
         """
+        if self.plot_robbers is True:
+            robber.visible = True
+        elif self.plot_robbers is False:
+            robber.visible = False
+        elif robber.name not in self.plot_robbers:
+            robber.visible = False
+
+        self.dynamic_elements.append(robber)
         self.robbers[robber.name] = robber
-        if self.display_type == 'particle':
-            self.particle_layer[robber.name] = ParticleLayer(bounds=self.bounds)
-        else:
-            self.probability_layer[robber.name] = ProbabilityLayer(fig=self.fig, bounds=self.bounds)
 
-    def rem_robber(self, robber_name):
-        """Remove a dynamic ``Robot`` robber from the Map by its name.
+    def rem_robber(self, robber):
+        """Remove a dynamic ``Robot`` robber.
 
-        robber_name : str
-            Name of the robber.
+        robber : obj
+            The robber.
         """
-        # self.shape_layer.rem_obj(robber_name)
-        del self.robbers[robber_name]
-        if self.display_type == 'particle':
-            del self.particle_layer[robber_name]
-        else:
-            del self.probability_layer[robber_name]
+        robber.patch.remove()
+        self.dynamic_elements.remove(robber)
+        try:
+            if self.fusion_engine is not None:
+                if self.display_type == 'particle':
+                    self.particle_layers[robber.name].remove()
+                    del self.particle_layers[robber.name]
+                elif self.display_type == 'probability':
+                    del self.probability_layers[robber.name]
+        except:
+            #<>TODO: actually catch other exceptions here
+            logging.debug('No layer to remove.')
 
-    def plot(self, show_areas=False):
-        """Plot the static map.
+        del self.robbers[robber.name]
+
+    def found_robber(self, robber):
+        """Make the robber visible, remove it's particles.
 
         """
-        fig = plt.figure(1, figsize=(12, 10))
-        ax = fig.add_subplot(111)
-        self.shape_layer.plot(plot_spaces=False, ax=ax)
+        robber.visible = True
+        robber.color = 'darkorange'
+        try:
+            if self.display_type == 'particle':
+                self.particle_layers[robber.name].remove()
+                del self.particle_layers[robber.name]
+            elif self.display_type == 'probability':
+                self.probability_layers[robber.name].remove()
+                del self.probability_layers[robber.name]
+        except:
+            #<>TODO: actually catch other exceptions here
+            logging.debug('No layer to remove.')
 
-        if show_areas:
-            for _, area in self.areas.iteritems():
-                area.plot()
 
-        ax.set_xlim([self.bounds[0], self.bounds[2]])
-        ax.set_ylim([self.bounds[1], self.bounds[3]])
-        ax.set_title('Experimental environment with landmarks and areas')
-        plt.show()
+    # def plot(self):
+    #     """Plot the static map.
 
-    def setup_plot(self):
+    #     """
+    #     # <>TODO: Needs rework
+    #     fig = plt.figure(1, figsize=(12, 10))
+    #     ax = fig.add_subplot(111)
+    #     self.shape_layer.update_plot(update_static=True)
+
+    #     ax.set_xlim([self.bounds[0], self.bounds[2]])
+    #     ax.set_ylim([self.bounds[1], self.bounds[3]])
+    #     ax.set_title('Experimental environment with landmarks and areas')
+    #     plt.show()
+
+    def setup_plot(self, fusion_engine=None):
         """Create the initial plot for the animation.
         """
-        self.ax_list = {}
+        logging.info('Setting up plot')
+        self.fusion_engine = fusion_engine
+        self._setup_axes()
+        self._setup_layers()
+        
+        # Set up the human interface
+        if self.human_sensor:
+            HumanInterface(self.fig, self.human_sensor, **self.human_cfg)
+
+    def _setup_axes(self):
+        self.axes = {}
         if len(self.robbers) == 1:
-            self.ax_list[self.robbers] = self.fig.add_subplot(111)
+            self.axes[self.robbers] = self.fig.add_subplot(111)
         elif self.combined_only:
-            self.ax_list['combined'] = self.fig.add_subplot(111)
+            self.axes['combined'] = self.fig.add_subplot(111)
         else:
             num_axes = len(self.robbers) + 1
             num_rows = int(math.ceil(num_axes / 2))
 
-            for i, robber in enumerate(self.robbers):
+            i = 0
+            for robber_name in self.robbers:
                 ax = plt.subplot2grid((num_rows, 4),
                                       (int(math.floor(i / 2)), (i % 2) * 2),
                                       colspan=2
                                       )
-                self.ax_list[robber] = ax
+                self.axes[robber_name] = ax
+                i += 1
 
             # Add a plot for the combined estimate
             if (num_axes % 2) == 0:
@@ -202,197 +267,59 @@ class Map(object):
             else:
                 ax = plt.subplot2grid((num_rows, 4), (num_rows - 1, 1),
                                       colspan=2)
-            self.ax_list['combined'] = ax
+            self.axes['combined'] = ax
 
-        # Define generic plot elements
-        movement_path = plt.Line2D((0, 0), (0, 0), linewidth=2, alpha=0.4,
-                                    color=cnames['green'])
-        simple_poly = Point((0, 0)).buffer(0.01)
-        if self.display_type == 'particle':
-            arbitrary_particle_layer = next(self.particle_layer.itervalues())
-            init_particles = np.zeros((arbitrary_particle_layer.n_particles, 3))
-            self.particle_scat = {}
-        else:
-            init_distribution = GaussianMixture(1,[0,0],[[1,0],[0,1]])
-            self.prob_plot = {}
-
-        self.cop_patch = {}
-        self.movement_path = {}
-        self.camera_patch = {}
-        self.robber_patch = {}
-
-        # Set up all robber plots
-        if (not self.combined_only) or (len(self.robbers) == 1):
-            for robber in self.robbers:
-                ax = self.ax_list[robber]
-                ax.set_xlim([self.bounds[0], self.bounds[2]])
-                ax.set_ylim([self.bounds[1], self.bounds[3]])
-                ax.set_title('Tracking {}.'.format(robber))
-
-                # Plot static elements
-                self.shape_layer.plot(plot_spaces=False, ax=ax)
-
-                # Define cop path
-                self.cop_patch[robber] = PolygonPatch(simple_poly)
-                ax.add_patch(self.cop_patch[robber])
-
-                # Define cop movement path
-                self.movement_path[robber] = movement_path
-                ax.add_line(self.movement_path[robber])
-
-                # Define camera patch
-                self.camera_patch[robber] = PolygonPatch(simple_poly)
-                ax.add_patch(self.camera_patch[robber])
-
-                # Define robber patch
-                self.robber_patch[robber] = PolygonPatch(simple_poly)
-                ax.add_patch(self.robber_patch[robber])
-
-                if self.display_type == 'particle':
-                    # Define particle scatter plot
-                    self.particle_scat[robber] = \
-                        ax.scatter(init_particles[:, 0],
-                                   init_particles[:, 1],
-                                   c=init_particles[:, 2],
-                                   cmap=arbitrary_particle_layer.cmap,
-                                   s=arbitrary_particle_layer.particle_size,
-                                   lw=arbitrary_particle_layer.line_weight,
-                                   alpha=arbitrary_particle_layer.alpha,
-                                   marker='.',
-                                   vmin=0,
-                                   vmax=1
-                                   )
-                else:
-                    # Define probability contour plot
-                    self.probability_layer[robber].ax = ax
-                    # self.probability_layer[robber].plot(init_distribution)
-
-        # Set up combined plot
-        if (len(self.ax_list) > 1) or self.combined_only:
-            ax = self.ax_list['combined']
-            # Plot setup
+        # Rescale, setup bounds and title
+        for ax_name, ax in self.axes.iteritems():
+            ax.axis('scaled')
             ax.set_xlim([self.bounds[0], self.bounds[2]])
+            ax.set_xlabel('x position (m)')
             ax.set_ylim([self.bounds[1], self.bounds[3]])
-            ax.set_title('Combined tracking of all '
-                                               'remaining targets.')
-
-            # Static elements
-            self.shape_layer.plot(plot_spaces=False,
-                                  ax=ax)
-
-            # Dynamic elements
-            self.cop_patch['combined'] = PolygonPatch(simple_poly)
-            self.movement_path['combined'] = movement_path
-            self.camera_patch['combined'] = PolygonPatch(simple_poly)
-
-            ax.add_patch(self.cop_patch['combined'])
-            ax.add_line(self.movement_path['combined'])
-            ax.add_patch(self.camera_patch['combined'])
-
-            self.robber_patch['combined'] = {}
-            for robber in self.robbers:
-                self.robber_patch['combined'][robber] = \
-                    PolygonPatch(simple_poly)
-                ax\
-                    .add_patch(self.robber_patch['combined'][robber])
-
-            if self.display_type == 'particle':
-                init_combined_particles = init_particles.repeat(3, axis=0)
-                self.particle_scat['combined'] = ax\
-                    .scatter(init_combined_particles[:, 0],
-                             init_combined_particles[:, 1],
-                             c=init_combined_particles[:, 2],
-                             cmap=arbitrary_particle_layer.cmap,
-                             s=arbitrary_particle_layer.particle_size,
-                             lw=arbitrary_particle_layer.line_weight,
-                             alpha=arbitrary_particle_layer.alpha,
-                             marker='.',
-                             vmin=0,
-                             vmax=1
-                             )
+            ax.set_ylabel('y position (m)')
+            if ax_name == 'combined':
+                ax.set_title('Combined perception of all robots')
             else:
-                self.probability_layer['combined'] \
-                    = ProbabilityLayer(fig=self.fig, ax=ax, bounds=self.bounds)
+                ax.set_title("Map of {}'s perceived location".format(ax_name))
 
+    def _setup_layers(self):
+        # Set up basic layers
+        self.shape_layers = {}
+        self.feasible_layers = {}
+        for ax_name, ax in self.axes.iteritems():
+            self.shape_layers[ax_name] = ShapeLayer(self.element_dict,
+                                                    bounds=self.bounds,
+                                                    ax=ax)
 
-        # Set up the human interface
-        if self.human_sensor:
-            HumanInterface(self.fig, self.human_sensor)
+            # Set up probability/particle layers
+            if self.fusion_engine is not None:
+                filter_ = self.fusion_engine.filters[ax_name]
+                if self.display_type == 'particle':
+                    self.particle_layers[ax_name] = ParticleLayer(filter_,
+                                                                  ax=ax)
+                elif self.display_type == 'probability':
+                    self.probability_layers[ax_name] = \
+                        ProbabilityLayer(filter_, fig=self.fig, ax=ax,
+                                         bounds=self.bounds)
 
-    def animation_stream(self):
-        """Update the animated plot.
-
-        This is a generator function that takes in packets of animation
-        data and yields nothing.
-
+    def update(self, i):
         """
-        while True:
-            packet = yield
-            for robber_name, pkt in packet.iteritems():
-                logging.debug("Updating {}'s animation frame."
-                              .format(robber_name))
-
-                (cop_shape, cop_path, camera_shape, robber_shape, particles, distribution)\
-                    = pkt
-
-                # Update cop patch
-                self.cop_patch[robber_name].remove()
-                self.cop_patch[robber_name] = \
-                    PolygonPatch(cop_shape,
-                                 facecolor=cnames['green'],
-                                 alpha=0.9,
-                                 zorder=2)
-                self.ax_list[robber_name]\
-                    .add_patch(self.cop_patch[robber_name])
-
-                # Update movement path
-                # <>TODO: Figure out why this doesn't work for multiple plots
-                self.movement_path[robber_name].set_data(cop_path)
-
-                # Update sensor patch
-                self.camera_patch[robber_name].remove()
-                self.camera_patch[robber_name] = \
-                    PolygonPatch(camera_shape,
-                                 facecolor=cnames['yellow'],
-                                 alpha=0.3,
-                                 zorder=2)
-                self.ax_list[robber_name]\
-                    .add_patch(self.camera_patch[robber_name])
-
-                # Update robber patch
-                if robber_name == 'combined':
-                    for robber in self.robbers:
-                        self.robber_patch['combined'][robber].remove()
-                        self.robber_patch['combined'][robber] = \
-                            PolygonPatch(robber_shape[robber],
-                                         facecolor=cnames['orange'],
-                                         alpha=0.9,
-                                         zorder=2)
-                        self.ax_list['combined']\
-                            .add_patch(self.robber_patch['combined'][robber])
-                else:
-                    self.robber_patch[robber_name].remove()
-                    self.robber_patch[robber_name] = \
-                        PolygonPatch(robber_shape,
-                                     facecolor=cnames['orange'],
-                                     alpha=0.9,
-                                     zorder=2)
-                    self.ax_list[robber_name]\
-                        .add_patch(self.robber_patch[robber_name])
-
-                # Update Filter
-                if particles is not None:
-                    colors = particles[:, 0]\
-                        * next(self.particle_layer.itervalues()).color_gain
-
-                    self.particle_scat[robber_name].set_array(colors)
-                    self.particle_scat[robber_name].set_offsets(particles[:, 1:3])
-                else:
-                    self.probability_layer[robber_name].distribution = distribution
-                    self.probability_layer[robber_name].update()
+        """
+        # self.shape_layer.update(i=i)
+        for ax_name, ax in self.axes.iteritems():
+            try:
+                self.shape_layers[ax_name].update(i=i)
+                
+                # Update probability/particle layers
+                if self.fusion_engine is not None:
+                    if self.display_type == 'particle':
+                        self.particle_layers[ax_name].update(i=i)
+                    elif self.display_type == 'probability':
+                        self.probability_layers[ax_name].update(i=i)
+            except KeyError:
+                logging.debug('Robber already removed.')
 
 
-def set_up_fleming(display_type='particle'):
+def set_up_fleming(map_):
     """Set up a map as the generic Fleming space configuration.
 
     """
@@ -406,7 +333,7 @@ def set_up_fleming(display_type='particle'):
     wall_shape = [l, w]
 
     poses = np.array([[-7, -1.55, 1],
-                      [-7, -2.55, 1],
+                      [-7, -1.55 - l, 1],
                       [-7 + l/2 + w/2, -1, 0],
                       [-7 + 3*l/2 + w/2, -1, 0],
                       [-7 + 5*l/2 + w/2, -1, 0],
@@ -436,77 +363,44 @@ def set_up_fleming(display_type='particle'):
                          has_spaces=False)
         walls.append(wall)
 
-    landmarks = []
-    """
-    # Make landmark billiards
-    poses = np.array([[2.2, 1.5, 0],
-                      [1.2, 1, 0],
-                      [1.2, 2.75, 0]
-                     ])
-    colors = ['yellow', 'blue', 'red', 'purple', 'orange', 'green', 'brown',
-              'black']
-
-    for i, pose in enumerate(poses):
-        name = 'Ball ' + str(i)
-        shape_pts = Point(pose).buffer(0.075).exterior.coords
-        landmark = MapObject(name, shape_pts[:], pose=pose, has_spaces=False,
-                             color_str=colors[i])
-        landmarks.append(landmark)
-
-    # Make landmark glasses
-    poses = np.array([[-4.7, 2.3, 0],
-                      [-4.8, 2.45, 0],
-                      [-4.5, 2.35, 0]
-                     ])
-
-    for i, pose in enumerate(poses):
-        name = 'Glass ' + str(i)
-        shape_pts = Point(pose).buffer(0.06).exterior.coords
-        landmark = MapObject(name, shape_pts[:], pose=pose, has_spaces=False,
-                             color_str='grey')
-        landmarks.append(landmark)
-    """
-
     # Make rectangular objects (desk, bookcase, etc)
+    labels = ['Bookcase', 'Desk', 'Chair', 'Filing Cabinet']
+    colors = ['sandybrown', 'sandybrown', 'brown', 'black']
     poses = np.array([[0, -1.2, 270],
                       [-5.5, -2, 00],
-                      [3, -2, 180]
+                      [3, -2, 180],
+                      [-4, -1.3, 270]
                      ])
-    colors = ['sandybrown', 'sandybrown', 'brown']
-    labels = ['Bookcase', 'Desk', 'Chair']
     sizes = np.array([[0.18, 0.38],
                       [0.61, 0.99],
-                      [0.46, 0.41]
+                      [0.46, 0.41],
+                      [0.5, 0.37],
                      ])
-    
+
+    landmarks = []
     for i, pose in enumerate(poses):
         landmark = MapObject(labels[i], sizes[i], pose=pose,
                              color_str=colors[i])
         landmarks.append(landmark)
 
     # Make odd landmarks
-    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.3, 270], color_str='black')
+    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.38, 270], color_str='black')
     landmarks.append(landmark)
     # pose = [-9.5, 2.1, 0]
     # shape_pts = Point(pose).buffer(0.2).exterior.coords
     # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
     # landmarks.append(landmark)
-    
-
-    # Create Fleming map
-    bounds = [-9.5, -3.33, 4, 3.68]
-    fleming = Map('Fleming', bounds, display_type=display_type)
 
     # Add walls to map
     for wall in walls:
-        fleming.add_obj(wall)
+        map_.add_obj(wall)
 
     # Add landmarks to map
     for landmark in landmarks:
-        fleming.add_obj(landmark)
+        map_.add_obj(landmark)
 
     # Create areas
-    labels = ['Study', 'Library', 'Kitchen', 'Billiard Room', 'Hallway', 
+    labels = ['Study', 'Library', 'Kitchen', 'Billiard Room', 'Hallway',
               'Dining Room']
     colors = ['aquamarine','lightcoral', 'goldenrod', 'sage','cornflowerblue',
               'orchid']
@@ -522,14 +416,13 @@ def set_up_fleming(display_type='particle'):
                     pts[0,1] + np.abs(pts[1,1] - pts[0,1]) / 2, 0 ]
         area = MapArea(name=labels[i], shape_pts=pts, pose=centroid,
                        color_str=colors[i])
-        fleming.add_area(labels[i], area)
+        map_.add_area(area)
 
     # <>TODO: Include area demarcations
-
-    return fleming
+    map_.feasible_layer.define_feasible_regions(map_.static_elements)
 
 
 if __name__ == '__main__':
     fleming = set_up_fleming()
-    fleming.plot(show_areas=True)
+    fleming.plot()
     fleming.feasible_layer.plot()
