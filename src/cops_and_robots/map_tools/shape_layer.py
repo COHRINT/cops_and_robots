@@ -20,6 +20,7 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import copy
 
 from shapely.geometry import MultiPolygon, Polygon
 
@@ -46,6 +47,8 @@ class ShapeLayer(Layer):
         self.invisible_elements = invisible_elements
         self.update_static = False
 
+        #<>TODO: plot or not
+
     def update_plot(self, elements=None, update_static=None, **kwargs):
         """Plot all visible map objects (and their spaces, if visible).
 
@@ -65,27 +68,26 @@ class ShapeLayer(Layer):
         if update_static is None:
             update_static = self.update_static
 
+        self.static_patches = []
+        self.dynamic_patches = []
         if update_static:
             for element in self.elements['static']:
-                # Remove old elements
-                if hasattr(element, 'patch'):
-                    element.patch.remove()
+
                 # Re add element
                 if element not in self.invisible_elements and element.visible:
-                    element.patch = element.get_patch()
-                    self.ax.add_patch(element.patch)
+                    patch = copy.copy(element.get_patch())
+                    self.ax.add_patch(patch)
+                    self.static_patches.append(patch)
                 # Get element's softmax spaces to plot.
                 if element.plot_spaces:
                     pass
 
         for element in self.elements['dynamic']:
-            # Remove old elements
-            if hasattr(element, 'patch'):
-                element.patch.remove()
             # Re add element
             if element not in self.invisible_elements and element.visible:
-                element.patch = element.get_patch()
-                self.ax.add_patch(element.patch)
+                patch = copy.copy(element.get_patch())
+                self.ax.add_patch(patch)
+                self.dynamic_patches.append(patch)
             # Get element's softmax spaces to plot.
             if element.plot_spaces:
                 pass
@@ -93,6 +95,16 @@ class ShapeLayer(Layer):
         for element in self.elements['information']:
             # Add text and paths
             pass
+
+    def remove(self, remove_static=False):
+        if hasattr(self, 'dynamic_patches'):
+            for patch in self.dynamic_patches:
+                patch.remove()
+
+        if remove_static:
+            if hasattr(self, 'static_patches'):
+                for patch in self.static_patches:
+                    patch.remove()
 
     def update(self, i=0):
         """Remove dynamic elements and replot.
@@ -108,6 +120,7 @@ class ShapeLayer(Layer):
 
         # Allows update_static to be set elsewhere, but always updates
         # on the first iteration of the animation
+        self.remove()
         if i == 0:
             self.update_plot(update_static=True)
         else:
@@ -116,6 +129,9 @@ class ShapeLayer(Layer):
 
 def main():
     from cops_and_robots.map_tools.map_elements import MapArea, MapObject
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
 
     area1 = MapArea('Area1', [1, 1], pose=[1, 1, 0], visible=True, color_str='blue')
     area2 = MapArea('Area2', [1, 1], pose=[-1, 1, 0], visible=True, color_str='lightblue')
@@ -128,8 +144,11 @@ def main():
     elements = {'static': static_elements, 'dynamic': dynamic_elements, 'information':information_elements}
     invisible_elements = [area2, object1]
 
-    # sl = ShapeLayer(elements, bounds=[-5, -5, 5, 5])
-    sl = ShapeLayer(elements, invisible_elements=invisible_elements, bounds=[-5, -5, 5, 5])
+    bounds = [-5, -5, 5, 5]
+    sl = ShapeLayer(elements, bounds=bounds)
+    ax.set_xlim(bounds[0], bounds[2])
+    ax.set_ylim(bounds[1], bounds[3])
+    # sl = ShapeLayer(elements, invisible_elements=invisible_elements, bounds=[-5, -5, 5, 5])
 
     ani = animation.FuncAnimation(sl.fig, sl.update,
         frames=xrange(100),

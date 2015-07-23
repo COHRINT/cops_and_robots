@@ -31,6 +31,7 @@ import numpy as np
 from cops_and_robots.fusion.particle_filter import ParticleFilter
 from cops_and_robots.fusion.gauss_sum_filter import \
     GaussSumFilter
+from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 
 
 class FusionEngine(object):
@@ -149,4 +150,28 @@ class FusionEngine(object):
             sensors['human'].utterance = ''
             sensors['human'].target = ''
         else:
-            self.filters['combined'].probability = self.filters['Roy'].probability
+            # Pre-allocate parameter arrays
+            num_mixands = 0
+            for label, filter_ in self.filters.iteritems():
+                if label == 'combined':
+                    continue
+                num_mixands += filter_.probability.num_mixands
+                ndims = filter_.probability.ndims
+            weights = np.empty((num_mixands))
+            means = np.empty((num_mixands, ndims))
+            covariances = np.empty((num_mixands, ndims, ndims))
+
+            # Load parameter arrays
+            i = 0
+            for label, filter_ in self.filters.iteritems():
+                if label == 'combined':
+                    continue
+                size = filter_.probability.num_mixands
+                weights[i:i + size] = filter_.probability.weights
+                means[i:i + size] = filter_.probability.means
+                covariances[i:i + size] = filter_.probability.covariances
+                i += size
+
+            combined_gm = GaussianMixture(weights,means,covariances,
+                                          max_num_mixands=num_mixands)
+            self.filters['combined'].probability = combined_gm

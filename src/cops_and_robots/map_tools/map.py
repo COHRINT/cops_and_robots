@@ -59,7 +59,8 @@ class Map(object):
 
     """
     def __init__(self, map_name='fleming', bounds=[-5, -5, 5, 5],
-                 plot_robbers=True, map_display_type='particle'):
+                 plot_robbers=True, map_display_type='particle',
+                 combined_only=True):
 
         # <>TODO: Move to main?
         self.human_cfg = load_config()['human_interface']
@@ -75,9 +76,10 @@ class Map(object):
         self.plot_robbers = plot_robbers
         self.outer_bounds = [i * 1.1 for i in self.bounds]
         self.origin = [0, 0]  # in [m]
-        self.fig = plt.figure(1, figsize=(12, 10))
+        self.fig = plt.figure(1, figsize=(14, 10))
         # <>TODO: Make display type relative to each robber
         self.display_type = map_display_type
+        self.combined_only = combined_only
 
         # Define map elements
         self.objects = {}  # For dynamic/static map objects (not robbers/cops)
@@ -96,8 +98,8 @@ class Map(object):
         self.shape_layer = ShapeLayer(self.element_dict, bounds=self.bounds)
         self.feasible_layer = FeasibleLayer(bounds=self.bounds)
 
-        self.particle_layer = {}  # One per robber, plus one combined
-        self.probability_layer = {}  # One per robber, plus one combined
+        self.particle_layers = {}  # One per robber, plus one combined
+        self.probability_layers = {}  # One per robber, plus one combined
 
         # Set up map
         if self.map_name == 'fleming':
@@ -157,7 +159,7 @@ class Map(object):
         self.dynamic_elements.remove(cop_obj)
         del self.cops[cop_obj.name]
 
-    def add_robber(self, robber, filter_):
+    def add_robber(self, robber):
         # <>TODO: Make generic imaginary robbers
         """Add a dynamic ``Robot`` robber from the Map.
 
@@ -166,17 +168,13 @@ class Map(object):
         """
         if self.plot_robbers is True:
             robber.visible = True
-        elif self.plot_robbers is False or robber.name not in self.plot_robbers:
+        elif self.plot_robbers is False:
+            robber.visible = False
+        elif robber.name not in self.plot_robbers:
             robber.visible = False
 
         self.dynamic_elements.append(robber)
         self.robbers[robber.name] = robber
-
-        if self.display_type == 'particle':
-            self.particle_layer[robber.name] = ParticleLayer(filter_)
-        elif self.display_type == 'probability':
-            self.probability_layer[robber.name] = \
-                ProbabilityLayer(filter_, fig=self.fig, bounds=self.bounds)
 
     def rem_robber(self, robber):
         """Remove a dynamic ``Robot`` robber.
@@ -186,12 +184,18 @@ class Map(object):
         """
         robber.patch.remove()
         self.dynamic_elements.remove(robber)
+        try:
+            if self.fusion_engine is not None:
+                if self.display_type == 'particle':
+                    self.particle_layers[robber.name].remove()
+                    del self.particle_layers[robber.name]
+                elif self.display_type == 'probability':
+                    del self.probability_layers[robber.name]
+        except:
+            #<>TODO: actually catch other exceptions here
+            logging.debug('No layer to remove.')
+
         del self.robbers[robber.name]
-        if self.display_type == 'particle':
-            self.particle_layer[robber.name].remove()
-            del self.particle_layer[robber.name]
-        elif self.display_type == 'probability':
-            del self.probability_layer[robber.name]
 
     def found_robber(self, robber):
         """Make the robber visible, remove it's particles.
@@ -199,46 +203,120 @@ class Map(object):
         """
         robber.visible = True
         robber.color = 'darkorange'
-        if self.display_type == 'particle':
-            self.particle_layer[robber.name].remove()
-            del self.particle_layer[robber.name]
+        try:
+            if self.display_type == 'particle':
+                self.particle_layers[robber.name].remove()
+                del self.particle_layers[robber.name]
+            elif self.display_type == 'probability':
+                self.probability_layers[robber.name].remove()
+                del self.probability_layers[robber.name]
+        except:
+            #<>TODO: actually catch other exceptions here
+            logging.debug('No layer to remove.')
 
-    def plot(self):
-        """Plot the static map.
 
-        """
-        # <>TODO: Needs rework
-        fig = plt.figure(1, figsize=(12, 10))
-        ax = fig.add_subplot(111)
-        self.shape_layer.update_plot(update_static=True)
+    # def plot(self):
+    #     """Plot the static map.
 
-        ax.set_xlim([self.bounds[0], self.bounds[2]])
-        ax.set_ylim([self.bounds[1], self.bounds[3]])
-        ax.set_title('Experimental environment with landmarks and areas')
-        plt.show()
+    #     """
+    #     # <>TODO: Needs rework
+    #     fig = plt.figure(1, figsize=(12, 10))
+    #     ax = fig.add_subplot(111)
+    #     self.shape_layer.update_plot(update_static=True)
 
-    def setup_plot(self):
+    #     ax.set_xlim([self.bounds[0], self.bounds[2]])
+    #     ax.set_ylim([self.bounds[1], self.bounds[3]])
+    #     ax.set_title('Experimental environment with landmarks and areas')
+    #     plt.show()
+
+    def setup_plot(self, fusion_engine=None):
         """Create the initial plot for the animation.
         """
         logging.info('Setting up plot')
-        self.ax = self.fig.add_subplot(111)
-        self.ax.set_xlim([self.bounds[0], self.bounds[2]])
-        self.ax.set_ylim([self.bounds[1], self.bounds[3]])
-
+        self.fusion_engine = fusion_engine
+        self._setup_axes()
+        self._setup_layers()
+        
         # Set up the human interface
         if self.human_sensor:
             HumanInterface(self.fig, self.human_sensor, **self.human_cfg)
 
+    def _setup_axes(self):
+        self.axes = {}
+        if len(self.robbers) == 1:
+            self.axes[self.robbers] = self.fig.add_subplot(111)
+        elif self.combined_only:
+            self.axes['combined'] = self.fig.add_subplot(111)
+        else:
+            num_axes = len(self.robbers) + 1
+            num_rows = int(math.ceil(num_axes / 2))
+
+            i = 0
+            for robber_name in self.robbers:
+                ax = plt.subplot2grid((num_rows, 4),
+                                      (int(math.floor(i / 2)), (i % 2) * 2),
+                                      colspan=2
+                                      )
+                self.axes[robber_name] = ax
+                i += 1
+
+            # Add a plot for the combined estimate
+            if (num_axes % 2) == 0:
+                ax = plt.subplot2grid((num_rows, 4), (num_rows - 1, 2),
+                                      colspan=2)
+            else:
+                ax = plt.subplot2grid((num_rows, 4), (num_rows - 1, 1),
+                                      colspan=2)
+            self.axes['combined'] = ax
+
+        # Rescale, setup bounds and title
+        for ax_name, ax in self.axes.iteritems():
+            ax.axis('scaled')
+            ax.set_xlim([self.bounds[0], self.bounds[2]])
+            ax.set_xlabel('x position (m)')
+            ax.set_ylim([self.bounds[1], self.bounds[3]])
+            ax.set_ylabel('y position (m)')
+            if ax_name == 'combined':
+                ax.set_title('Combined perception of all robots')
+            else:
+                ax.set_title("Map of {}'s perceived location".format(ax_name))
+
+    def _setup_layers(self):
+        # Set up basic layers
+        self.shape_layers = {}
+        self.feasible_layers = {}
+        for ax_name, ax in self.axes.iteritems():
+            self.shape_layers[ax_name] = ShapeLayer(self.element_dict,
+                                                    bounds=self.bounds,
+                                                    ax=ax)
+
+            # Set up probability/particle layers
+            if self.fusion_engine is not None:
+                filter_ = self.fusion_engine.filters[ax_name]
+                if self.display_type == 'particle':
+                    self.particle_layers[ax_name] = ParticleLayer(filter_,
+                                                                  ax=ax)
+                elif self.display_type == 'probability':
+                    self.probability_layers[ax_name] = \
+                        ProbabilityLayer(filter_, fig=self.fig, ax=ax,
+                                         bounds=self.bounds)
+
     def update(self, i):
         """
         """
-        self.shape_layer.update(i=i)
-        if self.display_type == 'particle':
-            for robber_particles in self.particle_layer.values():
-                robber_particles.update(i=i)
-        elif self.display_type == 'probability':
-            for robber_probability in self.probability_layer.values():
-                robber_probability.update(i=i)
+        # self.shape_layer.update(i=i)
+        for ax_name, ax in self.axes.iteritems():
+            try:
+                self.shape_layers[ax_name].update(i=i)
+                
+                # Update probability/particle layers
+                if self.fusion_engine is not None:
+                    if self.display_type == 'particle':
+                        self.particle_layers[ax_name].update(i=i)
+                    elif self.display_type == 'probability':
+                        self.probability_layers[ax_name].update(i=i)
+            except KeyError:
+                logging.debug('Robber already removed.')
 
 
 def set_up_fleming(map_):
