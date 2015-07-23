@@ -9,3 +9,4 @@ docutils>=0.3
 #catkin_tools
 pyserial
 pandas
+pytest
