@@ -165,8 +165,7 @@ class Cop(Robot):
                                                            blocks_camera=False,
                                                            color_str='none')
             # <>TODO: allow no display individually for each robber
-            self.map.add_robber(self.missing_robbers[name].map_obj,
-                                self.fusion_engine.filters[name])
+            self.map.add_robber(self.missing_robbers[name].map_obj)
             # All will be at 0,0,0 until actually pose is given.
             # init_pose =
             # self.missing_robbers[name].map_obj.move_absolute(init_pose)

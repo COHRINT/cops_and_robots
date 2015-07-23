@@ -93,7 +93,8 @@ def main():
     figure = cops['Deckard'].map.fig
 
     def init():
-        cops['Deckard'].map.setup_plot()
+        fusion_engine = cops['Deckard'].fusion_engine
+        cops['Deckard'].map.setup_plot(fusion_engine)
 
     def animated_exploration():
         """Start the cop's exploration of the environment, while

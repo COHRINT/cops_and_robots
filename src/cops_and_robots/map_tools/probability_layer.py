@@ -125,7 +125,7 @@ class ProbabilityLayer(Layer):
 if __name__ == '__main__':
     d = GaussianMixture(1,[0, 0],[[1,0],[0,1]])
     filter_ = type('test', (object,), {'probability': d})()
-    pl = ProbabilityLayer(d, z_levels=50, alpha=1.0)
+    pl = ProbabilityLayer(d, z_levels=50, alpha=1)
 
     test_probability = []
     test_probability.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
