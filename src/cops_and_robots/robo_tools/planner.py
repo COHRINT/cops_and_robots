@@ -525,10 +525,11 @@ class PathPlanner(object):
                              'of acceptable types: {}'
                              .format(type_, PathPlanner.types))
         self.type = type_
+        print self.type
         self.robot = robot
         self.path_planner_status = 'not planning'
 
-        if self.type is 'a_star':
+        if self.type == 'a_star':
             self.cell_size = 0.1
             # Generate Occupancy Grid from feasible layer
             self.occupancy_layer = OccupancyLayer(
@@ -546,9 +547,9 @@ class PathPlanner(object):
             the final pose angle
 
         """
-        if self.type is 'direct':
+        if self.type == 'direct':
             goal_path, final_theta = self.find_path_directly()
-        elif self.type is 'a_star':
+        elif self.type == 'a_star':
             goal_path, final_theta = self.find_path_from_a_star()
 
         self.goal_path = goal_path
@@ -630,7 +631,7 @@ class PathPlanner(object):
         current_status = self.path_planner_status
         new_status = current_status
 
-        if current_status is 'planning':
+        if current_status == 'planning':
             # Find new path
             self.find_path()
             # Update controller

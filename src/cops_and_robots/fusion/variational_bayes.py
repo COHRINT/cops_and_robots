@@ -365,7 +365,13 @@ class VariationalBayes(object):
             ellipses = prior.std_ellipses(num_std)
 
             for i, ellipse in enumerate(ellipses):
-                if poly.intersects(ellipse):
+                try:
+                    has_intersection = poly.intersects(ellipse)
+                except ValueError:
+                    logging.warn('Null geometry error! Defaulting to true.')
+                    has_intersection = True
+
+                if has_intersection:
                     # Get parameters for intersecting priors
                     mixand_ids.append(i)
                     weights.append(prior.weights[i])

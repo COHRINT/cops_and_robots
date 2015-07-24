@@ -74,6 +74,7 @@ class Cop(Robot):
     mission_statuses = ['searching', 'capturing', 'retired']
     goal_planner_defaults = {'type_': 'particle',
                              'use_target_as_goal': False}
+    path_planner_defaults = {'type_': 'direct'}
 
     def __init__(self,
                  name,
@@ -84,11 +85,14 @@ class Cop(Robot):
                  robber_model='static',
                  map_cfg={},
                  goal_planner_cfg={},
+                 path_planner_cfg={},
                  camera_cfg={},
                  **kwargs):
         # Use class defaults for kwargs not included
         gp_cfg = Cop.goal_planner_defaults.copy()
         gp_cfg.update(goal_planner_cfg)
+        pp_cfg = Cop.path_planner_defaults.copy()
+        pp_cfg.update(path_planner_cfg)
 
         # Configure fusion and map based on goal planner
         if gp_cfg['type_'] == 'particle':
@@ -105,9 +109,10 @@ class Cop(Robot):
                                   pose=pose,
                                   pose_source=pose_source,
                                   goal_planner_cfg=gp_cfg,
+                                  path_planner_cfg=pp_cfg,
                                   map_cfg=map_cfg,
                                   mission_status='searching',
-                                  color_str='darkgreen')
+                                  color_str='darkgreen',)
 
         # Tracking attributes
         self.other_cop_names = other_cop_names
