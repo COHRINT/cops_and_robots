@@ -128,7 +128,6 @@ class GoalPlanner(object):
 
         self.robot = robot
         if self.robot.publish_to_ROS:
-            import tf
             import rospy
             from geometry_msgs.msg import PoseStamped
             self.goal_pose_topic = goal_pose_topic
@@ -430,6 +429,9 @@ class GoalPlanner(object):
         return position_bool and orientation_bool
 
     def create_ROS_goal_message(self):
+            import tf
+            import rospy
+            from geometry_msgs.msg import PoseStamped
             self.move_base_goal = PoseStamped()
             theta = np.rad2deg(self.goal_pose[2])
             quaternions = tf.transformations.quaternion_from_euler(0, 0, theta)
