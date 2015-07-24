@@ -187,12 +187,11 @@ class Map(object):
         try:
             if self.fusion_engine is not None:
                 if self.display_type == 'particle':
-                    self.particle_layers[robber.name].remove()
-                    del self.particle_layers[robber.name]
+                    self.rem_particle_layer(robber.name)
                 elif self.display_type == 'probability':
-                    del self.probability_layers[robber.name]
+                    self.rem_probability_layer(robber.name)
         except:
-            #<>TODO: actually catch other exceptions here
+            # <>TODO: actually catch other exceptions here
             logging.debug('No layer to remove.')
 
         del self.robbers[robber.name]
@@ -205,38 +204,51 @@ class Map(object):
         robber.color = 'darkorange'
         try:
             if self.display_type == 'particle':
-                self.particle_layers[robber.name].remove()
-                del self.particle_layers[robber.name]
+                self.rem_particle_layer(robber.name)
             elif self.display_type == 'probability':
-                self.probability_layers[robber.name].remove()
-                del self.probability_layers[robber.name]
+                self.rem_probability_layer(robber.name)
         except:
-            #<>TODO: actually catch other exceptions here
+            # <>TODO: actually catch other exceptions here
             logging.debug('No layer to remove.')
 
+    def add_particle_layer(self, name, filter_):
+        self.particle_layers[name] = ParticleLayer(filter_)
 
-    # def plot(self):
-    #     """Plot the static map.
+    def rem_particle_layer(self, name):
+        self.particle_layers[name].remove()
+        del self.particle_layers[name]
 
-    #     """
-    #     # <>TODO: Needs rework
-    #     fig = plt.figure(1, figsize=(12, 10))
-    #     ax = fig.add_subplot(111)
-    #     self.shape_layer.update_plot(update_static=True)
+    def add_probability_layer(self, name, filter_):
+        self.probability_layers[name] = ProbabilityLayer(filter_,
+                                                         fig=self.fig,
+                                                         bounds=self.bounds)
 
-    #     ax.set_xlim([self.bounds[0], self.bounds[2]])
-    #     ax.set_ylim([self.bounds[1], self.bounds[3]])
-    #     ax.set_title('Experimental environment with landmarks and areas')
-    #     plt.show()
+    def rem_probability_layer(self, name):
+        self.probability_layers[name].remove()
+        del self.probability_layers[name]
 
-    def setup_plot(self, fusion_engine=None):
+    def plot(self):
+        """Plot the static map.
+
+        """
+        # <>TODO: Needs rework
+        fig = plt.figure(1, figsize=(12, 10))
+        ax = fig.add_subplot(111)
+        self.shape_layer.update_plot(update_static=True)
+
+        ax.set_xlim([self.bounds[0], self.bounds[2]])
+        ax.set_ylim([self.bounds[1], self.bounds[3]])
+        ax.set_title('Experimental environment with landmarks and areas')
+        plt.show()
+
+    def setup_plot(self, fusion_engine):
         """Create the initial plot for the animation.
         """
         logging.info('Setting up plot')
         self.fusion_engine = fusion_engine
         self._setup_axes()
         self._setup_layers()
-        
+
         # Set up the human interface
         if self.human_sensor:
             HumanInterface(self.fig, self.human_sensor, **self.human_cfg)
@@ -309,7 +321,6 @@ class Map(object):
         for ax_name, ax in self.axes.iteritems():
             try:
                 self.shape_layers[ax_name].update(i=i)
-                
                 # Update probability/particle layers
                 if self.fusion_engine is not None:
                     if self.display_type == 'particle':
@@ -318,7 +329,6 @@ class Map(object):
                         self.probability_layers[ax_name].update(i=i)
             except KeyError:
                 logging.debug('Robber already removed.')
-
 
 def set_up_fleming(map_):
     """Set up a map as the generic Fleming space configuration.
