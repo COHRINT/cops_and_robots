@@ -280,6 +280,7 @@ class Map(object):
                 ax.set_title('Combined perception of all robots')
             else:
                 ax.set_title("Map of {}'s perceived location".format(ax_name))
+        # plt.tight_layout()
 
     def _setup_layers(self):
         # Set up basic layers

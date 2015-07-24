@@ -153,7 +153,7 @@ class FusionEngine(object):
             # Pre-allocate parameter arrays
             num_mixands = 0
             for label, filter_ in self.filters.iteritems():
-                if label == 'combined':
+                if label == 'combined' or filter_.finished:
                     continue
                 num_mixands += filter_.probability.num_mixands
                 ndims = filter_.probability.ndims
@@ -164,7 +164,7 @@ class FusionEngine(object):
             # Load parameter arrays
             i = 0
             for label, filter_ in self.filters.iteritems():
-                if label == 'combined':
+                if label == 'combined' or filter_.finished:
                     continue
                 size = filter_.probability.num_mixands
                 weights[i:i + size] = filter_.probability.weights

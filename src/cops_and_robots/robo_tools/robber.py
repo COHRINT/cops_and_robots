@@ -55,6 +55,7 @@ class Robber(Robot):
     mission_statuses = ['on the run', 'captured']
     goal_planner_defaults = {'type_': 'simple',
                              'use_target_as_goal': True}
+    path_planner_defaults = {'type_': 'direct'}
 
     def __init__(self,
                  name,
@@ -62,17 +63,22 @@ class Robber(Robot):
                  pose_source='python',
                  map_cfg={},
                  goal_planner_cfg={},
+                 path_planner_cfg={},
                  **kwargs):
         # Use class defaults for kwargs not included
         gp_cfg = Robber.goal_planner_defaults.copy()
         gp_cfg.update(goal_planner_cfg)
+        pp_cfg = Robber.path_planner_defaults.copy()
+        pp_cfg.update(path_planner_cfg)
         super(Robber, self).__init__(name,
                                      pose=pose,
                                      pose_source=pose_source,
                                      goal_planner_cfg=gp_cfg,
+                                     path_planner_cfg=pp_cfg,
                                      map_cfg=map_cfg,
                                      mission_status='searching',
-                                     color_str='red')
+                                     color_str='red',
+                                     **kwargs)
 
         self.found_robbers = {}
         self.found = False
