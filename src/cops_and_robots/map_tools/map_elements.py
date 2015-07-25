@@ -132,7 +132,7 @@ class MapElement(object):
         self.shape = Polygon(shape_pts)
 
         # Redefine sides, points and and spaces
-        self.points = self.shape.exterior.coords
+        # self.points = self.shape.exterior.coords
         self.sides = []
         self.spaces = []
         self.spaces_by_label = {}
@@ -168,7 +168,7 @@ class MapElement(object):
         self.shape = Polygon(shape_pts)
 
         # Redefine sides, points and and spaces
-        self.points = self.shape.exterior.coords
+        # self.points = self.shape.exterior.coords
         self.sides = []
         self.spaces = []
         self.spaces_by_label = {}

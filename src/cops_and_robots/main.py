@@ -84,7 +84,18 @@ def main(config_file=None):
     fusion_engine = cops['Deckard'].fusion_engine
     cops['Deckard'].map.setup_plot(fusion_engine)
     sim_start_time = time.time()
-    animated_exploration(fig, cops, robbers, main_cfg, sim_start_time)
+
+    # animated_exploration(fig, cops, robbers, main_cfg, sim_start_time)
+    headless_mode(cops, robbers, main_cfg, sim_start_time)
+
+
+def headless_mode(cops, robbers, main_cfg, sim_start_time):
+    i = 0
+    while cops['Deckard'].mission_planner.mission_status != 'retired':
+        update(i, cops, robbers, main_cfg, sim_start_time)
+        i += 1
+
+    print 'Finished'
 
 
 def animated_exploration(fig, cops, robbers, main_cfg, sim_start_time):
