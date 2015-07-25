@@ -24,7 +24,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pytest
 
-
 from scipy.stats import multivariate_normal, norm
 from descartes.patch import PolygonPatch
 from shapely.geometry import Polygon
@@ -107,11 +106,6 @@ class GaussianMixture(object):
             mean = self.means[i]
             covariance = self.covariances[i]
             gaussian_pdf = multivariate_normal.pdf(x, mean, covariance)
-            # logging.info(x)
-            # logging.info(x.size)
-            # logging.info(mean)
-            # logging.info(covariance)
-            # logging.info(weight)
             pdf += weight * gaussian_pdf
 
         return pdf
@@ -146,17 +140,14 @@ class GaussianMixture(object):
 
         return rvs
 
-    def max_point_by_grid(self, bounds=[-5,-5,5,5], grid_spacing=0.1):
+    def max_point_by_grid(self, bounds=None, grid_spacing=0.1):
         #<>TODO: set for n-dimensional
-        xx, yy = np.mgrid[bounds[0]:bounds[2]:grid_spacing,
-                          bounds[1]:bounds[3]:grid_spacing]
-        pos = np.empty(xx.shape + (2,))
-        pos[:, :, 0] = xx
-        pos[:, :, 1] = yy
+        if not hasattr(self, 'pos'):
+            self._discretize(bounds, grid_spacing)
 
-        prob = self.pdf(pos)
+        prob = self.pdf(self.pos)
         MAP_i = np.unravel_index(prob.argmax(), prob.shape)
-        MAP_point = np.array([xx[MAP_i[0]][0], yy[0][MAP_i[1]]])
+        MAP_point = np.array([self.xx[MAP_i[0]][0], self.yy[0][MAP_i[1]]])
         MAP_prob = prob[MAP_i]
         return MAP_point, MAP_prob
 
@@ -279,18 +270,7 @@ class GaussianMixture(object):
         else:
             self.ax = ax
 
-        if bounds is None:
-            self.bounds =[-10, -10, 10, 10]
-        else:
-            self.bounds = bounds
-
-        # Create grid
-        xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]:resolution,
-                          self.bounds[1]:self.bounds[3]:resolution]
-        pos = np.empty(xx.shape + (2,))
-        pos[:, :, 0] = xx; pos[:, :, 1] = yy
-        self.xx = xx; self.yy = yy
-        self.pos = pos
+        self._discretize()
 
         # Set levels
         if levels is None:
@@ -322,7 +302,8 @@ class GaussianMixture(object):
         """
         # <>TODO: figure this out. Look at papers!
         # http://www-personal.acfr.usyd.edu.au/tbailey/papers/mfi08_huber.pdf
-        pass
+        H = np.sum(self.pdf(x) .dot (np.log(self.pdf(x))))
+
 
     def _input_check(self):
         # Check if weights sum are normalized
@@ -335,8 +316,7 @@ class GaussianMixture(object):
 
         # Check if weights sum to 1
         try:
-            a = np.sum(self.weights)
-            assert np.isclose(np.ones(1), a)
+            assert np.isclose(np.ones(1), np.sum(self.weights))
         except AssertionError, e:
             logging.exception('Weights sum to {}, not 1.'.format(a))
             raise e
@@ -380,14 +360,6 @@ class GaussianMixture(object):
                                   ' \n{}'.format(mean, var))
                 raise e
 
-        # Check if covariances are positive semidefinite
-        for var in self.covariances:
-            try:
-                assert np.all(np.linalg.det(var) > 0)
-            except AssertionError, e:
-                logging.warn('Following variance is not positive '
-                                  'semidefinite: \n{}'.format(var))
-                var = np.eye(self.ndims) * 10 ** -3
 
         # Check if covariances are symmetric
         for var in self.covariances:
@@ -402,6 +374,20 @@ class GaussianMixture(object):
 
         # Merge if necessary
         self._merge()
+
+    def _discretize(self, bounds=None, grid_spacing=0.1):
+        if bounds is None:
+            self.bounds =[-10, -10, 10, 10]
+        else:
+            self.bounds = bounds
+
+        # Create grid
+        xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]:grid_spacing,
+                          self.bounds[1]:self.bounds[3]:grid_spacing]
+        pos = np.empty(xx.shape + (2,))
+        pos[:, :, 0] = xx; pos[:, :, 1] = yy
+        self.xx = xx; self.yy = yy
+        self.pos = pos
 
     def _merge(self, max_num_mixands=None):
         """
