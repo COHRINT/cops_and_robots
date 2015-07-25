@@ -4,7 +4,7 @@ main:
   numpy_print_precision: 2
   use_ROS: False # True if any robot is in the real world
   ROS_node_name: 'Python_Node'
-  max_run_time: 10  # in seconds, -1 for infinite
+  max_run_time: 5  # in seconds, -1 for infinite
   log_time: True
 
 cops:
@@ -13,7 +13,7 @@ cops:
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
     goal_planner_cfg:
-      type_: MAP  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
+      type_: particle  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
     path_planner_cfg:
         type_: 'a_star'  # ['direct', 'a_star'] 
     camera_cfg:

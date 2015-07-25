@@ -256,7 +256,8 @@ class Map(object):
     def _setup_axes(self):
         self.axes = {}
         if len(self.robbers) == 1:
-            self.axes[self.robbers] = self.fig.add_subplot(111)
+            print self.robbers
+            self.axes['Roy'] = self.fig.add_subplot(111)
         elif self.combined_only:
             self.axes['combined'] = self.fig.add_subplot(111)
         else:
@@ -329,7 +330,6 @@ class Map(object):
                         self.probability_layers[ax_name].update(i=i)
             except KeyError:
                 logging.debug('Robber already removed.')
-
 
 def set_up_fleming(map_):
     """Set up a map as the generic Fleming space configuration.

@@ -3,9 +3,10 @@
 
 """
 import logging
+import time
+import sys
 
 import numpy as np
-
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -15,9 +16,9 @@ from cops_and_robots.robo_tools.robber import Robber
 # <>TODO: @MATT @NICK Look into adding PyPubSub
 
 
-def main():
+def main(config_file=None):
     # Load configuration files
-    cfg = load_config()
+    cfg = load_config(config_file)
     main_cfg = cfg['main']
     cop_cfg = cfg['cops']
     robber_cfg = cfg['robbers']
@@ -53,7 +54,7 @@ def main():
         logging.info('{} added to simulation'.format(robber))
 
     # <>TODO: Replace with message passing
-    # Give cops references to the robbers actual pose
+    # Give cops references to the robber's actual poses
     for cop in cops.values():
         for robber_name, robber in robbers.iteritems():
             cop.missing_robbers[robber_name].pose2D = \
@@ -78,43 +79,42 @@ def main():
     logging.info('Simulation started with {} chasing {}.'
                  .format(cop_str, robber_str))
 
-    # Create Visualization
-    def update(i=0):
-        logging.debug('Main update {}'.format(i))
+    # Start the simulation
+    fig = cops['Deckard'].map.fig
+    fusion_engine = cops['Deckard'].fusion_engine
+    cops['Deckard'].map.setup_plot(fusion_engine)
+    sim_start_time = time.time()
+    animated_exploration(fig, cops, robbers, main_cfg, sim_start_time)
 
-        for cop_name, cop in cops.iteritems():
-            cop.update(i)
 
-        for robber_name, robber in robbers.iteritems():
-            robber.update(i)
+def animated_exploration(fig, cops, robbers, main_cfg, sim_start_time):
+    """Animate the exploration of the environment from a cop's perspective.
 
-        cops['Deckard'].map.update(i)
+    """
+    # <>TODO fix frames (i.e. stop animation once done)
+    ani = animation.FuncAnimation(fig,
+                                  update,
+                                  fargs=[cops, robbers, main_cfg, sim_start_time],
+                                  interval=10,
+                                  blit=False,
+                                  repeat=False,
+                                  )
+    #<>TODO: break from non-blocking plt.show() gracefully
+    plt.show()
 
-    figure = cops['Deckard'].map.fig
 
-    def init():
-        fusion_engine = cops['Deckard'].fusion_engine
-        cops['Deckard'].map.setup_plot(fusion_engine)
+def update(i, cops, robbers, main_cfg, sim_start_time):
+    logging.debug('Main update frame {}'.format(i))
 
-    def animated_exploration():
-        """Start the cop's exploration of the environment, while
-        animating the world from the cop's perspective.
+    for cop_name, cop in cops.iteritems():
+        cop.update(i)
 
-        """
-        # <>TODO fix frames (i.e. stop animation once done)
-        ani = animation.FuncAnimation(figure,
-                                      update,
-                                      init_func=init,
-                                      interval=5,
-                                      blit=False)
-        plt.show()
+    for robber_name, robber in robbers.iteritems():
+        robber.update(i)
 
-    animated_exploration()
-
+    cops['Deckard'].map.update(i)
+    if main_cfg['log_time']:
+        logging.info('Frame {} at time {}.'.format(i, time.time() -  sim_start_time))
 
 if __name__ == '__main__':
     main()
-
-    # # Example Cop
-    # goal_planner_cfg = {'type': {'level_lower': 'simple'}}
-    # cop = Cop("Niles", goal_planner_cfg)

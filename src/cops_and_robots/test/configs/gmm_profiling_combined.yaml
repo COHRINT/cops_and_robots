@@ -4,7 +4,7 @@ main:
   numpy_print_precision: 2
   use_ROS: False # True if any robot is in the real world
   ROS_node_name: 'Python_Node'
-  max_run_time: 10  # in seconds, -1 for infinite
+  max_run_time: 5  # in seconds, -1 for infinite
   log_time: True
 
 cops:
