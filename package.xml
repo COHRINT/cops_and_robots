@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
-  <name>cops_and_robots</name>
-  <version>0.1.0</version>
+  <name>cops_and_robots_ros</name>
+  <version>1.0.0</version>
   <description>Robotic cops and robbers project for dynamic target-tracking on the iRobot Create platform</description>
 
   <maintainer email="nick.sweet@colorado.edu">Nick Sweet</maintainer>
