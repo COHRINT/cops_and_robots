@@ -801,7 +801,6 @@ def fleming_prior_test():
     ax.set_xlim(bounds[0:3:2])
     ax.set_ylim(bounds[1:4:2])
     plt.show()
-    print os.system("say '{}'".format(gauss_2d))
 
 
 def uniform_prior_test(num_mixands=10, bounds=None):
@@ -840,10 +839,10 @@ if __name__ == '__main__':
     # rv_test()
     # fleming_prior_test()
     
-    # fp = fleming_prior()
+    fp = fleming_prior_test()
     # new_fp = fp.copy()
     # new_fp.weights = np.ones(6)
     # print fp
     # ellipses_test(2)
-    merge_test(120, speak=False)
+    # merge_test(120, speak=False)
     # uniform_prior_test()

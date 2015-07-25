@@ -561,7 +561,8 @@ class Softmax(object):
         # Move polygon
         if hasattr(self,'poly'):
             from cops_and_robots.map_tools.map_elements import MapObject
-            mo = MapObject('', self.poly.exterior.coords[:], pose=new_pose)
+            mo = MapObject('', self.poly.exterior.coords[:], pose=new_pose,
+                           has_spaces=False)
             self.poly = mo.shape
 
 
@@ -1349,14 +1350,15 @@ class BinarySoftmax(Softmax):
 
             self.binary_models[class_label] = new_softmax
 
-    def probability(self, state, label=None):
-        # if label == None:
-        #     label = 
-        if 'Not ' in label:
-            not_label = label
-            label = label.replace('Not ', '')
+    def probability(self, state, class_=None):
+        # if class_ == None:
+        #     class_ = 
+        if 'Not ' in class_:
+            not_label = class_
+            label = class_.replace('Not ', '')
             p = self.binary_models[label].probability(state, not_label)
         else:
+            label = class_
             p = self.binary_models[label].probability(state, label)
         return p
 
@@ -1517,62 +1519,90 @@ def binary_intrinsic_space_model(poly=None):
     return bism
 
 
+def run_demos():
+    logging.info('Preparing Softmax models for demo...')
+    # Regular Softmax models #################################################
+
+    # Speed model
+    sm = speed_model()
+    title='Softmax Speed Model'
+    logging.info('Building {}'.format(title))
+    sm.plot(show_plot=False, plot_3D=False, title=title)
+
+    # Pentagon Model
+    pm = pentagon_model()
+    title='Softmax Area Model (The Pentagon)'
+    logging.info('Building {}'.format(title))
+    pm.plot(show_plot=False, title=title)
+
+    # Range model
+    x = [-2, 0, 2, 2]
+    y = [-3, -1, -1, -3]
+    pts = zip(x,y)
+    poly = Polygon(pts)
+    rm = range_model(poly)
+    rm = intrinsic_space_model(poly)
+    title='Softmax Intrinsic Space Model (Irregular)'
+    logging.info('Building {}'.format(title))
+    rm.plot(show_plot=False, title=title)
+
+    # Multimodal softmax models ##############################################
+
+    # Range model (irregular poly)
+    x = [-2, 0, 2, 2]
+    y = [-3, -1, -1, -3]
+    pts = zip(x,y)
+    poly = Polygon(pts)
+    rm = range_model(poly)
+    title='MMS Range Model (Irregular)'
+    logging.info('Building {}'.format(title))
+    rm.plot(show_plot=False, title=title)
+
+    # Camera model (with movement)
+    cm = camera_model_2D()
+    cm.move([-2,-2, 90])
+    title='MMS Camera Model'
+    logging.info('Building {}'.format(title))
+    cm.plot(show_plot=False, title=title)
+    cm.move([-5,-2, 90])
+    title='MMS Camera Model (moved, detect only)'
+    logging.info('Building {}'.format(title))
+    cm.plot(show_plot=False, class_='Detection', title=title)
+
+    # Binary softmax models ##################################################
+
+    # Binary speed model 
+    bsm = binary_speed_model()
+    title='Binary MMS Speed Model'
+    logging.info('Building {}'.format(title))
+    bsm.binary_models['Medium'].plot(show_plot=False, title=title)
+
+    # Binary Pentagon Model - Individual and multiple plots
+    pent = pentagon_model()
+    bpent = BinarySoftmax(pent)
+    title='Binary MMS Pentagon Model (Not Heliport only)'
+    logging.info('Building {}'.format(title))
+    bpent.binary_models['Heliport Facade'].plot(show_plot=False, class_='Not Heliport Facade',
+                                                title=title)
+    title='Binary MMS Pentagon Model (Interior)'
+    bpent.binary_models['Interior'].plot(show_plot=False, title=title)
+
+    # Binary Range Model
+    bdsm = binary_range_model()
+    title='Binary MMS Range Model'
+    logging.info('Building {}'.format(title))
+    bdsm.binary_models['Near'].plot(show_plot=False, title=title)
+    plt.show()
+
+    # Binary intrinsic space model
+    brm = binary_intrinsic_space_model()
+    title='Binary MMS Intrinsic Space Model'
+    logging.info('Building {}'.format(title))
+    brm.binary_models['Front'].plot(show_plot=False, title=title)
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     np.set_printoptions(precision=10, suppress=True)
 
-    # # Regular Softmax models #################################################
-
-    # # Speed model
-    # sm = speed_model()
-    # sm.plot(plot_3D=False)
-
-    # # Pentagon Model
-    # pm = pentagon_model()
-    # pm.plot()
-
-    # # Range model
-    # rm = intrinsic_space_model()
-    # rm.plot()
-
-    # Multimodal softmax models ##############################################
-
-    # # Range model (irregular poly)
-    # x = [-2, 0, 2, 2]
-    # y = [-3, -1, -1, -3]
-    # pts = zip(x,y)
-    # poly = Polygon(pts)
-    # rm = range_model(poly)
-    # rm.plot()
-
-    # Camera model (with movement)
-    cm = camera_model_2D()
-    # cm.plot(class_='Detection')
-    # cm.move([-1,0], 0)
-    # cm.plot(class_='Detection')
-    # cm.move([0,0], 90, rotation_point=[-1, 0])
-    # cm.plot()
-    cm.move([-4,-2,90])
-    cm.plot(class_='Detection')
-    cm.move([-5,-2,90])
-    cm.plot(class_='Detection')
-
-    # # Binary softmax models ##################################################
-
-    # # Binary speed model 
-    # bsm = binary_speed_model()
-    # bsm.binary_models['Medium'].plot()
-
-    # # Binary Pentagon Model - Individual and multiple plots
-    # pent = pentagon_model()
-    # bpent = BinarySoftmax(pent)
-    # bpent.binary_models['Heliport Facade'].plot('Not Heliport Facade')
-    # bpent.binary_models['Interior'].plot()
-
-    # # Binary Range Model
-    # bdsm = binary_range_model()
-    # bdsm.binary_models['Near'].plot()
-
-    # # Binary intrinsic space model
-    # brm = binary_intrinsic_space_model()
-    # brm.binary_models['Front'].plot()
+    run_demos()

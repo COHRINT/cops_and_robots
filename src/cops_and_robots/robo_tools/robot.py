@@ -112,7 +112,6 @@ class Robot(iRobotCreate):
                                         **goal_planner_cfg)
         # If pose_source is python, this robot is just in simulation
         if not self.publish_to_ROS:
-            print path_planner_cfg
             self.path_planner = PathPlanner(self, **path_planner_cfg)
             self.controller = Controller(self)
 

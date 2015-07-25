@@ -527,12 +527,11 @@ class PathPlanner(object):
                              'of acceptable types: {}'
                              .format(type_, PathPlanner.types))
         self.type = type_
-        print self.type
         self.robot = robot
         self.path_planner_status = 'not planning'
 
         if self.type == 'a_star':
-            self.cell_size = 0.1
+            self.cell_size = 0.35
             # Generate Occupancy Grid from feasible layer
             self.occupancy_layer = OccupancyLayer(
                 cell_size=self.cell_size,

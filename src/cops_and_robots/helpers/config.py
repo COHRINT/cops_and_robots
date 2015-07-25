@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""Run a basic cops_and_robots simulation.
 
-"""
 import logging
 import yaml
 import os
