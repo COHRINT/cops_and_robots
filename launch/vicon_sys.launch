@@ -1,4 +1,5 @@
 <launch>
+	<arg name="model"              default="deckard"         doc="Robot you want odom from"/>
     <!-- Add a identity transform between map and odom -->
     <!-- TODO: add into vicon_bridge -->
     <node pkg="tf" type="static_transform_publisher" 
