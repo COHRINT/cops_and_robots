@@ -441,7 +441,7 @@ class GoalPlanner(object):
             self.move_base_goal.pose.orientation.y = quaternions[1]
             self.move_base_goal.pose.orientation.z = quaternions[2]
             self.move_base_goal.pose.orientation.w = quaternions[3]
-            self.move_base_goal.header.frame_id = 'map'
+            self.move_base_goal.header.frame_id = '/map'
             self.move_base_goal.header.stamp = rospy.Time.now()
             self.pub.publish(self.move_base_goal)
 

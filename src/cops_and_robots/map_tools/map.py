@@ -330,6 +330,7 @@ class Map(object):
             except KeyError:
                 logging.debug('Robber already removed.')
 
+
 def set_up_fleming(map_):
     """Set up a map as the generic Fleming space configuration.
 

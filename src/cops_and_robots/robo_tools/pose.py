@@ -48,10 +48,11 @@ class Pose(object):
     If the pose_source is not python, a new node will be created to listen
     to a topic named /pose_source.
     """
-    def __init__(self, pose=[0, 0, 0],
+    def __init__(self, robot, pose=[0, 0, 0],
                  pose_source='python',
                  filename_for_recording=None):
 
+        self.robot = robot
         self.pose_source = pose_source
         self._pose = pose
         self.filename_for_recording = filename_for_recording
@@ -60,9 +61,12 @@ class Pose(object):
             # Lazy imports
             import rospy
             from nav_msgs.msg import Odometry
+            import tf
 
-            rospy.Subscriber(self.pose_source, Odometry, self.callback)
-            # rospy.spin()
+            if pose_source == 'tf':
+                self.listener = tf.TransformListener()
+            else:
+                rospy.Subscriber(self.pose_source, Odometry, self.callback)
 
     def callback(self, msg):
         import tf
@@ -76,7 +80,18 @@ class Pose(object):
         # print('Robot Pose')
         # print(self.pose)
 
-    # <>TODO: why doesn't logging work here?
+    def tf_update(self):
+        import rospy
+        import tf
+        ref = "/" + self.robot.name.lower() + "/odom"
+        child = "/" + self.robot.name.lower() + "/base_footprint"
+        (trans, rot) = self.listener.lookupTransform(ref, child, rospy.Time(0))
+        x = trans[0]
+        y = trans[1]
+        (_, _, theta) = tf.transformations.euler_from_quaternion(rot)
+        self._pose = [x, y, np.rad2deg(theta)]
+        # print self._pose
+
     @property
     def x(self):
         return self._pose[0]
