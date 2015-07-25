@@ -95,4 +95,4 @@ class ImaginaryRobber(object):
     """
     def __init__(self, name, pose=None):
         self.name = name
-        self.pose = pose
+        self.pose2D = pose

@@ -56,8 +56,8 @@ def main():
     # Give cops references to the robbers actual pose
     for cop in cops.values():
         for robber_name, robber in robbers.iteritems():
-            cop.missing_robbers[robber_name].pose = \
-                robber.pose2D.pose
+            cop.missing_robbers[robber_name].pose2D = \
+                robber.pose2D
     for robber in robbers.values():
         robber.found_robbers = cops['Deckard'].found_robbers
 
