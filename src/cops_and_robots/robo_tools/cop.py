@@ -190,17 +190,18 @@ class Cop(Robot):
         # Update sensor and fusion information
         # irobber - Imaginary robber
         for irobber in self.missing_robbers.values():
-            point = Point(irobber.pose[0:2])
+            point = Point(irobber.pose2D.pose[0:2])
             # Try to visually spot a robber
             if self.sensors['camera'].viewcone.shape.contains(point):
                 self.map.found_robber(irobber.map_obj)
                 logging.info('{} captured!'.format(irobber.name))
-                self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose)
+                self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose2D.pose)
                 self.found_robbers.update({irobber.name:
                                            self.missing_robbers.pop(irobber.name)})
+
             # Update robber's shapes
             else:
-                self.missing_robbers[irobber.name].map_obj.move_absolute(irobber.pose)
+                self.missing_robbers[irobber.name].map_obj.move_absolute(irobber.pose2D.pose)
             # except:
             #     logging.warn('{} has no pose, and can\'t be detected'
             #                  .format(irobber.name))

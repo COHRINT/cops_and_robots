@@ -82,6 +82,7 @@ class Robot(iRobotCreate):
 
         # Object attributes
         self.name = name
+        self.pose_source = pose_source
 
         # Setup map
         self.map = Map(**map_cfg)
@@ -97,7 +98,7 @@ class Robot(iRobotCreate):
             theta = random.uniform(0, 359)
             pose = [x, y, theta]
 
-        self.pose2D = Pose(pose, pose_source)
+        self.pose2D = Pose(self, pose, pose_source)
         self.pose_history = np.array(([0, 0, 0], self.pose2D.pose))
         if pose_source == 'python':
             self.publish_to_ROS = False
@@ -143,6 +144,9 @@ class Robot(iRobotCreate):
             `None` if the robot does not generate an animation packet, or a
             tuple of all animation parameters otherwise.
         """
+        if self.pose_source == 'tf':
+            self.pose2D.tf_update()
+
         if self.mission_planner.mission_status is not 'stopped':
             # Update statuses and planners
             self.update_mission_status()
