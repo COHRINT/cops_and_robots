@@ -74,8 +74,8 @@ class Robot(iRobotCreate):
                  pose=None,
                  pose_source='python',
                  color_str='darkorange',
-                 mission_status='on the run',
                  map_cfg={},
+                 create_mission_planner=True,
                  goal_planner_cfg={},
                  path_planner_cfg={},
                  **kwargs):
@@ -106,8 +106,8 @@ class Robot(iRobotCreate):
             self.publish_to_ROS = True
 
         # Setup planners
-        self.mission_status = mission_status
-        self.mission_planner = MissionPlanner(self)
+        if create_mission_planner:
+            self.mission_planner = MissionPlanner(self)
         self.goal_planner = GoalPlanner(self,
                                         **goal_planner_cfg)
         # If pose_source is python, this robot is just in simulation
@@ -149,7 +149,7 @@ class Robot(iRobotCreate):
 
         if self.mission_planner.mission_status is not 'stopped':
             # Update statuses and planners
-            self.update_mission_status()
+            self.mission_planner.update()
             self.goal_planner.update()
             if self.publish_to_ROS is False:
                 self.path_planner.update()

@@ -20,6 +20,7 @@ __status__ = "Development"
 import logging
 
 from cops_and_robots.robo_tools.robot import Robot
+from cops_and_robots.robo_tools.planner import MissionPlanner
 
 
 class Robber(Robot):
@@ -52,7 +53,7 @@ class Robber(Robot):
                 is no longer moving.
 
     """
-    mission_statuses = ['on the run', 'captured']
+    mission_planner_defaults = {}
     goal_planner_defaults = {'type_': 'simple',
                              'use_target_as_goal': True}
     path_planner_defaults = {'type_': 'direct'}
@@ -62,10 +63,13 @@ class Robber(Robot):
                  pose=None,
                  pose_source='python',
                  map_cfg={},
+                 mission_planner_cfg={},
                  goal_planner_cfg={},
                  path_planner_cfg={},
                  **kwargs):
         # Use class defaults for kwargs not included
+        mp_cfg = Robber.mission_planner_defaults.copy()
+        mp_cfg.update(mission_planner_cfg)
         gp_cfg = Robber.goal_planner_defaults.copy()
         gp_cfg.update(goal_planner_cfg)
         pp_cfg = Robber.path_planner_defaults.copy()
@@ -76,22 +80,12 @@ class Robber(Robot):
                                      goal_planner_cfg=gp_cfg,
                                      path_planner_cfg=pp_cfg,
                                      map_cfg=map_cfg,
-                                     mission_status='searching',
+                                     create_mission_planner=False,
                                      color_str='red',
                                      **kwargs)
 
         self.found_robbers = {}
-        self.found = False
-
-    def update_mission_status(self):
-        # <>TODO: Replace with MissionPlanner
-        """Update the robber's status
-
-        """
-        if self.name in self.found_robbers.keys():
-            self.mission_status = 'captured'
-        if self.mission_status is 'captured':
-            self.mission_planner.stop_all_movement()
+        self.mission_planner = RobberMissionPlanner(self, **mp_cfg)
 
 
 class ImaginaryRobber(object):
@@ -102,3 +96,23 @@ class ImaginaryRobber(object):
     def __init__(self, name, pose=None):
         self.name = name
         self.pose2D = pose
+
+
+class RobberMissionPlanner(MissionPlanner):
+    """The Cop subclass of the generic MissionPlanner
+    """
+    mission_statuses = ['on the run', 'captured']
+
+    def __init__(self, robot, mission_status='on the run'):
+
+        super(RobberMissionPlanner, self).__init__(robot,
+                                                   mission_status=mission_status)
+
+    def update(self):
+        """Update the robber's status
+
+        """
+        if self.robot.name in self.robot.found_robbers.keys():
+            self.mission_status = 'captured'
+        if self.mission_status is 'captured':
+            self.stop_all_movement()
