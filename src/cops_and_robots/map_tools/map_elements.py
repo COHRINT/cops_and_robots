@@ -308,8 +308,8 @@ class MapArea(MapElement):
 
         Defaults to: 'Inside', 'Near', and 'Outside'.
         """
-        self.spaces = range_model(self.shape)
-        # self.spaces = binary_range_model(self.shape)
+        # self.spaces = range_model(self.shape)
+        self.spaces = binary_range_model(self.shape)
 
     # Handle with Information
     # def plot(self, ax=None, alpha=0.2, **kwargs):
