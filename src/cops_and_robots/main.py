@@ -85,8 +85,8 @@ def main(config_file=None):
     cops['Deckard'].map.setup_plot(fusion_engine)
     sim_start_time = time.time()
 
-    # animated_exploration(fig, cops, robbers, main_cfg, sim_start_time)
-    headless_mode(cops, robbers, main_cfg, sim_start_time)
+    animated_exploration(fig, cops, robbers, main_cfg, sim_start_time)
+    # headless_mode(cops, robbers, main_cfg, sim_start_time)
 
 
 def headless_mode(cops, robbers, main_cfg, sim_start_time):

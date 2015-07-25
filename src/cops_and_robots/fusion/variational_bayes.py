@@ -486,6 +486,15 @@ class VariationalBayes(object):
         var_hat = var_hat[beta_hat > self.weight_threshold, :]
         beta_hat = beta_hat[beta_hat > self.weight_threshold]
 
+                # Check if covariances are positive semidefinite
+        for i, var in enumerate(var_hat):
+            try:
+                assert np.all(np.linalg.det(var) > 0)
+            except AssertionError, e:
+                logging.warn('Following variance is not positive '
+                                  'semidefinite: \n{}'.format(var))
+                var_hat[i] = np.eye(var.shape[0]) * 10 ** -3
+
         # Renormalize beta_hat
         beta_hat /= beta_hat.sum()
 
