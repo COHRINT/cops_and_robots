@@ -40,10 +40,11 @@ class MissionPlanner(object):
 
 
     """
-    def __init__(self, robot):
+    def __init__(self, robot, mission_status='Moving', target=None):
         self.robot = robot
+        self.target = target
         self.trajectory = self.test_trajectory()
-        self.mission_status = 'Moving'
+        self.mission_status = mission_status
 
     def stop_all_movement(self):
         self.robot.goal_planner.goal_status = 'done'
@@ -265,20 +266,28 @@ class GoalPlanner(object):
             A pose as [x,y,theta] in [m,m,degrees].
 
         """
+        target = self.robot.mission_planner.target
         fusion_engine = self.robot.fusion_engine
         # <>TODO: @Nick Test this!
-        if not next(fusion_engine.filters.iteritems()):
+        if fusion_engine.filter_type != 'particle':
                 raise ValueError('The fusion_engine must have a '
                                  'particle_filter.')
 
         theta = random.uniform(0, 360)
-        logging.debug('New theta = {}'.format(theta))
 
-        # If tracking multiple targets, use the combined particle filter
-        if len(fusion_engine.filters) > 1:
-            particles = fusion_engine.filters['combined'].particles
+        # If no target is specified, do default behavior
+        if target is None:
+            if len(fusion_engine.filters) > 1:
+                particles = fusion_engine.filters['combined'].particles
+            else:
+                particles = next(fusion_engine.filters.iteritems()).particles
         else:
-            particles = next(fusion_engine.filters.iteritems()).particles
+            try:
+                particles = fusion_engine.filters[target].particles
+                logging.info('Looking for {}'.format(target))
+            except:
+                logging.warn('No particle filter found for specified target')
+                return None
 
         max_prob = particles[:, 0].max()
         max_particle_i = np.where(particles[:, 0] == max_prob)[0]
@@ -305,21 +314,31 @@ class GoalPlanner(object):
             A pose as [x,y,theta] in [m,m,degrees].
 
         """
+        target = self.robot.mission_planner.target
         fusion_engine = self.robot.fusion_engine
 
         # <>TODO: @Nick Test this!
-        if not next(fusion_engine.filters.iteritems()):
+        if fusion_engine.filter_type != 'guass sum':
                 raise ValueError('The fusion_engine must have a '
-                                 'particle_filter.')
+                                 'guass sum filter.')
 
         theta = random.uniform(0, 360)
 
-        # If tracking multiple targets, use the combined particle filter
-        if len(fusion_engine.filters) > 1:
-            posterior = fusion_engine.filters['combined'].probability
+        # If no target is specified, do default behavior
+        if target is None:
+            if len(fusion_engine.filters) > 1:
+                posterior = fusion_engine.filters['combined'].probability
+            else:
+                posterior = next(fusion_engine.filters.iteritems()).probability
         else:
-            posterior = next(fusion_engine.filters.iteritems()).probability
+            try:
+                posterior = fusion_engine.filters[target].probability
+                logging.info('Looking for {}'.format(target))
+            except:
+                logging.warn('No guass sum filter found for specified target')
+                return None
 
+        # <>TODO: softmax update not inside if point in object
         bounds = self.feasible_layer.bounds
         MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
 
@@ -527,7 +546,6 @@ class PathPlanner(object):
                              'of acceptable types: {}'
                              .format(type_, PathPlanner.types))
         self.type = type_
-        print self.type
         self.robot = robot
         self.path_planner_status = 'not planning'
 
@@ -607,6 +625,13 @@ class PathPlanner(object):
                                 dirs, dx, dy, start[0], start[1],
                                 end[0], end[1])
 
+        if route == 'No Path':
+            logging.warn('No path found')
+            # <>TODO: Kick it to simple planner without waiting
+            # sit still so simple planner kicks in
+            goal_path = np.array([current_point])
+            return goal_path, final_theta
+
         # Convert to a list of points
         x = start[0]
         y = start[1]
@@ -619,7 +644,7 @@ class PathPlanner(object):
 
         # Convert to a list of coordinates
         path = np.array(path)
-        print self.occupancy_layer.bounds[0:2]
+        # print self.occupancy_layer.bounds[0:2]
         path = (path * self.occupancy_layer.cell_size
                 + np.array(self.occupancy_layer.bounds[0:2]))
 

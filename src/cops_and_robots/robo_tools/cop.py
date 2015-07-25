@@ -27,6 +27,7 @@ from shapely.geometry import Point
 from cops_and_robots.robo_tools.robber import ImaginaryRobber
 from cops_and_robots.robo_tools.robot import Robot
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
+from cops_and_robots.robo_tools.planner import MissionPlanner
 from cops_and_robots.fusion.fusion_engine import FusionEngine
 from cops_and_robots.fusion.camera import Camera
 from cops_and_robots.fusion.human import Human
@@ -71,7 +72,7 @@ class Cop(Robot):
             * `retired` means all robbers have been captured.
 
     """
-    mission_statuses = ['searching', 'capturing', 'retired']
+    mission_planner_defaults = {}
     goal_planner_defaults = {'type_': 'particle',
                              'use_target_as_goal': False}
     path_planner_defaults = {'type_': 'direct'}
@@ -84,11 +85,14 @@ class Cop(Robot):
                  other_cop_names=[],
                  robber_model='static',
                  map_cfg={},
+                 mission_planner_cfg={},
                  goal_planner_cfg={},
                  path_planner_cfg={},
                  camera_cfg={},
                  **kwargs):
         # Use class defaults for kwargs not included
+        mp_cfg = Cop.mission_planner_defaults.copy()
+        mp_cfg.update(mission_planner_cfg)
         gp_cfg = Cop.goal_planner_defaults.copy()
         gp_cfg.update(goal_planner_cfg)
         pp_cfg = Cop.path_planner_defaults.copy()
@@ -108,16 +112,19 @@ class Cop(Robot):
         super(Cop, self).__init__(name,
                                   pose=pose,
                                   pose_source=pose_source,
+                                  create_mission_planner=False,
                                   goal_planner_cfg=gp_cfg,
                                   path_planner_cfg=pp_cfg,
                                   map_cfg=map_cfg,
-                                  mission_status='searching',
                                   color_str='darkgreen',)
 
         # Tracking attributes
         self.other_cop_names = other_cop_names
         self.missing_robber_names = missing_robber_names
         self.found_robbers = {}
+
+        # Create mission planner
+        self.mission_planner = CopMissionPlanner(self, **mp_cfg)
 
         # Fusion and sensor attributes
         # <>TODO: Fusion Engine owned and refrenced from imaginary robber?
@@ -175,20 +182,6 @@ class Cop(Robot):
             # init_pose =
             # self.missing_robbers[name].map_obj.move_absolute(init_pose)
 
-    def update_mission_status(self):
-        # <>TODO: Replace with MissionPlanner
-        """Update the cop's high-level mission status.
-
-        Update the cop's status from one of:
-            1. retired (all robots have been captured)
-            2. searching (moving around to gather information)
-
-        """
-        if self.mission_status is 'searching':
-            if len(self.missing_robbers) is 0:
-                self.mission_status = 'retired'
-                self.mission_planner.stop_all_movement()
-
     def update(self, i=0):
         super(Cop, self).update(i=i)
 
@@ -200,6 +193,7 @@ class Cop(Robot):
             if self.sensors['camera'].viewcone.shape.contains(point):
                 self.map.found_robber(irobber.map_obj)
                 logging.info('{} captured!'.format(irobber.name))
+                self.mission_planner.found_robber(irobber.name)
                 self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose2D.pose)
                 self.found_robbers.update({irobber.name:
                                            self.missing_robbers.pop(irobber.name)})
@@ -214,3 +208,49 @@ class Cop(Robot):
         # Update probability model
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
                                   self.missing_robbers)
+
+
+class CopMissionPlanner(MissionPlanner):
+    """The Cop subclass of the generic MissionPlanner
+    """
+    mission_statuses = ['searching', 'capturing', 'retired']
+
+    def __init__(self, robot, mission_status='searching', target_order=None):
+        if target_order is None:
+            target = None
+        else:
+            target = target_order[0]
+        self.target_order = target_order
+
+        super(CopMissionPlanner, self).__init__(robot,
+                                                mission_status=mission_status,
+                                                target=target)
+
+    def update(self):
+        """Update the cop's high-level mission status.
+
+        Update the cop's status from one of:
+            1. retired (all robots have been captured)
+            2. searching (moving around to gather information)
+
+        """
+        if self.mission_status is 'searching':
+            if len(self.robot.missing_robbers) is 0:
+                self.mission_status = 'retired'
+                self.stop_all_movement()
+
+    def found_robber(self, name):
+        # If no target order, do default behavior
+        if self.target_order is None:
+            return
+        else:
+            try:
+                self.target_order.remove(name)
+                if self.target_order == []:
+                    self.target_order = None
+                    logging.info('Completed target order')
+                else:
+                    self.target = self.target_order[0]
+                    logging.info('New target: {}'.format(self.target))
+            except:
+                logging.info('{} is not in target order'.format(name))
