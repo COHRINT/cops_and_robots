@@ -380,10 +380,6 @@ class GaussianMixture(object):
                                   ' \n{}'.format(mean, var))
                 raise e
 
-        # Ensure all variances are positive
-        # for i, var in enumerate(self.covariances):
-        #     self.covariances[i] = np.abs(var)
-
         # Check if covariances are positive semidefinite
         for var in self.covariances:
             try:
@@ -831,6 +827,16 @@ def uniform_prior_test(num_mixands=10, bounds=None):
     plt.show()
 
 
+def merge_test(num_mixands=100, max_num_mixands=10, spread=4,):
+    # Generate the unmerged and merged gaussians
+    weights, means, covariances = generate_random_params(num_mixands,
+                                                         ndims=2,
+                                                         spread=spread)
+    merged_gauss_2d = GaussianMixture(weights.copy(),
+                                      means.copy(),
+                                      covariances.copy(),
+                                      max_num_mixands=max_num_mixands)
+    
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
@@ -839,10 +845,10 @@ if __name__ == '__main__':
     # rv_test()
     # fleming_prior_test()
     
-    fp = fleming_prior_test()
+    # fp = fleming_prior_test()
     # new_fp = fp.copy()
     # new_fp.weights = np.ones(6)
     # print fp
     # ellipses_test(2)
-    # merge_test(120, speak=False)
+    merge_test(120)
     # uniform_prior_test()
