@@ -318,9 +318,9 @@ class GoalPlanner(object):
         fusion_engine = self.robot.fusion_engine
 
         # <>TODO: @Nick Test this!
-        if fusion_engine.filter_type != 'guass sum':
+        if fusion_engine.filter_type != 'gauss sum':
                 raise ValueError('The fusion_engine must have a '
-                                 'guass sum filter.')
+                                 'gauss sum filter.')
 
         theta = random.uniform(0, 360)
 
@@ -335,7 +335,7 @@ class GoalPlanner(object):
                 posterior = fusion_engine.filters[target].probability
                 logging.info('Looking for {}'.format(target))
             except:
-                logging.warn('No guass sum filter found for specified target')
+                logging.warn('No gauss sum filter found for specified target')
                 return None
 
         # <>TODO: softmax update not inside if point in object
