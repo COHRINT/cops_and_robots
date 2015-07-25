@@ -91,7 +91,7 @@ def main(config_file=None):
 
 def headless_mode(cops, robbers, main_cfg, sim_start_time):
     i = 0
-    while cops['Deckard'].mission_planner.mission_status != 'retired':
+    while cops['Deckard'].mission_planner.mission_status != 'stopped':
         update(i, cops, robbers, main_cfg, sim_start_time)
         i += 1
 
@@ -110,7 +110,7 @@ def animated_exploration(fig, cops, robbers, main_cfg, sim_start_time):
                                   blit=False,
                                   repeat=False,
                                   )
-    #<>TODO: break from non-blocking plt.show() gracefully
+    # <>TODO: break from non-blocking plt.show() gracefully
     plt.show()
 
 
