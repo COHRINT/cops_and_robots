@@ -24,7 +24,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pytest
 
-from scipy.stats import multivariate_normal, norm
+from scipy.stats import multivariate_normal, norm, entropy
 from descartes.patch import PolygonPatch
 from shapely.geometry import Polygon
 
@@ -85,7 +85,7 @@ class GaussianMixture(object):
         return '\n' + df.to_string()
             
 
-    def pdf(self, x):
+    def pdf(self, x=None):
         """Probability density function at state x.
 
         Will return a probability distribution relative to the shape of the
@@ -93,6 +93,12 @@ class GaussianMixture(object):
         with a 2-dimensional normal, pdf is 5x1; if x is 5x5x2 
         with a 2-dimensional normal, pdf is 5x5.
         """
+
+        # Look over the whole state space
+        if x is None:
+            if not hasattr(self, 'pos'):
+                self._discretize()
+            x = self.pos
 
         # Ensure proper output shape
         x = np.atleast_1d(x)
@@ -302,8 +308,13 @@ class GaussianMixture(object):
         """
         # <>TODO: figure this out. Look at papers!
         # http://www-personal.acfr.usyd.edu.au/tbailey/papers/mfi08_huber.pdf
-        H = np.sum(self.pdf(x) .dot (np.log(self.pdf(x))))
+        if not hasattr(self,'pos'):
+            self._discretize()
 
+        p_i = self.pdf(self.pos) 
+        p_i /= p_i.sum()  # normalize input probability
+        H = -np.sum(p_i * np.log(p_i))  # sum of elementwise entropy values
+        return H
 
     def _input_check(self):
         # Check if weights sum are normalized
@@ -318,8 +329,8 @@ class GaussianMixture(object):
         try:
             assert np.isclose(np.ones(1), np.sum(self.weights))
         except AssertionError, e:
-            logging.exception('Weights sum to {}, not 1.'.format(a))
-            raise e
+            logging.exception('Weights sum to {}, not 1.'.format(np.sum(self.weights)))
+            raise
 
         # Identify dimensionality
         if self.means.ndim == 0:  # single Univariate gaussian
@@ -375,19 +386,30 @@ class GaussianMixture(object):
         # Merge if necessary
         self._merge()
 
-    def _discretize(self, bounds=None, grid_spacing=0.1):
+    def _discretize(self, bounds=None, grid_spacing=1):
+        self.grid_spacing = grid_spacing
         if bounds is None:
-            self.bounds =[-10, -10, 10, 10]
+            b = [-10, 10]  # bounds in any dimension
+            bounds = [[d] * self.ndims for d in b]  # apply bounds to each dim
+            self.bounds = [d for dim in bounds for d in dim]  # flatten bounds
         else:
             self.bounds = bounds
 
         # Create grid
-        xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]:grid_spacing,
-                          self.bounds[1]:self.bounds[3]:grid_spacing]
-        pos = np.empty(xx.shape + (2,))
-        pos[:, :, 0] = xx; pos[:, :, 1] = yy
-        self.xx = xx; self.yy = yy
-        self.pos = pos
+        if self.ndims == 1:
+            x = np.arange(self.bounds[0], self.bounds[1], grid_spacing)
+            self.x = x
+            self.pos = x
+        elif self.ndims == 2:
+            xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]:grid_spacing,
+                              self.bounds[1]:self.bounds[3]:grid_spacing]
+            pos = np.empty(xx.shape + (2,))
+            pos[:, :, 0] = xx; pos[:, :, 1] = yy
+            self.xx = xx; self.yy = yy
+            self.pos = pos
+        else:
+            logging.error('Only discretizing 2- or 1-dimensional GMs.')
+            raise ValueError
 
     def _merge(self, max_num_mixands=None):
         """
@@ -510,6 +532,7 @@ def mixand_dissimilarity(mix_i, mix_j):
     b = 0.5 * ((w_i + w_j) * logdet_P_ij - w_i * logdet_P_i - w_j * logdet_P_j)
     return b
 
+
 def generate_random_params(num_mixands, ndims=2, spread=4):
     # Randomly generate parameters
     weights = np.random.uniform(size=num_mixands)
@@ -528,6 +551,7 @@ def generate_random_params(num_mixands, ndims=2, spread=4):
         covariances[i] = (covariance + covariance.T)/2
 
     return weights, means, covariances
+
 
 def pdf_test():
     fig = plt.figure()
@@ -824,6 +848,102 @@ def merge_test(num_mixands=100, max_num_mixands=10, spread=4,):
                                       max_num_mixands=max_num_mixands)
     
 
+def entropy_test():
+
+    # 1D entropy - no mixtures ################################################
+    gauss1_1d = GaussianMixture(1, 3, 1.5)
+    gauss2_1d = GaussianMixture(1, 3, 0.5)
+
+    # Discrete
+    H1_1d = gauss1_1d.entropy()
+    H2_1d = gauss2_1d.entropy()
+
+    # Exact
+    var1 = gauss1_1d.covariances[0][0][0]
+    var2 = gauss2_1d.covariances[0][0][0]
+    exactH1_1d = 0.5 * np.log(var1 * 2 * np.pi * np.e)
+    exactH2_1d = 0.5 * np.log(var2 * 2 * np.pi * np.e)
+
+    # Scipy
+    x = np.arange(-10, 10, 1)
+    scipyH1_1d = entropy(norm(3, np.sqrt(1.5)).pdf(x))
+    scipyH2_1d = entropy(norm(3, np.sqrt(0.5)).pdf(x))
+
+    logging.info('Entropy of a 1d gaussian: {} (discrete) \t {} (exact) \t {} (scipy)'
+                 '\n with params: {}'
+                 .format(H1_1d, exactH1_1d, scipyH1_1d, gauss1_1d))
+    logging.info('Entropy of a 1d gaussian: {} (discrete) \t {} (exact) \t {} (scipy)'
+                 '\n with params: {}'
+                 .format(H2_1d, exactH2_1d, scipyH2_1d, gauss2_1d))
+
+    # 1D entropy - mixtures ###################################################
+    gauss3_1d = GaussianMixture([0.3, 0.7], [-3, 6], [1.5, 4])
+    gauss4_1d = GaussianMixture([0.3, 0.7], [-3, 6], [0.5, 0.4])
+
+    # Discrete
+    H3_1d = gauss3_1d.entropy()
+    H4_1d = gauss4_1d.entropy()
+
+    logging.info('Entropy of a 1d gaussian: {} (discrete)'
+                 '\n with params: {}'
+                 .format(H3_1d, gauss3_1d))
+    logging.info('Entropy of a 1d gaussian: {} (discrete)'
+                 '\n with params: {}'
+                 .format(H4_1d, gauss4_1d))
+    #<>TODO: VALIDATE AGAINST NISAR'S CODE
+
+    # 2D entropy - no mixtures ################################################
+    gauss1_2d = GaussianMixture(1, [3, -2], [[1.5, 1.0],[1.0, 1.5]])
+    gauss2_2d = GaussianMixture(1, [3, -2], [[0.5, 0.0],[0.0, 0.5]])
+
+    # Discrete
+    H1_2d = gauss1_2d.entropy()
+    H2_2d = gauss2_2d.entropy()
+
+    # Exact
+    det_var1 = np.linalg.det(gauss1_2d.covariances)
+    det_var2 = np.linalg.det(gauss2_2d.covariances)
+    exactH1_2d = 0.5 * np.log(det_var1 * (2 * np.pi * np.e) ** gauss1_2d.ndims)
+    exactH2_2d = 0.5 * np.log(det_var2 * (2 * np.pi * np.e) ** gauss2_2d.ndims)
+
+    logging.info('Entropy of a 2d gaussian: {} (discrete) \t {} (exact)'
+                 '\n with params: {}'
+                 .format(H1_2d, exactH1_2d, gauss1_2d))
+    logging.info('Entropy of a 2d gaussian: {} (discrete) \t {} (exact)'
+                 '\n with params: {}'
+                 .format(H2_2d, exactH2_2d, gauss2_2d))
+
+    # 2D entropy - mixtures ###################################################
+    gauss3_2d = GaussianMixture([0.3, 0.7],
+                                [[3, -2],
+                                 [-4, -6]
+                                 ], 
+                                 [[[1.5, 1.0],
+                                   [1.0, 1.5]],
+                                  [[2.5, -0.3],
+                                   [-0.3, 2.5]]
+                                 ])
+    gauss4_2d = GaussianMixture([0.3, 0.7],
+                                [[3, -2],
+                                 [-4, -6]
+                                 ], 
+                                 [[[0.5, 0.0],
+                                   [0.0, 0.5]],
+                                  [[1.5, -0.3],
+                                   [-0.3, 1.5]]
+                                 ])
+
+    # Discrete
+    H3_2d = gauss3_2d.entropy()
+    H4_2d = gauss4_2d.entropy()
+
+    logging.info('Entropy of a 2d gaussian: {} (discrete)'
+                 '\n with params: {}'
+                 .format(H3_2d, gauss3_2d))
+    logging.info('Entropy of a 2d gaussian: {} (discrete)'
+                 '\n with params: {}'
+                 .format(H4_2d, gauss4_2d))
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
@@ -836,5 +956,6 @@ if __name__ == '__main__':
     # new_fp.weights = np.ones(6)
     # print fp
     # ellipses_test(2)
-    merge_test(120)
+    # merge_test(120)
     # uniform_prior_test()
+    entropy_test()
