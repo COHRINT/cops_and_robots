@@ -144,7 +144,10 @@ class GoalPlanner(object):
         self.view_distance = view_distance
         self.use_target_as_goal = use_target_as_goal
         self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
-        self.stuck_buffer = 200  # time steps after being stuck before checking
+        if self.robot.publish_to_ROS:
+            self.stuck_buffer = 200  # time steps after being stuck before checking
+        else:
+            self.stuck_buffer = 50
         self.stuck_count = self.stuck_buffer
         self.distance_allowance = 0.15  # [m] acceptable distance to a goal
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal
@@ -479,19 +482,24 @@ class GoalPlanner(object):
         new_status = current_status
 
         if current_status == 'without a goal':
-            self.goal_pose = self.find_goal_pose()
-            if self.goal_pose is None:
+            if self.type == 'stationary':
                 new_status = 'done'
             else:
-                if self.robot.publish_to_ROS is True:
-                    self.create_ROS_goal_message()
+                self.goal_pose = self.find_goal_pose()
+                if self.goal_pose is None:
+                    new_status = 'without a goal'
                 else:
-                    self.robot.path_planner.path_planner_status = 'planning'
-                new_status = 'moving to goal'
+                    if self.robot.publish_to_ROS is True:
+                        self.create_ROS_goal_message()
+                    else:
+                        self.robot.path_planner.path_planner_status = 'planning'
+                    new_status = 'moving to goal'
 
         elif current_status == 'moving to goal':
             if self.is_stuck():
                 new_status = 'stuck'
+            elif self.goal_pose is None:
+                new_status = 'without a goal'
             elif self.is_at_goal():
                 new_status = 'at goal'
 
@@ -659,6 +667,8 @@ class PathPlanner(object):
         new_status = current_status
 
         if current_status == 'planning':
+            if self.robot.goal_planner.goal_pose is None:
+                new_status = 'not_planning'
             # Find new path
             self.find_path()
             # Update controller
