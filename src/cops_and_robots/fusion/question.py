@@ -35,13 +35,13 @@ class Questions(object):
                  }
                 }
     all_questions=[]
-    for certinty in certainties:
+    for certainty in certainties:
         for target in targets:
             for positive in positivities:
                 for dict in groundings.values():
                     for element,relations in dict.iteritems():
                         for relation in relations:
-                            all_questions.append("Do you "+certinty+" "+target+" "+positive+" "+relation+" "+element+"?")
+                            all_questions.append("Do you "+certainty+" "+target+" "+positive+" "+relation+" "+element+"?")
     # for question in all_questions:
     #     print question
     # print len(all_questions)

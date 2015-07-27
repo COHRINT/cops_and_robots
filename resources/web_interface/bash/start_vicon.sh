@@ -21,7 +21,7 @@ xterm -e ./gzweb/start_gzweb.sh &
 
 	xterm -e ssh pi@cam2 'roslaunch usb_cam usb_cam-test.launch' &
 
-	xterm -e ssh pi@cam3'roslaunch usb_cam usb_cam-test.launch' &
+	xterm -e ssh pi@cam3 'roslaunch usb_cam usb_cam-test.launch' &
 
 
 	# Tyrell commandes 2
