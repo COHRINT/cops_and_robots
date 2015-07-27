@@ -241,7 +241,7 @@ class Map(object):
         ax.set_title('Experimental environment with landmarks and areas')
         plt.show()
 
-    def setup_plot(self, fusion_engine):
+    def setup_plot(self, fusion_engine=None, show_human_interface=True):
         """Create the initial plot for the animation.
         """
         logging.info('Setting up plot')
@@ -250,7 +250,7 @@ class Map(object):
         self._setup_layers()
 
         # Set up the human interface
-        if self.human_sensor:
+        if self.human_sensor and show_human_interface:
             HumanInterface(self.fig, self.human_sensor, **self.human_cfg)
 
     def _setup_axes(self):
@@ -315,7 +315,7 @@ class Map(object):
                         ProbabilityLayer(filter_, fig=self.fig, ax=ax,
                                          bounds=self.bounds)
 
-    def update(self, i):
+    def update(self, i=0):
         """
         """
         # self.shape_layer.update(i=i)
@@ -337,7 +337,7 @@ def set_up_fleming(map_):
     """
     # Make vicon field space object
     field_w = 7.5  # [m] field width
-    field = MapArea('Field', [field_w, field_w], has_spaces=False)
+    field = MapArea('Field', [field_w, field_w], has_relations=False)
 
     # Make wall objects
     l = 1.15  # [m] wall length
@@ -372,7 +372,7 @@ def set_up_fleming(map_):
         name = 'Wall ' + str(i)
         pose = poses[i, :]
         wall = MapObject(name, wall_shape, pose=pose, color_str='sienna',
-                         has_spaces=False)
+                         has_relations=False, map_bounds=map_.bounds)
         walls.append(wall)
 
     # Make rectangular objects (desk, bookcase, etc)
@@ -392,15 +392,16 @@ def set_up_fleming(map_):
     landmarks = []
     for i, pose in enumerate(poses):
         landmark = MapObject(labels[i], sizes[i], pose=pose,
-                             color_str=colors[i])
+                             color_str=colors[i], map_bounds=map_.bounds)
         landmarks.append(landmark)
 
     # Make odd landmarks
-    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.38, 270], color_str='black')
+    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.38, 270],
+                         color_str='black', map_bounds=map_.bounds)
     landmarks.append(landmark)
     # pose = [-9.5, 2.1, 0]
     # shape_pts = Point(pose).buffer(0.2).exterior.coords
-    # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_spaces=False, color_str='slategrey')
+    # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_relations=False, color_str='slategrey')
     # landmarks.append(landmark)
 
     # Add walls to map
@@ -427,7 +428,7 @@ def set_up_fleming(map_):
         centroid = [pts[0,0] + np.abs(pts[2,0] - pts[0,0]) / 2,
                     pts[0,1] + np.abs(pts[1,1] - pts[0,1]) / 2, 0 ]
         area = MapArea(name=labels[i], shape_pts=pts, pose=centroid,
-                       color_str=colors[i])
+                       color_str=colors[i], map_bounds=map_.bounds)
         map_.add_area(area)
 
     # <>TODO: Include area demarcations

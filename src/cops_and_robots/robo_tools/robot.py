@@ -118,7 +118,7 @@ class Robot(iRobotCreate):
         # Define MapObject
         shape_pts = Point([0, 0]).buffer(iRobotCreate.DIAMETER / 2)\
             .exterior.coords
-        self.map_obj = MapObject(self.name, shape_pts[:], has_spaces=False,
+        self.map_obj = MapObject(self.name, shape_pts[:], has_relations=False,
                                  blocks_camera=False, color_str=color_str)
         self.update_shape()
 

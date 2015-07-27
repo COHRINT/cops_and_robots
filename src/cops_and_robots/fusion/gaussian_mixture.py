@@ -242,7 +242,7 @@ class GaussianMixture(object):
             ellipse_patches.append(patch)
         return ellipse_patches
 
-    def plot(self, title=None, **kwargs):
+    def plot(self, title=None, alpha=1.0, **kwargs):
         if not hasattr(self,'ax'):
             self.plot_setup(**kwargs)
         if title is None:
@@ -250,7 +250,8 @@ class GaussianMixture(object):
         self.contourf = self.ax.contourf(self.xx, self.yy,
                                          self.pdf(self.pos),
                                          levels=self.levels,
-                                         cmap=plt.get_cmap('jet')
+                                         cmap=plt.get_cmap('jet'),
+                                         alpha=alpha,
                                          )
         self.ax.set_title(title)
 
@@ -276,19 +277,23 @@ class GaussianMixture(object):
         else:
             self.ax = ax
 
-        self._discretize()
+        if bounds is None:
+            bounds = self.bounds
+
+        if not hasattr(self,'pos'):
+            self._discretize(bounds=bounds)
 
         # Set levels
         if levels is None:
-            max_prob = np.max(self.pdf(pos))
+            max_prob = np.max(self.pdf(self.pos))
             self.levels = np.linspace(0, max_prob * 1.2, 50)
         else:
             self.levels = levels
         
         # Set bounds
         plt.axis('scaled')
-        self.ax.set_xlim([self.bounds[0], self.bounds[2]])
-        self.ax.set_ylim([self.bounds[1], self.bounds[3]])
+        self.ax.set_xlim([bounds[0], bounds[2]])
+        self.ax.set_ylim([bounds[1], bounds[3]])
 
     def plot_remove(self):
         """Removes all plotted elements related to this gaussian mixture.
@@ -312,8 +317,9 @@ class GaussianMixture(object):
             self._discretize()
 
         p_i = self.pdf(self.pos) 
-        p_i /= p_i.sum()  # normalize input probability
-        H = -np.sum(p_i * np.log(p_i))  # sum of elementwise entropy values
+        # p_i /= p_i.sum()  # normalize input probability
+        # H = np.sum(entr(p_i)) * self.grid_spacing ** self.ndims # sum of elementwise entropy values
+        H = -np.sum(p_i * np.log(p_i)) * self.grid_spacing ** self.ndims # sum of elementwise entropy values
         return H
 
     def _input_check(self):
@@ -386,7 +392,7 @@ class GaussianMixture(object):
         # Merge if necessary
         self._merge()
 
-    def _discretize(self, bounds=None, grid_spacing=1):
+    def _discretize(self, bounds=None, grid_spacing=0.1):
         self.grid_spacing = grid_spacing
         if bounds is None:
             b = [-10, 10]  # bounds in any dimension
@@ -401,8 +407,10 @@ class GaussianMixture(object):
             self.x = x
             self.pos = x
         elif self.ndims == 2:
-            xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]:grid_spacing,
-                              self.bounds[1]:self.bounds[3]:grid_spacing]
+            xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]
+                              + grid_spacing:grid_spacing,
+                              self.bounds[1]:self.bounds[3]
+                              + grid_spacing:grid_spacing]
             pos = np.empty(xx.shape + (2,))
             pos[:, :, 0] = xx; pos[:, :, 1] = yy
             self.xx = xx; self.yy = yy
@@ -485,6 +493,14 @@ class GaussianMixture(object):
         self.weights = np.delete(self.weights, deleted_mixands, axis=0)
         self.means = np.delete(self.means, deleted_mixands, axis=0)
         self.covariances = np.delete(self.covariances, deleted_mixands, axis=0)
+
+def entr(p_i):
+    if p_i > 0:
+       return -p_i * np.log(p_i)
+    elif np.isclose(p_i, 0):
+        return 0
+    else:
+      return -np.inf
 
 def merge_mixands(mix_i, mix_j):
     """Use moment-preserving merge (0th, 1st, 2nd moments) to combine mixands.

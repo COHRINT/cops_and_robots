@@ -562,7 +562,7 @@ class Softmax(object):
         if hasattr(self,'poly'):
             from cops_and_robots.map_tools.map_elements import MapObject
             mo = MapObject('', self.poly.exterior.coords[:], pose=new_pose,
-                           has_spaces=False)
+                           has_relations=False)
             self.poly = mo.shape
 
 
@@ -705,7 +705,7 @@ class Softmax(object):
             subclass.bias = self.biases[i]
             self.classes[label].add_subclass(subclass)
 
-    def _define_state(self, state_spec, res):
+    def _define_state(self, state_spec, res, bounds=None):
         """Create a numeric state vector from a specification.
 
         Possible specifications:
@@ -733,7 +733,10 @@ class Softmax(object):
         # <>TODO: Fix for n-dimensional
         # <>TODO: Use SymPy
         # Define distribution over a gridded state space
-        bounds = self.bounds[:]
+        if bounds is None:
+            bounds = self.bounds[:]
+        else:
+            self.bounds = bounds
         if state_spec == 'x':
             #<>TODO: implement bound dimension checking
             self.X = np.linspace(bounds[0], bounds[2],
@@ -1292,16 +1295,18 @@ class BinarySoftmax(Softmax):
 
     """
 
-    def __init__(self, softmax_model):
+    def __init__(self, softmax_model, bounds=None):
         super(BinarySoftmax, self).__init__(weights=np.zeros((2, 2)),
                                             biases=np.zeros(2),
                                             labels=['Null', 'NaC'],
+                                            bounds=bounds,
                                             )
         self.softmax_model = softmax_model
 
         # Remove unwanted bits of the softmax superclass
         del self.weights
         del self.biases
+        del self.classes
         del self.class_cmaps
         del self.class_colors
         del self.class_labels
@@ -1350,7 +1355,7 @@ class BinarySoftmax(Softmax):
 
             self.binary_models[class_label] = new_softmax
 
-    def probability(self, state, class_=None):
+    def probability(self, state=None, class_=None):
         # if class_ == None:
         #     class_ = 
         if 'Not ' in class_:
@@ -1469,20 +1474,20 @@ def pentagon_model():
     return sm
 
 
-def range_model(poly=None, spread=1):
+def range_model(poly=None, spread=1, bounds=None):
     if poly == None:
         poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
     labels = ['Inside'] + ['Near'] * 4
     steepnesses = [10] * 5
     sm = Softmax(poly=poly, labels=labels, resolution=0.1,
-                 steepness=steepnesses)
+                 steepness=steepnesses, bounds=bounds)
 
     steepnesses = [11] * 5
     # far_bounds = _make_regular_2D_poly(4, max_r=3, theta=np.pi/4)
     larger_poly = scale(poly,2,2)
     labels = ['Inside'] + ['Outside'] * 4
     sm_far = Softmax(poly=poly, labels=labels, resolution=0.1,
-                 steepness=steepnesses)
+                 steepness=steepnesses, bounds=bounds)
 
     new_weights = sm_far.weights[1:]
     new_biases = sm_far.biases[1:] - spread
@@ -1493,13 +1498,13 @@ def range_model(poly=None, spread=1):
     return sm
 
 
-def binary_range_model(poly=None):
-    dsm = range_model(poly)
-    bdsm = BinarySoftmax(dsm)
+def binary_range_model(poly=None, bounds=None):
+    dsm = range_model(poly, bounds=bounds)
+    bdsm = BinarySoftmax(dsm, bounds=bounds)
     return bdsm
 
 
-def intrinsic_space_model(poly=None):
+def intrinsic_space_model(poly=None, bounds=None):
     if poly == None:
         poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
 
@@ -1508,13 +1513,13 @@ def intrinsic_space_model(poly=None):
     labels = ['Inside', 'Front', 'Left', 'Back', 'Right']
     steepness = 3
     sm = Softmax(poly=poly, labels=labels, resolution=0.1,
-                 steepness=steepness)
+                 steepness=steepness, bounds=bounds)
     return sm
 
 
-def binary_intrinsic_space_model(poly=None):
-    ism = intrinsic_space_model(poly)
-    bism = BinarySoftmax(ism)
+def binary_intrinsic_space_model(poly=None, bounds=None):
+    ism = intrinsic_space_model(poly, bounds=bounds)
+    bism = BinarySoftmax(ism, bounds=bounds)
     del bism.binary_models['Inside']
     return bism
 
@@ -1595,14 +1600,16 @@ def run_demos():
     plt.show()
 
     # Binary intrinsic space model
-    brm = binary_intrinsic_space_model()
+    bism = binary_intrinsic_space_model()
     title='Binary MMS Intrinsic Space Model'
     logging.info('Building {}'.format(title))
-    brm.binary_models['Front'].plot(show_plot=False, title=title)
+    bism.binary_models['Front'].plot(show_plot=False, title=title)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     np.set_printoptions(precision=10, suppress=True)
 
-    run_demos()
+    # run_demos()
+    bism = binary_intrinsic_space_model()
+    print bism.probability(class_='Front')

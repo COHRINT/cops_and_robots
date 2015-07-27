@@ -76,12 +76,12 @@ class MapElement(object):
 
     """
     def __init__(self, name, shape_pts, pose=[0, 0, 0], visible=True,
-                 show_name=False, has_spaces=False, plot_spaces=False,
-                 blocks_camera=True, centroid_at_origin=True,
+                 show_name=False, has_relations=False, plot_relations=False,
+                 blocks_camera=True, centroid_at_origin=True, map_bounds=None,
                  space_resolution=0.1, color_str='darkblue', alpha=0.5):
         # Define basic MapElement properties
-        self.has_spaces = has_spaces
-        self.plot_spaces = plot_spaces
+        self.has_relations = has_relations
+        self.plot_relations = plot_relations
         self.name = name
         self.visible = visible
         self.blocks_camera = blocks_camera
@@ -131,14 +131,6 @@ class MapElement(object):
                      for p in rotated_shape.exterior.coords]
         self.shape = Polygon(shape_pts)
 
-        # Redefine sides, points and and spaces
-        # self.points = self.shape.exterior.coords
-        self.sides = []
-        self.spaces = []
-        self.spaces_by_label = {}
-        if self.has_spaces:
-            self.define_spaces()
-
     def move_relative(self, pose, rotation_pt=None):
         """Translate and rotate the shape.
 
@@ -166,15 +158,6 @@ class MapElement(object):
         shape_pts = [(p[0] + pose[0], p[1] + pose[1])
                      for p in self.shape.exterior.coords]
         self.shape = Polygon(shape_pts)
-
-        # Redefine sides, points and and spaces
-        # self.points = self.shape.exterior.coords
-        self.sides = []
-        self.spaces = []
-        self.spaces_by_label = {}
-        if self.has_spaces:
-            #<>TODO: Change this to move_absolute
-            self.define_spaces()
 
     def rotate_poly(self, angle, rotation_point):
         """Rotate the shape about a rotation point.
@@ -205,11 +188,11 @@ class MapElement(object):
                              alpha=self.alpha, zorder=2, **kwargs)
         return patch
 
-    def plot(self, ax=None, alpha=0.5, plot_spaces=False, **kwargs):
+    def plot(self, ax=None, alpha=0.5, plot_relations=False, **kwargs):
         """DO NOT USE
         Plot the map_element as a polygon patch.
 
-        plot_spaces : bool, optional
+        plot_relations : bool, optional
             Plot the map element's spaces if true. Defaults to `False`.
         ax : axes handle, optional
             The axes to be used for plotting. Defaults to current axes.
@@ -221,7 +204,7 @@ class MapElement(object):
         Note
         ----
             The spaces can be plotted without the shape if the shape's
-            ``visible`` attribute is False, but ``plot_spaces`` is True.
+            ``visible`` attribute is False, but ``plot_relations`` is True.
 
             DO NOT USE, use get_patch and plot using the shapelayer
         """
@@ -251,31 +234,29 @@ class MapObject(MapElement):
     """
 
     def __init__(self, name, shape_pts, color_str='darkseagreen', alpha=0.9,
-                 visible=True, blocks_camera=True, has_spaces=True,
-                 plot_spaces=False, **kwargs):
+                 visible=True, blocks_camera=True, has_relations=True,
+                 plot_relations=False, map_bounds=None, **kwargs):
         super(MapObject, self).__init__(name, shape_pts,
                                         color_str=color_str,
                                         visible=visible,
                                         blocks_camera=blocks_camera,
-                                        has_spaces=has_spaces,
-                                        plot_spaces=plot_spaces,
+                                        has_relations=has_relations,
+                                        plot_relations=plot_relations,
                                         alpha=alpha,
                                         **kwargs
                                         )
-        if self.has_spaces:
-            self.define_spaces()
-            self.plot_spaces = plot_spaces
+        if self.has_relations:
+            self.define_relations(map_bounds)
+            self.plot_relations = plot_relations
         else:
-            plot_spaces = False
+            plot_relations = False
 
-    def define_spaces(self):
-            """Create a multimodal softmax model of spatial relationships.
+    def define_relations(self, map_bounds=None):
+        """Create a multimodal softmax model of spatial relationships.
 
-            Defaults to: 'Front', 'Back', 'Left', and 'Right'.
-            """
-            # self.spaces = intrinsic_space_model(self.shape)
-            self.spaces = binary_intrinsic_space_model(self.shape)
-
+        Defaults to: 'Front', 'Back', 'Left', and 'Right'.
+        """
+        self.relations = binary_intrinsic_space_model(self.shape, bounds=map_bounds)
 
 
 class MapArea(MapElement):
@@ -286,35 +267,27 @@ class MapArea(MapElement):
     """
 
     def __init__(self, name, shape_pts, color_str='blanchedalmond', alpha=0.9,
-                 visible=False, blocks_camera=False, has_spaces=True,
-                 plot_spaces=False, **kwargs):
+                 visible=False, blocks_camera=False, has_relations=True,
+                 relations=None, map_bounds=None,
+                 plot_relations=False, **kwargs):
         super(MapArea, self).__init__(name, shape_pts,
                                       color_str=color_str,
                                       visible=visible,
                                       blocks_camera=blocks_camera,
-                                      has_spaces=has_spaces,
-                                      plot_spaces=plot_spaces,
+                                      has_relations=has_relations,
+                                      plot_relations=plot_relations,
                                       alpha=alpha,
                                       **kwargs
                                       )
-        if self.has_spaces:
-            self.define_spaces()
-            self.plot_spaces = plot_spaces
+        if self.has_relations:
+            self.define_relations(map_bounds)
+            self.plot_relations = plot_relations
         else:
-            self.plot_spaces = False
+            self.plot_relations = False
 
-    def define_spaces(self):
+    def define_relations(self, map_bounds=None):
         """Create a multimodal softmax model of spatial relationships.
 
         Defaults to: 'Inside', 'Near', and 'Outside'.
         """
-        # self.spaces = range_model(self.shape)
-        self.spaces = binary_range_model(self.shape)
-
-    # Handle with Information
-    # def plot(self, ax=None, alpha=0.2, **kwargs):
-    #     super(MapArea, self).plot(ax=ax, alpha=alpha, **kwargs)
-    #     if self.show_name:
-    #         if not ax:
-    #             ax = plt.gca()
-    #         ax.annotate(self.name, self.pose[:2])
+        self.relations = binary_range_model(self.shape, bounds=map_bounds)

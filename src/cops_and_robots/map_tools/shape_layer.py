@@ -50,7 +50,7 @@ class ShapeLayer(Layer):
         #<>TODO: plot or not
 
     def update_plot(self, elements=None, update_static=None, **kwargs):
-        """Plot all visible map objects (and their spaces, if visible).
+        """Plot all visible map objects (and their relations, if visible).
 
         Parameters
         ----------
@@ -78,8 +78,8 @@ class ShapeLayer(Layer):
                     patch = copy.copy(element.get_patch())
                     self.ax.add_patch(patch)
                     self.static_patches.append(patch)
-                # Get element's softmax spaces to plot.
-                if element.plot_spaces:
+                # Get element's softmax relations to plot.
+                if element.plot_relations:
                     pass
 
         for element in self.elements['dynamic']:
@@ -88,8 +88,8 @@ class ShapeLayer(Layer):
                 patch = copy.copy(element.get_patch())
                 self.ax.add_patch(patch)
                 self.dynamic_patches.append(patch)
-            # Get element's softmax spaces to plot.
-            if element.plot_spaces:
+            # Get element's softmax relations to plot.
+            if element.plot_relations:
                 pass
 
         for element in self.elements['information']:

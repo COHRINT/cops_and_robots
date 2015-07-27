@@ -83,7 +83,7 @@ class FeasibleLayer(Layer):
                 buffered_shape = element.shape.buffer(self.max_robot_radius)
                 self.pose_region = self.pose_region.difference(buffered_shape)
 
-    def plot(self, type_="pose", ax=None, alpha=0.5, plot_spaces=False, **kwargs):
+    def plot(self, type_="pose", ax=None, alpha=0.5, plot_relations=False, **kwargs):
         """Plot either the pose or point feasible regions.
 
         Parameters

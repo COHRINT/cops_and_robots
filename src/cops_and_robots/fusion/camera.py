@@ -90,7 +90,7 @@ class Camera(Sensor):
                                         blocks_camera=False,
                                         color_str='pink',
                                         pose=robot_pose,
-                                        has_spaces=False,
+                                        has_relations=False,
                                         centroid_at_origin=False,
                                         )
         self.viewcone = MapObject('Viewcone',
@@ -100,7 +100,7 @@ class Camera(Sensor):
                                   blocks_camera=False,
                                   color_str='lightyellow',
                                   pose=robot_pose,
-                                  has_spaces=False,
+                                  has_relations=False,
                                   centroid_at_origin=False,
                                   )
         self.view_pose = (0, 0, 0)
@@ -240,7 +240,7 @@ class Camera(Sensor):
                                          poly=self.detection_model.poly
                                          )
         gm = GaussianMixture(beta, mu, sigma)
-        gm.camera_viewcone = self.detection_model.poly
+        gm.camera_viewcone = self.detection_model.poly  # for plotting
         return gm
 
 
