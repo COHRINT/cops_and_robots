@@ -159,3 +159,68 @@ class Robot(iRobotCreate):
             self.pose_history = np.vstack((self.pose_history,
                                            self.pose2D.pose[:]))
             self.update_shape()
+
+###############################################################################
+# Custom Robot classes
+###############################################################################
+
+
+class ImaginaryRobot(object):
+    """An imaginary robber for the cop
+        Represents what the cop thinks the robber is doing.
+        Includes robber's real pose for psuedo detection.
+    """
+    def __init__(self, name, pose=None):
+        self.name = name
+        self.pose2D = pose
+
+
+class Distractor(Robot):
+    """The Distractor subclass of the generic robot type.
+
+    Distractors act as distractions during search. They can be given
+    move goals, but do not interact with other robots
+
+    Parameters
+    ----------
+    name : str
+        The distractor's name.
+    pose : list of float, optional
+        The robots's initial [x, y, theta] (defaults to [0, 0.5, 90]).
+    planner_type: {'simple', 'particle', 'MAP'}
+        The robot's own type of planner.
+
+    Attributes
+    ----------
+    planner
+
+    """
+    mission_planner_defaults = {}
+    goal_planner_defaults = {'type_': 'stationary'}
+    path_planner_defaults = {'type_': 'direct'}
+
+    def __init__(self,
+                 name,
+                 pose=[0, 0, 90],
+                 pose_source='python',
+                 map_cfg={},
+                 mission_planner_cfg={},
+                 goal_planner_cfg={},
+                 path_planner_cfg={},
+                 **kwargs):
+        # Use class defaults for kwargs not included
+        mp_cfg = Distractor.mission_planner_defaults.copy()
+        mp_cfg.update(mission_planner_cfg)
+        gp_cfg = Distractor.goal_planner_defaults.copy()
+        gp_cfg.update(goal_planner_cfg)
+        pp_cfg = Distractor.path_planner_defaults.copy()
+        pp_cfg.update(path_planner_cfg)
+
+        # Superclass and compositional attributes
+        super(Distractor, self).__init__(name,
+                                         pose=pose,
+                                         pose_source=pose_source,
+                                         goal_planner_cfg=gp_cfg,
+                                         path_planner_cfg=pp_cfg,
+                                         map_cfg=map_cfg,
+                                         color_str='darkgreen')

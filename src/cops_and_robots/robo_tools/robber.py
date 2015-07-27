@@ -88,16 +88,6 @@ class Robber(Robot):
         self.mission_planner = RobberMissionPlanner(self, **mp_cfg)
 
 
-class ImaginaryRobber(object):
-    """An imaginary robber for the cop
-        Represents what the cop thinks the robber is doing.
-        Includes robber's real pose for psuedo detection.
-    """
-    def __init__(self, name, pose=None):
-        self.name = name
-        self.pose2D = pose
-
-
 class RobberMissionPlanner(MissionPlanner):
     """The Cop subclass of the generic MissionPlanner
     """

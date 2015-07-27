@@ -24,8 +24,7 @@ import numpy as np
 
 from shapely.geometry import Point
 
-from cops_and_robots.robo_tools.robber import ImaginaryRobber
-from cops_and_robots.robo_tools.robot import Robot
+from cops_and_robots.robo_tools.robot import Robot, ImaginaryRobot
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
 from cops_and_robots.robo_tools.planner import MissionPlanner
 from cops_and_robots.fusion.fusion_engine import FusionEngine
@@ -82,9 +81,8 @@ class Cop(Robot):
                  name,
                  pose=[0, 0, 90],
                  pose_source='python',
-                 missing_robber_names=[],
-                 other_cop_names=[],
                  robber_model='static',
+                 other_robot_names={},
                  map_cfg={},
                  mission_planner_cfg={},
                  goal_planner_cfg={},
@@ -117,11 +115,12 @@ class Cop(Robot):
                                   goal_planner_cfg=gp_cfg,
                                   path_planner_cfg=pp_cfg,
                                   map_cfg=map_cfg,
-                                  color_str='darkgreen',)
+                                  color_str='darkgreen')
 
         # Tracking attributes
-        self.other_cop_names = other_cop_names
-        self.missing_robber_names = missing_robber_names
+        self.other_robot_names = other_robot_names
+        self.missing_robber_names = self.other_robot_names['robbers']
+        self.distracting_robot_names = self.other_robot_names['distractors']
         self.found_robbers = {}
 
         # Create mission planner
@@ -173,7 +172,7 @@ class Cop(Robot):
         # <>TODO: Implement imaginary class for more robust models
         self.missing_robbers = {}
         for name in self.missing_robber_names:
-            self.missing_robbers[name] = ImaginaryRobber(name)
+            self.missing_robbers[name] = ImaginaryRobot(name)
             # Add robber objects to map
             self.missing_robbers[name].map_obj = MapObject(name,
                                                            shape_pts[:],
@@ -185,6 +184,15 @@ class Cop(Robot):
             # All will be at 0,0,0 until actually pose is given.
             # init_pose =
             # self.missing_robbers[name].map_obj.move_absolute(init_pose)
+        self.distracting_robots = {}
+        for name in self.distracting_robot_names:
+            self.distracting_robots[name] = ImaginaryRobot(name)
+            self.distracting_robots[name].map_obj = MapObject(name,
+                                                              shape_pts[:],
+                                                              has_spaces=False,
+                                                              blocks_camera=False,
+                                                              color_str='none')
+            self.map.add_robot(self.distracting_robots[name].map_obj)
 
     def update(self, i=0):
         super(Cop, self).update(i=i)
@@ -204,10 +212,19 @@ class Cop(Robot):
 
             # Update robber's shapes
             else:
-                self.missing_robbers[irobber.name].map_obj.move_absolute(irobber.pose2D.pose)
-            # except:
-            #     logging.warn('{} has no pose, and can\'t be detected'
-            #                  .format(irobber.name))
+                self.missing_robbers[irobber.name].map_obj.move_absolute(
+                    irobber.pose2D.pose)
+
+        for idistractor in self.distracting_robots.values():
+            point = Point(idistractor.pose2D.pose[0:2])
+            # Try to visually spot a robot
+            if self.sensors['camera'].viewcone.shape.contains(point):
+                logging.info('{} found, but it is not a robber!'
+                             .format(idistractor.name))
+
+            # Update robber's shapes
+            self.distracting_robots[idistractor.name].map_obj.move_absolute(
+                idistractor.pose2D.pose)
 
         # Update probability model
         self.fusion_engine.update(self.pose2D.pose, self.sensors,

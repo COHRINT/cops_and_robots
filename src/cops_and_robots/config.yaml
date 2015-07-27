@@ -12,6 +12,9 @@ cops:
     pose: [0, 0, 90]  # [x(meters), y(meters), theta(degrees)]
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
+    other_robot_names: 
+      robbers: ['Roy', 'Zhora']
+      distractors: ['Pris']
     mission_planner_cfg:
       target_order: ['Roy', 'Zhora']
     goal_planner_cfg:
@@ -33,18 +36,21 @@ robbers:
       type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
       type_: 'direct'  # ['direct', 'a_star'] 
-  Pris:
-    pose_source: python  # ['python' or a ros topic string like '/pris/odom']
-    goal_planner_cfg:
-      type_: stationary  # ['stationary', 'simple', 'trajectory']
-    path_planner_cfg:
-      type_: 'direct'  # ['direct', 'a_star'] 
   Zhora:
     pose_source: python  # ['python' or a ros topic string like '/zhora/odom']
     goal_planner_cfg:
       type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
       type_: 'direct'  # ['direct', 'a_star'] 
+
+distractors:
+  Pris:
+    pose_source: python  # ['python' or a ros topic string like '/pris/odom']
+    goal_planner_cfg:
+      type_: simple  # ['stationary', 'simple', 'trajectory']
+    path_planner_cfg:
+      type_: 'direct'  # ['direct', 'a_star'] 
+
 
 human_interface:
   measurement_types:
