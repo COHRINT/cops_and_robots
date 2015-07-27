@@ -36,15 +36,17 @@ class GaussSumFilter(object):
             return
         self.update_mixand_motion()
         self._camera_update(camera)
-        # self._human_update(human_sensor)
+        self._human_update(human_sensor)
 
     def _camera_update(self, camera):
         self.probability = camera.detect('gauss sum', prior=self.probability)
 
 
     def _human_update(self, human_sensor):
-        self.probability = human_sensor.detect(self.target_name, 'gauss sum',
-                                               prior=self.probability)
+        if human_sensor.new_update:
+            human_sensor.new_update = False
+            self.probability = human_sensor.detect(self.target_name, 'gauss sum',
+                                                   prior=self.probability)
 
     def robber_detected(self, robber_pose):
         """Update the particle filter for a detected robber.

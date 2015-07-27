@@ -31,6 +31,7 @@ from cops_and_robots.robo_tools.planner import MissionPlanner
 from cops_and_robots.fusion.fusion_engine import FusionEngine
 from cops_and_robots.fusion.camera import Camera
 from cops_and_robots.fusion.human import Human
+from cops_and_robots.fusion.question import Questioner
 from cops_and_robots.map_tools.map_elements import MapObject
 
 
@@ -147,6 +148,9 @@ class Cop(Robot):
         # Add human sensor after robbers have been made
         self.sensors['human'] = Human(self.map)
         self.map.add_human_sensor(self.sensors['human'])
+        self.questioner = Questioner(target='Roy',
+                                     human_sensor=self.sensors['human'])
+
 
     def make_others(self):
         # <>TODO: Make generic, so each robot has an idea of all others
@@ -173,7 +177,7 @@ class Cop(Robot):
             # Add robber objects to map
             self.missing_robbers[name].map_obj = MapObject(name,
                                                            shape_pts[:],
-                                                           has_spaces=False,
+                                                           has_relations=False,
                                                            blocks_camera=False,
                                                            color_str='none')
             # <>TODO: allow no display individually for each robber
@@ -208,6 +212,12 @@ class Cop(Robot):
         # Update probability model
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
                                   self.missing_robbers)
+
+        # Ask a question every 10th step
+        if i % 10 == 9:
+            prior = self.fusion_engine.filters['Roy'].probability
+            prior._discretize(bounds=self.map.bounds, grid_spacing=0.1)
+            self.questioner.ask(prior, 1)
 
 
 class CopMissionPlanner(MissionPlanner):

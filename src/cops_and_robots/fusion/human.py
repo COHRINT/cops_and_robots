@@ -37,6 +37,8 @@ from shapely.geometry import Point
 
 from cops_and_robots.fusion.sensor import Sensor
 from cops_and_robots.fusion.softmax import Softmax, speed_model, binary_speed_model
+from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+from cops_and_robots.fusion.variational_bayes import VariationalBayes
 
 
 
@@ -70,8 +72,9 @@ class Human(Sensor):
         super(Human, self).__init__(self.update_rate,
                                     self.has_physical_dimensions)
 
-        self.certainties = ['think', 'know']
-        self.positivities = ['is', 'is not']
+        # self.certainties = ['think', 'know']
+        self.certainties = ['know']
+        self.positivities = ['is not', 'is']  #<>TODO: oh god wtf why does order matter
         self.relations = {'object': ['behind',
                                      'in front of',
                                      'left of',
@@ -89,16 +92,20 @@ class Human(Sensor):
 
         self.groundings['object'] = {}
         for cop_name, cop in map_.cops.iteritems():
-            if cop.has_spaces:
+            if cop.has_relations:
                 self.groundings['object'][cop_name] = cop
         for object_name, obj in map_.objects.iteritems():
-            if obj.has_spaces:
+            if obj.has_relations:
                 self.groundings['object'][object_name] = obj
 
         self.target_names = ['nothing', 'a robot'] + map_.robbers.keys()
         self.utterance = ''
+        self.new_update = False
 
-    def detect(self, filter_name, type_="particle", particles=None, GMM=None):
+        # Set up the VB fusion parameters
+        self.vb = VariationalBayes()
+
+    def detect(self, filter_name, type_="particle", particles=None, prior=None):
         """Update a fusion engine's probability from human sensor updates.
 
         Parameters
@@ -130,14 +137,15 @@ class Human(Sensor):
 
         if type_ == 'particle':
             self.detect_particles(particles)
-        elif type_ == 'GMM':
-            self.detect_GMM(GMM)
+        elif type_ == 'gauss sum':
+            return self.detect_probability(prior)
         else:
             logging.error('Wrong detection model specified.')
 
     def parse_utterance(self):
         """ Parse the input string into workable values.
         """
+        logging.info('Parsing: {}'.format(self.utterance))
 
         for str_ in self.certainties:
             if str_ in self.utterance:
@@ -173,7 +181,9 @@ class Human(Sensor):
 
         for str_type in self.groundings:
             for str_ in self.groundings[str_type].keys():
+                str_ = str_.lower()
                 if str_ in self.utterance:
+                    str_ = str_.title()
                     self.grounding = self.groundings[str_type][str_]
                     break
             else:
@@ -252,23 +262,26 @@ class Human(Sensor):
             position data and p is the particle's associated probability.
 
         """
-        # <>TODO: include certainty
 
+        if not hasattr(self.grounding,'relations'):
+            self.grounding.define_relations()
+
+        # <>TODO: include certainty
         if self.detection_type == 'position':
             label = self.relation
             if self.target_name == 'nothing' and self.positivity == 'not':
-                self.target_name = 'a robot'
+                label = 'a robot'
             elif self.target_name == 'nothing' or self.positivity == 'not':
                 label = 'Not ' + label
 
             for i, particle in enumerate(particles):
                 state = particle[1:3]
-                particle[0] *= self.grounding.spaces.probability(state=state, class_=label)
+                particle[0] *= self.grounding.relations.probability(state=state, class_=label)
 
         elif self.detection_type == 'movement':
             label = self.movement
             if self.target_name == 'nothing' and self.positivity == 'not':
-                self.target_name = 'a robot'
+                label = 'a robot'
             elif self.target_name == 'nothing' or self.positivity == 'not':
                 label = 'Not ' + label
 
@@ -279,6 +292,28 @@ class Human(Sensor):
         # Renormalize
         particles[:, 0] /= sum(particles[:, 0])
 
-        def detect_GMM(self, GMM):
-            pass
+    def detect_probability(self, prior):
+        if not hasattr(self.grounding,'relations'):
+            self.grounding.define_relations()
+
+
+        # Position update
+        label = self.relation
+        if self.target_name == 'nothing' and self.positivity == 'is not':
+            label = 'a robot'
+        elif self.target_name == 'nothing' or self.positivity == 'is not':
+            label = 'Not ' + label
+
+        likelihood = self.grounding.relations.binary_models[self.relation]
+        logging.info(self.positivity)
+        logging.info(self.relation)
+        logging.info(likelihood)
+        logging.info(label)
+        mu, sigma, beta = self.vb.update(measurement=label,
+                                         likelihood=likelihood,
+                                         prior=prior,
+                                         use_LWIS=False,
+                                         )
+        gm = GaussianMixture(beta, mu, sigma)
+        return gm
 
