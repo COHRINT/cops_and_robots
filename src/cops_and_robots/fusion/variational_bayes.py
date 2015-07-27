@@ -364,6 +364,7 @@ class VariationalBayes(object):
             mixand_ids = []
             ellipses = prior.std_ellipses(num_std)
 
+            any_intersection = False
             for i, ellipse in enumerate(ellipses):
                 try:
                     has_intersection = poly.intersects(ellipse)
@@ -377,6 +378,14 @@ class VariationalBayes(object):
                     weights.append(prior.weights[i])
                     means.append(prior.means[i])
                     covariances.append(prior.covariances[i])
+                    any_intersection = True
+
+            if not any_intersection:
+                    logging.info('No intersection with any ellipse.')
+                    mu_hat = other_priors.means
+                    var_hat = other_priors.covariances
+                    beta_hat = other_priors.weights
+                    return mu_hat, var_hat, beta_hat
 
             # Remove these from the other priors
             other_priors.weights = \

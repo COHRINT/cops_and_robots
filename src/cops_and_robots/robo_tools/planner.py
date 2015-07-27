@@ -633,7 +633,7 @@ class PathPlanner(object):
                                 dirs, dx, dy, start[0], start[1],
                                 end[0], end[1])
 
-        if route == 'No Path':
+        if route == 'No Path' or '':
             logging.warn('No path found')
             # <>TODO: Kick it to simple planner without waiting
             # sit still so simple planner kicks in
