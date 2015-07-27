@@ -20,8 +20,14 @@ var rosMaster = new ROSLIB.Ros({
 var settings = [];
 var robotNames = ['deckard','roy','pris','zhora'];
 var robotPorts = [':9091',':9092',':9093',':9094'];
+var robots = [];
 
-var robots = []
+// First rostopic updates
+var hover = false;
+questionHovering(hover);
+var cam = 'Deckard Visual';
+humanViewState(cam);
+
 
 for (i = 0;  i < robotNames.length; i++){
 	nname = robotNames[i].charAt(0).toUpperCase() + robotNames[i].slice(1);
@@ -50,10 +56,8 @@ for (i = 0;  i < robotNames.length; i++){
 * Publishes a message to the input history console
 */
 function consoleOut(str){
- 	var history = jQuery("#codeHistoryBody");
 	var dt = new Date();
 	var time = dt.getHours() + ":" + dt.getMinutes() + ":" + dt.getSeconds();
-
 	jQuery("<code>[" + time + "] " + str + "</code> <br />").appendTo("#codeHistoryBody");
 	jQuery("#codeHistoryBody").scrollTop(jQuery("#codeHistoryBody")[0].scrollHeight);
 }
@@ -69,19 +73,18 @@ function robotUpdateSetup(){
 		messageType : 'cops_and_robots_ros/Question'
 	});	
 
-
 	questioner.subscribe(function(message) {
-	  updateRobotQuestions(message.questions, message.weights);
+	  updateRobotQuestions(message.questions, message.weights, message.qids);
 	});
 }
-robotUpdateSetup();
+
 /*
 * Updates the robot question panel based on ROS messages
 */
-function updateRobotQuestions(publishedQuestions, questionValues){
+function updateRobotQuestions(publishedQuestions, questionValues, questionIds){
 	
 	// Check if we get the right number and type/value of questions
-	for(i = 0; i<questionValues.length; i++){
+	for(i = 0; i < questionValues.length; i++){
 		if((questionValues.length != 5) || (questionValues[i] > 1) || (questionValues[i] < 0)){
 			console.log("Not getting properly formed questions.");
 			return;
@@ -90,7 +93,7 @@ function updateRobotQuestions(publishedQuestions, questionValues){
 
 	// Turn them all into precentages
 	for(i = 0; i < questionValues.length; i++){
-		questionValues[i] = questionValues[i] *100;
+		questionValues[i] = questionValues[i] * 100;
 	}
 
 	var values = questionValues.slice();	
@@ -103,21 +106,47 @@ function updateRobotQuestions(publishedQuestions, questionValues){
 		$('#question_' + i + ' div p').html(questions[i]);
 		$('#question_' + i + ' div').attr("aria-valuenow", values[i].toString());
 		$('#question_' + i + ' div').css("width", values[i].toString() + "%");
-		console.log('#question_' + i + ' div p')
-		console.log(questions[i]);
-		console.log(values[i]);
-		
+		$('#question_' + i + ' button.btn-success').attr("id", questionIds[i]);	
+		$('#question_' + i + ' button.btn-danger').attr("id", questionIds[i]);
 	}
-	
 
+
+	answeredQuestions(questionIds, questions);
 }
 
+function answeredQuestions(questionIds, quests){
+	var qids = questionIds;
+	var questions = quests;
 
+	jQuery('.btn-success').unbind().click(function() {
+		var qid = this.id;
+		var j;
 
-/**
-* Select a robot to be controlled via teleoperation
-* @param {String} robot
-*/
+	    for(i = 0; i < qids.length; i++){	
+		    if (qid == qids[i]){
+		    	j = i;
+		    	break;
+		    }
+		}
+		var str = [questions[j] + " :YES"];
+		consoleOut(str);
+	});
+
+	jQuery('.btn-danger').unbind().click(function() {
+		var qid = this.id;
+	    var answeredQuestion;
+
+	        for(i = 0; i < qids.length; i++){	
+	    	    if (qid == qids[i]){
+	    	    	answeredQuestion = questions[i];
+	    	    	break;
+	    	    }
+	    	}
+	    	var str = [answeredQuestion + " :NO"];
+	    	consoleOut(str);
+	});	
+}
+
 function selectControl(robot){
     for (i = 0;  i < robotNames.length; i++){
     	if (robot === robots[i].nicename){
@@ -149,26 +178,109 @@ function selectView(robot){
     consoleOut(str);
 }
 
+/**
+* Publish if mouse is on robot generated questions
+*/
+function questionHovering(bool){
+
+	rosMaster.on('connection', function() {
+	    console.log('Connected to websocket server.');
+	});
+	
+	// Establish ROS topic for sending hover messages
+	var questionHover = new ROSLIB.Topic({
+	    ros : rosMaster,
+	    name : '/question_hover',
+	    messageType : 'std_msgs/Bool'
+	});
+
+    var msg = new ROSLIB.Message({data: bool});	 
+	questionHover.publish(msg);
+}
+
+/**
+* Publish human sensory data
+*/
+function humanInputSensor(str){
+
+	rosMaster.on('connection', function() {
+		console.log('Connected to websocket server.');
+	});
+		
+	/*---------------------Codebook-------------------*/
+	// Establish ROS topic for sending human messages
+	var human_sensor = new ROSLIB.Topic({
+	    ros : rosMaster,
+	    name : '/human_sensor',
+	    messageType : 'std_msgs/String'
+	});
+	
+	var msg = new ROSLIB.Message({data: str}); 
+	human_sensor.publish(msg);
+}
+
+/**
+* Publish what camera the human is looking through
+*/
+function humanViewState(str){
+
+	rosMaster.on('connection', function() {
+		console.log('Connected to websocket server.');
+	});
+		
+	/*---------------------Codebook-------------------*/
+	// Establish ROS topic for sending human messages
+	var human_view_state = new ROSLIB.Topic({
+	    ros : rosMaster,
+	    name : '/human_view_state',
+	    messageType : 'std_msgs/String'
+	});
+
+	var msg = new ROSLIB.Message({data: str});	 
+	human_view_state.publish(msg);
+}
+
+/**
+* Publish the way the human answers the robots questions
+*/
+function questionAnswer(idNumber, bool){
+
+	var idNum = parseInt(idNumber);
+
+	rosMaster.on('connection', function() {
+	    console.log('Connected to websocket server.');
+	});
+	
+	// Establish ROS topic for sending hover messages
+	var questionAnswer = new ROSLIB.Topic({
+	    ros : rosMaster,
+	    name : '/question_answer',
+	    messageType : 'cops_and_robots_ros/question_answer'
+	});
+
+    var msg = new ROSLIB.Message({qid: idNum, answer: bool});	 
+	questionAnswer.publish(msg);
+}
+
 
 /**
 * Get settings parameters from UI and modify model appropriately
 */
 function checkSettings(){
 	//Select simulation vs. experiment
- 	settings.dataSource = jQuery('#settings-source').children('.active').text();
 
  	var vicon = jQuery("#setting-source-vicon");
 	var gazebo= jQuery("#setting-source-gazebo");
 	var diffSettings = [vicon, gazebo];
 	var vPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
-	var vTopics = ["/camera/rgb/image_raw", "TOPIC", "TOPIC", "TOPIC", "usb_cam1/image_raw", "usb_cam2/image_raw", "usb_cam3/image_raw"];
+	var vTopics = ["/deckard/camera/rgb/image_raw", "/pris/camera/rgb/image_raw", "/roy/camera/rgb/image_raw", "/zhora/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
 	var gPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
 	var gTopics = ["deckard/camera/image_raw", "pris/camera/image_raw", "roy/camera/image_raw", "zhora/camera/image_raw", "security_camera1/camera/image_raw", "security_camera2/camera/image_raw", "security_camera3/camera/image_raw"]; 
 	var ports = [vPorts, gPorts];
 	var topics =[vTopics, gTopics];
 	var ids = ["#deckard-visual", "#pris-visual", "#roy-visual", "#zhora-visual", "#camera1-visual", "#camera2-visual", "#camera3-visual"];
 
-    for(i = 0; i<diffSettings.length; i++){
+    for(i = 0; i < diffSettings.length; i++){
     	if(diffSettings[i].parent().hasClass('active') == true){
 	      for(j=0; j<ports[i].length; j++){
 	      	// $(ids[j]).attr("src", "http://flemming.recov.org"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
@@ -178,6 +290,7 @@ function checkSettings(){
 		}
     }
 
+    settings.dataSource = jQuery('#settings-source').children('.active').text();
 	consoleOut('Data source: ' + settings.dataSource );
 	
 	//Identify active robots
@@ -207,24 +320,13 @@ function checkSettings(){
 * Initialize interface parameters (ROS elements, camera, map, etc.)
 */
 function init() {
-		
-	 rosMaster.on('connection', function() {
-	    console.log('Connected to websocket server.');
-	 });
-	
+	consoleOut('WTF is this shit')
+
 	selectControl('Deckard');
 	selectView('Deckard');	
-		
-	/*---------------------Codebook-------------------*/
-	// Establish ROS topic for sending human messages
-	var human_sensor = new ROSLIB.Topic({
-	    ros : rosMaster,
-	    name : '/human_sensor',
-	    messageType : 'std_msgs/String'
-	});
 	
 	//Toggle velocity fields
-		//Toggle velocity fields
+	//Toggle velocity fields
 
 	var posObj = jQuery("#Position_obj");
 	var posArea = jQuery("#position_area");
@@ -288,10 +390,10 @@ function init() {
 
 	
 	// Publish through ros every time 'submit' is pressed
-	jQuery("#human_sensor_button").click(function() { 
+	jQuery("#human_sensor_button").unbind().click(function() { 
 	    
 	    var s = [];
-	    for(i = 0; i<tabs.length; i++){
+	    for(i = 0; i < tabs.length; i++){
 	    	if(tabs[i].hasClass('active') == true){
 	    		s[1] = certaintyCases[i];
 			    s[2] = targetCases[i];
@@ -320,8 +422,8 @@ function init() {
 				  	" " 		+ return_str[4],
 				  	" " 		+ return_str[5],
 				  	"."].join('');
-	  	var msg = new ROSLIB.Message({data: str});	 
-		human_sensor.publish(msg);
+
+		humanInputSensor(str);
 		consoleOut(str);
 	});
 	       	    
@@ -329,19 +431,18 @@ function init() {
 	/*---------------------Teleoperation-------------------*/
 	
 	//Command switch
-	jQuery('.ctrl-robot').click(function(e) {
+	jQuery('.ctrl-robot').unbind().click(function(e) {
 	    e.preventDefault();
 	    var robot = jQuery(this).parent().prev().text().trim();	    
 	    selectControl(robot);
 	})
 	
 	//View Switch
-	jQuery('.view-robot').click(function(e) {
+	jQuery('.view-robot').unbind().click(function(e) {
 	    e.preventDefault();
 	    var robot = jQuery(this).parent().prev().text().trim();	    
 	    selectView(robot);
-	})	
-
+	})
 
 	 // Initialize the teleop.
     var teleop = new KEYBOARDTELEOP.Teleop({
@@ -396,6 +497,20 @@ function init() {
 */	
 }
 
+function determineView(){
+	//Determine what camera the human is looking through
+	var viewTabs = ['#deckardVisual', '#prisVisual', '#royVisual', '#zhoraVisual', '#cam1', '#cam2', '#cam3'];
+	var viewTabNames = ['Deckard Visual', 'Pris Visual', 'Roy Visual', 'Zhora Visual', 'Security Camera 1 Visual', 'Security Camera 2 Visual', 'Security Camera 3 Visual'];
+
+	for(i = 0; i < viewTabs.length; i++){
+		if(jQuery(viewTabs[i]).hasClass('active') == true){
+			var str = viewTabNames[i];
+			humanViewState(str);
+			break;
+		}
+	}	
+}
+
 /**
 * Uses ajax to call bash script
 */
@@ -424,14 +539,42 @@ jQuery(document).ready(function(){
 		
 	checkSettings();
 	init();
+	robotUpdateSetup();
 });
 
-jQuery('#settings-save').click(function(){
+jQuery('#settings-save').unbind().click(function(){
 	checkSettings();
-	$('#settings').modal('hide');
+	jQuery('#settings').modal('hide');
 });
 
-jQuery('#start-stop').click(function(){
+// Lags behind by one 
+jQuery('.camera_views').unbind().click(function(){
+	//wait .1 seconds before continuing otherwise wont set new element to active fast enough
+	setTimeout(determineView, 100) 
+})
+
+jQuery('#robotQuestions').hover(function(){
+    jQuery("div div.progress-bar").css("background-color", "#E6E6E6");
+    var bool = true;
+    questionHovering(bool);
+	}, function(){
+		jQuery("div div.progress-bar").css("background-color", "#5BC0DE");		
+	var bool = false;
+	questionHovering(bool);
+});
+
+jQuery('.btn-success').unbind().click(function() {
+	var qid = this.id;
+    questionAnswer(qid, true);
+});
+
+jQuery('.btn-danger').unbind().click(function() {
+	var qid = this.id;
+    questionAnswer(qid, true);
+});
+
+
+jQuery('#start-stop').unbind().click(function(){
 
 	var vicon = jQuery("#setting-source-vicon");
 	var gazebo= jQuery("#setting-source-gazebo");

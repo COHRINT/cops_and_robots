@@ -19,5 +19,4 @@ fi
 
 # Port forwarding to 9222 and ssh into tyrell corp and run setting script
 # ssh -L localport:host:hostport user@ssh_server -N 
-ssh -L 192.168.20.110:9222 tyrell_corp@cohrint ./$setting_script
-
+ssh -L localport:192.168.20.110:9222 tyrell_corp@cohrint ./$setting_script
