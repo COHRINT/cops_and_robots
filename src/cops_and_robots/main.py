@@ -13,6 +13,7 @@ import matplotlib.animation as animation
 from cops_and_robots.helpers.config import load_config
 from cops_and_robots.robo_tools.cop import Cop
 from cops_and_robots.robo_tools.robber import Robber
+from cops_and_robots.robo_tools.robot import Distractor
 # <>TODO: @MATT @NICK Look into adding PyPubSub
 
 
@@ -22,6 +23,7 @@ def main(config_file=None):
     main_cfg = cfg['main']
     cop_cfg = cfg['cops']
     robber_cfg = cfg['robbers']
+    distractor_cfg = cfg['distractors']
 
     # Set up logging and printing
     logger_level = logging.getLevelName(main_cfg['logging_level'])
@@ -41,10 +43,9 @@ def main(config_file=None):
         logging.getLogger().addHandler(handler)
 
     # Create cops with config params
-    robber_names = robber_cfg.keys()
     cops = {}
     for cop, kwargs in cop_cfg.iteritems():
-        cops[cop] = Cop(cop, missing_robber_names=robber_names, **kwargs)
+        cops[cop] = Cop(cop, **kwargs)
         logging.info('{} added to simulation'.format(cop))
 
     # Create robbers with config params
@@ -53,12 +54,21 @@ def main(config_file=None):
         robbers[robber] = Robber(robber, **kwargs)
         logging.info('{} added to simulation'.format(robber))
 
+    # Create distractors with config params
+    distractors = {}
+    for distractor, kwargs in distractor_cfg.iteritems():
+        distractors[distractor] = Distractor(distractor, **kwargs)
+
     # <>TODO: Replace with message passing
     # Give cops references to the robber's actual poses
     for cop in cops.values():
         for robber_name, robber in robbers.iteritems():
             cop.missing_robbers[robber_name].pose2D = \
                 robber.pose2D
+        for distrator_name, distractor in distractors.iteritems():
+            cop.distracting_robots[distrator_name].pose2D = \
+                distractor.pose2D
+    # Give robber the cops list of found robots, so they will stop when found
     for robber in robbers.values():
         robber.found_robbers = cops['Deckard'].found_robbers
 
@@ -85,25 +95,25 @@ def main(config_file=None):
     cops['Deckard'].map.setup_plot(fusion_engine)
     sim_start_time = time.time()
 
-    animated_exploration(fig, cops, robbers, main_cfg, sim_start_time)
+    animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time)
     # headless_mode(cops, robbers, main_cfg, sim_start_time)
 
 
-def headless_mode(cops, robbers, main_cfg, sim_start_time):
+def headless_mode(cops, robbers, distractors, main_cfg, sim_start_time):
     i = 0
     while cops['Deckard'].mission_planner.mission_status != 'stopped':
-        update(i, cops, robbers, main_cfg, sim_start_time)
+        update(i, cops, robbers, distractors, main_cfg, sim_start_time)
         i += 1
 
 
-def animated_exploration(fig, cops, robbers, main_cfg, sim_start_time):
+def animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time):
     """Animate the exploration of the environment from a cop's perspective.
 
     """
     # <>TODO fix frames (i.e. stop animation once done)
     ani = animation.FuncAnimation(fig,
                                   update,
-                                  fargs=[cops, robbers, main_cfg, sim_start_time],
+                                  fargs=[cops, robbers, distractors, main_cfg, sim_start_time],
                                   interval=10,
                                   blit=False,
                                   repeat=False,
@@ -112,7 +122,7 @@ def animated_exploration(fig, cops, robbers, main_cfg, sim_start_time):
     plt.show()
 
 
-def update(i, cops, robbers, main_cfg, sim_start_time):
+def update(i, cops, robbers, distractors, main_cfg, sim_start_time):
     logging.debug('Main update frame {}'.format(i))
 
     for cop_name, cop in cops.iteritems():
@@ -121,9 +131,12 @@ def update(i, cops, robbers, main_cfg, sim_start_time):
     for robber_name, robber in robbers.iteritems():
         robber.update(i)
 
+    for distractor_name, distractor in distractors.iteritems():
+        distractor.update(i)
+
     cops['Deckard'].map.update(i)
     if main_cfg['log_time']:
-        logging.info('Frame {} at time {}.'.format(i, time.time() -  sim_start_time))
+        logging.info('Frame {} at time {}.'.format(i, time.time() - sim_start_time))
 
 if __name__ == '__main__':
     main()

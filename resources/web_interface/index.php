@@ -46,21 +46,21 @@ $progress_values = array("40", "30", "10", "10", "10");
 
 	                <!-- Nav tabs -->
             		<ul class="nav nav-tabs" role="tablist">
-                   		 	<li class="active"><a href="#deckard_camera" aria-controls="deckard_camera" data-toggle="tab">Deckard's Camera</a></li>
+                   		 	<li class="camera_views active" id="deckardVisual"><a href="#deckard_camera" aria-controls="deckard_camera" data-toggle="tab">Deckard's Camera</a></li>
                    		 	<li class="dropdown">
                    		 		<a href="#Robber Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Robber Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
-		                    			<li><a data-toggle="tab" href="#pris_camera" aria-controls="pris_camera" >Pris's Camera</a></li>
-		                    			<li><a data-toggle="tab" href="#roy_camera" aria-controls="roy_camera" >Roy's Camera</a></li>
-		                    			<li><a data-toggle="tab" href="#zhora_camera" aria-controls="zhora_camera" >Zhora's Camera</a></li>
+		                    			<li class="camera_views" id="prisVisual"><a data-toggle="tab" href="#pris_camera" aria-controls="pris_camera" >Pris's Camera</a></li>
+		                    			<li class="camera_views" id="royVisual"><a data-toggle="tab" href="#roy_camera" aria-controls="roy_camera" >Roy's Camera</a></li>
+		                    			<li class="camera_views" id="zhoraVisual"><a data-toggle="tab" href="#zhora_camera" aria-controls="zhora_camera" >Zhora's Camera</a></li>
 		                    		</ul>
 		                    </li>
                    		 	<li class="dropdown">
                    		 		<a href="#Security Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Security Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
-		                    			<li><a data-toggle="tab" href="#camera_1" aria-controls="camera_1" >Camera 1</a></li>
-		                    			<li><a data-toggle="tab" href="#camera_2" aria-controls="camera_2" >Camera 2</a></li>
-		                    			<li><a data-toggle="tab" href="#camera_3" aria-controls="camera_3" >Camera 3</a></li>
+		                    			<li class="camera_views" id="cam1"><a data-toggle="tab" href="#camera_1" aria-controls="camera_1" >Camera 1</a></li>
+		                    			<li class="camera_views" id="cam2"><a data-toggle="tab" href="#camera_2" aria-controls="camera_2" >Camera 2</a></li>
+		                    			<li class="camera_views" id="cam3"><a data-toggle="tab" href="#camera_3" aria-controls="camera_3" >Camera 3</a></li>
 		                    		</ul>
 		                    </li>
             		</ul>
@@ -211,15 +211,15 @@ $progress_values = array("40", "30", "10", "10", "10");
 			    	<h2 class="panel-title" align="center">Human Sensory Input</h2>
 				</div>
 
-				<div class="panel-body form-inline" id="code" >
+				<div class="panel-body form-inline" id="code2" >
 
 				   <div role="tabpanel">
 
 		                <!-- Nav tabs -->
                 		<ul class="nav nav-tabs" role="tablist">
-                       		 	<li role="presentation" class="active"><a href="#Position_obj" aria-controls="Position_obj" role="tab" data-toggle="tab">Position (Object)</a></li>
-                        		<li role="presentation"><a href="#position_area" aria-controls="position_area" role="tab" data-toggle="tab">Position (Area)</a></li>
-                        		<li role="presentation"><a href="#Movement" aria-controls="Movement" role="tab" data-toggle="tab">Movement</a></li>
+                   		 	<li role="presentation" class="active"><a href="#Position_obj" aria-controls="Position_obj" role="tab" data-toggle="tab">Position (Object)</a></li>
+                    		<li role="presentation"><a href="#position_area" aria-controls="position_area" role="tab" data-toggle="tab">Position (Area)</a></li>
+                    		<li role="presentation"><a href="#Movement" aria-controls="Movement" role="tab" data-toggle="tab">Movement</a></li>
                 		</ul>
 
 				  		<!-- Tab panes -->
@@ -259,7 +259,7 @@ $progress_values = array("40", "30", "10", "10", "10");
 					<br />
 					<div align="center" style="margin-top:10px"><button type="button" class="btn btn-success btn-lg" id="human_sensor_button" >Submit</button></div>								   
 				</div><!--/.panel-body-->
-			</div>
+			</div><!--/.panel-->
 		</div><!-- /#codeBox -->
 
 		<!-- Questions/History -->
@@ -272,39 +272,40 @@ $progress_values = array("40", "30", "10", "10", "10");
 
 				<div class="panel-body form-inline" id="code" >
 				
-				<div role="tabpanel" >
+					<div role="tabpanel" >
 
-					<ul class="nav nav-tabs" role="tablist">
-						<li role="presentation" class="active">
-							<a href="#robotQuestions" aria-controls="robotQuestions" role= "tab" data-toggle="tab">Robot Questions</a>
-						</li>
-						<li role="presentation">
-							<a href="#codeHistoryBody" aria-controls="codeHistoryBody" role= "tab" data-toggle="tab">Input History</a>
-						</li> 
-					</ul>
+						<ul class="nav nav-tabs" role="tablist">
+							<li role="presentation" class="active">
+								<a href="#robotQuestions" aria-controls="robotQuestions" role= "tab" data-toggle="tab">Robot Questions</a>
+							</li>
+							<li role="presentation">
+								<a href="#codeHistoryBody" aria-controls="codeHistoryBody" role= "tab" data-toggle="tab">History</a>
+							</li> 
+						</ul>
 
-					<div class="tab-content">
-						<div class="tab-plane row" id="robotQuestions"> 
-							<?php for($i = 0; $i < 5; $i++){ ?>
+						<div class="tab-content">
+
+							<div id="robotQuestions" class="tab-pane active row" > 
+								<?php for($i = 0; $i < 5; $i++){ ?>
 									<div id="question_<?php echo $i; ?>" class="questionContainer col-md-9" >
 									    <div class=" questionProgess progress-bar progress-bar-info" style="width:100%" role="progress" aria-valuemin="30" aria-valuemax="100">
 									        <p class="questionText" align="center"></p> 
-									        <!--<span class="sr-only">questions</span> -->
 									    </div> <!-- /.questionProgress -->
 									</div> <!--/questionContainer -->
-									<div class="btn-group col-md-3" role="group" aria-label="...">
-								  	    <button type="button" class="btn btn-success">Yes</button>
-								  	    <button type="button" class="btn btn-danger">No</button>
+									<div id="question_<?php echo $i; ?>" class="btn-group col-md-3" role="group" aria-label="...">
+								  	    <button type="button" class="btn btn-success" id="" >Yes</button>
+								  	    <button type="button" class="btn btn-danger" id="" >No</button>
 								    </div>
-							<?php } ?>
-						</div> <!-- /#robotQuestions -->
+								<?php } ?>
+							</div> <!-- /#robotQuestions -->
 
-						<div class="tab-plane" id="codeHistoryBody" style="height:183px; overflow-y:scroll;"></div>
+							<div id="codeHistoryBody" class="tab-pane" style="height:183px; overflow-y:scroll;"></div>
 
-					</div><!-- /.tabContent -->
-				
-				</div><!-- /.tabpanel -->
-			</div><!-- /.panelBody -->
+						</div><!-- /.tabContent -->
+					
+					</div><!-- /.tabpanel -->
+				</div><!-- /.panelBody -->
+			</div><!--#panel-->
 		</div><!-- /.robo_updates -->
 	
 	</div> <!-- /.row -->
