@@ -123,6 +123,12 @@ class Map(object):
         self.static_elements.append(map_obj)
         self.feasible_layer.define_feasible_regions(self.static_elements)
 
+    def add_robot(self, map_obj):
+        """Add a dynamic robot to the map
+        """
+        # <>TODO: Modify so it can have relations
+        self.dynamic_elements.append(map_obj)
+
     def rem_obj(self, map_obj):
         """Remove a ``MapObj`` from the Map.
 
