@@ -251,6 +251,8 @@ class MapObject(MapElement):
         else:
             plot_relations = False
 
+        self.container_area = {}
+
     def define_relations(self, map_bounds=None):
         """Create a multimodal softmax model of spatial relationships.
 
@@ -284,6 +286,8 @@ class MapArea(MapElement):
             self.plot_relations = plot_relations
         else:
             self.plot_relations = False
+
+        self.contained_objects = {}
 
     def define_relations(self, map_bounds=None):
         """Create a multimodal softmax model of spatial relationships.
