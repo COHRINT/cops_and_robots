@@ -27,7 +27,11 @@ cops:
     map_cfg:
       plot_robbers: True #True for all, False for none, or list of robbers to plot
       map_name: fleming
-      combined_only: True
+      combined_only: False
+    questioner_cfg:
+      target_order: ['Zhora', 'Roy']
+      false_alarm_prob: 0.1
+
 
 robbers:
   Roy:
@@ -50,7 +54,6 @@ distractors:
       type_: simple  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
       type_: 'direct'  # ['direct', 'a_star'] 
-
 
 human_interface:
   measurement_types:

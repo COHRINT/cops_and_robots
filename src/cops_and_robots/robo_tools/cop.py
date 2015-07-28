@@ -76,6 +76,7 @@ class Cop(Robot):
     goal_planner_defaults = {'type_': 'particle',
                              'use_target_as_goal': False}
     path_planner_defaults = {'type_': 'direct'}
+    questioner_defaults = {}
 
     def __init__(self,
                  name,
@@ -88,6 +89,7 @@ class Cop(Robot):
                  goal_planner_cfg={},
                  path_planner_cfg={},
                  camera_cfg={},
+                 questioner_cfg={},
                  **kwargs):
         # Use class defaults for kwargs not included
         mp_cfg = Cop.mission_planner_defaults.copy()
@@ -96,6 +98,8 @@ class Cop(Robot):
         gp_cfg.update(goal_planner_cfg)
         pp_cfg = Cop.path_planner_defaults.copy()
         pp_cfg.update(path_planner_cfg)
+        q_cfg = Cop.questioner_defaults.copy()
+        q_cfg.update(questioner_cfg)
 
         # Configure fusion and map based on goal planner
         if gp_cfg['type_'] == 'particle':
@@ -147,8 +151,8 @@ class Cop(Robot):
         # Add human sensor after robbers have been made
         self.sensors['human'] = Human(self.map)
         self.map.add_human_sensor(self.sensors['human'])
-        self.questioner = Questioner(target='Roy',
-                                     human_sensor=self.sensors['human'])
+        self.questioner = Questioner(human_sensor=self.sensors['human'],
+                                     **q_cfg)
 
 
     def make_others(self):
@@ -189,7 +193,7 @@ class Cop(Robot):
             self.distracting_robots[name] = ImaginaryRobot(name)
             self.distracting_robots[name].map_obj = MapObject(name,
                                                               shape_pts[:],
-                                                              has_spaces=False,
+                                                              has_relations=False,
                                                               blocks_camera=False,
                                                               color_str='none')
             self.map.add_robot(self.distracting_robots[name].map_obj)
@@ -209,6 +213,7 @@ class Cop(Robot):
                 self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose2D.pose)
                 self.found_robbers.update({irobber.name:
                                            self.missing_robbers.pop(irobber.name)})
+                self.questioner.update_target(irobber.name)
 
             # Update robber's shapes
             else:
@@ -231,8 +236,9 @@ class Cop(Robot):
                                   self.missing_robbers)
 
         # Ask a question every 10th step
-        if i % 10 == 9:
-            prior = self.fusion_engine.filters['Roy'].probability
+        if i % 10 == 9 and self.fusion_engine.filter_type == 'gauss sum':
+            target = self.questioner.target
+            prior = self.fusion_engine.filters[target].probability
             prior._discretize(bounds=self.map.bounds, grid_spacing=0.1)
             self.questioner.ask(prior, 1)
 

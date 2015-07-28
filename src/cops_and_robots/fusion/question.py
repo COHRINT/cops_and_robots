@@ -7,13 +7,13 @@ import numpy as np
 
 class Questioner(object):
 
-    def __init__(self, target=None, human_sensor=None, use_ROS=False,
-            false_alarm_prob=0.1):
-        self.target = target
+    def __init__(self, human_sensor=None, use_ROS=False, target_order=None,
+                 false_alarm_prob=0.1):
         self.human_sensor = human_sensor
         self.use_ROS = False
+        self.target_order = target_order
+        self.update_target()
         self.is_hovered = False
-        self.generate_questions()
         self.false_alarm_prob = false_alarm_prob
         #<>TODO: actually use false alarm prob
 
@@ -41,6 +41,18 @@ class Questioner(object):
 
     def __str__(self):
         return '\n'.join(self.all_questions)
+
+    def update_target(self, target=None):
+        if self.target_order == []:
+            logging.info('All targets found! No need to ask any more questions.')
+            return
+        if target==None or target==self.target:
+            self.target = self.target_order.pop(0)
+        else:
+            self.target = self.target_order.remove(target)
+
+        logging.info('Asking about {}.'.format(self.target))
+        self.generate_questions()
 
     def generate_questions(self):
         if self.human_sensor is None:
@@ -104,6 +116,10 @@ class Questioner(object):
                         relation_name = 'left of'
                     elif relation_name == 'right':
                         relation_name = 'right of'
+
+                    if grounding_type == 'object' and relation_name == 'inside':
+                        continue
+
                     for certainty in certainties:
                         if certainty == 'know':
                             certainty = 'know if'
@@ -170,7 +186,6 @@ class Questioner(object):
                 log_sensor_marginal)) * grid_spacing ** 2
 
         VOI += -prior_entropy
-        # logging.info('VOI for {}: {}'.format(likelihoods[0]['question'], VOI))
         return -VOI  # keep value positive
 
     def ask(self, prior, num_questions_to_ask=5, ask_human=True):
@@ -197,7 +212,7 @@ class Questioner(object):
                 self.question_publisher.publish(self.message)
             elif ask_human:
                 qu = self.weighted_questions[0]
-                logging.info(qu)
+                logging.info(qu[2])
                 answer = raw_input('Answer (y/n): ')
                 statement = question_to_statement(qu[2], answer)
                 self.human_sensor.utterance = statement
