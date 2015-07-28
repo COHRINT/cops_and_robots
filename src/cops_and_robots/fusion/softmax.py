@@ -1520,7 +1520,7 @@ def intrinsic_space_model(poly=None, bounds=None):
 def binary_intrinsic_space_model(poly=None, bounds=None):
     ism = intrinsic_space_model(poly, bounds=bounds)
     bism = BinarySoftmax(ism, bounds=bounds)
-    del bism.binary_models['Inside']
+    # del bism.binary_models['Inside']
     return bism
 
 
