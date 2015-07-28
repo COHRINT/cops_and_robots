@@ -320,7 +320,6 @@ function checkSettings(){
 * Initialize interface parameters (ROS elements, camera, map, etc.)
 */
 function init() {
-	consoleOut('WTF is this shit')
 
 	selectControl('Deckard');
 	selectView('Deckard');	
@@ -487,7 +486,6 @@ function init() {
 	});
 	*/
 	
-	
 /*	
 	// Update battery charge values
 	poseListener.subscribe(function(message) {
@@ -512,12 +510,28 @@ function determineView(){
 }
 
 /**
-* Uses ajax to call bash script
+* Uses ajax to call start bash script
 */
-function callScript(arg){
+function callStartScript(arg){
     jQuery.ajax({ 
     	type: "POST",
-        url: "/bash/start_stop.sh",
+        url: "cgi_bin/starting_script.php",
+        dataType: "script",
+        data:{setting: arg},  
+        async: true,
+        success: function(body){  
+            alert('response received: ' + arg);              
+        } 
+    }); 
+
+}
+/**
+* Uses ajax to call stop bash script
+*/
+function callStopScript(arg){
+    jQuery.ajax({ 
+    	type: "POST",
+        url: "cgi_bin/stopping_script.php",
         dataType: "script",
         data:{setting: arg},  
         async: true,
@@ -594,28 +608,12 @@ jQuery('#start-stop').unbind().click(function(){
     	}
     }
 
-    callScript(setting);
+	// Calls script function
+    if(jQuery(this).children("span").hasClass("glyphicon-stop") == true){
+    	callStartScript(setting);
+    } else if (jQuery(this).children("span").hasClass("glyphicon-play") == true){
+    	callStopScript(setting);
+    }
 
-	// var childExec = require('child_process');
-	// console.log(childExec);
-	// console.log(childExec.execFile);
-	// function getMethods(obj) {
-	//   var result = [];
-	//   for (var id in obj) {
-	//     try {
-	//       if (typeof(obj[id]) == "function") {
-	//         result.push(id + ": " + obj[id].toString());
-	//       }
-	//     } catch (err) {
-	//       result.push(id + ": inaccessible");
-	//     }
-	//   }
-	//   return result;
-	// }
-	// console.log(getMethods(childExec));
 
-	// childExec.execFile('./bash/start_stop.sh', [setting], {}, function (error, stdout, stderr) {
-	// 	console.log('Hi!!')
-	// });
-         
 });
