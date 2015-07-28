@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Test setting
+echo "i am here" 
 
 # launch rosbridge
 xterm -e roslaunch rosbridge_server rosbridge_websocket.launch &
