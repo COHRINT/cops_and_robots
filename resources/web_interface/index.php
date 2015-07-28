@@ -9,7 +9,7 @@ $targets = array("nothing", "a robber", "Roy", "Pris", "Zhora");
 $certainties = array("I think", "I know");
 $positivities = array("is", "is not");
 $object_relations = array("behind", "infront of", "left of", "right of");
-$objects = array("Deckard", "the bookshelf", "the chair", "the desk", "the table");
+$objects = array("the bookcase", "the desk", "the chair", "the filing cabinet", "the dining table", "the mars poster", "the cassini poster", "the fridge", " the checkers table");
 $area_relations = array("inside", "near", "outside");
 $areas = array("the study", "the billiard room", "the hallway", "the dining room", "the kitchen", "the library");
 $movement_types = array("moving", "stopped");
@@ -21,9 +21,7 @@ $pos_area = array($certainties, $targets, $positivities, $area_relations, $areas
 $Id_area = array("area_certainties","area_targets", "area_positivities", "area_relation", "area");
 $move = array($certainties, $targets, $positivities, $movement_types, $movement_qualities);
 $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "mv_qualities");
-// $questions= array("Under table?", "Next to bookcase?", "Above fridge?", "In kitchen?", "Drinking tea?");
-$question_weights = array("50%", "50%", "50%", "50%", "50%");
-$progress_values = array("40", "30", "10", "10", "10");
+
 ?>
 
 <div class="container">
@@ -357,6 +355,5 @@ $progress_values = array("40", "30", "10", "10", "10");
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="bootstrap-3.3.4-dist/bootstrap.min.js"></script>
 <script type="text/javascript" src="js/keyboardteleopquadrotor.js"></script>
-<script type="text/javascript" src="bundle.js"></script>
 <script type="text/javascript" src="js/interface.js"></script>
 
