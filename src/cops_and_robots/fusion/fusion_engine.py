@@ -173,6 +173,6 @@ class FusionEngine(object):
                 covariances[i:i + size] = filter_.probability.covariances
                 i += size
 
-            combined_gm = GaussianMixture(weights,means,covariances,
+            combined_gm = GaussianMixture(weights, means, covariances,
                                           max_num_mixands=num_mixands)
             self.filters['combined'].probability = combined_gm
