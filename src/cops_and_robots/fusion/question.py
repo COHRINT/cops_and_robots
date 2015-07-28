@@ -87,7 +87,7 @@ class Questioner(object):
                                                ('probability', np.object)
                                                ])
         i = 0
-        for _, grounding_type in groundings.iteritems():
+        for grounding_type_name, grounding_type in groundings.iteritems():
             for grounding_name, grounding in grounding_type.iteritems():
                 grounding_name = grounding_name.lower()
                 if grounding_name.find('the') == -1:
@@ -104,6 +104,8 @@ class Questioner(object):
                         relation_name = 'left of'
                     elif relation_name == 'right':
                         relation_name = 'right of'
+                    if grounding_type_name == 'object' and relation_name == 'inside':
+                        continue
                     for certainty in certainties:
                         if certainty == 'know':
                             certainty = 'know if'
