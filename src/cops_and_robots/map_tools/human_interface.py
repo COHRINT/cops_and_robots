@@ -114,6 +114,11 @@ class HumanInterface(object):
             self.movement_qualities = ['slowly', 'moderately', 'quickly']
         self.groundings['object'].sort()
         self.groundings['area'].sort()
+        for i, object_ in enumerate(self.groundings['object']):
+            if object_ not in ['Zhora', 'Pris', 'Leon', 'Deckard']:
+                self.groundings['object'][i] = 'the ' + object_.lower()
+        for i, area_name in enumerate(self.groundings['area']):
+            self.groundings['area'][i] = 'the ' + area_name.lower()
         self.relations['object'].sort()
         self.relations['area'].sort()
         self.targets[2:] = sorted(self.targets[2:])

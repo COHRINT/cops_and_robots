@@ -120,6 +120,7 @@ class FusionEngine(object):
                 self.filters[robber.name].update(sensors['camera'],
                                                  sensors['human'])
         self._update_combined(sensors, robbers)
+        sensors['human'].new_update = False  # done checking human, no more update
 
     def _update_combined(self, sensors, robbers):
         """Update the `combined` filter.

@@ -145,7 +145,8 @@ class Human(Sensor):
     def parse_utterance(self):
         """ Parse the input string into workable values.
         """
-        logging.info('Parsing: {}'.format(self.utterance))
+        logging.debug('Parsing: {}'.format(self.utterance))
+        logging.debug('Groundings: {}'.format(self.groundings))
 
         for str_ in self.certainties:
             if str_ in self.utterance:
@@ -191,6 +192,9 @@ class Human(Sensor):
             break
         else:
             self.grounding = None
+
+        logging.debug('Utterance: {}'.format(self.utterance))
+        logging.debug('Grounding: {}'.format(self.grounding))
 
         for str_ in self.movement_types:
             if str_ in self.utterance:
@@ -296,7 +300,6 @@ class Human(Sensor):
         if not hasattr(self.grounding,'relations'):
             self.grounding.define_relations()
 
-
         # Position update
         label = self.relation
         if self.target_name == 'nothing' and self.positivity == 'is not':
@@ -315,5 +318,6 @@ class Human(Sensor):
                                          use_LWIS=False,
                                          )
         gm = GaussianMixture(beta, mu, sigma)
+
         return gm
 

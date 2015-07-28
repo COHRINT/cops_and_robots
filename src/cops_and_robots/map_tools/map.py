@@ -382,17 +382,31 @@ def set_up_fleming(map_):
         walls.append(wall)
 
     # Make rectangular objects (desk, bookcase, etc)
-    labels = ['Bookcase', 'Desk', 'Chair', 'Filing Cabinet']
-    colors = ['sandybrown', 'sandybrown', 'brown', 'black']
-    poses = np.array([[0, -1.2, 270],
-                      [-5.5, -2, 00],
-                      [3, -2, 180],
-                      [-4, -1.3, 270]
+    labels = ['Bookcase', 'Desk', 'Chair', 'Filing Cabinet',
+              'Dining Table', 'Mars Poster', 'Cassini Poster',
+              'Fridge', 'Checkers Table']
+    colors = ['sandybrown', 'sandybrown', 'brown', 'black',
+              'brown', 'bisque', 'black',
+              'black','sandybrown']
+    poses = np.array([[0, -1.2, 270],  # Bookcase
+                      [-5.5, -2, 0],  # Desk
+                      [3, -2, 180],  # Chair
+                      [-4, -1.32, 270],  # Filing Cabinet
+                      [-8.24, -2.15, 90],  # Dining Table
+                      [-4.38, 3.67, 270],  # Mars Poster
+                      [1.38, 3.67, 270],  # Cassini Poster
+                      [-9.1, 3.3, 315],  # Fridge
+                      [2.04, 2.66, 270],  # Checkers Table
                      ])
-    sizes = np.array([[0.18, 0.38],
-                      [0.61, 0.99],
-                      [0.46, 0.41],
-                      [0.5, 0.37],
+    sizes = np.array([[0.18, 0.38],  # Bookcase
+                      [0.61, 0.99],  # Desk
+                      [0.46, 0.41],  # Chair
+                      [0.5, 0.37],  # Filing Cabinet
+                      [1.17, 0.69],  # Dining Table
+                      [0.05, 0.84],  # Mars Poster
+                      [0.05, 0.56],  # Cassini Poster
+                      [0.46, 0.46],  # Fridge
+                      [0.5, 0.5],  # Checkers Table
                      ])
 
     landmarks = []
@@ -400,15 +414,6 @@ def set_up_fleming(map_):
         landmark = MapObject(labels[i], sizes[i], pose=pose,
                              color_str=colors[i], map_bounds=map_.bounds)
         landmarks.append(landmark)
-
-    # Make odd landmarks
-    landmark = MapObject('Filing Cabinet', [0.5, 0.37], pose=[-4, -1.38, 270],
-                         color_str='black', map_bounds=map_.bounds)
-    landmarks.append(landmark)
-    # pose = [-9.5, 2.1, 0]
-    # shape_pts = Point(pose).buffer(0.2).exterior.coords
-    # landmark = MapObject('Frying Pan', shape_pts, pose=pose, has_relations=False, color_str='slategrey')
-    # landmarks.append(landmark)
 
     # Add walls to map
     for wall in walls:
@@ -442,6 +447,6 @@ def set_up_fleming(map_):
 
 
 if __name__ == '__main__':
-    fleming = set_up_fleming()
+    fleming = Map()
     fleming.plot()
-    fleming.feasible_layer.plot()
+    # fleming.feasible_layer.plot()

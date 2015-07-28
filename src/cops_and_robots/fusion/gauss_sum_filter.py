@@ -44,9 +44,10 @@ class GaussSumFilter(object):
 
     def _human_update(self, human_sensor):
         if human_sensor.new_update:
-            human_sensor.new_update = False
-            self.probability = human_sensor.detect(self.target_name, 'gauss sum',
+            gm = human_sensor.detect(self.target_name, 'gauss sum',
                                                    prior=self.probability)
+            if gm is not None:
+                self.probability = gm
 
     def robber_detected(self, robber_pose):
         """Update the particle filter for a detected robber.
