@@ -41,7 +41,6 @@ from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 from cops_and_robots.fusion.variational_bayes import VariationalBayes
 
 
-
 class Human(Sensor):
     """The human sensor, able to provide updates to a fusion engine.
 
@@ -62,7 +61,7 @@ class Human(Sensor):
         statement, which can be increased if the human says "I know" instead.
 
     """
-    def __init__(self, map_=None, detection_chance=0.6):
+    def __init__(self, map_=None, detection_chance=0.6, web_interface_topic='python'):
         self.update_rate = None
         self.has_physical_dimensions = False
         self.speed_model = speed_model()
@@ -74,7 +73,7 @@ class Human(Sensor):
 
         # self.certainties = ['think', 'know']
         self.certainties = ['know']
-        self.positivities = ['is not', 'is']  #<>TODO: oh god wtf why does order matter
+        self.positivities = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
         self.relations = {'object': ['behind',
                                      'in front of',
                                      'left of',
@@ -84,7 +83,7 @@ class Human(Sensor):
                                    'near',
                                    'outside'
                                    ]}
-        self.movement_types = ['moving','stopped',]
+        self.movement_types = ['moving', 'stopped']
         self.movement_qualities = ['slowly', 'moderately', 'quickly']
 
         self.groundings = {}
@@ -104,6 +103,15 @@ class Human(Sensor):
 
         # Set up the VB fusion parameters
         self.vb = VariationalBayes()
+
+        if web_interface_topic != 'python':
+            # Subscribe to web interface
+            import rospy
+            from std_msgs.msg import String
+            rospy.Subscriber(web_interface_topic, String, self.callback)
+
+    def callback(self, msg):
+        self.utterance = msg.data
 
     def detect(self, filter_name, type_="particle", particles=None, prior=None):
         """Update a fusion engine's probability from human sensor updates.
@@ -197,7 +205,7 @@ class Human(Sensor):
                 self.movement_type = str_
 
                 logging.info(str_)
-                
+
                 break
         else:
             self.movement_type = ''
@@ -205,9 +213,9 @@ class Human(Sensor):
         for str_ in self.movement_qualities:
             if str_ in self.utterance:
                 self.movement_quality = str_
-                
+
                 logging.info(str_)
-                
+
                 break
         else:
             self.movement_quality = ''
@@ -235,7 +243,7 @@ class Human(Sensor):
                 translated_relation = self.relation.title()
             self.relation = translated_relation
         elif relation_type == 'relative':
-            pass # <>TODO: Implement relative relations
+            pass  # <>TODO: Implement relative relations
 
     def translate_movement(self):
         """Translate the uttered movement to a likelihood label.
@@ -263,7 +271,7 @@ class Human(Sensor):
 
         """
 
-        if not hasattr(self.grounding,'relations'):
+        if not hasattr(self.grounding, 'relations'):
             self.grounding.define_relations()
 
         # <>TODO: include certainty
@@ -316,4 +324,3 @@ class Human(Sensor):
                                          )
         gm = GaussianMixture(beta, mu, sigma)
         return gm
-

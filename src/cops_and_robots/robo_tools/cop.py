@@ -81,6 +81,7 @@ class Cop(Robot):
                  name,
                  pose=[0, 0, 90],
                  pose_source='python',
+                 web_interface_topic='python',
                  robber_model='static',
                  other_robot_names={},
                  map_cfg={},
@@ -145,11 +146,10 @@ class Cop(Robot):
         self.make_others()
 
         # Add human sensor after robbers have been made
-        self.sensors['human'] = Human(self.map)
+        self.sensors['human'] = Human(self.map, web_interface_topic=web_interface_topic)
         self.map.add_human_sensor(self.sensors['human'])
         self.questioner = Questioner(target='Roy',
                                      human_sensor=self.sensors['human'])
-
 
     def make_others(self):
         # <>TODO: Make generic, so each robot has an idea of all others
@@ -261,6 +261,10 @@ class CopMissionPlanner(MissionPlanner):
             2. searching (moving around to gather information)
 
         """
+        if self.robot.sensors['human'].new_update is True:
+            self.robot.goal_planner.goal_status = 'without a goal'
+            self.robot.sensors['human'].new_update = False
+
         if self.mission_status is 'searching':
             if len(self.robot.missing_robbers) is 0:
                 self.mission_status = 'retired'
