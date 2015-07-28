@@ -189,7 +189,7 @@ class Cop(Robot):
             self.distracting_robots[name] = ImaginaryRobot(name)
             self.distracting_robots[name].map_obj = MapObject(name,
                                                               shape_pts[:],
-                                                              has_spaces=False,
+                                                              has_relations=False,
                                                               blocks_camera=False,
                                                               color_str='none')
             self.map.add_robot(self.distracting_robots[name].map_obj)
@@ -231,10 +231,10 @@ class Cop(Robot):
                                   self.missing_robbers)
 
         # Ask a question every 10th step
-        if i % 10 == 9:
-            prior = self.fusion_engine.filters['Roy'].probability
-            prior._discretize(bounds=self.map.bounds, grid_spacing=0.1)
-            self.questioner.ask(prior, 1)
+        # if i % 10 == 9:
+        #     prior = self.fusion_engine.filters['Roy'].probability
+        #     prior._discretize(bounds=self.map.bounds, grid_spacing=0.1)
+        #     self.questioner.ask(prior, 1)
 
 
 class CopMissionPlanner(MissionPlanner):

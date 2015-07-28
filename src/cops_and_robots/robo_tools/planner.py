@@ -33,6 +33,8 @@ from shapely.geometry import Point, LineString
 
 import cops_and_robots.robo_tools.a_star as a_star
 from cops_and_robots.map_tools.occupancy_layer import OccupancyLayer
+from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+from cops_and_robots.fusion.variational_bayes import VariationalBayes
 
 
 class MissionPlanner(object):
@@ -341,14 +343,68 @@ class GoalPlanner(object):
                 logging.warn('No gauss sum filter found for specified target')
                 return None
 
-        # <>TODO: softmax update not inside if point in object
         bounds = self.feasible_layer.bounds
         MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
 
         # Select randomly from max_particles
         goal_pose = np.append(MAP_point, theta)
 
+        # Check if its a feasible goal
+        pt = Point(goal_pose[0:2])
+        if self.feasible_layer.pose_region.contains(pt):
+            # If feasible return goal
+            return goal_pose
+        else:
+            # Check if it inside an object, update probability
+            map_ = self.robot.map
+            for name, obj in map_.objects.iteritems():
+                if obj.shape.contains(pt):
+                    self.clear_probability_from_objects(target, obj)
+                    goal_pose = None
+                    return goal_pose
+            else:
+                # If not in feasible region but not in object, and not
+                # using a view goal, generate a point in the same way
+                # as a view goal
+                logging.info('Not feasible, not in object')
+                if self.use_target_as_goal:
+                    goal_pose = self.view_goal(goal_pose)
+
         return goal_pose
+
+    def clear_probability_from_objects(self, target, obj):
+        logging.info('Clearing probability from {}'.format(obj.name))
+        fusion_engine = self.robot.fusion_engine
+        vb = VariationalBayes()
+
+        if not hasattr(obj, 'relations'):
+            obj.define_relations()
+
+        if target is not None:
+            prior = fusion_engine.filters[target].probability
+            likelihood = obj.relations.binary_models['Inside']
+            mu, sigma, beta = vb.update(measurement='Not Inside',
+                                        likelihood=likelihood,
+                                        prior=prior,
+                                        use_LWIS=False,
+                                        )
+            gm = GaussianMixture(beta, mu, sigma)
+            fusion_engine.filters[target].probability = gm
+        else:
+            # Update all but combined filters
+            for name, filter_ in fusion_engine.filters.iteritems():
+                if name == 'combined':
+                    pass
+                else:
+                    prior = filter_.probability
+                    likelihood = obj.relations.binary_models['Inside']
+                    mu, sigma, beta = vb.update(measurement='Not Inside',
+                                                likelihood=likelihood,
+                                                prior=prior,
+                                                use_LWIS=False,
+                                                )
+                    gm = GaussianMixture(beta, mu, sigma)
+                    filter_.probability = gm
 
     def find_goal_from_trajectory(self):
         """Find a goal pose from a set trajectory, defined by the
