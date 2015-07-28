@@ -105,3 +105,10 @@ div.progress-bar {
     margin-bottom: 8px;
 }
 
+div #Position_obj.tab-pane{
+    height:155px;
+}
+
+#Position_obj div.bloc{
+    height:155px;
+}
