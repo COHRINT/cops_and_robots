@@ -445,11 +445,11 @@ def set_up_fleming(map_):
                        color_str=colors[i], map_bounds=map_.bounds)
         map_.add_area(area)
 
-        # Relate landmarks and areas
-        for landmark in landmarks:
-            if area.shape.contains(Point(landmark.pose)):
-                area.contained_objects[landmark.name] = landmark
-                landmark.container_area[area.name] = area
+        # # Relate landmarks and areas
+        # for landmark in landmarks:
+        #     if area.shape.contains(Point(landmark.pose)):
+        #         area.contained_objects[landmark.name] = landmark
+        #         landmark.container_area[area.name] = area
 
     # for area in areas:
     #     logging.info('{} contains: {}.'.format(area.name, area.contained_objects
