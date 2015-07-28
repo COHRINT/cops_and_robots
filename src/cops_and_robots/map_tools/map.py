@@ -123,12 +123,6 @@ class Map(object):
         self.static_elements.append(map_obj)
         self.feasible_layer.define_feasible_regions(self.static_elements)
 
-    def add_robot(self, map_obj):
-        """Add a dynamic robot to the map
-        """
-        # <>TODO: Modify so it can have relations
-        self.dynamic_elements.append(map_obj)
-
     def rem_obj(self, map_obj):
         """Remove a ``MapObj`` from the Map.
 
@@ -138,6 +132,15 @@ class Map(object):
         self.static_elements.remove(map_obj)
         self.feasible_layer.define_feasible_regions(self.static_elements)
         del self.objects[map_obj.name]
+
+    def add_robot(self, map_obj):
+        """Add a dynamic robot to the map
+        """
+        # <>TODO: Modify so it can have relations
+        self.dynamic_elements.append(map_obj)
+
+    def rem_robot(self, map_obj):
+        self.dynamic_elements.remve(map_obj)
 
     def add_area(self, area):
         self.areas[area.name] = area
@@ -442,6 +445,14 @@ def set_up_fleming(map_):
                        color_str=colors[i], map_bounds=map_.bounds)
         map_.add_area(area)
 
+        # Relate landmarks and areas
+        for landmark in landmarks:
+            if area.shape.contains(Point(landmark.pose)):
+                area.contained_objects[landmark.name] = landmark
+                landmark.container_area[area.name] = area
+
+    # for area in areas:
+    #     logging.info('{} contains: {}.'.format(area.name, area.contained_objects
     # <>TODO: Include area demarcations
     map_.feasible_layer.define_feasible_regions(map_.static_elements)
 
