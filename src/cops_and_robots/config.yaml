@@ -2,16 +2,17 @@
 main:
   logging_level: INFO  #['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
   numpy_print_precision: 2
-  use_ROS: False # True if any robot is in the real world
+  use_ROS: True # True if any robot is in the real world
   ROS_node_name: 'Python_Node'
   max_run_time: 10  # in seconds, -1 for infinite
-  log_time: True
+  log_time: False
 
 cops:
   Deckard:
     pose: [0, 0, 90]  # [x(meters), y(meters), theta(degrees)]
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
-    pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
+    pose_source: tf  # ['python' or a ros topic string like '/deckard/odom']
+    web_interface_topic: human_sensor # python or rostopic name
     other_robot_names: 
       robbers: ['Roy', 'Zhora']
       distractors: ['Pris']
@@ -31,17 +32,18 @@ cops:
     questioner_cfg:
       target_order: ['Zhora', 'Roy']
       false_alarm_prob: 0.1
+      use_ROS: True
 
 
 robbers:
   Roy:
-    pose_source: python  # ['python' or a ros topic string like '/roy/odom']
+    pose_source: tf  # ['python' or a ros topic string like '/roy/odom']
     goal_planner_cfg:
       type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
       type_: 'direct'  # ['direct', 'a_star'] 
   Zhora:
-    pose_source: python  # ['python' or a ros topic string like '/zhora/odom']
+    pose_source: tf  # ['python' or a ros topic string like '/zhora/odom']
     goal_planner_cfg:
       type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
@@ -49,9 +51,9 @@ robbers:
 
 distractors:
   Pris:
-    pose_source: python  # ['python' or a ros topic string like '/pris/odom']
+    pose_source: tf  # ['python' or a ros topic string like '/pris/odom']
     goal_planner_cfg:
-      type_: simple  # ['stationary', 'simple', 'trajectory']
+      type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
       type_: 'direct'  # ['direct', 'a_star'] 
 

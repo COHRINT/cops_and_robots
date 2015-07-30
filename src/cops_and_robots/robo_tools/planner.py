@@ -147,7 +147,7 @@ class GoalPlanner(object):
         self.use_target_as_goal = use_target_as_goal
         self.stuck_distance = 0.1  # [m] distance traveled before assumed stuck
         if self.robot.publish_to_ROS:
-            self.stuck_buffer = 200  # time steps after being stuck before checking
+            self.stuck_buffer = 75  # time steps after being stuck before checking
         else:
             self.stuck_buffer = 50
         self.stuck_count = self.stuck_buffer
