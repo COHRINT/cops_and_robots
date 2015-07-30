@@ -238,9 +238,10 @@ class Cop(Robot):
         # Ask a question every 10th step
         if i % 10 == 9 and self.fusion_engine.filter_type == 'gauss sum':
             target = self.questioner.target
+            # <>TODO: Key error, make sure target is reassigned.
             prior = self.fusion_engine.filters[target].probability
             prior._discretize(bounds=self.map.bounds, grid_spacing=0.1)
-            self.questioner.ask(prior, 1)
+            self.questioner.ask(prior)
 
 
 class CopMissionPlanner(MissionPlanner):
