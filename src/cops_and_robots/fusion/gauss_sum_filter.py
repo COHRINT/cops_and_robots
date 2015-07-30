@@ -25,9 +25,10 @@ class GaussSumFilter(object):
     def __init__(self, target_name, feasible_layer=None, motion_model='stationary',
                  v_params=[0, 0.1], state_spec='x y x_dot y_dot'):
         self.target_name = target_name
-        self.feasible_layer = feasible_layer  #<>TODO: Do something with this
+        self.feasible_layer = feasible_layer  # <>TODO: Do something with this
         self.motion_model = motion_model
         self.finished = False
+        self.recieved_human_update = False
 
         self.probability = fleming_prior()
 
@@ -43,11 +44,13 @@ class GaussSumFilter(object):
 
 
     def _human_update(self, human_sensor):
+        self.recieved_human_update = False
         if human_sensor.new_update:
             gm = human_sensor.detect(self.target_name, 'gauss sum',
-                                                   prior=self.probability)
+                                     prior=self.probability)
             if gm is not None:
                 self.probability = gm
+                self.recieved_human_update = True
 
     def robber_detected(self, robber_pose):
         """Update the particle filter for a detected robber.

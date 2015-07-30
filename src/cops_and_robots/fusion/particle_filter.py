@@ -181,7 +181,10 @@ class ParticleFilter(object):
             A human sensor object.
 
         """
-        human_sensor.detect(self.target_name, 'particle', self.particles,)
+        self.recieved_human_update = False
+        self.recieved_human_update = human_sensor.detect(self.target_name,
+                                                         'particle',
+                                                         self.particles)
 
     def resample(self):
         """Sample or resample distribution to generate new particles

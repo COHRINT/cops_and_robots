@@ -5,13 +5,14 @@ main:
   use_ROS: False # True if any robot is in the real world
   ROS_node_name: 'Python_Node'
   max_run_time: 10  # in seconds, -1 for infinite
-  log_time: True
+  log_time: False
 
 cops:
   Deckard:
     pose: [0, 0, 90]  # [x(meters), y(meters), theta(degrees)]
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
+    web_interface_topic: python # python or rostopic name
     other_robot_names: 
       robbers: ['Roy', 'Zhora']
       distractors: ['Pris']
@@ -33,7 +34,7 @@ cops:
       web_interface_topic: 'python'  # ['python' or a ros topic string like '/deckard/odom']
     questioner_cfg:
       target_order: ['Zhora', 'Roy']
-
+      use_ROS: False
 
 robbers:
   Roy:
@@ -53,7 +54,7 @@ distractors:
   Pris:
     pose_source: python  # ['python' or a ros topic string like '/pris/odom']
     goal_planner_cfg:
-      type_: simple  # ['stationary', 'simple', 'trajectory']
+      type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
       type_: 'direct'  # ['direct', 'a_star'] 
 
