@@ -7,14 +7,12 @@ import numpy as np
 
 class Questioner(object):
 
-    def __init__(self, human_sensor=None, use_ROS=False, target_order=None,
-                 false_alarm_prob=0.1):
+    def __init__(self, human_sensor=None, use_ROS=False, target_order=None):
         self.human_sensor = human_sensor
         self.use_ROS = False
         self.target_order = target_order
         self.update_target()
         self.is_hovered = False
-        self.false_alarm_prob = false_alarm_prob
         #<>TODO: actually use false alarm prob
 
         if self.use_ROS:
@@ -171,8 +169,10 @@ class Questioner(object):
 
         VOI = 0
         grid_spacing = 0.1
-        pos_likelihood = likelihood['probability']
+        alpha = self.human_sensor.false_alarm_prob / 2  # only for binary
+        pos_likelihood = alpha + (1 - alpha) * likelihood['probability']
         neg_likelihood = np.ones_like(pos_likelihood) - pos_likelihood
+        neg_likelihood = alpha + (1 - alpha) * neg_likelihood
         likelihoods = [neg_likelihood, pos_likelihood]
         for likelihood in likelihoods:
             post_unnormalized = likelihood * flat_prior_pdf

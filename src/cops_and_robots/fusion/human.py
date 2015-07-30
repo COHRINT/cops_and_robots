@@ -61,13 +61,14 @@ class Human(Sensor):
         statement, which can be increased if the human says "I know" instead.
 
     """
-    def __init__(self, map_=None, detection_chance=0.6, web_interface_topic='python'):
+    def __init__(self, map_=None, web_interface_topic='python',
+                 false_alarm_prob=0.2):
         self.update_rate = None
         self.has_physical_dimensions = False
         self.speed_model = speed_model()
+        self.false_alarm_prob = false_alarm_prob
         # self.speed_model = binary_speed_model()
 
-        self.no_detection_chance = 0.01
         super(Human, self).__init__(self.update_rate,
                                     self.has_physical_dimensions)
 
@@ -316,15 +317,14 @@ class Human(Sensor):
             label = 'Not ' + label
 
         likelihood = self.grounding.relations.binary_models[self.relation]
-        logging.info(self.positivity)
-        logging.info(self.relation)
-        logging.info(likelihood)
-        logging.info(label)
         mu, sigma, beta = self.vb.update(measurement=label,
                                          likelihood=likelihood,
                                          prior=prior,
                                          use_LWIS=False,
                                          )
-        gm = GaussianMixture(beta, mu, sigma)
 
-        return gm
+        gm = GaussianMixture(beta, mu, sigma)
+        alpha = self.false_alarm_prob / 2
+        posterior = prior.combine_gms(gm, alpha)
+        # Weight based on human possibly being wrong
+        return posterior

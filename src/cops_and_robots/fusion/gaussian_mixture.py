@@ -322,6 +322,15 @@ class GaussianMixture(object):
         H = -np.sum(p_i * np.log(p_i)) * self.grid_spacing ** self.ndims # sum of elementwise entropy values
         return H
 
+    def combine_gms(self, other_gm, self_gm_weight=0.5):
+        """Merge two gaussian mixtures together, weighing the original by alpha.
+        """
+        alpha = self_gm_weight
+        beta_hat = np.hstack((self.weights * alpha, other_gm.weights * (1 - alpha)))
+        mu_hat = np.vstack((self.means, other_gm.means))
+        var_hat = np.concatenate((self.covariances, other_gm.covariances))
+        return GaussianMixture(beta_hat, mu_hat, var_hat)
+
     def _input_check(self):
         # Check if weights sum are normalized
         try:
@@ -960,6 +969,30 @@ def entropy_test():
                  '\n with params: {}'
                  .format(H4_2d, gauss4_2d))
 
+def merge_gm_test(alpha=0.5):
+    gm1 = GaussianMixture([0.3, 0.7],
+                                [[3, -2],
+                                 [-4, -6]
+                                 ], 
+                                 [[[0.5, 0.0],
+                                   [0.0, 0.5]],
+                                  [[1.5, -0.3],
+                                   [-0.3, 1.5]]
+                                 ])
+
+    gm2 = GaussianMixture([0.3, 0.7],
+                                [[-3, 2],
+                                 [4, 6]
+                                 ], 
+                                 [[[0.5, 0.0],
+                                   [0.0, 0.5]],
+                                  [[1.5, -0.3],
+                                   [-0.3, 1.5]]
+                                 ])
+
+    gm3 = gm1.combine_gms(gm2, alpha)
+    print gm3
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
@@ -974,4 +1007,5 @@ if __name__ == '__main__':
     # ellipses_test(2)
     # merge_test(120)
     # uniform_prior_test()
-    entropy_test()
+    # entropy_test()
+    merge_gm_test(0.01)
