@@ -148,6 +148,7 @@ class Human(Sensor):
 
         if type_ == 'particle':
             self.detect_particles(particles)
+            return True
         elif type_ == 'gauss sum':
             return self.detect_probability(prior)
         else:
@@ -319,10 +320,10 @@ class Human(Sensor):
             label = 'Not ' + label
 
         likelihood = self.grounding.relations.binary_models[self.relation]
-        logging.info(self.positivity)
-        logging.info(self.relation)
-        logging.info(likelihood)
-        logging.info(label)
+        logging.debug(self.positivity)
+        logging.debug(self.relation)
+        logging.debug(likelihood)
+        logging.debug(label)
         mu, sigma, beta = self.vb.update(measurement=label,
                                          likelihood=likelihood,
                                          prior=prior,
