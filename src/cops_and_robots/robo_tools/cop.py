@@ -268,9 +268,20 @@ class CopMissionPlanner(MissionPlanner):
             2. searching (moving around to gather information)
 
         """
-        # if self.robot.sensors['human'].new_update is True:
-        #     self.robot.goal_planner.goal_status = 'without a goal'
-        #     self.robot.sensors['human'].new_update = False
+        if self.target is None:
+            for name, filter_ in self.robot.fusion_engine.filters.iteritems():
+                if filter_.recieved_human_update:
+                    self.robot.goal_planner.goal_status = 'without a goal'
+                    break
+        else:
+            for name, filter_ in self.robot.fusion_engine.filters.iteritems():
+                if filter_.recieved_human_update and name == self.target:
+                    self.robot.goal_planner.goal_status = 'without a goal'
+                    logging.info('{} recieved an update, replanning goal'
+                                 .format(name))
+                elif filter_.recieved_human_update:
+                    logging.info('{} recieved an update, but is not the target'
+                                 .format(name))
 
         if self.mission_status is 'searching':
             if len(self.robot.missing_robbers) is 0:
