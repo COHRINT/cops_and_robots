@@ -9,11 +9,10 @@ class Questioner(object):
 
     def __init__(self, human_sensor=None, use_ROS=False, target_order=None):
         self.human_sensor = human_sensor
-        self.use_ROS = False
+        self.use_ROS = use_ROS
         self.target_order = target_order
         self.update_target()
         self.is_hovered = False
-        #<>TODO: actually use false alarm prob
 
         if self.use_ROS:
             import rospy
@@ -47,7 +46,7 @@ class Questioner(object):
         if target==None or target==self.target:
             self.target = self.target_order.pop(0)
         else:
-            self.target = self.target_order.remove(target)
+            self.target_order.remove(target)
 
         logging.info('Asking about {}.'.format(self.target))
         self.generate_questions()
@@ -199,14 +198,18 @@ class Questioner(object):
                 self.message.weights = []
                 self.message.qids = []
                 self.message.questions = []
-                normalizer = np.sum(questions_to_ask[:num_questions_to_ask][0])
+                
+                normalizer = 0
+                for q in questions_to_ask:
+                    normalizer += q[0]
+                # normalizer = np.sum(questions_to_ask[:num_questions_to_ask][0])
                 for q in questions_to_ask:
                     normalized_weight = q[0] / normalizer
                     self.message.weights.append(normalized_weight)
                     self.message.qids.append(q[1])
                     self.message.questions.append(q[2])
 
-                logging.info(self.message)
+                logging.debug(self.message)
                 self.question_publisher.publish(self.message)
             elif ask_human:
                 qu = self.weighted_questions[0]
@@ -218,16 +221,18 @@ class Questioner(object):
 
 
     def hover_callback(self, data):
+        import rospy
         self.is_hovered = data.data
         rospy.loginfo("%s", data.data)
 
     def answer_callback(self, data):
+        import rospy
         index = data.qid
         answer = data.answer
-        rospy.loginfo("%s", data.qid)
-        asked = self.all_questions[self.index]
+        logging.info("I Heard{}".format(data.qid))
+        question = self.all_questions[index]
         self.statement = question_to_statement(question, answer)
-        rospy.loginfo(self.statement)
+        logging.info(self.statement)
         self.answer_publisher.publish(self.statement)
 
 def question_to_statement(question, answer):

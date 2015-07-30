@@ -107,12 +107,15 @@ class Human(Sensor):
 
         if web_interface_topic != 'python':
             # Subscribe to web interface
+            print web_interface_topic
             import rospy
             from std_msgs.msg import String
             rospy.Subscriber(web_interface_topic, String, self.callback)
 
     def callback(self, msg):
+        logging.debug('Processing sensor')
         self.utterance = msg.data
+        self.new_update = True
 
     def detect(self, filter_name, type_="particle", particles=None, prior=None):
         """Update a fusion engine's probability from human sensor updates.
@@ -146,6 +149,7 @@ class Human(Sensor):
 
         if type_ == 'particle':
             self.detect_particles(particles)
+            return True
         elif type_ == 'gauss sum':
             return self.detect_probability(prior)
         else:

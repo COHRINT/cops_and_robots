@@ -151,7 +151,7 @@ class Cop(Robot):
         self.make_others()
 
         # Add human sensor after robbers have been made
-        self.sensors['human'] = Human(self.map, web_interface_topic=web_interface_topic)
+        self.sensors['human'] = Human(self.map, **human_cfg)
         self.map.add_human_sensor(self.sensors['human'])
         self.questioner = Questioner(human_sensor=self.sensors['human'],
                                      **q_cfg)
@@ -239,9 +239,10 @@ class Cop(Robot):
         # Ask a question every 10th step
         if i % 10 == 9 and self.fusion_engine.filter_type == 'gauss sum':
             target = self.questioner.target
+            # <>TODO: Key error, make sure target is reassigned.
             prior = self.fusion_engine.filters[target].probability
             prior._discretize(bounds=self.map.bounds, grid_spacing=0.1)
-            self.questioner.ask(prior, 1)
+            self.questioner.ask(prior)
 
 
 class CopMissionPlanner(MissionPlanner):
@@ -268,9 +269,20 @@ class CopMissionPlanner(MissionPlanner):
             2. searching (moving around to gather information)
 
         """
-        # if self.robot.sensors['human'].new_update is True:
-        #     self.robot.goal_planner.goal_status = 'without a goal'
-        #     self.robot.sensors['human'].new_update = False
+        if self.target is None:
+            for name, filter_ in self.robot.fusion_engine.filters.iteritems():
+                if filter_.recieved_human_update:
+                    self.robot.goal_planner.goal_status = 'without a goal'
+                    break
+        else:
+            for name, filter_ in self.robot.fusion_engine.filters.iteritems():
+                if filter_.recieved_human_update and name == self.target:
+                    self.robot.goal_planner.goal_status = 'without a goal'
+                    logging.info('{} recieved an update, replanning goal'
+                                 .format(name))
+                elif filter_.recieved_human_update:
+                    logging.info('{} recieved an update, but is not the target'
+                                 .format(name))
 
         if self.mission_status is 'searching':
             if len(self.robot.missing_robbers) is 0:
