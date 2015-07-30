@@ -91,6 +91,7 @@ class Cop(Robot):
                  path_planner_cfg={},
                  camera_cfg={},
                  questioner_cfg={},
+                 human_cfg={},
                  **kwargs):
         # Use class defaults for kwargs not included
         mp_cfg = Cop.mission_planner_defaults.copy()
