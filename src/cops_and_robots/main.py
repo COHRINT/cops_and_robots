@@ -95,8 +95,10 @@ def main(config_file=None):
     cops['Deckard'].map.setup_plot(fusion_engine)
     sim_start_time = time.time()
 
-    animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time)
-    # headless_mode(cops, robbers, main_cfg, sim_start_time)
+    if cop_cfg['Deckard']['map_cfg']['publish_to_ROS']:
+        headless_mode(cops, robbers, distractors, main_cfg, sim_start_time)
+    else:
+        animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time)
 
 
 def headless_mode(cops, robbers, distractors, main_cfg, sim_start_time):
@@ -140,3 +142,26 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time):
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+# import cv2
+# from cv_bridge import CvBridge, CvBridgeError
+# import rospy
+# from sensor_msgs.msg import Image
+# # <>TODO: Lazy init for ros
+
+# self.bridge = CvBridge()
+#         self.image_pub = rospy.Publisher("test_prob_layer", Image)
+#         rospy.init_node('Probability_Node')
+
+
+#     plt.savefig('foo.png')
+#         img = cv2.imread('foo.png', 1)
+#         try:
+#             self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "passthrough"))
+#         except CvBridgeError, e:
+#             print e

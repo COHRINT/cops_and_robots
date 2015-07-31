@@ -16,6 +16,19 @@
 	<param name="datastream_hostport" value="192.168.20.100:801" type="str" />
     </node>
 
+    <!-- Run web video server -->
+    <node pkg="web_video_server" type="web_video_server" name="set_parameters" output="screen">
+        <param name="port" value="1234" type="int" />
+        <param name="quality" value="240" type="int" />
+        <param name="width" value="320" type="int" />
+        <param name="height" value="240" type="int" />
+        <param name="bitrate" value="10000" type="int" />
+        </node>
+
+     <!-- Run rosbridge server -->
+     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+
+
     <!-- Run vicon vicon_odom node to provide odometry data -->
     <!-- REMOVED FOR NOW
     <node pkg="vicon_odom" type="vicon_odom" name="deckard" output="screen">
