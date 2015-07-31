@@ -83,6 +83,7 @@ class Cop(Robot):
                  pose=[0, 0, 90],
                  pose_source='python',
                  web_interface_topic='python',
+                 ask_every_ten=False,
                  robber_model='static',
                  other_robot_names={},
                  map_cfg={},
@@ -151,6 +152,7 @@ class Cop(Robot):
         self.make_others()
 
         # Add human sensor after robbers have been made
+        self.ask_every_ten = ask_every_ten
         self.sensors['human'] = Human(self.map, **human_cfg)
         self.map.add_human_sensor(self.sensors['human'])
         self.questioner = Questioner(human_sensor=self.sensors['human'],
@@ -237,7 +239,9 @@ class Cop(Robot):
                                   self.missing_robbers)
 
         # Ask a question every 10th step
-        if i % 10 == 9 and self.fusion_engine.filter_type == 'gauss sum':
+        if i % 10 == 9 and self.fusion_engine.filter_type == 'gauss sum' and \
+           self.ask_every_ten:
+
             target = self.questioner.target
             # <>TODO: Key error, make sure target is reassigned.
             prior = self.fusion_engine.filters[target].probability
@@ -269,6 +273,7 @@ class CopMissionPlanner(MissionPlanner):
             2. searching (moving around to gather information)
 
         """
+        # <>TODO: @Matt Hacky, reimplement. Human sensor method needs clean up in general
         if self.target is None:
             for name, filter_ in self.robot.fusion_engine.filters.iteritems():
                 if filter_.recieved_human_update:
