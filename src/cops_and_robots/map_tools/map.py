@@ -60,7 +60,7 @@ class Map(object):
     """
     def __init__(self, map_name='fleming', bounds=[-5, -5, 5, 5],
                  plot_robbers=True, map_display_type='particle',
-                 combined_only=True):
+                 combined_only=True, publish_to_ROS=False):
 
         # <>TODO: Move to main?
         self.human_cfg = load_config()['human_interface']
@@ -80,6 +80,17 @@ class Map(object):
         # <>TODO: Make display type relative to each robber
         self.display_type = map_display_type
         self.combined_only = combined_only
+
+        self.publish_to_ROS = publish_to_ROS
+        if publish_to_ROS:
+            from cv_bridge import CvBridge
+            import rospy
+            from sensor_msgs.msg import Image
+            from std_msgs.msg import String
+            self.probability_target = 'Roy'
+            self.bridge = CvBridge()
+            self.image_pub = rospy.Publisher("python_probability_map", Image, queue_size=10)
+            rospy.Subscriber("robot_probability_map", String, self.change_published_ax)
 
         # Define map elements
         self.objects = {}  # For dynamic/static map objects (not robbers/cops)
@@ -324,6 +335,9 @@ class Map(object):
                         ProbabilityLayer(filter_, fig=self.fig, ax=ax,
                                          bounds=self.bounds)
 
+    def change_published_ax(self, msg):
+        self.probability_target = msg.data
+
     def update(self, i=0):
         """
         """
@@ -339,6 +353,18 @@ class Map(object):
                         self.probability_layers[ax_name].update(i=i)
             except KeyError:
                 logging.debug('Robber already removed.')
+
+            if ax_name == self.probability_target and self.publish_to_ROS:
+                import cv2
+                from cv_bridge import CvBridgeError
+
+                extent = ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
+                self.fig.savefig(ax_name + '.png', bbox_inches=extent.expanded(1.1, 1.2))
+                img = cv2.imread(ax_name + '.png', 1)
+                try:
+                    self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+                except CvBridgeError, e:
+                    print e
 
 def set_up_fleming(map_):
     """Set up a map as the generic Fleming space configuration.
