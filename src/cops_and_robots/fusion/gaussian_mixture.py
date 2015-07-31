@@ -111,7 +111,7 @@ class GaussianMixture(object):
         for i, weight in enumerate(self.weights):
             mean = self.means[i]
             covariance = self.covariances[i]
-            gaussian_pdf = multivariate_normal.pdf(x, mean, covariance)
+            gaussian_pdf = multivariate_normal.pdf(x, mean, covariance, allow_singular=True)
             pdf += weight * gaussian_pdf
 
         return pdf
