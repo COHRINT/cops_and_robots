@@ -26,15 +26,18 @@ cops:
       max_view_dist: 1.0
       min_view_dist: 0.0
     map_cfg:
-      plot_robbers: True #True for all, False for none, or list of robbers to plot
+      plot_robbers: True # True for all, False for none, or list of robbers to plot
       map_name: fleming
       combined_only: False
     human_cfg:
-      false_alarm_prob: 0.3
+      false_alarm_prob: 0.2
       web_interface_topic: 'python'  # ['python' or a ros topic string like '/deckard/odom']
     questioner_cfg:
-      target_order: ['Zhora', 'Roy']
       use_ROS: False
+      target_order: ['Zhora', 'Roy']
+      target_weights: [11, 10]
+      repeat_annoyance: 0.8  # max penalty to a repeated question
+      repeat_time_penalty: 300  # seconds during which a repeat question is penalized
 
 robbers:
   Roy:
