@@ -67,7 +67,6 @@ class Human(Sensor):
         self.has_physical_dimensions = False
         self.speed_model = speed_model()
         self.false_alarm_prob = false_alarm_prob
-        # self.speed_model = binary_speed_model()
 
         super(Human, self).__init__(self.update_rate,
                                     self.has_physical_dimensions)
