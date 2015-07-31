@@ -216,7 +216,7 @@ class Cop(Robot):
                 self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose2D.pose)
                 self.found_robbers.update({irobber.name:
                                            self.missing_robbers.pop(irobber.name)})
-                self.questioner.update_target(irobber.name)
+                self.questioner.remove_target(irobber.name)
 
             # Update robber's shapes
             else:
@@ -241,12 +241,15 @@ class Cop(Robot):
         # Ask a question every 10th step
         if i % 10 == 9 and self.fusion_engine.filter_type == 'gauss sum' and \
            self.ask_every_ten:
-
-            target = self.questioner.target
             # <>TODO: Key error, make sure target is reassigned.
-            prior = self.fusion_engine.filters[target].probability
-            prior._discretize(bounds=self.map.bounds, grid_spacing=0.1)
-            self.questioner.ask(prior)
+            priors = {}
+            for name, filter_ in self.fusion_engine.filters.iteritems():
+                if name == 'combined':
+                    continue
+                priors[name] = filter_.probability
+                priors[name]._discretize(bounds=self.map.bounds,
+                                          grid_spacing=0.1)
+            self.questioner.ask(priors)
 
 
 class CopMissionPlanner(MissionPlanner):
