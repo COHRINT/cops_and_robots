@@ -106,6 +106,9 @@ def headless_mode(cops, robbers, distractors, main_cfg, sim_start_time):
     while cops['Deckard'].mission_planner.mission_status != 'stopped':
         update(i, cops, robbers, distractors, main_cfg, sim_start_time)
         i += 1
+        # For ending early
+        # if i == 101:
+        #     break
 
 
 def animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time):
