@@ -12,8 +12,8 @@
 	} else {
 	    $setting_script = '../bash/stop_python.sh';
 	}
-	exec('bash '.$setting_script);
 	echo('bash '.$setting_script);
+	exec('bash '.$setting_script);
 ?>
 
 </body>

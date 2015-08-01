@@ -5,14 +5,18 @@
 //Set up primary ROS master
 // var rosurl =  'ws://fleming.recuv.org'; //commonly at 128.138.157.84
 // var rosMaster = new ROSLIB.Ros({
-//   url : rosurl + ':9090'
+//   url : rosurl + ':9000'
 // });
 
-
-var rosurl =  'ws://127.0.0.1'; //commonly at 128.138.157.84
+var rosurl =  'ws://192.168.20.110'; //commonly at 128.138.157.84
 var rosMaster = new ROSLIB.Ros({
-  url : rosurl + ':9090'
+  url : rosurl + ':9990'
 });
+
+// var rosurl =  'ws://127.0.0.1'; //commonly at 128.138.157.84
+// var rosMaster = new ROSLIB.Ros({
+//   url : rosurl + ':9090'
+// });
 
 
 
@@ -29,6 +33,10 @@ var cam = 'Deckard Visual';
 humanViewState(cam);
 
 
+
+/*
+*NEED TO FIND OUT WHAT THIS DOES
+*/
 for (i = 0;  i < robotNames.length; i++){
 	nname = robotNames[i].charAt(0).toUpperCase() + robotNames[i].slice(1);
 	var cmdTopic = new ROSLIB.Topic({ ros : rosMaster, name : '/robot_command/' + robotNames[i] , messageType : 'std_msgs/String'});
@@ -97,56 +105,63 @@ function updateRobotQuestions(publishedQuestions, questionValues, questionIds){
 	}
 
 	var values = questionValues.slice();	
-	var questions = publishedQuestions;
 
 	//Send to pct_weights and robo_questions to index.php to be published in progress bars
 
 	// Set text and weight for questions
 	for(i = 0; i < 5; i++){
-		$('#question_' + i + ' div p').html(questions[i]);
+		$('#question_' + i + ' div p').html(publishedQuestions[i]);
 		$('#question_' + i + ' div').attr("aria-valuenow", values[i].toString());
 		$('#question_' + i + ' div').css("width", values[i].toString() + "%");
 		$('#question_' + i + ' button.btn-success').attr("id", questionIds[i]);	
 		$('#question_' + i + ' button.btn-danger').attr("id", questionIds[i]);
 	}
 
-
-	answeredQuestions(questionIds, questions);
+	answeredQuestions(questionIds, publishedQuestions);
 }
 
-function answeredQuestions(questionIds, quests){
-	var qids = questionIds;
-	var questions = quests;
+/*
+* Sends information to ROS topic /answer and publishes to input history
+*/
+function answeredQuestions(questionIds, askedQuestions){
 
-	jQuery('.btn-success').unbind().click(function() {
+	jQuery('#robotQuestions div .btn-success').unbind().click(function() {
 		var qid = this.id;
-		var j;
+		var answeredQuestion;
+		var bool = true;
 
-	    for(i = 0; i < qids.length; i++){	
-		    if (qid == qids[i]){
-		    	j = i;
+	    for(i = 0; i < questionIds.length; i++){	
+		    if (qid == questionIds[i]){
+		    	answeredQuestion = askedQuestions[i];
 		    	break;
 		    }
 		}
-		var str = [questions[j] + " :YES"];
+		var str = [answeredQuestion + " :YES"];
 		consoleOut(str);
+    	publishAnswer(qid, bool);
 	});
 
-	jQuery('.btn-danger').unbind().click(function() {
+	jQuery('#robotQuestions div .btn-danger').unbind().click(function() {
 		var qid = this.id;
 	    var answeredQuestion;
+	    var bool = false;
 
-	        for(i = 0; i < qids.length; i++){	
-	    	    if (qid == qids[i]){
-	    	    	answeredQuestion = questions[i];
-	    	    	break;
-	    	    }
-	    	}
-	    	var str = [answeredQuestion + " :NO"];
-	    	consoleOut(str);
+        for(i = 0; i < questionIds.length; i++){	
+    	    if (qid == questionIds[i]){
+    	    	answeredQuestion = askedQuestions[i];
+    	    	break;
+    	    }
+    	}
+    	var str = [answeredQuestion + " :NO"];
+    	consoleOut(str);
+    	publishAnswer(qid, bool);
 	});	
 }
 
+/**
+* Select either Deckard's real camera or the control of any simulated robot
+* @param {String} robot
+*/
 function selectControl(robot){
     for (i = 0;  i < robotNames.length; i++){
     	if (robot === robots[i].nicename){
@@ -179,6 +194,46 @@ function selectView(robot){
 }
 
 /**
+* Select either Deckard's real camera or the view of any simulated robot
+* @param {String} robot
+*/
+function selectMap(robot){
+    for (i = 0;  i < robotNames.length; i++){
+    	if (robot === robots[i].nicename){
+	    	robots[i].map = true;
+    	} else{
+	    	robots[i].map = false;
+    	}
+    }
+    
+    var str = "Probability map of " + robot + "." ;
+    consoleOut(str);
+    robotProbabilityMap(robot);
+}
+
+/**
+* Publish which robot probability map should be projected to gazebo
+*/
+function robotProbabilityMap(str){
+
+	rosMaster.on('connection', function() {
+		console.log('Connected to websocket server.');
+	});
+
+		
+	/*---------------------Codebook-------------------*/
+	// Establish ROS topic for sending human messages
+	var robot_probability_map = new ROSLIB.Topic({
+	    ros : rosMaster,
+	    name : '/robot_probability_map',
+	    messageType : 'std_msgs/String'
+	});
+	
+	var msg = new ROSLIB.Message({data: str}); 
+	robot_probability_map.publish(msg);
+}
+
+/**
 * Publish if mouse is on robot generated questions
 */
 function questionHovering(bool){
@@ -206,6 +261,7 @@ function humanInputSensor(str){
 	rosMaster.on('connection', function() {
 		console.log('Connected to websocket server.');
 	});
+
 		
 	/*---------------------Codebook-------------------*/
 	// Establish ROS topic for sending human messages
@@ -243,7 +299,7 @@ function humanViewState(str){
 /**
 * Publish the way the human answers the robots questions
 */
-function questionAnswer(idNumber, bool){
+function publishAnswer(idNumber, bool){
 
 	var idNum = parseInt(idNumber);
 
@@ -254,11 +310,11 @@ function questionAnswer(idNumber, bool){
 	// Establish ROS topic for sending hover messages
 	var questionAnswer = new ROSLIB.Topic({
 	    ros : rosMaster,
-	    name : '/question_answer',
-	    messageType : 'cops_and_robots_ros/question_answer'
+	    name : '/answer',
+	    messageType : 'cops_and_robots_ros/Answer'
 	});
 
-    var msg = new ROSLIB.Message({qid: idNum, answer: bool});	 
+    var msg = new ROSLIB.Message({qid: idNum, answer: bool});	
 	questionAnswer.publish(msg);
 }
 
@@ -269,22 +325,28 @@ function questionAnswer(idNumber, bool){
 function checkSettings(){
 	//Select simulation vs. experiment
 
+	///deckard/camera/rgb/image_raw
+
  	var vicon = jQuery("#setting-source-vicon");
 	var gazebo= jQuery("#setting-source-gazebo");
 	var diffSettings = [vicon, gazebo];
-	var vPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
-	var vTopics = ["/deckard/camera/rgb/image_raw", "/pris/camera/rgb/image_raw", "/roy/camera/rgb/image_raw", "/zhora/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
-	var gPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
-	var gTopics = ["deckard/camera/image_raw", "pris/camera/image_raw", "roy/camera/image_raw", "zhora/camera/image_raw", "security_camera1/camera/image_raw", "security_camera2/camera/image_raw", "security_camera3/camera/image_raw"]; 
+	// var vPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
+	// var vTopics = ["/deckard/camera/rgb/image_raw", "/pris/camera/rgb/image_raw", "/roy/camera/rgb/image_raw", "/zhora/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
+	// var gPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
+	// var gTopics = ["/deckard/camera/image_raw", "/pris/camera/image_raw", "/roy/camera/image_raw", "/zhora/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
+	var vPorts =[":1234", ":1234", ":1234", ":1234"];
+	var vTopics = ["na", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
+	var gPorts =[":1234", ":1234", ":1234", ":1234"];
+	var gTopics = ["/deckard/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
 	var ports = [vPorts, gPorts];
 	var topics =[vTopics, gTopics];
-	var ids = ["#deckard-visual", "#pris-visual", "#roy-visual", "#zhora-visual", "#camera1-visual", "#camera2-visual", "#camera3-visual"];
+	var ids = ["#deckard-visual", "#camera1-visual", "#camera2-visual", "#camera3-visual"];
 
     for(i = 0; i < diffSettings.length; i++){
     	if(diffSettings[i].parent().hasClass('active') == true){
 	      for(j=0; j<ports[i].length; j++){
 	      	// $(ids[j]).attr("src", "http://flemming.recov.org"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
-	      	$(ids[j]).attr("src", "http://127.0.0.1"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
+	      	$(ids[j]).attr("src", "http://192.168.20.110"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
 	  	  }
 	  	  break;	 
 		}
@@ -323,6 +385,7 @@ function init() {
 
 	selectControl('Deckard');
 	selectView('Deckard');	
+	selectMap('Roy')
 	
 	//Toggle velocity fields
 	//Toggle velocity fields
@@ -443,6 +506,13 @@ function init() {
 	    selectView(robot);
 	})
 
+	//Map Switch
+	jQuery('.probability-robot').unbind().click(function(e) {
+	    e.preventDefault();
+	    var robot = jQuery(this).parent().prev().text().trim();	    
+	    selectMap(robot);
+	})
+
 	 // Initialize the teleop.
     var teleop = new KEYBOARDTELEOP.Teleop({
       ros : rosMaster,
@@ -495,6 +565,9 @@ function init() {
 */	
 }
 
+/*
+* Determines the view which the human is looking through
+*/
 function determineView(){
 	//Determine what camera the human is looking through
 	var viewTabs = ['#deckardVisual', '#prisVisual', '#royVisual', '#zhoraVisual', '#cam1', '#cam2', '#cam3'];
@@ -561,7 +634,6 @@ jQuery('#settings-save').unbind().click(function(){
 	jQuery('#settings').modal('hide');
 });
 
-// Lags behind by one 
 jQuery('.camera_views').unbind().click(function(){
 	//wait .1 seconds before continuing otherwise wont set new element to active fast enough
 	setTimeout(determineView, 100) 
@@ -577,30 +649,19 @@ jQuery('#robotQuestions').hover(function(){
 	questionHovering(bool);
 });
 
-jQuery('.btn-success').unbind().click(function() {
-	var qid = this.id;
-    questionAnswer(qid, true);
-});
-
-jQuery('.btn-danger').unbind().click(function() {
-	var qid = this.id;
-    questionAnswer(qid, true);
-});
-
-
 jQuery('#start-stop').unbind().click(function(){
 
 	var vicon = jQuery("#setting-source-vicon");
 	var gazebo= jQuery("#setting-source-gazebo");
 	var diffSettings = [vicon, gazebo];
 	var activeSet = ['vicon', 'gazebo'];
+	var setting = '';
 
     jQuery(this).toggleClass("btn-success");
     jQuery(this).toggleClass("btn-danger");			        
     jQuery(this).children("span").toggleClass("glyphicon-play");
     jQuery(this).children("span").toggleClass("glyphicon-stop");	
 
-    var setting = '';
     for(i = 0; i<diffSettings.length; i++){
     	if(diffSettings[i].parent().hasClass('active') == true){
     		setting = activeSet[i];

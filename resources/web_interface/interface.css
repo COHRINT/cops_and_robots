@@ -23,8 +23,12 @@ white-space:pre-wrap;
     height: auto;
 }
 
-#visual div .nav-tabs{
-    padding-bottom: 15px;
+span.glyphicon.glyphicon-wrench{
+    font-size: 16px;
+}
+
+span.glyphicon.glyphicon-resize-full{
+    font-size: 16px;
 }
 
 #deckard-visual {

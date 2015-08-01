@@ -2,15 +2,15 @@
 
 # Gazebo Setting
 echo "success" 
-
+mkdir SUCCESS
 # launch rosbridge
-gnome-terminal -e roslaunch rosbridge_server rosbridge_websocket.launch &
+xterm -e roslaunch rosbridge_server rosbridge_websocket.launch &
 
 # launch vicon bridge
-gnome-terminal -e roslaunch web_video_server web_video_server.launch & 
+xterm -e roslaunch web_video_server web_video_server.launch & 
 
 # launch gazebo world
-gnome-terminal -e roslaunch gazebo_ros plain_gazebo_clue_world.launch 
+roslaunch gazebo_ros plain_gazebo_clue_world.launch 
 
 
 #Start gzweb
