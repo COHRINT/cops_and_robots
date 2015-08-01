@@ -23,8 +23,12 @@ white-space:pre-wrap;
     height: auto;
 }
 
-#visual div .nav-tabs{
-    padding-bottom: 15px;
+span.glyphicon.glyphicon-wrench{
+    font-size: 16px;
+}
+
+span.glyphicon.glyphicon-resize-full{
+    font-size: 16px;
 }
 
 #deckard-visual {
@@ -33,7 +37,7 @@ white-space:pre-wrap;
     transform: scale(1.73, 1.73);
 }
 
-#pris-visual {
+/*#pris-visual {
     padding-top: 35px;
     transform-origin: left;
     transform: scale(1.73, 1.73);
@@ -49,7 +53,7 @@ white-space:pre-wrap;
     padding-top: 35px;
     transform-origin: left;
     transform: scale(1.73, 1.73);
-}
+}*/
 
 #camera1-visual {
     padding-top: 35px;
@@ -67,6 +71,12 @@ white-space:pre-wrap;
     padding-top: 35px;
     transform-origin: left;
     transform: scale(1.73, 1.73);
+}
+
+#probMap {
+    position: absolute;
+    margin-top: -35px;
+    overflow: hidden;
 }
 
 div.questionContainer {
