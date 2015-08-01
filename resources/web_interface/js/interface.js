@@ -325,7 +325,7 @@ function publishAnswer(idNumber, bool){
 function checkSettings(){
 	//Select simulation vs. experiment
 
-	///deckard/camera/rgb/image_raw
+	//
 
  	var vicon = jQuery("#setting-source-vicon");
 	var gazebo= jQuery("#setting-source-gazebo");
@@ -335,7 +335,7 @@ function checkSettings(){
 	// var gPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
 	// var gTopics = ["/deckard/camera/image_raw", "/pris/camera/image_raw", "/roy/camera/image_raw", "/zhora/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
 	var vPorts =[":1234", ":1234", ":1234", ":1234"];
-	var vTopics = ["na", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
+	var vTopics = ["/deckard/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
 	var gPorts =[":1234", ":1234", ":1234", ":1234"];
 	var gTopics = ["/deckard/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
 	var ports = [vPorts, gPorts];
@@ -346,7 +346,9 @@ function checkSettings(){
     	if(diffSettings[i].parent().hasClass('active') == true){
 	      for(j=0; j<ports[i].length; j++){
 	      	// $(ids[j]).attr("src", "http://flemming.recov.org"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
+	      	//Regular topic stream
 	      	$(ids[j]).attr("src", "http://192.168.20.110"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
+
 	  	  }
 	  	  break;	 
 		}
