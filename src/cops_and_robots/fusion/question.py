@@ -119,6 +119,8 @@ class Questioner(object):
                 relation_names = grounding.relations.binary_models.keys()
                 for relation_name in relation_names:
                     relation = relation_name
+
+                    # Make relation names grammatically correct
                     relation_name = relation_name.lower()
                     if relation_name == 'front':
                         relation_name = 'in front of'
@@ -128,14 +130,20 @@ class Questioner(object):
                         relation_name = 'left of'
                     elif relation_name == 'right':
                         relation_name = 'right of'
+
+                    # Ignore certain questons
                     if grounding_type_name == 'object' and relation_name == 'inside':
                         continue
+                    if grounding_type_name == 'object' and relation_name == 'outside':
+                        continue
+
                     for target in targets:
                         # Write question
                         question_str = "Is " + target + " " + relation_name \
                             + " " + grounding_name +"?"
                         self.all_questions.append(question_str)
 
+                        logging.info(question_str)
                         # Calculate likelihood
                         self.all_likelihoods[i]['question'] = \
                             question_str
@@ -185,7 +193,7 @@ class Questioner(object):
         self.weighted_questions = zip(q_weights, q_ids, self.all_questions[:])
         self.weighted_questions.sort(reverse=True)
         for q in self.weighted_questions:
-            logging.info(q)
+            logging.debug(q)
 
 
     def _calculate_VOI(self, likelihood, flat_prior_pdf, prior_entropy=None):
