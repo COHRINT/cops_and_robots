@@ -8,7 +8,7 @@ $robots = array("Deckard", "Pris", "Roy", "Zhora");
 $targets = array("nothing", "a robber", "Roy", "Pris", "Zhora");
 $certainties = array("I think", "I know");
 $positivities = array("is", "is not");
-$object_relations = array("behind", "infront of", "left of", "right of");
+$object_relations = array("behind", "in front of", "left of", "right of");
 $objects = array("the bookcase", "the desk", "the chair", "the filing cabinet", "the dining table", "the mars poster", "the cassini poster", "the fridge", " the checkers table");
 $area_relations = array("inside", "near", "outside");
 $areas = array("the study", "the billiard room", "the hallway", "the dining room", "the kitchen", "the library");
@@ -45,14 +45,14 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 	                <!-- Nav tabs -->
             		<ul class="nav nav-tabs" role="tablist">
                    		 	<li class="camera_views active" id="deckardVisual"><a href="#deckard_camera" aria-controls="deckard_camera" data-toggle="tab">Deckard's Camera</a></li>
-                   		 	<li class="dropdown">
+							<!-- <li class="dropdown">
                    		 		<a href="#Robber Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Robber Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
 		                    			<li class="camera_views" id="prisVisual"><a data-toggle="tab" href="#pris_camera" aria-controls="pris_camera" >Pris's Camera</a></li>
 		                    			<li class="camera_views" id="royVisual"><a data-toggle="tab" href="#roy_camera" aria-controls="roy_camera" >Roy's Camera</a></li>
 		                    			<li class="camera_views" id="zhoraVisual"><a data-toggle="tab" href="#zhora_camera" aria-controls="zhora_camera" >Zhora's Camera</a></li>
 		                    		</ul>
-		                    </li>
+		                    </li> -->
                    		 	<li class="dropdown">
                    		 		<a href="#Security Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Security Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
@@ -68,7 +68,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
     					<div class="tab-pane active" id="deckard_camera"> 
     						<iframe id="deckard-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
     					</div>
-    					<div class="tab-pane" id="pris_camera"> 
+    					<!-- <div class="tab-pane" id="pris_camera"> 
     						<iframe id="pris-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
     					</div>
     					<div class="tab-pane" id="roy_camera"> 
@@ -76,7 +76,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
     					</div>
     					<div class="tab-pane" id="zhora_camera"> 
     						<iframe id="zhora-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-    					</div>
+    					</div> -->
     					<div class="tab-pane" id="camera_1"> 
     						<iframe id="camera1-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
     					</div>
@@ -91,29 +91,38 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 
 		</div><!-- /#visual -->
 
-		<!-- Environment Map -->
-			<!-- Currently running through local host -->
-
-		
+		<!-- Environment Map -->		
 		<div id="map-test" class="col-md-6">
-			<h3 align="center">Environment Map
-				<button class="btn btn-info btn-sm" data-toggle="modal" data-target=".bs-example-modal-lg">
-					<span class="glyphicon glyphicon-resize-full"></span>
-				</button>
-				<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#settings">
-					<span class="glyphicon glyphicon-wrench"></span>
-				</button>
-			</h3>
-			<div class="embed-responsive embed-responsive-4by3">
-				<iframe class="embed-responsive-item" src="http://localhost:8080" height="416" width="555" allowfullscreen="" frameborder="0"></iframe>
-			</div>
+			<!-- Camera Options -->
+			<div role="tabpanel">
+				<!-- Nav tabs -->
+				<ul class="nav nav-tabs" role="tablist">
+		       		<li class="environmant_maps active" id="gazebo_map"><a href="#gzweb_map" aria-controls="gzweb_map" data-toggle="tab">Gazebo Map</a></li>
+					<li class="environmant_maps" id="probability_map"><a href="#prob_map" aria-controls="prob_map" data-toggle="tab">Probability Map</a></li>
 
+                    <button class="btn btn-info btn-sm" data-toggle="modal" data-target=".bs-example-modal-lg">
+                    	<span class="glyphicon glyphicon-resize-full"></span>
+                    </button>
+                    <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#settings">
+                    	<span class="glyphicon glyphicon-wrench"></span>
+                    </button>
+                </ul>
+
+				<div class="tab-content embed-responsive embed-responsive-4by3">
+					<div class="tab-pane active" id="gzweb_map"> 
+						<iframe id='gazeboMap' class="embed-responsive-item" src="http://localhost:8080" height="416" width="555" allowfullscreen="" frameborder="0"></iframe>
+					</div>
+					<div class="tab-pane" id="prob_map"> 
+						<iframe id='probMap' class="embed-responsive-item" src="http://192.168.20.110:1234/stream_viewer?topic=/python_probability_map" height="416" width="555" allowfullscreen="" frameborder="0"></iframe>
+					</div>
+				</div>
+			</div>
 			<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-			  <div class="modal-dialog modal-lg" style="width: 100%;  height: 100%;  padding: 0;">
-			    <div class="modal-content">
- 					<iframe src="http://localhost:8080" height="800px" width="100%" frameborder="0"></iframe>
-			    </div>
-			  </div>
+		  		<div class="modal-dialog modal-lg" style="width: 100%;  height: 100%;  padding: 0;">
+		    		<div class="modal-content">
+							<iframe src="http://localhost:8080" height="800px" width="100%" frameborder="0"></iframe>
+		    		</div>
+		  		</div>
 			</div>
 
 			<!-- Settings -->
@@ -194,6 +203,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 			  <ul class="dropdown-menu" role="menu">
 			    <li class="view-robot"><a href="#">View</a></li>
 			    <li class="ctrl-robot"><a href="#">Control</a></li>
+			    <li class="probability-robot"><a href="#">Probability Map</a></li>
 			  </ul>
 			</div>
 			<?php } ?>
