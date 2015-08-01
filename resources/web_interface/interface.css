@@ -37,7 +37,7 @@ span.glyphicon.glyphicon-resize-full{
     transform: scale(1.73, 1.73);
 }
 
-#pris-visual {
+/*#pris-visual {
     padding-top: 35px;
     transform-origin: left;
     transform: scale(1.73, 1.73);
@@ -53,7 +53,7 @@ span.glyphicon.glyphicon-resize-full{
     padding-top: 35px;
     transform-origin: left;
     transform: scale(1.73, 1.73);
-}
+}*/
 
 #camera1-visual {
     padding-top: 35px;
@@ -71,6 +71,12 @@ span.glyphicon.glyphicon-resize-full{
     padding-top: 35px;
     transform-origin: left;
     transform: scale(1.73, 1.73);
+}
+
+#probMap {
+    position: absolute;
+    margin-top: -35px;
+    overflow: hidden;
 }
 
 div.questionContainer {
