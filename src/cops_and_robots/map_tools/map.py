@@ -354,7 +354,7 @@ class Map(object):
             except KeyError:
                 logging.debug('Robber already removed.')
 
-            if ax_name == self.probability_target and self.publish_to_ROS:
+            if self.publish_to_ROS and ax_name == self.probability_target:
                 import cv2
                 from cv_bridge import CvBridgeError
 
@@ -464,6 +464,7 @@ def set_up_fleming(map_):
                        [[-9.5, -1], [-9.5, 1.4],[4, 1.4], [4, -1]],
                        [[-9.5, -3.33], [-9.5, -1],[-7, -1], [-7, -3.33]],
                       ])
+
     for i, pts in enumerate(points):
         centroid = [pts[0,0] + np.abs(pts[2,0] - pts[0,0]) / 2,
                     pts[0,1] + np.abs(pts[1,1] - pts[0,1]) / 2, 0 ]
@@ -471,19 +472,20 @@ def set_up_fleming(map_):
                        color_str=colors[i], map_bounds=map_.bounds)
         map_.add_area(area)
 
-        # # Relate landmarks and areas
-        # for landmark in landmarks:
-        #     if area.shape.contains(Point(landmark.pose)):
-        #         area.contained_objects[landmark.name] = landmark
-        #         landmark.container_area[area.name] = area
+        # Relate landmarks and areas
+        for landmark in landmarks:
+            if area.shape.contains(Point(landmark.pose)):
+                area.contained_objects[landmark.name] = landmark
+                landmark.container_area = area
+                landmark.define_relations(map_.bounds)
+        area.define_relations(map_.bounds)
 
-    # for area in areas:
-    #     logging.info('{} contains: {}.'.format(area.name, area.contained_objects
     # <>TODO: Include area demarcations
     map_.feasible_layer.define_feasible_regions(map_.static_elements)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     fleming = Map()
     fleming.plot()
     # fleming.feasible_layer.plot()
