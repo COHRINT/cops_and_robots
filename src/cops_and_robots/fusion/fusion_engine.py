@@ -153,11 +153,19 @@ class FusionEngine(object):
         else:
             # Pre-allocate parameter arrays
             num_mixands = 0
+            all_done = True
             for label, filter_ in self.filters.iteritems():
                 if label == 'combined' or filter_.finished:
                     continue
+                all_done = False
                 num_mixands += filter_.probability.num_mixands
+                # <>TODO: Don't find ndims each time
                 ndims = filter_.probability.ndims
+            if all_done:
+                # <>TODO: Fix hardcoded dimensions, clean it up
+                gm = GaussianMixture(1, [0, 0], 0.01 * np.eye(2))
+                self.filters['combined'].probability = gm
+                return
             weights = np.empty((num_mixands))
             means = np.empty((num_mixands, ndims))
             covariances = np.empty((num_mixands, ndims, ndims))

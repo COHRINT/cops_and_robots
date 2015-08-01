@@ -12,8 +12,9 @@
 	} else {
 	    $setting_script = '../bash/start_python.sh';
 	}
-	exec('bash '.$setting_script);
 	echo('bash '.$setting_script);
+	// exec('bash '.$setting_script);
+	exec('bash http:127.0.0.1/optimized_web_interface/bash/start_gazebo.sh');
 ?>
 
 </body>

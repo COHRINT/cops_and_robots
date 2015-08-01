@@ -354,7 +354,8 @@ class Map(object):
             except KeyError:
                 logging.debug('Robber already removed.')
 
-            if self.publish_to_ROS and ax_name == self.probability_target:
+            if ax_name == self.probability_target and self.publish_to_ROS and \
+               i % 1 == 0:
                 import cv2
                 from cv_bridge import CvBridgeError
 
