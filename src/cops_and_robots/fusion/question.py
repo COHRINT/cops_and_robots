@@ -185,7 +185,7 @@ class Questioner(object):
         self.weighted_questions = zip(q_weights, q_ids, self.all_questions[:])
         self.weighted_questions.sort(reverse=True)
         for q in self.weighted_questions:
-            logging.info(q)
+            logging.debug(q)
 
 
     def _calculate_VOI(self, likelihood, flat_prior_pdf, prior_entropy=None):
