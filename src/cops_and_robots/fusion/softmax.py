@@ -1295,7 +1295,7 @@ class BinarySoftmax(Softmax):
 
     """
 
-    def __init__(self, softmax_model, bounds=None):
+    def __init__(self, softmax_model, allowed_relations=None, bounds=None):
         super(BinarySoftmax, self).__init__(weights=np.zeros((2, 2)),
                                             biases=np.zeros(2),
                                             labels=['Null', 'NaC'],
@@ -1367,6 +1367,8 @@ class BinarySoftmax(Softmax):
             p = self.binary_models[label].probability(state, label)
         return p
 
+    def trim_categories(self):
+        pass
     # <>TODO: Subclass dict to BinaryDict, allowing us to call any class from
     # a binary MMS model
     # @property
@@ -1484,7 +1486,7 @@ def range_model(poly=None, spread=1, bounds=None):
 
     steepnesses = [11] * 5
     # far_bounds = _make_regular_2D_poly(4, max_r=3, theta=np.pi/4)
-    larger_poly = scale(poly,2,2)
+    larger_poly = scale(poly, 2, 2)
     labels = ['Inside'] + ['Outside'] * 4
     sm_far = Softmax(poly=poly, labels=labels, resolution=0.1,
                  steepness=steepnesses, bounds=bounds)
@@ -1517,8 +1519,41 @@ def intrinsic_space_model(poly=None, bounds=None):
     return sm
 
 
-def binary_intrinsic_space_model(poly=None, bounds=None):
+def binary_intrinsic_space_model(poly=None, bounds=None, allowed_relations=None,
+                                 container_poly=None):
+    if bounds is None:
+        bounds = [-5, -5, 5, 5]
     ism = intrinsic_space_model(poly, bounds=bounds)
+
+    if container_poly is not None:
+        # container_rm = range_model(container_poly)
+        n, o = normals_from_polygon(container_poly)
+        # outside_weights = container_rm.weights[5:]
+        # outside_biases = container_rm.biases[5:]
+
+        # outside_weights = outside_weights + ism.weights[1:]
+        # outside_biases = outside_biases + ism.biases[1:]
+        outside_weights = n * 10 + ism.weights[1:] 
+        outside_biases = o * 10 + ism.biases[1:] 
+        # outside_biases[2] += 2.5
+        # outside_biases[3] += 3.5
+
+        # print outside_weights
+        labels = ['Outside'] * 4
+        # labels = ['Outside_Front','Outside_Left','Outside_Back','Outside_Right']
+        ism.add_classes(outside_weights, outside_biases, labels)
+
+    
+    # <>TODO: remove this debug stub
+    # axes = ism.plot(plot_poly=True)
+    # patch = PolygonPatch(container_poly, facecolor='white', zorder=5,
+    #                      linewidth=5, edgecolor='brown',)
+    # axes[0].add_patch(patch)
+    # plt.show()
+
+    # <>TODO: add 'near'
+    # rm = range_model(poly)
+
     bism = BinarySoftmax(ism, bounds=bounds)
     # del bism.binary_models['Inside']
     return bism
@@ -1611,5 +1646,12 @@ if __name__ == '__main__':
     np.set_printoptions(precision=10, suppress=True)
 
     # run_demos()
-    bism = binary_intrinsic_space_model()
-    print bism.probability(class_='Front')
+
+    poly = box(1,1,2,3)
+    container_poly = box(-3,-4,3,4)
+    # container_poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
+    # bism = binary_intrinsic_space_model(poly=poly)
+    bism = binary_intrinsic_space_model(poly=poly, container_poly=container_poly)
+    title = 'Binary MMS Intrinsic Space Model'
+    bism.binary_models['Front'].plot(show_plot=False, title=title)
+    plt.show()

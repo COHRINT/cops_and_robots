@@ -310,6 +310,8 @@ class Human(Sensor):
 
     def detect_probability(self, prior):
         if not hasattr(self.grounding,'relations'):
+            logging.info("Defining relations because {} didn't have any."
+                         .format(self.grounding.name))
             self.grounding.define_relations()
 
         # Position update
