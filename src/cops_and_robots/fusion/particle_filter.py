@@ -63,6 +63,7 @@ class ParticleFilter(object):
         self.state_spec = state_spec
         self.v_params = v_params
         self.finished = False
+        self.recieved_human_update = False
 
         self.generate_particles()
 

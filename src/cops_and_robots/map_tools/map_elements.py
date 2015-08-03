@@ -268,7 +268,7 @@ class MapArea(MapElement):
 
     """
 
-    def __init__(self, name, shape_pts, color_str='blanchedalmond', alpha=0.9,
+    def __init__(self, name, shape_pts, color_str='blanchedalmond', alpha=0.2,
                  visible=False, blocks_camera=False, has_relations=True,
                  relations=None, map_bounds=None,
                  plot_relations=False, **kwargs):
