@@ -267,6 +267,8 @@ class MapObject(MapElement):
         self.relations = binary_intrinsic_space_model(self.shape,
                                                       container_poly=container_poly,
                                                       bounds=map_bounds)
+        brm = binary_range_model(self.shape, bounds=map_bounds)
+        self.relations.binary_models['Near'] = brm.binary_models['Near']
 
 
 class MapArea(MapElement):
