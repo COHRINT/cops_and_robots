@@ -32,7 +32,7 @@
     <node name="cam1" pkg="image_transport" type="republish" ns="theora" args="theora in:=/cam1/theora raw out:=/cam1/image" />
     <node name="cam2" pkg="image_transport" type="republish" ns="theora" args="theora in:=/cam2/theora raw out:=/cam2/image" />
     <node name="cam3" pkg="image_transport" type="republish" ns="theora" args="theora in:=/cam3/theora raw out:=/cam3/image" />
-    <node name="deckard" pkg="image_transport" type="republish" ns="theora" args="theora in:=/deckard/testtheora raw out:=/deckard/image" />
+    <node name="deckard" pkg="image_transport" type="republish" ns="theora" args="theora in:=/deckard/theora raw out:=/deckard/image" />
 
     <!-- Run vicon vicon_odom node to provide odometry data -->
     <!-- REMOVED FOR NOW
