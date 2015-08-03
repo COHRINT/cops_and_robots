@@ -1486,7 +1486,7 @@ def range_model(poly=None, spread=1, bounds=None):
 
     steepnesses = [11] * 5
     # far_bounds = _make_regular_2D_poly(4, max_r=3, theta=np.pi/4)
-    larger_poly = scale(poly,2,2)
+    larger_poly = scale(poly, 2, 2)
     labels = ['Inside'] + ['Outside'] * 4
     sm_far = Softmax(poly=poly, labels=labels, resolution=0.1,
                  steepness=steepnesses, bounds=bounds)
@@ -1526,28 +1526,30 @@ def binary_intrinsic_space_model(poly=None, bounds=None, allowed_relations=None,
     ism = intrinsic_space_model(poly, bounds=bounds)
 
     if container_poly is not None:
-        container_rm = range_model(container_poly)
-        num_subclasses = container_rm.classes['Outside'].num_subclasses
-        num_states = container_rm.classes['Outside'].weights.shape[0]
+        # container_rm = range_model(container_poly)
+        n, o = normals_from_polygon(container_poly)
+        # outside_weights = container_rm.weights[5:]
+        # outside_biases = container_rm.biases[5:]
 
-        outside_weights = np.empty((num_subclasses, num_states))
-        outside_biases = np.empty(num_subclasses)
-        i = 0
-        for _, subclass in container_rm.classes['Outside'].subclasses.iteritems():
-            outside_biases[i] = subclass.bias.copy()
-            outside_weights[i] = subclass.weights.copy()
-            i += 1
+        # outside_weights = outside_weights + ism.weights[1:]
+        # outside_biases = outside_biases + ism.biases[1:]
+        outside_weights = n * 10 + ism.weights[1:] 
+        outside_biases = o * 10 + ism.biases[1:] 
+        # outside_biases[2] += 2.5
+        # outside_biases[3] += 3.5
 
+        # print outside_weights
         labels = ['Outside'] * 4
+        # labels = ['Outside_Front','Outside_Left','Outside_Back','Outside_Right']
         ism.add_classes(outside_weights, outside_biases, labels)
+
     
     # <>TODO: remove this debug stub
-    axes = ism.plot(plot_poly=True, plot_probs=False)
-    patch = PolygonPatch(container_poly, facecolor='none', zorder=5,
-                                 linewidth=5, edgecolor='black',)
-    axes[0].add_patch(patch)
-    print dir(axes[0])
-    plt.show()
+    # axes = ism.plot(plot_poly=True)
+    # patch = PolygonPatch(container_poly, facecolor='white', zorder=5,
+    #                      linewidth=5, edgecolor='brown',)
+    # axes[0].add_patch(patch)
+    # plt.show()
 
     # <>TODO: add 'near'
     # rm = range_model(poly)
@@ -1645,9 +1647,9 @@ if __name__ == '__main__':
 
     # run_demos()
 
-    poly = _make_regular_2D_poly(4, max_r=1, theta=np.pi/4)
-    poly = box(-2,-1,2,1)
-    container_poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
+    poly = box(1,1,2,3)
+    container_poly = box(-3,-4,3,4)
+    # container_poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
     # bism = binary_intrinsic_space_model(poly=poly)
     bism = binary_intrinsic_space_model(poly=poly, container_poly=container_poly)
     title = 'Binary MMS Intrinsic Space Model'

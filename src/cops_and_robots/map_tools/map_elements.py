@@ -236,7 +236,7 @@ class MapObject(MapElement):
     def __init__(self, name, shape_pts, color_str='darkseagreen', alpha=0.9,
                  visible=True, blocks_camera=True, has_relations=True,
                  allowed_relations=None, plot_relations=False, map_bounds=None,
-                 ignoring_containers=False, **kwargs):
+                 ignoring_containers=True, **kwargs):
         super(MapObject, self).__init__(name, shape_pts,
                                         color_str=color_str,
                                         visible=visible,
@@ -264,9 +264,6 @@ class MapObject(MapElement):
             container_poly = None
         else:
             container_poly = Polygon(self.container_area.shape)
-        logging.info('Defining relations for {}, contained by {} with shape {}'
-                     .format(self.name, self.container_area.name,
-                             container_poly))
         self.relations = binary_intrinsic_space_model(self.shape,
                                                       container_poly=container_poly,
                                                       bounds=map_bounds)

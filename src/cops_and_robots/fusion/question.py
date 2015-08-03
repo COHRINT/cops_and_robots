@@ -143,7 +143,6 @@ class Questioner(object):
                             + " " + grounding_name +"?"
                         self.all_questions.append(question_str)
 
-                        logging.info(question_str)
                         # Calculate likelihood
                         self.all_likelihoods[i]['question'] = \
                             question_str
