@@ -2,7 +2,7 @@
 main:
   logging_level: INFO  #['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
   numpy_print_precision: 2
-  use_ROS: True # True if any robot is in the real world
+  use_ROS: False # True if any robot is in the real world
   ROS_node_name: 'Python_Node'
   max_run_time: 10  # in seconds, -1 for infinite
   log_time: False
@@ -13,7 +13,7 @@ cops:
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
     web_interface_topic: python # python or rostopic name
-    ask_every_ten: False
+    ask_every_ten: True  #<>TODO: add this to questioner_cfg
     other_robot_names: 
       robbers: ['Roy', 'Zhora']
       distractors: ['Pris']
@@ -30,10 +30,10 @@ cops:
       plot_robbers: True # True for all, False for none, or list of robbers to plot
       map_name: fleming
       combined_only: False
-      publish_to_ROS: True
+      publish_to_ROS: False
     human_cfg:
       false_alarm_prob: 0.2
-      web_interface_topic: 'python'  # ['python' or a ros topic string like '/deckard/odom']
+      web_interface_topic: python  # ['python' or a ros topic string like '/deckard/odom']
     questioner_cfg:
       use_ROS: False
       target_order: ['Zhora', 'Roy']
