@@ -101,7 +101,7 @@ class Questioner(object):
 
         # Create all possible questions and precompute their likelihoods
         n = len(certainties) * len(targets)
-        num_questions = len(groundings['object']) * 4 * n
+        num_questions = len(groundings['object']) * 5 * n
         num_questions += len(groundings['area']) * 3 * n
         self.all_questions = []
         self.all_likelihoods = np.empty(num_questions,
@@ -353,7 +353,7 @@ def test_voi():
     # prior.plot(bounds=m.bounds, alpha=0.5, ax=ax)
     # m.update()
     # plt.show()
-    q.weigh_questions(prior)
+    q.weigh_questions({'Roy':prior})
     for qu in q.weighted_questions:
         print qu
     # loop_length = 10
