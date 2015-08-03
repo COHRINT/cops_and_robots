@@ -1526,19 +1526,12 @@ def binary_intrinsic_space_model(poly=None, bounds=None, allowed_relations=None,
     ism = intrinsic_space_model(poly, bounds=bounds)
 
     if container_poly is not None:
-        # container_rm = range_model(container_poly)
         n, o = normals_from_polygon(container_poly)
-        # outside_weights = container_rm.weights[5:]
-        # outside_biases = container_rm.biases[5:]
 
-        # outside_weights = outside_weights + ism.weights[1:]
-        # outside_biases = outside_biases + ism.biases[1:]
-        outside_weights = n * 10 + ism.weights[1:] 
-        outside_biases = o * 10 + ism.biases[1:] 
-        # outside_biases[2] += 2.5
-        # outside_biases[3] += 3.5
+        steepness = 10
+        outside_weights = n * steepness + ism.weights[1:] 
+        outside_biases = o * steepness + ism.biases[1:] 
 
-        # print outside_weights
         labels = ['Outside'] * 4
         # labels = ['Outside_Front','Outside_Left','Outside_Back','Outside_Right']
         ism.add_classes(outside_weights, outside_biases, labels)
@@ -1551,11 +1544,7 @@ def binary_intrinsic_space_model(poly=None, bounds=None, allowed_relations=None,
     # axes[0].add_patch(patch)
     # plt.show()
 
-    # <>TODO: add 'near'
-    # rm = range_model(poly)
-
     bism = BinarySoftmax(ism, bounds=bounds)
-    # del bism.binary_models['Inside']
     return bism
 
 
