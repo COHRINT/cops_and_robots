@@ -119,6 +119,8 @@ class Questioner(object):
                 relation_names = grounding.relations.binary_models.keys()
                 for relation_name in relation_names:
                     relation = relation_name
+
+                    # Make relation names grammatically correct
                     relation_name = relation_name.lower()
                     if relation_name == 'front':
                         relation_name = 'in front of'
@@ -128,8 +130,13 @@ class Questioner(object):
                         relation_name = 'left of'
                     elif relation_name == 'right':
                         relation_name = 'right of'
+
+                    # Ignore certain questons
                     if grounding_type_name == 'object' and relation_name == 'inside':
                         continue
+                    if grounding_type_name == 'object' and relation_name == 'outside':
+                        continue
+
                     for target in targets:
                         # Write question
                         question_str = "Is " + target + " " + relation_name \

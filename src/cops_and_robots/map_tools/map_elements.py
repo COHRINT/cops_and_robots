@@ -235,7 +235,8 @@ class MapObject(MapElement):
 
     def __init__(self, name, shape_pts, color_str='darkseagreen', alpha=0.9,
                  visible=True, blocks_camera=True, has_relations=True,
-                 plot_relations=False, map_bounds=None, **kwargs):
+                 allowed_relations=None, plot_relations=False, map_bounds=None,
+                 ignoring_containers=True, **kwargs):
         super(MapObject, self).__init__(name, shape_pts,
                                         color_str=color_str,
                                         visible=visible,
@@ -245,20 +246,27 @@ class MapObject(MapElement):
                                         alpha=alpha,
                                         **kwargs
                                         )
+
         if self.has_relations:
-            self.define_relations(map_bounds)
             self.plot_relations = plot_relations
         else:
             plot_relations = False
 
-        self.container_area = {}
+        self.container_area = None
+        self.ignoring_containers = ignoring_containers
 
     def define_relations(self, map_bounds=None):
         """Create a multimodal softmax model of spatial relationships.
 
         Defaults to: 'Front', 'Back', 'Left', and 'Right'.
         """
-        self.relations = binary_intrinsic_space_model(self.shape, bounds=map_bounds)
+        if self.container_area is None or self.ignoring_containers:
+            container_poly = None
+        else:
+            container_poly = Polygon(self.container_area.shape)
+        self.relations = binary_intrinsic_space_model(self.shape,
+                                                      container_poly=container_poly,
+                                                      bounds=map_bounds)
 
 
 class MapArea(MapElement):
@@ -270,7 +278,7 @@ class MapArea(MapElement):
 
     def __init__(self, name, shape_pts, color_str='blanchedalmond', alpha=0.2,
                  visible=False, blocks_camera=False, has_relations=True,
-                 relations=None, map_bounds=None,
+                 allowed_relations=None, map_bounds=None,
                  plot_relations=False, **kwargs):
         super(MapArea, self).__init__(name, shape_pts,
                                       color_str=color_str,
