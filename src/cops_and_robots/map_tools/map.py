@@ -256,9 +256,18 @@ class Map(object):
         ax = fig.add_subplot(111)
         self.shape_layer.update_plot(update_static=True)
 
+        for area in self.areas.values():
+            ax.add_patch(area.get_patch())
+
         ax.set_xlim([self.bounds[0], self.bounds[2]])
         ax.set_ylim([self.bounds[1], self.bounds[3]])
         ax.set_title('Experimental environment with landmarks and areas')
+        ax.annotate('Kitchen', [-5, 2.5])
+        ax.annotate('Billiard Room', [1.5, 2])
+        ax.annotate('Library', [0.75, -2.25])
+        ax.annotate('Study', [-4.5, -2.25])
+        ax.annotate('Dining Room', [-8.75, -1.4])
+        ax.annotate('Hallway', [-3.5, 0])
         plt.show()
 
     def setup_plot(self, fusion_engine=None, show_human_interface=True):
@@ -354,7 +363,7 @@ class Map(object):
             except KeyError:
                 logging.debug('Robber already removed.')
 
-            if ax_name == self.probability_target and self.publish_to_ROS and \
+            if self.publish_to_ROS and ax_name == self.probability_target and \
                i % 1 == 0:
                 import cv2
                 from cv_bridge import CvBridgeError
