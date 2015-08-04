@@ -200,6 +200,8 @@ class Cop(Robot):
                                                               blocks_camera=False,
                                                               color_str='none')
             self.map.add_robot(self.distracting_robots[name].map_obj)
+            # <>TODO: Add config similar to plot_robbers in map_cfg
+            self.distracting_robots[name].map_obj.visible = False
 
     def update(self, i=0):
         super(Cop, self).update(i=i)
@@ -229,6 +231,9 @@ class Cop(Robot):
             if self.sensors['camera'].viewcone.shape.contains(point):
                 logging.info('{} found, but it is not a robber!'
                              .format(idistractor.name))
+                if not idistractor.map_obj.visible:
+                    idistractor.map_obj.visible = True
+                    idistractor.map_obj.color = 'cornflowerblue'
 
             # Update robber's shapes
             self.distracting_robots[idistractor.name].map_obj.move_absolute(

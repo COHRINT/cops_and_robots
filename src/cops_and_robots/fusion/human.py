@@ -113,7 +113,7 @@ class Human(Sensor):
             rospy.Subscriber(web_interface_topic, String, self.callback)
 
     def callback(self, msg):
-        logging.debug('Processing sensor')
+        logging.info('I heard {}'.format(msg.data))
         self.utterance = msg.data
         self.new_update = True
 

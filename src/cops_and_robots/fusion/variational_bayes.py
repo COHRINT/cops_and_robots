@@ -381,7 +381,7 @@ class VariationalBayes(object):
                     any_intersection = True
 
             if not any_intersection:
-                    logging.info('No intersection with any ellipse.')
+                    logging.debug('No intersection with any ellipse.')
                     mu_hat = other_priors.means
                     var_hat = other_priors.covariances
                     beta_hat = other_priors.weights
