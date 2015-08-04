@@ -1,3 +1,8 @@
+$("#deckard-visual").load(function() {
+	console.log($(this).height($(this).contents().find("body").height()))
+    $(this).height( $(this).contents().find("body").height() );
+});
+
 /**
 * Set up primary elements to be manipulated by functions
 */
@@ -335,7 +340,8 @@ function checkSettings(){
 	// var gPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
 	// var gTopics = ["/deckard/camera/image_raw", "/pris/camera/image_raw", "/roy/camera/image_raw", "/zhora/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
 	var vPorts =[":1234", ":1234", ":1234", ":1234"];
-	var vTopics = ["/deckard/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
+	// var vTopics = ["/deckard/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
+	var vTopics = ["/deckard/image", "/cam1/image", "/cam2/image", "/cam3/image"];
 	var gPorts =[":1234", ":1234", ":1234", ":1234"];
 	var gTopics = ["/deckard/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
 	var ports = [vPorts, gPorts];
