@@ -435,7 +435,7 @@ def set_up_fleming(map_):
                       [-4.38, 3.67, 270],  # Mars Poster
                       [1.38, 3.67, 270],  # Cassini Poster
                       [-9.1, 3.3, 315],  # Fridge
-                      [2.04, 0.83, 270],  # Checkers Table
+                      [2.04, 2.66, 270],  # Checkers Table
                       [-2.475, 1.06, 270],  # Fern
                      ])
     sizes = np.array([[0.18, 0.38],  # Bookcase
