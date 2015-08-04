@@ -78,6 +78,7 @@ class Human(Sensor):
                                      'in front of',
                                      'left of',
                                      'right of',
+                                     'near',
                                      ],
                           'area': ['inside',
                                    'near',

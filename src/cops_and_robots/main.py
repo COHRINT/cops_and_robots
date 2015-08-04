@@ -143,6 +143,8 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time):
     if main_cfg['log_time']:
         logging.info('Frame {} at time {}.'.format(i, time.time() - sim_start_time))
 
+    # plt.savefig('animation/frame_{}.png'.format(i))
+
 if __name__ == '__main__':
     main()
 

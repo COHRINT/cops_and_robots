@@ -1511,8 +1511,8 @@ def intrinsic_space_model(poly=None, bounds=None):
         poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
 
     # <>TODO: If sides != 4, find a way to make it work!
-
-    labels = ['Inside', 'Front', 'Left', 'Back', 'Right']
+    # NOTE: front and back are intrinsic, left and right are extrinsic
+    labels = ['Inside', 'Front', 'Right', 'Back', 'Left']
     steepness = 3
     sm = Softmax(poly=poly, labels=labels, resolution=0.1,
                  steepness=steepness, bounds=bounds)
