@@ -6,10 +6,11 @@
 <?php
 $robots = array("Deckard", "Pris", "Roy", "Zhora");
 $targets = array("nothing", "a robber", "Roy", "Pris", "Zhora");
-$certainties = array("I think", "I know");
+// $certainties = array("I think", "I know");
+$certainties = array("I know");
 $positivities = array("is", "is not");
-$object_relations = array("behind", "in front of", "left of", "right of");
-$objects = array("the bookcase", "the desk", "the chair", "the filing cabinet", "the dining table", "the mars poster", "the cassini poster", "the fridge", " the checkers table");
+$object_relations = array("behind", "in front of", "left of", "right of", "near");
+$objects = array("the bookcase",  "the cassini poster", "the chair", "the checkers table", "the desk", "the dining table",  "the fern", "the filing cabinet", "the fridge", "the mars poster",  "Deckard");
 $area_relations = array("inside", "near", "outside");
 $areas = array("the study", "the billiard room", "the hallway", "the dining room", "the kitchen", "the library");
 $movement_types = array("moving", "stopped");
@@ -67,6 +68,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 	  				<div class="tab-content embed-responsive embed-responsive-4by3">
     					<div class="tab-pane active" id="deckard_camera"> 
     						<iframe id="deckard-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
+    						<!-- <iframe id="deckard-visual" class="embed-responsive-item" src="" allowfullscreen="" frameborder="0" scrolling="no"></iframe>  -->
     					</div>
     					<!-- <div class="tab-pane" id="pris_camera"> 
     						<iframe id="pris-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
@@ -265,7 +267,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		  				</div> <!-- Tab Content -->
 					</div><!-- Tabbing -->
 					<br />
-					<div align="center" style="margin-top:10px"><button type="button" class="btn btn-success btn-lg" id="human_sensor_button" >Submit</button></div>								   
+					<div align="center"><button type="button" class="btn btn-success btn-lg" id="human_sensor_button" >Submit</button></div>								   
 				</div><!--/.panel-body-->
 			</div><!--/.panel-->
 		</div><!-- /#codeBox -->
