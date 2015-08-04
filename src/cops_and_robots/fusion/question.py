@@ -101,7 +101,7 @@ class Questioner(object):
 
         # Create all possible questions and precompute their likelihoods
         n = len(certainties) * len(targets)
-        num_questions = len(groundings['object']) * 5 * n
+        num_questions = (len(groundings['object']) - 1) * 5 * n
         num_questions += len(groundings['area']) * 3 * n
         self.all_questions = []
         self.all_likelihoods = np.empty(num_questions,
@@ -114,6 +114,8 @@ class Questioner(object):
         for grounding_type_name, grounding_type in groundings.iteritems():
             for grounding_name, grounding in grounding_type.iteritems():
                 grounding_name = grounding_name.lower()
+                if grounding_name == 'deckard':
+                    continue
                 if grounding_name.find('the') == -1:
                     grounding_name = 'the ' + grounding_name
                 relation_names = grounding.relations.binary_models.keys()

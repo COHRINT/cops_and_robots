@@ -92,8 +92,8 @@ class Human(Sensor):
 
         self.groundings['object'] = {}
         for cop_name, cop in map_.cops.iteritems():
-            if cop.has_relations:
-                self.groundings['object'][cop_name] = cop
+            # if cop.has_relations:
+            self.groundings['object'][cop_name] = cop
         for object_name, obj in map_.objects.iteritems():
             if obj.has_relations:
                 self.groundings['object'][object_name] = obj
@@ -196,7 +196,7 @@ class Human(Sensor):
         for str_type in self.groundings:
             for str_ in self.groundings[str_type].keys():
                 str_ = str_.lower()
-                if str_ in self.utterance:
+                if str_ in self.utterance.lower():
                     str_ = str_.title()
                     self.grounding = self.groundings[str_type][str_]
                     break
