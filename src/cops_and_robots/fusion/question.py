@@ -344,7 +344,7 @@ def test_voi():
                              ])
     prior._discretize(bounds=m.bounds, grid_spacing=0.1)
     q = Questioner(human_sensor=h, target_order=['Pris','Roy'],
-                   target_weights=[10, 9])
+                   target_weights=[11., 10.])
 
     m.setup_plot(show_human_interface=False)
     m.update()

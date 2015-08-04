@@ -420,13 +420,13 @@ def set_up_fleming(map_):
               'black','sandybrown','sage']
     poses = np.array([[0, -1.2, 270],  # Bookcase
                       [-5.5, -2, 0],  # Desk
-                      [3, -2, 180],  # Chair
+                      [3, -2, 270],  # Chair
                       [-4, -1.32, 270],  # Filing Cabinet
-                      [-8.24, -2.15, 90],  # Dining Table
+                      [-8.24, -2.15, 270],  # Dining Table
                       [-4.38, 3.67, 270],  # Mars Poster
                       [1.38, 3.67, 270],  # Cassini Poster
                       [-9.1, 3.3, 315],  # Fridge
-                      [2.04, 0.83, 270],  # Checkers Table
+                      [2.04, 2.66, 270],  # Checkers Table
                       [-2.475, 1.06, 270],  # Fern
                      ])
     sizes = np.array([[0.18, 0.38],  # Bookcase
