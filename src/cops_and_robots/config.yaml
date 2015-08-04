@@ -22,7 +22,7 @@ cops:
     goal_planner_cfg:
       type_: MAP  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
     path_planner_cfg:
-      type_: 'direct'  # ['direct', 'a_star'] 
+      type_: 'a_star'  # ['direct', 'a_star'] 
     camera_cfg:
       max_view_dist: 1.0
       min_view_dist: 0.0
@@ -35,7 +35,8 @@ cops:
       false_alarm_prob: 0.2
       web_interface_topic: python  # ['python' or a ros topic string like '/deckard/odom']
     questioner_cfg:
-      use_ROS: True
+      use_ROS: False
+      # target_order: ['Zhora', 'Roy']
       target_order: ['Zhora', 'Roy']
       target_weights: [11, 10]
       repeat_annoyance: 0.8  # max penalty to a repeated question
@@ -43,13 +44,13 @@ cops:
 
 robbers:
   Roy:
-    pose_source: tf  # ['python' or a ros topic string like '/roy/odom']
+    pose_source: python  # ['python' or a ros topic string like '/roy/odom']
     goal_planner_cfg:
       type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
       type_: 'direct'  # ['direct', 'a_star'] 
   Zhora:
-    pose_source: tf  # ['python' or a ros topic string like '/zhora/odom']
+    pose_source: python  # ['python' or a ros topic string like '/zhora/odom']
     goal_planner_cfg:
       type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
@@ -57,7 +58,7 @@ robbers:
 
 distractors:
   Pris:
-    pose_source: tf  # ['python' or a ros topic string like '/pris/odom']
+    pose_source: python  # ['python' or a ros topic string like '/pris/odom']
     goal_planner_cfg:
       type_: stationary  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
