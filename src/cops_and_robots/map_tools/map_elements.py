@@ -29,6 +29,7 @@ from shapely.geometry import box, Polygon, LineString
 from shapely.affinity import rotate
 from descartes.patch import PolygonPatch
 
+from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
 from cops_and_robots.fusion.softmax import (binary_range_model,
                                             binary_intrinsic_space_model,
                                             range_model,
@@ -264,10 +265,20 @@ class MapObject(MapElement):
             container_poly = None
         else:
             container_poly = Polygon(self.container_area.shape)
-        self.relations = binary_intrinsic_space_model(self.shape,
+
+        #If not rectangular, approx. with rectangular
+        if len(self.shape.exterior.coords[:]) != 5:
+            r = iRobotCreate.DIAMETER / 2
+            x = [-r, r, r, -r, -r,]
+            y = [-r, -r, r, r, -r,]
+            shape = Polygon(zip(x, y))
+        else:
+            shape = self.shape
+
+        self.relations = binary_intrinsic_space_model(shape,
                                                       container_poly=container_poly,
                                                       bounds=map_bounds)
-        brm = binary_range_model(self.shape, bounds=map_bounds)
+        brm = binary_range_model(shape, bounds=map_bounds)
         self.relations.binary_models['Near'] = brm.binary_models['Near']
 
 
