@@ -310,7 +310,8 @@ class Human(Sensor):
         particles[:, 0] /= sum(particles[:, 0])
 
     def detect_probability(self, prior):
-        if not hasattr(self.grounding,'relations'):
+        if not hasattr(self.grounding, 'relations') \
+            or self.grounding.name.lower() == 'deckard':
             logging.info("Defining relations because {} didn't have any."
                          .format(self.grounding.name))
             self.grounding.define_relations()
