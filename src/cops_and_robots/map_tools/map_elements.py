@@ -29,7 +29,6 @@ from shapely.geometry import box, Polygon, LineString
 from shapely.affinity import rotate
 from descartes.patch import PolygonPatch
 
-from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
 from cops_and_robots.fusion.softmax import (binary_range_model,
                                             binary_intrinsic_space_model,
                                             range_model,
@@ -256,7 +255,7 @@ class MapObject(MapElement):
         self.container_area = None
         self.ignoring_containers = ignoring_containers
 
-    def define_relations(self, map_bounds=None):
+    def define_relations(self, map_bounds=None, pose=None):
         """Create a multimodal softmax model of spatial relationships.
 
         Defaults to: 'Front', 'Back', 'Left', and 'Right'.
@@ -267,13 +266,7 @@ class MapObject(MapElement):
             container_poly = Polygon(self.container_area.shape)
 
         #If not rectangular, approx. with rectangular
-        if len(self.shape.exterior.coords[:]) != 5:
-            r = iRobotCreate.DIAMETER / 2
-            x = [-r, r, r, -r, -r,]
-            y = [-r, -r, r, r, -r,]
-            shape = Polygon(zip(x, y))
-        else:
-            shape = self.shape
+        shape = self.shape
 
         self.relations = binary_intrinsic_space_model(shape,
                                                       container_poly=container_poly,

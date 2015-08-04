@@ -27,7 +27,7 @@ import math
 import random
 import numpy as np
 
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
 
 from cops_and_robots.robo_tools.pose import Pose
 from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
@@ -116,8 +116,18 @@ class Robot(iRobotCreate):
             self.controller = Controller(self)
 
         # Define MapObject
-        shape_pts = Point([0, 0]).buffer(iRobotCreate.DIAMETER / 2)\
-            .exterior.coords
+        # <>TODO: fix this horrible hack
+        if self.name == 'Deckard':
+            r = iRobotCreate.DIAMETER / 2
+            n_sides = 4
+            x = [r * np.cos(2 * np.pi * n / n_sides + pose[2]) + pose[0]
+                 for n in range(n_sides)]
+            y = [r * np.sin(2 * np.pi * n / n_sides + pose[2]) + pose[1]
+                 for n in range(n_sides)]
+            shape_pts = Polygon(zip(x, y)).exterior.coords
+        else:
+            shape_pts = Point([0, 0]).buffer(iRobotCreate.DIAMETER / 2)\
+                .exterior.coords
         self.map_obj = MapObject(self.name, shape_pts[:], has_relations=False,
                                  blocks_camera=False, color_str=color_str)
         self.update_shape()
