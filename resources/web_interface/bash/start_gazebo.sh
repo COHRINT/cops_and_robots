@@ -1,8 +1,12 @@
 #!/bin/bash
 
 # Gazebo Setting
-echo "success" 
-mkdir SUCCESS
+
+# roscore
+xterm -e roscore &
+
+sleep 2 
+
 # launch rosbridge
 xterm -e roslaunch rosbridge_server rosbridge_websocket.launch &
 
@@ -10,8 +14,7 @@ xterm -e roslaunch rosbridge_server rosbridge_websocket.launch &
 xterm -e roslaunch web_video_server web_video_server.launch & 
 
 # launch gazebo world
-roslaunch gazebo_ros plain_gazebo_clue_world.launch 
-
+xterm -e roslaunch gazebo_ros plain_gazebo_clue_world.launch &
 
 #Start gzweb
-# ./gzweb/start_gzweb.sh 
+bash /home/sierra/gzweb/start_gzweb.sh

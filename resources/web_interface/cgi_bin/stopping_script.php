@@ -13,7 +13,11 @@
 	    $setting_script = '../bash/stop_python.sh';
 	}
 	echo('bash '.$setting_script);
-	exec('bash '.$setting_script);
+	shell_exec('bash '.$setting_script);
+
+	return;
+
+	exit;
 ?>
 
 </body>

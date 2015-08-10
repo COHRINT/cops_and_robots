@@ -335,12 +335,7 @@ function checkSettings(){
  	var vicon = jQuery("#setting-source-vicon");
 	var gazebo= jQuery("#setting-source-gazebo");
 	var diffSettings = [vicon, gazebo];
-	// var vPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
-	// var vTopics = ["/deckard/camera/rgb/image_raw", "/pris/camera/rgb/image_raw", "/roy/camera/rgb/image_raw", "/zhora/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
-	// var gPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
-	// var gTopics = ["/deckard/camera/image_raw", "/pris/camera/image_raw", "/roy/camera/image_raw", "/zhora/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
 	var vPorts =[":1234", ":1234", ":1234", ":1234"];
-	// var vTopics = ["/deckard/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
 	var vTopics = ["/deckard/image", "/cam1/image", "/cam2/image", "/cam3/image"];
 	var gPorts =[":1234", ":1234", ":1234", ":1234"];
 	var gTopics = ["/deckard/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
@@ -652,7 +647,7 @@ jQuery('#robotQuestions').hover(function(){
     var bool = true;
     questionHovering(bool);
 	}, function(){
-		jQuery("div div.progress-bar").css("background-color", "#5BC0DE");		
+		jQuery("div div.progress-bar").css("background-color", "#A4ECFD");		
 	var bool = false;
 	questionHovering(bool);
 });
