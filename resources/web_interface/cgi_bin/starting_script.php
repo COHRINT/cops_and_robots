@@ -1,9 +1,10 @@
+
 <html>
 <body>
 
 <?php
-
-	$setting = $_POST['setting'];
+	// $setting = $_POST['setting'];
+	$setting = "gazebo";
 
 	if ($setting == "vicon") {
 	    $setting_script = '../bash/start_vicon_sierra.sh';
@@ -13,8 +14,7 @@
 	    $setting_script = '../bash/start_python.sh';
 	}
 	echo('bash '.$setting_script);
-	// exec('bash '.$setting_script);
-	exec('bash http:127.0.0.1/optimized_web_interface/bash/start_gazebo.sh');
+	shell_exec('bash '.$setting_script);
 ?>
 
 </body>
