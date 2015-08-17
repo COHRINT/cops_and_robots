@@ -68,7 +68,6 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 	  				<div class="tab-content embed-responsive embed-responsive-4by3">
     					<div class="tab-pane active" id="deckard_camera"> 
     						<iframe id="deckard-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
-    						<!-- <iframe id="deckard-visual" class="embed-responsive-item" src="" allowfullscreen="" frameborder="0" scrolling="no"></iframe>  -->
     					</div>
     					<!-- <div class="tab-pane" id="pris_camera"> 
     						<iframe id="pris-visual" class="embed-responsive-item" src="" height="416" width="555"  allowfullscreen="" frameborder="0"></iframe> 
@@ -156,9 +155,9 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 					  <label class="btn btn-info ">
 					    <input type="radio" name="options" id="setting-source-gazebo" autocomplete="off" > Gazebo
 					  </label>
-					  <label class="btn btn-info ">
+<!-- 					  <label class="btn btn-info ">
 					    <input type="radio" name="options" id="setting-source-python" autocomplete="off" > Python
-					  </label>
+					  </label> -->
 					</div>
 
 			        <h3>Active Agents</h3>
@@ -238,8 +237,8 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		    				<div id='Position_obj' class='tab-pane active'>
 		    					<?php 
 		    						for($i = 0; $i < count($pos_obj); $i++){
-		    							PositionViaObject($pos_obj[$i], $Id_obj[$i]);
-		    						}
+			    						PositionViaObject($pos_obj[$i], $Id_obj[$i]);
+			    					}
 		    					?>
 	    					</div> <!-- Pos_obj -->
 
@@ -318,11 +317,16 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 
 
 <!-- PHP function -->
+
 	<?php function PositionViaObject(array $pos_obj, $Id_obj){ ?>
 		<div id="humanSensoryInputQuestions" class="bloc">
 		<select size="6" id="<?php echo $Id_obj ?>" class="form-control code-select"  >
-		<?php for($i = 0; $i < count($pos_obj); $i++){ ?>
-			<option> <?php echo $pos_obj[$i]; ?> </option>
+		<?php for($i = 0; $i < count($pos_obj); $i++){ 
+			if($i == 0){?>
+				<option selected="selected"> <?php echo $pos_obj[$i]; ?> </option>
+			<?php }else{ ?>
+				<option> <?php echo $pos_obj[$i]; ?> </option>
+			<?php } ?>
 		<?php } ?>
 			</select>
 		</div> <!-- Scrollbar blocker --> 
@@ -331,8 +335,12 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 	<?php function PositionViaArea(array $pos_area, $Id_area){ ?>
 		<div id="humanSensoryInputQuestions" class="bloc">
 			<select size="6" id="<?php echo $Id_area ?>" class="form-control code-select"  >
-		<?php for($i = 0; $i < count($pos_area); $i++){ ?>
-			<option> <?php echo $pos_area[$i]; ?> </option>
+		<?php for($i = 0; $i < count($pos_area); $i++){ 
+			if($i == 0){?>
+				<option selected="selected"> <?php echo $pos_area[$i]; ?> </option>
+			<?php }else{ ?>
+				<option> <?php echo $pos_area[$i]; ?> </option>
+			<?php } ?>
 		<?php } ?>
 			</select>
 		</div> <!-- Scrollbar blocker --> 
@@ -341,8 +349,12 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 	<?php function Velocity(array $move, $Id_move){ ?>
 		<div id="humanSensoryInputQuestions" class="bloc">
 			<select size="6" id="<?php echo $Id_move ?>" class="form-control code-select"  >
-		<?php for($i = 0; $i < count($move); $i++){ ?>
-			<option> <?php echo $move[$i]; ?> </option>
+		<?php for($i = 0; $i < count($move); $i++){
+			if($i == 0){?>
+				<option selected="selected"> <?php echo $move[$i]; ?> </option>
+			<?php }else{ ?>
+				<option> <?php echo $move[$i]; ?> </option>
+			<?php } ?>
 		<?php } ?>
 			</select>
 		</div> <!-- Scrollbar blocker --> 
