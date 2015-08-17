@@ -1,6 +1,15 @@
 .code-select{
 width:inherit;
-vertical-align:-290%;
+/*vertical-align:-290%;*/
+vertical-align:-390%;
+}
+
+#codeBox div.panel div.panel-body div div.tab-content div.tab-pane{
+    min-height: 215px;
+}
+
+#obj{
+    min-height: 215px;
 }
 
 .tooltip-inner {
@@ -32,9 +41,12 @@ span.glyphicon.glyphicon-resize-full{
 }
 
 #deckard-visual {
-    padding-top: 35px;
+    margin-top: -78px;
     transform-origin: left;
-    transform: scale(1.73, 1.73);
+    transform: scale(0.85, 0.85);
+    zoom: 1;
+    width: 120%;
+    height: 130%;
 }
 
 /*#pris-visual {
@@ -73,10 +85,36 @@ span.glyphicon.glyphicon-resize-full{
     transform: scale(1.73, 1.73);
 }
 
+div#gzwebModal.modal-dialog.modal-lg {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+}
+
 #probMap {
     position: absolute;
     margin-top: -35px;
     overflow: hidden;
+}
+
+div#robots.col-md-6 {
+    text-align: center;
+}
+
+div#humanSensoryInputQuestions.bloc {
+    display: inline-block; 
+    vertical-align: top; 
+    overflow: hidden; 
+    border: 0px;
+}
+
+div#humanSensoryInputQuestions.bloc select {
+    padding:15px; 
+    margin:-5px -20px -5px -5px;
+}
+
+div#robo_updates div.panel.panel-default {
+    margin-top: 6px;
 }
 
 div.questionContainer {
@@ -86,16 +124,17 @@ div.questionContainer {
     margin-bottom: 1px;
 }
 
-div.progress-bar {
+div.questionProgress.progress-bar {
     height: 34px;
     opacity: 0.7;
+    width: 100%;
+    background-color: rgb(164, 236, 253);
 }
 
 #robotQuestions div div.btn-group {
     position: absolute;
     font-size: 14px;
     right: 0px;
-
 }
 
 #robotQuestions div div button.btn {
@@ -110,6 +149,12 @@ div.progress-bar {
     text-align: center;
     color: black;
 }
+
+div#codeHistoryBody.tab-pane {
+    height: 183px;
+    overflow-y: scroll;
+}
+
 #robo_updates div div .nav {
     padding-top: 0px;
     margin-bottom: 8px;

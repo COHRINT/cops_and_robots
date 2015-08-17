@@ -1,0 +1,4960 @@
+<?xml version="1.0" ?>
+<sdf version='1.5'>
+  <world name='default'>
+    <scene>
+      <sky>
+        <clouds>
+          <speed>12</speed>
+        </clouds>
+      </sky>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <model name='ground_plane'>
+      <static>1</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>50</mu2>
+              </ode>
+            </friction>
+            <bounce/>
+            <contact>
+              <ode/>
+            </contact>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <velocity_decay>
+          <linear>0</linear>
+          <angular>0</angular>
+        </velocity_decay>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+    </model>
+    <physics name='default_physics' default='0' type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+      <gravity>0 0 -9.8</gravity>
+      <magnetic_field>5.5645e-06 2.28758e-05 -4.23884e-05</magnetic_field>
+    </physics>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <state world_name='default'>
+      <sim_time>19819 579000000</sim_time>
+      <real_time>1425 685658027</real_time>
+      <wall_time>1439412988 420443859</wall_time>
+      <model name='building_template_model'>
+        <pose>0 0 0 0 -0 0</pose>
+        <link name='__default__'>
+          <pose>0 0 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_billard_poster_noplugin'>
+        <pose>1.30089 3.86386 0.178116 0 -0 0</pose>
+        <link name='poster1'>
+          <pose>1.30089 3.86386 0.178116 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_bookcase_noplugin'>
+        <pose>-0.127297 -1.11462 0 0 0 -1.57451</pose>
+        <link name='bookcase'>
+          <pose>-0.127297 -1.11462 0 0 0 -1.57451</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_chair'>
+        <pose>2.88726 -2.22183 0.780776 1.29923 -0.04091 -0.145839</pose>
+        <link name='chair'>
+          <pose>2.88726 -2.22183 0.780776 1.29923 -0.04091 -0.145839</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_checkers'>
+        <pose>1.87196 2.9098 0 0 -0 0</pose>
+        <link name='checkers'>
+          <pose>1.87196 2.9098 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_dining_table_0'>
+        <pose>-8.49699 -2.51702 0.451263 3.14159 -0.002327 3.14159</pose>
+        <link name='oval_table'>
+          <pose>-8.49699 -2.51702 0.451263 3.14159 -0.002327 3.14159</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_filing_cabinet'>
+        <pose>-3.84748 -1.33145 0 0 0 -1.56232</pose>
+        <link name='filing'>
+          <pose>-3.84748 -1.33145 0 0 0 -1.56232</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_fridge_noplugin'>
+        <pose>-9.0802 3.07926 0 0 -0 0.646143</pose>
+        <link name='fridge'>
+          <pose>-9.0802 3.07926 0 0 -0 0.646143</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_game_table'>
+        <pose>1.63418 3.1523 0.471539 -3.13896 0 0</pose>
+        <link name='game_table'>
+          <pose>1.63418 3.1523 0.471539 -3.13896 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_kitchen_poster_noplugin'>
+        <pose>-4.83837 3.85115 0.285367 0 -0 0</pose>
+        <link name='Poster'>
+          <pose>-4.83837 3.85115 0.285367 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_table_noplugin'>
+        <pose>-5.80216 -2.31243 0 0 -0 1.5656</pose>
+        <link name='table'>
+          <pose>-5.80216 -2.31243 0 0 -0 1.5656</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_tea_cup'>
+        <pose>-8.45393 -2.00842 0.371578 0 -0 0</pose>
+        <link name='tea_cup'>
+          <pose>-8.45393 -2.00842 0.371578 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_tea_cup_0'>
+        <pose>-8.45193 -3.00934 0.372739 0 -0 0</pose>
+        <link name='tea_cup'>
+          <pose>-8.45193 -3.00934 0.372739 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_tea_pot'>
+        <pose>-8.45874 -2.47682 0.516058 1.57298 -0 0</pose>
+        <link name='tea_pot'>
+          <pose>-8.45874 -2.47682 0.516058 1.57298 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='clue_vern'>
+        <pose>-2.89574 1.10893 -0.007015 1.56447 -0 0</pose>
+        <link name='plant'>
+          <pose>-2.89574 1.10893 -0.007015 1.56447 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='deckard'>
+        <pose>0.008706 0.024358 0.000146 -0.022337 -0.005778 3.10673</pose>
+        <link name='create::base'>
+          <pose>0.008706 0.024358 0.000146 -0.022337 -0.005778 3.10673</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='create::left_wheel'>
+          <pose>0.004318 -0.106251 0.029234 -0.022337 -0.005778 3.10673</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='create::right_wheel'>
+          <pose>0.013413 0.153525 0.03504 -0.022337 -0.005778 3.10673</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='kinect::link'>
+          <pose>0.097267 0.014478 0.303418 -0.022337 -0.005778 3.10673</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='rack'>
+          <pose>0.008706 0.024358 0.000146 -0.022337 -0.005778 3.10673</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_boundaries'>
+        <pose>-3.08953 0.277486 -1.78694 0 -0 0</pose>
+        <link name='Wall_6'>
+          <pose>-3.08953 3.95249 -1.78694 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='Wall_7'>
+          <pose>3.58547 0.277486 -1.78694 0 0 -1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='Wall_8'>
+          <pose>-3.08953 -3.39751 -1.78694 0 -0 3.14159</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='Wall_9'>
+          <pose>-9.76453 0.277486 -1.78694 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin'>
+        <pose>0.756109 1.40379 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>0.756109 1.40379 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_0'>
+        <pose>1.97684 1.40351 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>1.97684 1.40351 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_1'>
+        <pose>0.05822 2.02824 0 0 0 -1.57061</pose>
+        <link name='wall'>
+          <pose>0.05822 2.02824 0.0254 0 0 -1.57061</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_10'>
+        <pose>-6.36793 -1.00393 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-6.36793 -1.00393 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_11'>
+        <pose>-7.02612 -1.57369 0 0 -0 1.57975</pose>
+        <link name='wall'>
+          <pose>-7.02612 -1.57369 0.0254 0 -0 1.57975</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_12'>
+        <pose>-7.01985 -2.79174 0 -2e-06 -0.00043 1.57537</pose>
+        <link name='wall'>
+          <pose>-7.01985 -2.79175 0.0254 -2e-06 -0.00043 1.57537</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_13'>
+        <pose>1.16732 -0.95155 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>1.16732 -0.95155 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_14'>
+        <pose>-0.052009 -0.95515 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-0.052009 -0.95515 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_15'>
+        <pose>-1.26896 -0.95628 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-1.26896 -0.95628 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_16'>
+        <pose>-1.95967 -1.53558 0 0 -0 1.56489</pose>
+        <link name='wall'>
+          <pose>-1.95967 -1.53558 0.0254 0 -0 1.56489</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_2'>
+        <pose>0.057185 3.23446 0 0 0 -1.56878</pose>
+        <link name='wall'>
+          <pose>0.057185 3.23446 0.0254 0 0 -1.56878</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_3'>
+        <pose>-1.9709 1.44274 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-1.9709 1.44274 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_4'>
+        <pose>-3.19522 1.44325 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-3.19522 1.44325 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_5'>
+        <pose>-4.41726 1.44176 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-4.41726 1.44176 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_6'>
+        <pose>-5.63749 1.44318 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-5.63749 1.44318 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_7'>
+        <pose>-6.85264 1.44195 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-6.85264 1.44195 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_8'>
+        <pose>-3.92232 -1.00874 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-3.92232 -1.00874 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='fleming_wall no plugin_9'>
+        <pose>-5.14751 -1.00578 0 0 -0 0</pose>
+        <link name='wall'>
+          <pose>-5.14751 -1.00578 0.0254 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ground_plane'>
+        <pose>4 0 0 0 -0 0</pose>
+        <link name='link'>
+          <pose>4 0 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='pris'>
+        <pose>-7.3855 2.25644 0.309734 -0.008619 0.009629 -1.48004</pose>
+        <link name='create::base'>
+          <pose>-7.3855 2.25644 0.309734 -0.008619 0.009629 -1.48004</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='create::left_wheel'>
+          <pose>-7.25573 2.26795 0.340611 -0.008619 0.009629 -1.48004</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='create::right_wheel'>
+          <pose>-7.51465 2.24437 0.342852 -0.008619 0.009629 -1.48004</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='kinect::link'>
+          <pose>-7.39052 2.3405 0.614405 -0.008619 0.009629 -1.48004</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='rack'>
+          <pose>-7.3855 2.25644 0.309734 -0.008619 0.009629 -1.48004</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='roy'>
+        <pose>-4.7834 -1.83865 0.236462 0.008539 0.012091 -1.43367</pose>
+        <link name='create::base'>
+          <pose>-4.7834 -1.83865 0.236462 0.008539 0.012091 -1.43367</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='create::left_wheel'>
+          <pose>-4.65484 -1.82131 0.269568 0.008539 0.012091 -1.43367</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='create::right_wheel'>
+          <pose>-4.91239 -1.85682 0.267348 0.008539 0.012091 -1.43367</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='kinect::link'>
+          <pose>-4.79737 -1.75637 0.541339 0.008539 0.012091 -1.43367</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='rack'>
+          <pose>-4.7834 -1.83865 0.236462 0.008539 0.012091 -1.43367</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='security camera1'>
+        <pose>-2.01951 -1.59112 0.636083 0 0.166559 -3.13771</pose>
+        <link name='link'>
+          <pose>-2.01951 -1.59112 0.636083 0 0.166559 -3.13771</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='security camera2'>
+        <pose>-0.004553 2.03092 0.631676 -2.21428e-19 0.203907 3.13201</pose>
+        <link name='link'>
+          <pose>-0.004553 2.03092 0.631676 -2.21428e-19 0.203907 3.13201</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='security camera3'>
+        <pose>-0.011712 -0.892512 0.637329 1.43085e-17 0.245987 1.57569</pose>
+        <link name='link'>
+          <pose>-0.011712 -0.892512 0.637329 1.43085e-17 0.245987 1.57569</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='zhora'>
+        <pose>1.4106 -1.89538 0.205266 -0.012582 -0.001808 -3.10058</pose>
+        <link name='create::base'>
+          <pose>1.4106 -1.89538 0.205266 -0.012582 -0.001808 -3.10058</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='create::left_wheel'>
+          <pose>1.416 -2.02566 0.235628 -0.012582 -0.001808 -3.10058</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='create::right_wheel'>
+          <pose>1.40535 -1.7659 0.238899 -0.012582 -0.001808 -3.10058</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='kinect::link'>
+          <pose>1.49833 -1.89561 0.508941 -0.012582 -0.001808 -3.10058</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='rack'>
+          <pose>1.4106 -1.89538 0.205266 -0.012582 -0.001808 -3.10058</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+    </state>
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>-3.00233 -14.2538 11.4572 0 0.505797 1.60734</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+    <model name='building_template_model'>
+      <static>1</static>
+      <link name='__default__'>
+        <velocity_decay>
+          <linear>0</linear>
+          <angular>0</angular>
+        </velocity_decay>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+    </model>
+    <model name='fleming_boundaries'>
+      <pose>-5.04257 -6.3854 0 0 -0 0</pose>
+      <link name='Wall_6'>
+        <collision name='Wall_6_Collision'>
+          <geometry>
+            <box>
+              <size>13.5 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='Wall_6_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>13.5 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>0.760784 0.662745 0.627451 1</ambient>
+          </material>
+        </visual>
+        <pose>0 3.675 0 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='Wall_7'>
+        <collision name='Wall_7_Collision'>
+          <geometry>
+            <box>
+              <size>7.5 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='Wall_7_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>7.5 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>0.760784 0.662745 0.627451 1</ambient>
+          </material>
+        </visual>
+        <pose>6.675 -0 0 0 0 -1.5708</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='Wall_8'>
+        <collision name='Wall_8_Collision'>
+          <geometry>
+            <box>
+              <size>13.5 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='Wall_8_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>13.5 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>0.760784 0.662745 0.627451 1</ambient>
+          </material>
+        </visual>
+        <pose>0 -3.675 0 0 -0 3.14159</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='Wall_9'>
+        <collision name='Wall_9_Collision'>
+          <geometry>
+            <box>
+              <size>7.5 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='Wall_9_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>7.5 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>0.760784 0.662745 0.627451 1</ambient>
+          </material>
+        </visual>
+        <pose>-6.675 -0 0 0 -0 1.5708</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <static>1</static>
+    </model>
+    <model name='fleming_wall no plugin'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>0.5523 1 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_0'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>2 1 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_1'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-1 2 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_2'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-2 3 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_3'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-2 1 0 0 -0 0</pose>
+    </model>
+    <light name='sun' type='directional'>
+      <cast_shadows>1</cast_shadows>
+      <pose>-1 0 10 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name='fleming_wall no plugin_4'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-3 1 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_5'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-4.47945 1 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_6'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-5.53729 1 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_7'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-7 1 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_8'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-4 -0.467484 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_9'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-5 -0.482299 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_10'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-6.4381 -0.407575 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_11'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-8 -2 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_12'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-8 -2 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_13'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>1 0 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_14'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>0 0 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_15'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-1.46738 0 0 0 -0 0</pose>
+    </model>
+    <model name='fleming_wall no plugin_16'>
+      <static>1</static>
+      <link name='wall'>
+        <pose>0 0 0.0254 0 -0 0</pose>
+        <visual name='base_visual'>
+          <geometry>
+            <box>
+              <size>1.2192 0.1524 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_strut_visual'>
+          <pose>0 0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_strut_visual'>
+          <pose>0 -0.028575 0.0508 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.0508 0.0508</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='panel_visual'>
+          <pose>0 0 0.3556 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2192 0.003175 0.6096</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://fleming_wall/materials/scripts</uri>
+              <uri>model://fleming_wall/materials/textures</uri>
+              <name>FlemingWall/Image</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-2 0 0 0 -0 0</pose>
+    </model>
+    <model name='deckard'>
+      <static>1</static>
+      <link name='rack'>
+        <inertial>
+          <pose>0.001453 -0.000453 0.029787 0 -0 0</pose>
+        </inertial>
+        <visual name='plate_0_visual'>
+          <pose>-0.04334 0 0.084757 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://deckard/meshes/plate_0_logo.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='plate_2_visual'>
+          <pose>-0.00266 0 0.199108 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://deckard/meshes/plate_1_logo.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_0_visual'>
+          <pose>-0.00254 0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_1_visual'>
+          <pose>-0.00254 -0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_2_visual'>
+          <pose>-0.07239 -0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_3_visual'>
+          <pose>-0.07239 0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_0_visual'>
+          <pose>0.06764 0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_1_visual'>
+          <pose>0.06764 -0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_2_visual'>
+          <pose>-0.052832 -0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_3_visual'>
+          <pose>-0.052832 0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_4_visual'>
+          <pose>0.06764 0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_5_visual'>
+          <pose>0.06764 -0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_6_visual'>
+          <pose>-0.052832 -0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_7_visual'>
+          <pose>-0.052832 0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_kinect_0_visual'>
+          <pose>-0.105098 0.098 0.202308 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_kinect_1_visual'>
+          <pose>-0.105098 -0.098 0.202308 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='laser' type='ray'>
+          <pose>-0.065 0 0.092 0 -0 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>180</samples>
+                <resolution>1</resolution>
+                <min_angle>-2.26893</min_angle>
+                <max_angle>2.26893</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.08</min>
+              <max>10</max>
+              <resolution>0.01</resolution>
+            </range>
+          </ray>
+          <update_rate>20</update_rate>
+        </sensor>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::base'>
+        <inertial>
+          <pose>0.001453 -0.000453 0.029787 0 -0 0</pose>
+          <inertia>
+            <ixx>0.05864</ixx>
+            <ixy>0.000124</ixy>
+            <ixz>0.000615</ixz>
+            <iyy>0.058786</iyy>
+            <iyz>1.4e-05</iyz>
+            <izz>1.53244</izz>
+          </inertia>
+          <mass>2.234</mass>
+        </inertial>
+        <collision name='base_collision'>
+          <pose>0 0 0.0478 0 -0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.016495</radius>
+              <length>0.061163</length>
+            </cylinder>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='base_visual'>
+          <pose>0 0 0.0478 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://create/meshes/create_body.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='front_wheel_collision'>
+          <pose>0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.018</radius>
+            </sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='front_wheel_visual'>
+          <pose>0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.009</radius>
+            </sphere>
+          </geometry>
+        </visual>
+        <collision name='rear_wheel_collision'>
+          <pose>-0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.015</radius>
+            </sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='rear_wheel_visual'>
+          <pose>-0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.0075</radius>
+            </sphere>
+          </geometry>
+        </visual>
+        <sensor name='left_cliff_sensor' type='ray'>
+          <pose>0.07 0.14 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='leftfront_cliff_sensor' type='ray'>
+          <pose>0.15 0.04 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='right_cliff_sensor' type='ray'>
+          <pose>0.07 -0.14 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='rightfront_cliff_sensor' type='ray'>
+          <pose>0.15 -0.04 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='wall_sensor' type='ray'>
+          <pose>0.09 -0.12 0.059 0 0 -1</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.016</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <pose>0 0 0 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::left_wheel'>
+        <pose>0 0.13 0.032 0 -0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.01</mass>
+        </inertial>
+        <collision name='collision'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>10</mu>
+                <mu2>10</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::right_wheel'>
+        <pose>0 -0.13 0.032 0 -0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.01</mass>
+        </inertial>
+        <collision name='collision'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>10</mu>
+                <mu2>10</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='create::left_wheel' type='revolute'>
+        <parent>create::base</parent>
+        <child>create::left_wheel</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='create::right_wheel' type='revolute'>
+        <parent>create::base</parent>
+        <child>create::right_wheel</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <link name='kinect::link'>
+        <inertial>
+          <mass>0.1</mass>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.073 0.276 0.072</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://kinect/meshes/kinect.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='camera' type='depth'>
+          <update_rate>20</update_rate>
+          <camera name='__default__'>
+            <horizontal_fov>1.0472</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.05</near>
+              <far>3</far>
+            </clip>
+          </camera>
+        </sensor>
+        <pose>-0.087098 0 0.303857 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='create_rack' type='revolute'>
+        <parent>create::base</parent>
+        <child>rack</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='kinect_rack' type='revolute'>
+        <parent>kinect::link</parent>
+        <child>rack</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin name='ros_transform' filename='/usr/lib/libros_transform.so'>
+        <targetLink>create::base</targetLink>
+        <transformTopic>/vicon/deckard/deckard</transformTopic>
+      </plugin>
+      <pose>-8 2 0 0 -0 0</pose>
+    </model>
+    <model name='pris'>
+      <static>1</static>
+      <link name='rack'>
+        <inertial>
+          <pose>0.001453 -0.000453 0.029787 0 -0 0</pose>
+        </inertial>
+        <visual name='plate_0_visual'>
+          <pose>-0.04334 0 0.084757 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://pris/meshes/plate_0_logo.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='plate_2_visual'>
+          <pose>-0.00266 0 0.199108 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://pris/meshes/plate_1_logo.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_0_visual'>
+          <pose>-0.00254 0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_1_visual'>
+          <pose>-0.00254 -0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_2_visual'>
+          <pose>-0.07239 -0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_3_visual'>
+          <pose>-0.07239 0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_0_visual'>
+          <pose>0.06764 0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_1_visual'>
+          <pose>0.06764 -0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_2_visual'>
+          <pose>-0.052832 -0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_3_visual'>
+          <pose>-0.052832 0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_4_visual'>
+          <pose>0.06764 0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_5_visual'>
+          <pose>0.06764 -0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_6_visual'>
+          <pose>-0.052832 -0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_7_visual'>
+          <pose>-0.052832 0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_kinect_0_visual'>
+          <pose>-0.105098 0.098 0.202308 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_kinect_1_visual'>
+          <pose>-0.105098 -0.098 0.202308 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='laser' type='ray'>
+          <pose>-0.065 0 0.092 0 -0 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>180</samples>
+                <resolution>1</resolution>
+                <min_angle>-2.26893</min_angle>
+                <max_angle>2.26893</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.08</min>
+              <max>10</max>
+              <resolution>0.01</resolution>
+            </range>
+          </ray>
+          <update_rate>20</update_rate>
+        </sensor>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::base'>
+        <inertial>
+          <pose>0.001453 -0.000453 0.029787 0 -0 0</pose>
+          <inertia>
+            <ixx>0.05864</ixx>
+            <ixy>0.000124</ixy>
+            <ixz>0.000615</ixz>
+            <iyy>0.058786</iyy>
+            <iyz>1.4e-05</iyz>
+            <izz>1.53244</izz>
+          </inertia>
+          <mass>2.234</mass>
+        </inertial>
+        <collision name='base_collision'>
+          <pose>0 0 0.0478 0 -0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.016495</radius>
+              <length>0.061163</length>
+            </cylinder>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='base_visual'>
+          <pose>0 0 0.0478 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://create/meshes/create_body.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='front_wheel_collision'>
+          <pose>0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.018</radius>
+            </sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='front_wheel_visual'>
+          <pose>0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.009</radius>
+            </sphere>
+          </geometry>
+        </visual>
+        <collision name='rear_wheel_collision'>
+          <pose>-0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.015</radius>
+            </sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='rear_wheel_visual'>
+          <pose>-0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.0075</radius>
+            </sphere>
+          </geometry>
+        </visual>
+        <sensor name='left_cliff_sensor' type='ray'>
+          <pose>0.07 0.14 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='leftfront_cliff_sensor' type='ray'>
+          <pose>0.15 0.04 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='right_cliff_sensor' type='ray'>
+          <pose>0.07 -0.14 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='rightfront_cliff_sensor' type='ray'>
+          <pose>0.15 -0.04 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='wall_sensor' type='ray'>
+          <pose>0.09 -0.12 0.059 0 0 -1</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.016</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <pose>0 0 0 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::left_wheel'>
+        <pose>0 0.13 0.032 0 -0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.01</mass>
+        </inertial>
+        <collision name='collision'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>10</mu>
+                <mu2>10</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::right_wheel'>
+        <pose>0 -0.13 0.032 0 -0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.01</mass>
+        </inertial>
+        <collision name='collision'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>10</mu>
+                <mu2>10</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='create::left_wheel' type='revolute'>
+        <parent>create::base</parent>
+        <child>create::left_wheel</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='create::right_wheel' type='revolute'>
+        <parent>create::base</parent>
+        <child>create::right_wheel</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <link name='kinect::link'>
+        <inertial>
+          <mass>0.1</mass>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.073 0.276 0.072</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://kinect/meshes/kinect.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='camera' type='depth'>
+          <update_rate>20</update_rate>
+          <camera name='__default__'>
+            <horizontal_fov>1.0472</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.05</near>
+              <far>3</far>
+            </clip>
+          </camera>
+        </sensor>
+        <pose>-0.087098 0 0.303857 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='create_rack' type='revolute'>
+        <parent>create::base</parent>
+        <child>rack</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='kinect_rack' type='revolute'>
+        <parent>kinect::link</parent>
+        <child>rack</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin name='ros_transform' filename='/usr/lib/libros_transform.so'>
+        <targetLink>create::base</targetLink>
+        <transformTopic>/vicon/pris/pris</transformTopic>
+      </plugin>
+      <pose>-6.58835 1 0 0 -0 0</pose>
+    </model>
+    <model name='roy'>
+      <static>1</static>
+      <link name='rack'>
+        <inertial>
+          <pose>0.001453 -0.000453 0.029787 0 -0 0</pose>
+        </inertial>
+        <visual name='plate_0_visual'>
+          <pose>-0.04334 0 0.084757 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://roy/meshes/plate_0_logo.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='plate_2_visual'>
+          <pose>-0.00266 0 0.199108 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://roy/meshes/plate_1_logo.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_0_visual'>
+          <pose>-0.00254 0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_1_visual'>
+          <pose>-0.00254 -0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_2_visual'>
+          <pose>-0.07239 -0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_3_visual'>
+          <pose>-0.07239 0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_0_visual'>
+          <pose>0.06764 0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_1_visual'>
+          <pose>0.06764 -0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_2_visual'>
+          <pose>-0.052832 -0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_3_visual'>
+          <pose>-0.052832 0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_4_visual'>
+          <pose>0.06764 0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_5_visual'>
+          <pose>0.06764 -0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_6_visual'>
+          <pose>-0.052832 -0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_7_visual'>
+          <pose>-0.052832 0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_kinect_0_visual'>
+          <pose>-0.105098 0.098 0.202308 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_kinect_1_visual'>
+          <pose>-0.105098 -0.098 0.202308 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='laser' type='ray'>
+          <pose>-0.065 0 0.092 0 -0 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>180</samples>
+                <resolution>1</resolution>
+                <min_angle>-2.26893</min_angle>
+                <max_angle>2.26893</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.08</min>
+              <max>10</max>
+              <resolution>0.01</resolution>
+            </range>
+          </ray>
+          <update_rate>20</update_rate>
+        </sensor>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::base'>
+        <inertial>
+          <pose>0.001453 -0.000453 0.029787 0 -0 0</pose>
+          <inertia>
+            <ixx>0.05864</ixx>
+            <ixy>0.000124</ixy>
+            <ixz>0.000615</ixz>
+            <iyy>0.058786</iyy>
+            <iyz>1.4e-05</iyz>
+            <izz>1.53244</izz>
+          </inertia>
+          <mass>2.234</mass>
+        </inertial>
+        <collision name='base_collision'>
+          <pose>0 0 0.0478 0 -0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.016495</radius>
+              <length>0.061163</length>
+            </cylinder>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='base_visual'>
+          <pose>0 0 0.0478 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://create/meshes/create_body.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='front_wheel_collision'>
+          <pose>0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.018</radius>
+            </sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='front_wheel_visual'>
+          <pose>0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.009</radius>
+            </sphere>
+          </geometry>
+        </visual>
+        <collision name='rear_wheel_collision'>
+          <pose>-0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.015</radius>
+            </sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='rear_wheel_visual'>
+          <pose>-0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.0075</radius>
+            </sphere>
+          </geometry>
+        </visual>
+        <sensor name='left_cliff_sensor' type='ray'>
+          <pose>0.07 0.14 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='leftfront_cliff_sensor' type='ray'>
+          <pose>0.15 0.04 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='right_cliff_sensor' type='ray'>
+          <pose>0.07 -0.14 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='rightfront_cliff_sensor' type='ray'>
+          <pose>0.15 -0.04 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='wall_sensor' type='ray'>
+          <pose>0.09 -0.12 0.059 0 0 -1</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.016</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <pose>0 0 0 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::left_wheel'>
+        <pose>0 0.13 0.032 0 -0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.01</mass>
+        </inertial>
+        <collision name='collision'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>10</mu>
+                <mu2>10</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::right_wheel'>
+        <pose>0 -0.13 0.032 0 -0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.01</mass>
+        </inertial>
+        <collision name='collision'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>10</mu>
+                <mu2>10</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='create::left_wheel' type='revolute'>
+        <parent>create::base</parent>
+        <child>create::left_wheel</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='create::right_wheel' type='revolute'>
+        <parent>create::base</parent>
+        <child>create::right_wheel</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <link name='kinect::link'>
+        <inertial>
+          <mass>0.1</mass>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.073 0.276 0.072</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://kinect/meshes/kinect.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='camera' type='depth'>
+          <update_rate>20</update_rate>
+          <camera name='__default__'>
+            <horizontal_fov>1.0472</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.05</near>
+              <far>3</far>
+            </clip>
+          </camera>
+        </sensor>
+        <pose>-0.087098 0 0.303857 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='create_rack' type='revolute'>
+        <parent>create::base</parent>
+        <child>rack</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='kinect_rack' type='revolute'>
+        <parent>kinect::link</parent>
+        <child>rack</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin name='ros_transform' filename='/usr/lib/libros_transform.so'>
+        <targetLink>create::base</targetLink>
+        <transformTopic>/vicon/roy/roy</transformTopic>
+      </plugin>
+      <pose>-7 0 0 0 -0 0</pose>
+    </model>
+    <model name='zhora'>
+      <static>1</static>
+      <link name='rack'>
+        <inertial>
+          <pose>0.001453 -0.000453 0.029787 0 -0 0</pose>
+        </inertial>
+        <visual name='plate_0_visual'>
+          <pose>-0.04334 0 0.084757 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://zhora/meshes/plate_0_logo.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='plate_2_visual'>
+          <pose>-0.00266 0 0.199108 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://zhora/meshes/plate_1_logo.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_0_visual'>
+          <pose>-0.00254 0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_1_visual'>
+          <pose>-0.00254 -0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_2_visual'>
+          <pose>-0.07239 -0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='spacer_3_visual'>
+          <pose>-0.07239 0.111468 0.079992 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_0_visual'>
+          <pose>0.06764 0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_1_visual'>
+          <pose>0.06764 -0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_2_visual'>
+          <pose>-0.052832 -0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_3_visual'>
+          <pose>-0.052832 0.13142 0.08798 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_4_visual'>
+          <pose>0.06764 0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_5_visual'>
+          <pose>0.06764 -0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_6_visual'>
+          <pose>-0.052832 -0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_2in_7_visual'>
+          <pose>-0.052832 0.13142 0.14513 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_kinect_0_visual'>
+          <pose>-0.105098 0.098 0.202308 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <visual name='standoff_kinect_1_visual'>
+          <pose>-0.105098 -0.098 0.202308 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='laser' type='ray'>
+          <pose>-0.065 0 0.092 0 -0 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>180</samples>
+                <resolution>1</resolution>
+                <min_angle>-2.26893</min_angle>
+                <max_angle>2.26893</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.08</min>
+              <max>10</max>
+              <resolution>0.01</resolution>
+            </range>
+          </ray>
+          <update_rate>20</update_rate>
+        </sensor>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::base'>
+        <inertial>
+          <pose>0.001453 -0.000453 0.029787 0 -0 0</pose>
+          <inertia>
+            <ixx>0.05864</ixx>
+            <ixy>0.000124</ixy>
+            <ixz>0.000615</ixz>
+            <iyy>0.058786</iyy>
+            <iyz>1.4e-05</iyz>
+            <izz>1.53244</izz>
+          </inertia>
+          <mass>2.234</mass>
+        </inertial>
+        <collision name='base_collision'>
+          <pose>0 0 0.0478 0 -0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.016495</radius>
+              <length>0.061163</length>
+            </cylinder>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='base_visual'>
+          <pose>0 0 0.0478 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://create/meshes/create_body.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='front_wheel_collision'>
+          <pose>0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.018</radius>
+            </sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='front_wheel_visual'>
+          <pose>0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.009</radius>
+            </sphere>
+          </geometry>
+        </visual>
+        <collision name='rear_wheel_collision'>
+          <pose>-0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.015</radius>
+            </sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='rear_wheel_visual'>
+          <pose>-0.13 0 0.017 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <sphere>
+              <radius>0.0075</radius>
+            </sphere>
+          </geometry>
+        </visual>
+        <sensor name='left_cliff_sensor' type='ray'>
+          <pose>0.07 0.14 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='leftfront_cliff_sensor' type='ray'>
+          <pose>0.15 0.04 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='right_cliff_sensor' type='ray'>
+          <pose>0.07 -0.14 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='rightfront_cliff_sensor' type='ray'>
+          <pose>0.15 -0.04 0.027 0 1.57079 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.01</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <sensor name='wall_sensor' type='ray'>
+          <pose>0.09 -0.12 0.059 0 0 -1</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.016</min>
+              <max>0.04</max>
+              <resolution>0.1</resolution>
+            </range>
+          </ray>
+        </sensor>
+        <pose>0 0 0 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::left_wheel'>
+        <pose>0 0.13 0.032 0 -0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.01</mass>
+        </inertial>
+        <collision name='collision'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>10</mu>
+                <mu2>10</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <link name='create::right_wheel'>
+        <pose>0 -0.13 0.032 0 -0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.01</mass>
+        </inertial>
+        <collision name='collision'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>10</mu>
+                <mu2>10</mu2>
+                <fdir1>0 0 0</fdir1>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0 -5.76279e-13 1.5707 1.5707</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.033</radius>
+              <length>0.023</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='create::left_wheel' type='revolute'>
+        <parent>create::base</parent>
+        <child>create::left_wheel</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='create::right_wheel' type='revolute'>
+        <parent>create::base</parent>
+        <child>create::right_wheel</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <limit>
+            <lower>-1e+16</lower>
+            <upper>1e+16</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <link name='kinect::link'>
+        <inertial>
+          <mass>0.1</mass>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.073 0.276 0.072</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://kinect/meshes/kinect.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='camera' type='depth'>
+          <update_rate>20</update_rate>
+          <camera name='__default__'>
+            <horizontal_fov>1.0472</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.05</near>
+              <far>3</far>
+            </clip>
+          </camera>
+        </sensor>
+        <pose>-0.087098 0 0.303857 0 -0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <joint name='create_rack' type='revolute'>
+        <parent>create::base</parent>
+        <child>rack</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='kinect_rack' type='revolute'>
+        <parent>kinect::link</parent>
+        <child>rack</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+          <use_parent_model_frame>1</use_parent_model_frame>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin name='ros_transform' filename='/usr/lib/libros_transform.so'>
+        <targetLink>create::base</targetLink>
+        <transformTopic>/vicon/zhora/zhora</transformTopic>
+      </plugin>
+      <pose>-6 0 0 0 -0 0</pose>
+    </model>
+    <model name='security camera1'>
+      <static>1</static>
+      <pose>-3 -2 0.05 0 -0 0</pose>
+      <link name='link'>
+        <inertial>
+          <mass>0.1</mass>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+        </visual>
+        <sensor name='camera' type='camera'>
+          <camera name='__default__'>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+              <width>320</width>
+              <height>240</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+          </camera>
+          <plugin name='security_camera1_controller' filename='libgazebo_ros_camera.so'>
+            <always_on>1</always_on>
+            <update_rate>30</update_rate>
+            <cameraName>security_camera1/camera</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+            <frameName>camera_link</frameName>
+            <hackBaseline>0.07</hackBaseline>
+            <distortionK1>0.0</distortionK1>
+            <distortionK2>0.0</distortionK2>
+            <distortionK3>0.0</distortionK3>
+            <distortionT1>0.0</distortionT1>
+            <distortionT2>0.0</distortionT2>
+          </plugin>
+          <visualize>0</visualize>
+        </sensor>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+    </model>
+    <model name='security camera2'>
+      <static>1</static>
+      <pose>-1 2.55652 0.05 0 -0 0</pose>
+      <link name='link'>
+        <inertial>
+          <mass>0.1</mass>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+        </visual>
+        <sensor name='camera' type='camera'>
+          <camera name='__default__'>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+              <width>320</width>
+              <height>240</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+          </camera>
+          <plugin name='security_camera2_controller' filename='libgazebo_ros_camera.so'>
+            <always_on>1</always_on>
+            <update_rate>30</update_rate>
+            <cameraName>security_camera2/camera</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+            <frameName>camera_link</frameName>
+            <hackBaseline>0.07</hackBaseline>
+            <distortionK1>0.0</distortionK1>
+            <distortionK2>0.0</distortionK2>
+            <distortionK3>0.0</distortionK3>
+            <distortionT1>0.0</distortionT1>
+            <distortionT2>0.0</distortionT2>
+          </plugin>
+          <visualize>0</visualize>
+        </sensor>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+    </model>
+    <model name='security camera3'>
+      <static>1</static>
+      <pose>1 0 0.05 0 -0 0</pose>
+      <link name='link'>
+        <inertial>
+          <mass>0.1</mass>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+        </visual>
+        <sensor name='camera' type='camera'>
+          <camera name='__default__'>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+              <width>320</width>
+              <height>240</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+          </camera>
+          <plugin name='security_camera3_controller' filename='libgazebo_ros_camera.so'>
+            <always_on>1</always_on>
+            <update_rate>30</update_rate>
+            <cameraName>security_camera3/camera</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+            <frameName>camera_link</frameName>
+            <hackBaseline>0.07</hackBaseline>
+            <distortionK1>0.0</distortionK1>
+            <distortionK2>0.0</distortionK2>
+            <distortionK3>0.0</distortionK3>
+            <distortionT1>0.0</distortionT1>
+            <distortionT2>0.0</distortionT2>
+          </plugin>
+          <visualize>0</visualize>
+        </sensor>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+    </model>
+    <model name='clue_fridge_noplugin'>
+      <static>1</static>
+      <link name='fridge'>
+        <visual name='fridge_entire'>
+          <pose>0 0 0.425 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.476 0.451 0.85</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_fridge_noplugin/materials/scripts</uri>
+              <uri>model://clue_fridge_noplugin/materials/textures</uri>
+              <name>plastic</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-8.52121 3 0 0 -0 0</pose>
+    </model>
+    <model name='clue_vern'>
+      <static>1</static>
+      <link name='plant'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://clue_vern/meshes/plant.stl</uri>
+              <scale>0.02 0.02 0.02</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>46 137 30 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-2.50266 0 0 0 -0 0</pose>
+    </model>
+    <model name='clue_bookcase_noplugin'>
+      <static>1</static>
+      <link name='bookcase'>
+        <visual name='side_1'>
+          <pose>0 0 0.3 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.14224 0.04094 0.60198</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_bookcase_noplugin/materials/scripts</uri>
+              <uri>model://clue_bookcase_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='side_2'>
+          <pose>-0 0.33655 0.3 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.14224 0.04094 0.60198</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_bookcase_noplugin/materials/scripts</uri>
+              <uri>model://clue_bookcase_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back'>
+          <pose>-0.05207 0.16827 0.325755 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.0381 0.29845 0.55245</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_bookcase_noplugin/materials/scripts</uri>
+              <uri>model://clue_bookcase_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='shelf_1'>
+          <pose>0.0381 0.16827 0.06858 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.13462 0.29845 0.0381</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_bookcase_noplugin/materials/scripts</uri>
+              <uri>model://clue_bookcase_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='shelf_2'>
+          <pose>0.0381 0.16827 0.38862 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.13462 0.29845 0.0381</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_bookcase_noplugin/materials/scripts</uri>
+              <uri>model://clue_bookcase_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>0.409093 -1.51857 0 0 -0 0</pose>
+    </model>
+    <model name='clue_chair'>
+      <static>1</static>
+      <link name='chair'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://clue_chair/meshes/chair.stl</uri>
+              <scale>0.001 0.001 0.001</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>10 42 19 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>2 -1.5894 0 0 -0 0</pose>
+    </model>
+    <model name='clue_table_noplugin'>
+      <static>1</static>
+      <link name='table'>
+        <visual name='table_top'>
+          <pose>0 0 0.34 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.99 0.62 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_table_noplugin/materials/scripts</uri>
+              <uri>model://clue_table_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_left_leg'>
+          <pose>-0.475 0.24 0.17 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.14 0.34</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_table_noplugin/materials/scripts</uri>
+              <uri>model://clue_table_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='front_right_leg'>
+          <pose>-0.475 -0.24 0.17 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.14 0.34</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_table_noplugin/materials/scripts</uri>
+              <uri>model://clue_table_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_right_leg'>
+          <pose>0.475 0.24 0.17 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.14 0.34</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_table_noplugin/materials/scripts</uri>
+              <uri>model://clue_table_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <visual name='back_left_leg'>
+          <pose>0.475 -0.24 0.17 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.14 0.34</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_table_noplugin/materials/scripts</uri>
+              <uri>model://clue_table_noplugin/materials/textures</uri>
+              <name>Wood</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-6 -2 0 0 -0 0</pose>
+    </model>
+    <model name='clue_kitchen_poster_noplugin'>
+      <static>1</static>
+      <link name='Poster'>
+        <visual name='posterEntire'>
+          <pose>0 0 0.325 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.836 0.0001 0.65</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_kitchen_poster_noplugin/materials/scripts</uri>
+              <uri>model://clue_kitchen_poster_noplugin/materials/textures</uri>
+              <name>paper</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-4.49545 3.46694 0 0 -0 0</pose>
+    </model>
+    <model name='clue_game_table'>
+      <static>1</static>
+      <link name='game_table'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://clue_game_table/meshes/game_table.stl</uri>
+              <scale>0.02 0.02 0.02</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>229 166 79 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>1.48881 2.56101 0 0 -0 0</pose>
+    </model>
+    <model name='clue_tea_pot'>
+      <static>1</static>
+      <link name='tea_pot'>
+        <visual name='visual'>
+          <pose>-0.04334 0 0.084757 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://clue_tea_pot/meshes/teapot.dae</uri>
+              <scale>0.007 0.007 0.007</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>166 238 236 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-8 0 0 0 -0 0</pose>
+    </model>
+    <model name='clue_tea_cup'>
+      <static>1</static>
+      <link name='tea_cup'>
+        <visual name='visual'>
+          <pose>-0.04334 0 0.084757 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://clue_tea_cup/meshes/teaCup.stl</uri>
+              <scale>0.001 0.001 0.001</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>166 238 236 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-9 -1 0 0 -0 0</pose>
+    </model>
+    <model name='clue_tea_cup_0'>
+      <static>1</static>
+      <link name='tea_cup'>
+        <visual name='visual'>
+          <pose>-0.04334 0 0.084757 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://clue_tea_cup/meshes/teaCup.stl</uri>
+              <scale>0.001 0.001 0.001</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>166 238 236 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-8.50265 -0.484379 0 0 -0 0</pose>
+    </model>
+    <model name='clue_billard_poster_noplugin'>
+      <static>1</static>
+      <link name='poster1'>
+        <visual name='poster_entire'>
+          <pose>0 0 0.42 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.564 0.0001 0.84</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_billard_poster_noplugin/materials/scripts</uri>
+              <uri>model://clue_billard_poster_noplugin/materials/textures</uri>
+              <name>poster</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>1.47714 3.50012 0 0 -0 0</pose>
+    </model>
+    <model name='clue_filing_cabinet'>
+      <static>1</static>
+      <link name='filing'>
+        <visual name='filing_entire'>
+          <pose>0 0 0.251 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.495 0.366 0.502</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_filing_cabinet/materials/scripts</uri>
+              <uri>model://clue_filing_cabinet/materials/textures</uri>
+              <name>metal</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-3.44699 -2 0 0 -0 0</pose>
+    </model>
+    <model name='clue_checkers'>
+      <static>1</static>
+      <link name='checkers'>
+        <visual name='checkersEntire'>
+          <pose>0 0 0.48 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.381 0.381 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://clue_checkers/materials/scripts</uri>
+              <uri>model://clue_checkers/materials/textures</uri>
+              <name>board</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>1 3 0 0 -0 0</pose>
+    </model>
+    <model name='clue_dining_table_0'>
+      <static>1</static>
+      <link name='oval_table'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://clue_dining_table/meshes/diningTable.stl</uri>
+              <scale>0.025 0.025 0.025</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>10 42 19 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-8 0 0 0 -0 0</pose>
+    </model>
+  </world>
+</sdf>

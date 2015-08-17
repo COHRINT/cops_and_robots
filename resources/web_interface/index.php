@@ -1,15 +1,16 @@
 <!-- PLEASE SEE AND UPDATE INSTRUCTIONS HERE: https://github.com/COHRINT/Cops-and-Robots/wiki/Operating-Procedures -->
 
-<link href="interface.css" type="text/css" rel="stylesheet" />
-<link href="bootstrap-3.3.4-dist/bootstrap.min.css" rel="stylesheet">
+<link href="css/interface.css" type="text/css" rel="stylesheet" />
+<link href="css/bootstrap.min.css" rel="stylesheet">
 
 <?php
 $robots = array("Deckard", "Pris", "Roy", "Zhora");
 $targets = array("nothing", "a robber", "Roy", "Pris", "Zhora");
-$certainties = array("I think", "I know");
+// $certainties = array("I think", "I know");
+$certainties = array("I know");
 $positivities = array("is", "is not");
-$object_relations = array("behind", "in front of", "left of", "right of");
-$objects = array("the bookcase", "the desk", "the chair", "the filing cabinet", "the dining table", "the mars poster", "the cassini poster", "the fridge", " the checkers table");
+$object_relations = array("behind", "in front of", "left of", "right of", "near");
+$objects = array("the bookcase",  "the cassini poster", "the chair", "the checkers table", "the desk", "the dining table",  "the fern", "the filing cabinet", "the fridge", "the mars poster",  "Deckard");
 $area_relations = array("inside", "near", "outside");
 $areas = array("the study", "the billiard room", "the hallway", "the dining room", "the kitchen", "the library");
 $movement_types = array("moving", "stopped");
@@ -117,8 +118,8 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 					</div>
 				</div>
 			</div>
-			<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-		  		<div class="modal-dialog modal-lg" style="width: 100%;  height: 100%;  padding: 0;">
+			<div id="gzwebModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+		  		<div id="gzwebModal" class="modal-dialog modal-lg">
 		    		<div class="modal-content">
 							<iframe src="http://localhost:8080" height="800px" width="100%" frameborder="0"></iframe>
 		    		</div>
@@ -154,9 +155,9 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 					  <label class="btn btn-info ">
 					    <input type="radio" name="options" id="setting-source-gazebo" autocomplete="off" > Gazebo
 					  </label>
-					  <label class="btn btn-info ">
+<!-- 					  <label class="btn btn-info ">
 					    <input type="radio" name="options" id="setting-source-python" autocomplete="off" > Python
-					  </label>
+					  </label> -->
 					</div>
 
 			        <h3>Active Agents</h3>
@@ -192,7 +193,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		</div><!-- /#controls -->
 
 		<!-- Robot Buttons -->
-		<div id="robots" class="col-md-6" style="text-align:center">
+		<div id="robots" class="col-md-6">
 			<?php
 			foreach($robots as $name){  ?>
 			<div class="btn-group">
@@ -231,18 +232,13 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
                 		</ul>
 
 				  		<!-- Tab panes -->
-				  				<style>
-								 .bloc { display:inline-block; vertical-align:top; overflow:hidden; border:solid grey 0px; }
-								 .bloc select { padding:15px; margin:-5px -20px -5px -5px; }
-								</style>	
-
 		  				<div class="tab-content">
 
 		    				<div id='Position_obj' class='tab-pane active'>
 		    					<?php 
 		    						for($i = 0; $i < count($pos_obj); $i++){
-		    							PositionViaObject($pos_obj[$i], $Id_obj[$i]);
-		    						}
+			    						PositionViaObject($pos_obj[$i], $Id_obj[$i]);
+			    					}
 		    					?>
 	    					</div> <!-- Pos_obj -->
 
@@ -265,7 +261,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		  				</div> <!-- Tab Content -->
 					</div><!-- Tabbing -->
 					<br />
-					<div align="center" style="margin-top:10px"><button type="button" class="btn btn-success btn-lg" id="human_sensor_button" >Submit</button></div>								   
+					<div align="center"><button type="button" class="btn btn-success btn-lg" id="human_sensor_button" >Submit</button></div>								   
 				</div><!--/.panel-body-->
 			</div><!--/.panel-->
 		</div><!-- /#codeBox -->
@@ -273,7 +269,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		<!-- Questions/History -->
 		<div id="robo_updates" class="col-md-6">
 
-			<div class="panel panel-default" style="margin-top:6px;">
+			<div class="panel panel-default">
 				<div class="panel-heading">
 			    	<h2 class="panel-title" align="center">Robot Updates</h2>
 				</div>
@@ -296,7 +292,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 							<div id="robotQuestions" class="tab-pane active row" > 
 								<?php for($i = 0; $i < 5; $i++){ ?>
 									<div id="question_<?php echo $i; ?>" class="questionContainer col-md-9" >
-									    <div class=" questionProgess progress-bar progress-bar-info" style="width:100%" role="progress" aria-valuemin="30" aria-valuemax="100">
+									    <div class=" questionProgress progress-bar"  role="progress" aria-valuemin="30" aria-valuemax="100">
 									        <p class="questionText" align="center"></p> 
 									    </div> <!-- /.questionProgress -->
 									</div> <!--/questionContainer -->
@@ -307,7 +303,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 								<?php } ?>
 							</div> <!-- /#robotQuestions -->
 
-							<div id="codeHistoryBody" class="tab-pane" style="height:183px; overflow-y:scroll;"></div>
+							<div id="codeHistoryBody" class="tab-pane" ></div>
 
 						</div><!-- /.tabContent -->
 					
@@ -320,33 +316,45 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 </div> <!-- /.container -->
 
 
-
 <!-- PHP function -->
+
 	<?php function PositionViaObject(array $pos_obj, $Id_obj){ ?>
-		<div class="bloc">
+		<div id="humanSensoryInputQuestions" class="bloc">
 		<select size="6" id="<?php echo $Id_obj ?>" class="form-control code-select"  >
-		<?php for($i = 0; $i < count($pos_obj); $i++){ ?>
-			<option> <?php echo $pos_obj[$i]; ?> </option>
+		<?php for($i = 0; $i < count($pos_obj); $i++){ 
+			if($i == 0){?>
+				<option selected="selected"> <?php echo $pos_obj[$i]; ?> </option>
+			<?php }else{ ?>
+				<option> <?php echo $pos_obj[$i]; ?> </option>
+			<?php } ?>
 		<?php } ?>
 			</select>
 		</div> <!-- Scrollbar blocker --> 
 	<?php } ?>
 
 	<?php function PositionViaArea(array $pos_area, $Id_area){ ?>
-		<div class="bloc">
+		<div id="humanSensoryInputQuestions" class="bloc">
 			<select size="6" id="<?php echo $Id_area ?>" class="form-control code-select"  >
-		<?php for($i = 0; $i < count($pos_area); $i++){ ?>
-			<option> <?php echo $pos_area[$i]; ?> </option>
+		<?php for($i = 0; $i < count($pos_area); $i++){ 
+			if($i == 0){?>
+				<option selected="selected"> <?php echo $pos_area[$i]; ?> </option>
+			<?php }else{ ?>
+				<option> <?php echo $pos_area[$i]; ?> </option>
+			<?php } ?>
 		<?php } ?>
 			</select>
 		</div> <!-- Scrollbar blocker --> 
 	<?php } ?>
 
 	<?php function Velocity(array $move, $Id_move){ ?>
-		<div class="bloc">
+		<div id="humanSensoryInputQuestions" class="bloc">
 			<select size="6" id="<?php echo $Id_move ?>" class="form-control code-select"  >
-		<?php for($i = 0; $i < count($move); $i++){ ?>
-			<option> <?php echo $move[$i]; ?> </option>
+		<?php for($i = 0; $i < count($move); $i++){
+			if($i == 0){?>
+				<option selected="selected"> <?php echo $move[$i]; ?> </option>
+			<?php }else{ ?>
+				<option> <?php echo $move[$i]; ?> </option>
+			<?php } ?>
 		<?php } ?>
 			</select>
 		</div> <!-- Scrollbar blocker --> 
@@ -363,7 +371,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-<script src="bootstrap-3.3.4-dist/bootstrap.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
 <script type="text/javascript" src="js/keyboardteleopquadrotor.js"></script>
 <script type="text/javascript" src="js/interface.js"></script>
 
