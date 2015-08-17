@@ -71,6 +71,7 @@ class GaussSumFilter(object):
 
         self.probability = GaussianMixture(1, robber_pose[0:2], 0.01 * np.eye(2))
         self.finished = True
+        self.recieved_human_update = False
 
     def update_mixand_motion(self):
         #<>TODO: implement this

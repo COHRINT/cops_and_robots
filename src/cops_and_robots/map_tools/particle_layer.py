@@ -27,6 +27,7 @@ import itertools
 
 from cops_and_robots.map_tools.layer import Layer
 
+# <>TODO: Join in as probability layer sub class
 
 class ParticleLayer(Layer):
     """Visually represents a collection of particles.

@@ -12,8 +12,8 @@ cops:
     pose: [0, 0, 90]  # [x(meters), y(meters), theta(degrees)]
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: tf  # ['python' or a ros topic string like '/deckard/odom']
-    web_interface_topic: 'human_sensor' # python or rostopic name ('human_sensor')
-    ask_every_ten: True
+    web_interface_topic: 'human_sensor' # python or rostopic name
+    ask_every_ten: True  #<>TODO: add this to questioner_cfg
     other_robot_names: 
       robbers: ['Roy', 'Pris']
       distractors: ['Zhora']

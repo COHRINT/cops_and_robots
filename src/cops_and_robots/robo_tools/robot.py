@@ -118,6 +118,7 @@ class Robot(iRobotCreate):
         # Define MapObject
         # <>TODO: fix this horrible hack
         if self.name == 'Deckard':
+            pose = [0, 0, -np.pi/4]
             r = iRobotCreate.DIAMETER / 2
             n_sides = 4
             x = [r * np.cos(2 * np.pi * n / n_sides + pose[2]) + pose[0]

@@ -244,7 +244,7 @@ class Cop(Robot):
                                   self.missing_robbers)
 
         # Ask a question every 10th step
-        if i % 10 == 9 and self.fusion_engine.filter_type == 'gauss sum' and \
+        if i % 15 == 9 and self.fusion_engine.filter_type == 'gauss sum' and \
            self.ask_every_ten:
             # <>TODO: Key error, make sure target is reassigned.
             priors = {}
@@ -296,6 +296,7 @@ class CopMissionPlanner(MissionPlanner):
                 elif filter_.recieved_human_update:
                     logging.info('{} recieved an update, but is not the target'
                                  .format(name))
+                    
 
         if self.mission_status is 'searching':
             if len(self.robot.missing_robbers) is 0:
