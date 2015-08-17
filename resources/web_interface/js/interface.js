@@ -427,11 +427,15 @@ function init() {
 		}else{
 			positivitiesObj.options[1].style.display="inline";
 		}
+
+		$("area_targets option:selected") = $("obj_targets option:selected");
+		$("mv_targets option:selected") = $("obj_targets option:selected");
 	}
 
 	targetsArea.onchange = function(){
 		if(targetsArea.value == "nothing"){
 			positivitiesArea.options[1].style.display="none";
+
 		}else{
 			positivitiesArea.options[1].style.display="inline";
 		}
@@ -453,6 +457,17 @@ function init() {
 		}
 	}
 
+	// Combine first 3 colums to always have the same seleced options
+		// certaintyCases, targetCases, positivityCases
+		// take in id for each tabs options array, identify a change, append html to remove other tabs
+		//original selected and add it to the same value as in the other changed tab
+
+	// for(i = 0; i < targetCases; i++){
+	// 	targetCases[i].onchange = function(){
+
+	// 	}
+	// }
+	
 	
 	// Publish through ros every time 'submit' is pressed
 	jQuery("#human_sensor_button").unbind().click(function() { 
