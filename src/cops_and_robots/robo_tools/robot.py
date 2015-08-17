@@ -121,6 +121,7 @@ class Robot(iRobotCreate):
             pose = [0, 0, -np.pi/4]
             r = iRobotCreate.DIAMETER / 2
             n_sides = 4
+            pose = [0, 0, -np.pi/4]
             x = [r * np.cos(2 * np.pi * n / n_sides + pose[2]) + pose[0]
                  for n in range(n_sides)]
             y = [r * np.sin(2 * np.pi * n / n_sides + pose[2]) + pose[1]

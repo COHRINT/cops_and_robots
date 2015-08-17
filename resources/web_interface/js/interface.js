@@ -1,3 +1,8 @@
+$("#deckard-visual").load(function() {
+	console.log($(this).height($(this).contents().find("body").height()))
+    $(this).height( $(this).contents().find("body").height() );
+});
+
 /**
 * Set up primary elements to be manipulated by functions
 */
@@ -330,12 +335,8 @@ function checkSettings(){
  	var vicon = jQuery("#setting-source-vicon");
 	var gazebo= jQuery("#setting-source-gazebo");
 	var diffSettings = [vicon, gazebo];
-	// var vPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
-	// var vTopics = ["/deckard/camera/rgb/image_raw", "/pris/camera/rgb/image_raw", "/roy/camera/rgb/image_raw", "/zhora/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
-	// var gPorts =[":1234", ":1234", ":1234", ":1234", ":1234", ":1234", ":1234"];
-	// var gTopics = ["/deckard/camera/image_raw", "/pris/camera/image_raw", "/roy/camera/image_raw", "/zhora/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
 	var vPorts =[":1234", ":1234", ":1234", ":1234"];
-	var vTopics = ["/deckard/camera/rgb/image_raw", "/cam1/usb_cam/image_raw", "/cam2/usb_cam/image_raw", "/cam3/usb_cam/image_raw"];
+	var vTopics = ["/deckard/image", "/cam1/image", "/cam2/image", "/cam3/image"];
 	var gPorts =[":1234", ":1234", ":1234", ":1234"];
 	var gTopics = ["/deckard/camera/image_raw", "/security_camera1/camera/image_raw", "/security_camera2/camera/image_raw", "/security_camera3/camera/image_raw"]; 
 	var ports = [vPorts, gPorts];
@@ -426,11 +427,15 @@ function init() {
 		}else{
 			positivitiesObj.options[1].style.display="inline";
 		}
+
+		$("area_targets option:selected") = $("obj_targets option:selected");
+		$("mv_targets option:selected") = $("obj_targets option:selected");
 	}
 
 	targetsArea.onchange = function(){
 		if(targetsArea.value == "nothing"){
 			positivitiesArea.options[1].style.display="none";
+
 		}else{
 			positivitiesArea.options[1].style.display="inline";
 		}
@@ -452,6 +457,17 @@ function init() {
 		}
 	}
 
+	// Combine first 3 colums to always have the same seleced options
+		// certaintyCases, targetCases, positivityCases
+		// take in id for each tabs options array, identify a change, append html to remove other tabs
+		//original selected and add it to the same value as in the other changed tab
+
+	// for(i = 0; i < targetCases; i++){
+	// 	targetCases[i].onchange = function(){
+
+	// 	}
+	// }
+	
 	
 	// Publish through ros every time 'submit' is pressed
 	jQuery("#human_sensor_button").unbind().click(function() { 
@@ -646,7 +662,7 @@ jQuery('#robotQuestions').hover(function(){
     var bool = true;
     questionHovering(bool);
 	}, function(){
-		jQuery("div div.progress-bar").css("background-color", "#5BC0DE");		
+		jQuery("div div.progress-bar").css("background-color", "#A4ECFD");		
 	var bool = false;
 	questionHovering(bool);
 });

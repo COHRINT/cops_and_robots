@@ -11,9 +11,6 @@ xterm -e roslaunch vicon_bridge vicon.launch &
 # launch gazebo world
 roslaunch gazebo_ros plain_vicon_clue_world.launch &
 
-# Start gzweb
-xterm -e ./gzweb/start_gzweb.sh &
-
 # Set up device Camera's
 
 	# Security camera's
@@ -38,4 +35,8 @@ xterm -e ./gzweb/start_gzweb.sh &
 
 # To set up web interface
 	# launch web video server
-	xterm -e roslaunch web_video_server web_video_server.launch 
+	xterm -e roslaunch web_video_server web_video_server.launch &
+
+
+# Start gzweb
+bash /home/cohirnt/gzweb/start_gzweb.sh 
