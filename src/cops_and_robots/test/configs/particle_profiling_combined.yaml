@@ -1,0 +1,51 @@
+# YAML
+main:
+  logging_level: INFO  #['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+  numpy_print_precision: 2
+  use_ROS: False # True if any robot is in the real world
+  ROS_node_name: 'Python_Node'
+  max_run_time: 5  # in seconds, -1 for infinite
+  log_time: True
+
+cops:
+  Deckard:
+    pose: [0, 0, 90]  # [x(meters), y(meters), theta(degrees)]
+    robber_model: static  # ['static','clockwise','counterclockwise','random walk']
+    pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
+    goal_planner_cfg:
+      type_: particle  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
+    path_planner_cfg:
+        type_: 'a_star'  # ['direct', 'a_star'] 
+    camera_cfg:
+      max_view_dist: 1.0
+      min_view_dist: 0.3
+    map_cfg:
+      plot_robbers: True #True for all, False for none, or list of robbers to plot
+      map_name: fleming
+      combined_only: True
+
+robbers:
+  Roy:
+    pose_source: python  # ['python' or a ros topic string like '/roy/odom']
+    goal_planner_cfg:
+      type_: simple  # ['stationary', 'simple', 'trajectory']
+    path_planner_cfg:
+        type_: 'direct'  # ['direct', 'a_star'] 
+  Pris:
+    pose_source: python  # ['python' or a ros topic string like '/pris/odom']
+    goal_planner_cfg:
+      type_: trajectory  # ['stationary', 'simple', 'trajectory']
+    path_planner_cfg:
+        type_: 'direct'  # ['direct', 'a_star'] 
+  Zhora:
+    pose_source: python  # ['python' or a ros topic string like '/zhora/odom']
+    goal_planner_cfg:
+      type_: stationary  # ['stationary', 'simple', 'trajectory']
+    path_planner_cfg:
+        type_: 'direct'  # ['direct', 'a_star'] 
+
+human_interface:
+  measurement_types:
+    velocity: False
+    area: True
+    object: True

@@ -4,6 +4,7 @@
   Use the D pad while pressing and holding the left trigger button (5) to control.
 -->
 <launch>
+  <group ns="deckard">
   <!--  smooths inputs from cmd_vel_mux/input/teleop_raw to cmd_vel_mux/input/teleop -->
   <include file="$(find turtlebot_teleop)/launch/includes/velocity_smoother.launch.xml"/>
 
@@ -11,11 +12,11 @@
     <param name="scale_angular" value="1.5"/>
     <param name="scale_linear" value="0.5"/>
     <param name="axis_deadman" value="5" />
-    <remap from="turtlebot_teleop_joystick/cmd_vel" to="teleop_velocity_smoother/raw_cmd_vel"/>
+    <remap from="turtlebot_teleop_joystick/cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
   </node>
 
   <node pkg="joy" type="joy_node" name="joy_node">
-    <param name="/dev" value="/dev/input/js2" />
+    <param name="/dev" value="/dev/input/js0" />
   </node>
-
+  </group>
 </launch>

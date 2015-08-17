@@ -19,8 +19,15 @@ __status__ = "Development"
 
 import logging
 
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
+import itertools
+
 from cops_and_robots.map_tools.layer import Layer
 
+# <>TODO: Join in as probability layer sub class
 
 class ParticleLayer(Layer):
     """Visually represents a collection of particles.
@@ -39,20 +46,17 @@ class ParticleLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, particle_size=200, colorbar_visible=False,
-                 n_particles=2000, **kwargs):
-        super(ParticleLayer, self).__init__(**kwargs)
+    def __init__(self, filter_, particle_size=200,
+                 colorbar_visible=False, alpha=0.3,
+                 **kwargs):
+        super(ParticleLayer, self).__init__(alpha=alpha, **kwargs)
+        self.filter = filter_
         self.particle_size = particle_size
         self.colorbar_visible = colorbar_visible
-
-        # <>TODO: grab from particle filter instead
-        self.n_particles = n_particles
-
         self.line_weight = 0
-        self.alpha = 0.3
         self.color_gain = 400
 
-    def plot(self, robber_names, fusion_engine, **kwargs):
+    def plot(self, particles=None, **kwargs):
         """Plot the particles as a scatter plot.
 
         Parameters
@@ -70,21 +74,76 @@ class ParticleLayer(Layer):
             The scatter plot data.
 
         """
-        for name in robber_names:
-            if fusion_engine.type == 'discrete':
-                particle_filter = fusion_engine.filters[name]
-            else:
-                raise ValueError('Fusion engine type must be discrete.')
-            p = self.ax.scatter(particle_filter.particles[:, 0],
-                                particle_filter.particles[:, 1],
-                                c=particle_filter.particles[:, 2],
-                                cmap=self.cmap,
-                                s=self.particle_size,
-                                lw=self.line_weight,
-                                alpha=self.alpha,
-                                marker='.',
-                                vmin=0,
-                                vmax=1,
-                                **kwargs
-                                )
-        return p
+        if particles is None:
+            particles = self.filter.particles
+
+        if particles == 'Finished':
+            print ' also done'
+
+        self.scatter = self.ax.scatter(particles[:, 1],
+                                       particles[:, 2],
+                                       c=particles[:, 0] * self.color_gain,
+                                       cmap=self.cmap,
+                                       s=self.particle_size,
+                                       lw=self.line_weight,
+                                       alpha=self.alpha,
+                                       marker='.',
+                                       vmin=0,
+                                       vmax=1,
+                                       **kwargs
+                                       )
+        # <>TODO: Possible issue with scatter setting axis limits
+
+    def update(self, i=0):
+        """Remove previous scatter and replot new scatter
+        """
+        # Test stub for the call from __main__
+        if hasattr(self, 'test_particles'):
+            self.filter.particles = next(self.test_particles)
+
+        # Remove previous scatter plot and replot
+        self.remove()
+        self.plot()
+
+    def remove(self):
+        if hasattr(self, 'scatter'):
+            self.scatter.remove()
+            del self.scatter
+
+def main():
+    x = np.random.uniform(0, 10, 100)
+    y = np.random.uniform(0, 10, 100)
+    pts = np.column_stack((x, y))
+    probs = np.ones(100) / 100
+    particles = np.column_stack((probs, pts))
+    filter_ = type('test', (object,), {'particles': particles})()
+
+    pal = ParticleLayer(filter_, bounds=[0, 0, 10, 10])
+    pal.color_gain = 1
+
+    test_particles = {}
+    for i in range(10):
+        x = np.random.uniform(0, 10, 100)
+        y = np.random.uniform(0, 10, 100)
+        pts = np.column_stack((x, y))
+        probs = np.random.uniform(0, 1, 100)
+        # probs = np.ones(100) * .5
+        particles = np.column_stack((probs, pts))
+        test_particles['{}'.format(i)] = particles
+    for i in range(10):
+        i = i + 10
+        test_particles['{}'.format(i)] = np.column_stack(([],[],[]))
+
+    pal.test_particles = itertools.cycle(test_particles.values())
+
+    ani = animation.FuncAnimation(pal.fig, pal.update,
+        frames=xrange(100),
+        interval=100,
+        repeat=True,
+        blit=False)
+
+    plt.show()
+
+
+if __name__ == '__main__':
+    main()

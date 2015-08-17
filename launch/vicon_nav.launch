@@ -1,5 +1,6 @@
 <launch>
   <arg name="custom_param_file" default="$(find turtlebot_navigation)/param/dummy.yaml"/>
+  <include file="$(find turtlebot_bringup)/launch/minimal.launch" />
   <include file="$(find turtlebot_bringup)/launch/3dsensor.launch">
     <arg name="rgb_processing" value="false" />
     <arg name="depth_registration" value="false" />
@@ -11,17 +12,10 @@
   </include>
 
   <!-- Map server -->
-  <arg name="map_file" default="$(env TURTLEBOT_MAP_FILE)"/>
+  <arg name="map_file" default="/home/odroid/cops_and_robots/resources/maps/OccupancyGrid/lowResolutionMap.yaml"/>
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
-
-  <!-- Fake Localization -->
-  <node name="fake_localization" pkg="fake_localization" type="fake_localization">
-    <param name="base_frame_id" value="base_footprint"/>
-    <remap from="base_pose_ground_truth" to="odom"/>
-  </node>
 
   <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
     <arg name="custom_param_file" value="$(arg custom_param_file)"/>
   </include>
-
 </launch>

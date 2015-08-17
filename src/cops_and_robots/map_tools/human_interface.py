@@ -48,12 +48,20 @@ class HumanInterface(object):
         The type of human interface to generate.
 
     """
-    types = ['radio_buttons', 'textbox']
+    input_types = ['radio_buttons', 'textbox']
+    measurement_types = {'velocity': False,
+                         'area': True,
+                         'object': True
+                         }
 
-    def __init__(self, fig, human_sensor=None, type_='radio_buttons'):
+    def __init__(self, fig, human_sensor=None, input_type='radio_buttons',
+                 measurement_types=None):
+        if measurement_types is None:
+            measurement_types = HumanInterface.measurement_types
+
         # General interface parameters
         self.fig = fig
-        self.type = type_
+        self.input_type = input_type
         self.utterance = ''
         self.radio = {}
 
@@ -70,6 +78,7 @@ class HumanInterface(object):
             self.relations = human_sensor.relations
             self.movement_types = human_sensor.movement_types
             self.movement_qualities = human_sensor.movement_qualities
+            logging.debug('using human_sensor values')
         else:
             self.certainties = ['think', 'know']
             self.targets = ['nothing',
@@ -105,6 +114,11 @@ class HumanInterface(object):
             self.movement_qualities = ['slowly', 'moderately', 'quickly']
         self.groundings['object'].sort()
         self.groundings['area'].sort()
+        for i, object_ in enumerate(self.groundings['object']):
+            if object_ not in ['Zhora', 'Pris', 'Leon', 'Deckard']:
+                self.groundings['object'][i] = 'the ' + object_.lower()
+        for i, area_name in enumerate(self.groundings['area']):
+            self.groundings['area'][i] = 'the ' + area_name.lower()
         self.relations['object'].sort()
         self.relations['area'].sort()
         self.targets[2:] = sorted(self.targets[2:])
@@ -122,10 +136,10 @@ class HumanInterface(object):
 
         self.fig.subplots_adjust(bottom=0.32)
         self.set_helpers()
-        if self.type == 'radio_buttons':
+        if self.input_type == 'radio_buttons':
             self.current_dialog = 'position (object)'
             self.make_dialog()
-        elif self.type == 'textbox':
+        elif self.input_type == 'textbox':
             self.make_textbox()
 
     def make_dialog(self):
@@ -178,7 +192,13 @@ class HumanInterface(object):
         min_y = 0.18
         self.fig.text(min_x, min_y, 'I')
 
+        self.make_base_buttons()
+
+    def make_base_buttons(self):
         # Certainty radio buttons
+        min_x = 0.05
+        min_y = 0.18
+
         min_x += 0.01
         w, h = (0.09, 0.18)
         rax = plt.axes([min_x, min_y + 0.07 - h, w, h],
@@ -267,8 +287,8 @@ class HumanInterface(object):
 
     def remove_dialog(self):
         for radio_name, radio in self.radio.iteritems():
-            if radio_name not in ['certainty', 'target', 'positivity']:
-                self.fig.delaxes(radio.ax)
+            # if radio_name not in ['certainty', 'target', 'positivity']:
+            self.fig.delaxes(radio.ax)
         remove_names = ['relation', 'grounding', 'movement_type',
                         'movement_quality']
         for remove_name in remove_names:
@@ -328,6 +348,7 @@ class HumanInterface(object):
             if self.current_dialog != 'position (object)':
                 self.current_dialog = 'position (object)'
                 self.remove_dialog()
+                self.make_base_buttons()
                 self.make_position_dialog('object')
                 self.set_default_values('object')
                 self.fig.canvas.draw()
@@ -342,6 +363,7 @@ class HumanInterface(object):
             if self.current_dialog != 'position (area)':
                 self.current_dialog = 'position (area)'
                 self.remove_dialog()
+                self.make_base_buttons()
                 self.make_position_dialog('area')
                 self.set_default_values('area')
                 self.fig.canvas.draw()
@@ -356,6 +378,7 @@ class HumanInterface(object):
             if self.current_dialog != 'movement':
                 self.current_dialog = 'movement'
                 self.remove_dialog()
+                self.make_base_buttons()
                 self.make_movement_dialog()
                 self.set_default_values()
                 self.fig.canvas.draw()

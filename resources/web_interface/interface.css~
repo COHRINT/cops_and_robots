@@ -1,0 +1,114 @@
+.code-select{
+width:inherit;
+vertical-align:-290%;
+}
+
+.tooltip-inner {
+white-space:pre-wrap;
+}
+
+.video-container {
+    position: relative;
+    padding-bottom: 75%;
+    padding-top: 35px;
+    height: 0;
+    overflow: hidden;
+}
+
+.video-container iframe {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+}
+
+#visual div .nav-tabs{
+    padding-bottom: 15px;
+}
+
+#deckard-visual {
+    padding-top: 35px;
+    transform-origin: left;
+    transform: scale(1.73, 1.73);
+}
+
+#pris-visual {
+    padding-top: 35px;
+    transform-origin: left;
+    transform: scale(1.73, 1.73);
+}
+
+#roy-visual {
+    padding-top: 35px;
+    transform-origin: left;
+    transform: scale(1.73, 1.73);
+}
+
+#zhora-visual {
+    padding-top: 35px;
+    transform-origin: left;
+    transform: scale(1.73, 1.73);
+}
+
+#camera1-visual {
+    padding-top: 35px;
+    transform-origin: left;
+    transform:scale(1.73, 1.73);
+}
+
+#camera2-visual {
+    padding-top: 35px;
+    transform-origin: left;
+    transform:scale(1.73, 1.73);
+}
+
+#camera3-visual {
+    padding-top: 35px;
+    transform-origin: left;
+    transform: scale(1.73, 1.73);
+}
+
+div.questionContainer {
+    height: 34px;
+    background-color: white;
+    box-shadow: none;
+    margin-bottom: 1px;
+}
+
+div.progress-bar {
+    height: 34px;
+    opacity: 0.7;
+}
+
+#robotQuestions div div.btn-group {
+    position: absolute;
+    font-size: 14px;
+    right: 0px;
+
+}
+
+#robotQuestions div div button.btn {
+    position: relative;
+    display: inline;
+}
+
+.questionText {
+    position: absolute;
+    padding-top: 7px;
+    font-size: 14px;
+    text-align: center;
+    color: black;
+}
+#robo_updates div div .nav {
+    padding-top: 0px;
+    margin-bottom: 8px;
+}
+
+div #Position_obj.tab-pane{
+    height:155px;
+}
+
+#Position_obj div.bloc{
+    height:155px;
+}

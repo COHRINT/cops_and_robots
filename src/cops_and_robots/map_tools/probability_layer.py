@@ -21,10 +21,12 @@ import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from scipy import stats
-from pylab import *
 
 from cops_and_robots.map_tools.layer import Layer
+from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+import itertools
 
 
 class ProbabilityLayer(Layer):
@@ -34,44 +36,113 @@ class ProbabilityLayer(Layer):
 
     Parameters
     ----------
-    cell_size : float, optional
+    grid_size : float, optional
         The side length for each square cell in discretized probability map's
         cells. Defaults to 0.2.
     **kwargs
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, cell_size=0.2, **kwargs):
-        super(ProbabilityLayer, self).__init__(**kwargs)
-        self.cell_size = cell_size  # in [m/cell]
+    def __init__(self, filter_, grid_size=0.2, z_levels=100, alpha=0.6,
+                 colorbar_visible=False, show_ellipses=False,
+                **kwargs):
+        super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)
+        self.filter = filter_
+        self.grid_size = grid_size  # in [m/cell]
+        self.z_levels = z_levels
         self.colorbar_visible = colorbar_visible
 
-        xlin = np.linspace(bounds[0], bounds[2], 100)
-        ylin = np.linspace(bounds[1], bounds[3], 100)
-        self.X, self.Y = np.meshgrid(xlin, ylin)
+        self.X, self.Y = np.mgrid[self.bounds[0]:self.bounds[2]:self.grid_size,
+                                  self.bounds[1]:self.bounds[3]:self.grid_size]
         self.pos = np.empty(self.X.shape + (2,))
         self.pos[:, :, 0] = self.X
         self.pos[:, :, 1] = self.Y
+        self.show_ellipses = show_ellipses
 
-        self.MAP = [0, 0]  # [m] point of maximum a posteriori
+        # if colorbar_visible:
+        # generate new axis for colorbar
 
-        self.prob = stats.multivariate_normal([0, 0], [[10, 0], [0, 10]])
-
-    def plot(self, gauss_sum, **kwargs):
+    def plot(self, probability=None, **kwargs):
         """Plot the pseudo colormesh representation of probabilty.
 
         Parameters
         ----------
-        gauss_sum : GaussSum
-            A Gaussian sum distribution.
+        probability : [multiple]
+            Any probability with a 2D pdf.
 
         Returns
         -------
         QuadMesh
             The scatter pseudo colormesh data.
         """
-        p = plt.pcolormesh(self.X, self.Y, gauss_sum.prob.pdf(self.pos),
-                           cmap=self.cmap, alpha=self.alpha, **kwargs)
-        if colorbar_visible:
-            cb = plt.colorbar(p)
-        return p, cb
+        if probability is None:
+            probability = self.filter.probability
+
+        levels = np.linspace(0, np.max(probability.pdf(self.pos)),
+                             self.z_levels)
+        self.contourf = self.ax.contourf(self.X, self.Y, probability.pdf(self.pos),
+                           cmap=self.cmap, alpha=self.alpha, levels=levels, antialiased=True,
+                           **kwargs)
+
+        if self.show_ellipses:
+            if hasattr(self.filter.probability, 'camera_viewcone'):
+                poly = self.filter.probability.camera_viewcone
+            else:
+                poly = None
+            self.ellipse_patches = probability.plot_ellipses(ax=self.ax,
+                                                             poly=poly)
+        # if colorbar_visible:
+        #     self.cbar = plt.colorbar(p)
+
+    def update(self, i=0):
+        """Remove previous contour and replot new contour.
+        """
+        logging.debug('Probability Layer update {}'.format(i))
+        # Test stub for the call from __main__
+        if hasattr(self, 'test_probability'):
+            self.filter.probability = next(self.test_probability)
+
+        # Try to remove previous contourf and replot
+        self.remove()
+        self.plot()
+
+        # if colorbar_visible:
+        #    return self.contourf, self.cbar
+
+        return self.contourf
+
+    def remove(self):
+        if hasattr(self, 'contourf'):
+            for collection in self.contourf.collections:
+                collection.remove()
+            del self.contourf
+
+        if hasattr(self, 'ellipse_patches'):
+            for patch in self.ellipse_patches:
+                patch.remove()
+            del self.ellipse_patches
+
+if __name__ == '__main__':
+    d = GaussianMixture(1,[0, 0],[[1,0],[0,1]])
+    filter_ = type('test', (object,), {'probability': d})()
+    pl = ProbabilityLayer(d, z_levels=50, alpha=1)
+
+    test_probability = []
+    test_probability.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[1, 1],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[0, 2],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[-1, 1],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[-2, 0],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[-1, -1],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[0, -2],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[1, -1],[[1,0],[0,1]]))
+    test_probability.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))
+    pl.test_probability = itertools.cycle(test_probability)
+
+    ani = animation.FuncAnimation(pl.fig, pl.update,
+        frames=xrange(100),
+        interval=50,
+        repeat=True,
+        blit=False)
+
+    plt.show()
