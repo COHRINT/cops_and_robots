@@ -316,6 +316,12 @@ class Human(Sensor):
                          .format(self.grounding.name))
             self.grounding.define_relations()
 
+        if self.grounding.name.lower() == 'deckard':
+            if self.relation == 'Right':
+                self.relation = 'Left'
+            elif self.relation == 'Left':
+                self.relation = 'Right'
+
         # Position update
         label = self.relation
         if self.target_name == 'nothing' and self.positivity == 'is not':
