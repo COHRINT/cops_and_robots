@@ -26,20 +26,16 @@ import logging
 import math
 import numpy as np
 
-from matplotlib.colors import cnames
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
-from descartes.patch import PolygonPatch
 
 from cops_and_robots.helpers.config import load_config
 from cops_and_robots.map_tools.map_elements import MapObject, MapArea
 from cops_and_robots.map_tools.shape_layer import ShapeLayer
-from cops_and_robots.map_tools.occupancy_layer import OccupancyLayer
 from cops_and_robots.map_tools.feasible_layer import FeasibleLayer
 from cops_and_robots.map_tools.probability_layer import ProbabilityLayer
 from cops_and_robots.map_tools.particle_layer import ParticleLayer
 from cops_and_robots.map_tools.human_interface import HumanInterface
-from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 
 
 class Map(object):
@@ -53,11 +49,19 @@ class Map(object):
         The name of the map.
     bounds : array_like, optional
         Map boundaries as [xmin,ymin,xmax,ymax] in [m].
+    plot_robbers : list or bool
+        A list of robbers to plot, True for all, False for None.
+    map_display_type: {'particle', 'probability'}
+        Defines which layer to use.
     combined_only : bool, optional
         Whether to show only the combined plot (as opposed to individual plots
         for each robber, plus one combined plot). Defaults to `True`.
-
+    publish_to_ROS: bool
+        Whether to publish an image topic of the map to ROS.
     """
+    # TODO: @Config Change plot_robbers to just be a string
+    # TODO: @Refactor Seperate map and interface
+
     def __init__(self, map_name='fleming', bounds=[-5, -5, 5, 5],
                  plot_robbers=True, map_display_type='particle',
                  combined_only=True, publish_to_ROS=False):
@@ -71,7 +75,7 @@ class Map(object):
         if self.map_name == 'fleming':
             self.bounds = [-9.5, -3.33, 4, 3.68]
         else:
-            self.bounds = bounds  # [x_min,y_min,x_max,y_max] in [m] useful area
+            self.bounds = bounds  # [x_min,y_min,x_max,y_max] in [m]
 
         self.plot_robbers = plot_robbers
         self.outer_bounds = [i * 1.1 for i in self.bounds]
@@ -89,8 +93,10 @@ class Map(object):
             from std_msgs.msg import String
             self.probability_target = 'Roy'
             self.bridge = CvBridge()
-            self.image_pub = rospy.Publisher("python_probability_map", Image, queue_size=10)
-            rospy.Subscriber("robot_probability_map", String, self.change_published_ax)
+            self.image_pub = rospy.Publisher("python_probability_map", Image,
+                                             queue_size=10)
+            rospy.Subscriber("robot_probability_map", String,
+                             self.change_published_ax)
 
         # Define map elements
         self.objects = {}  # For dynamic/static map objects (not robbers/cops)
@@ -119,39 +125,24 @@ class Map(object):
             pass
 
     def add_human_sensor(self, human_sensor):
-        # Add human sensor for the human interface
         self.human_sensor = human_sensor
 
     def add_obj(self, map_obj):
-        """Append a static ``MapObj`` to the map.
-
-        Parameters
-        ----------
-        map_obj_name : MapObj
-            The object to be added.
-        """
         self.objects[map_obj.name] = map_obj
         self.static_elements.append(map_obj)
         self.feasible_layer.define_feasible_regions(self.static_elements)
 
     def rem_obj(self, map_obj):
-        """Remove a ``MapObj`` from the Map.
-
-        map_obj : map_obj
-            Map object to remove.
-        """
         self.static_elements.remove(map_obj)
         self.feasible_layer.define_feasible_regions(self.static_elements)
         del self.objects[map_obj.name]
 
     def add_robot(self, map_obj):
-        """Add a dynamic robot to the map
-        """
         # <>TODO: Modify so it can have relations
         self.dynamic_elements.append(map_obj)
 
     def rem_robot(self, map_obj):
-        self.dynamic_elements.remve(map_obj)
+        self.dynamic_elements.remove(map_obj)
 
     def add_area(self, area):
         self.areas[area.name] = area
@@ -162,30 +153,15 @@ class Map(object):
         del self.areas[area.name]
 
     def add_cop(self, cop_obj):
-        """Add a dynamic ``Robot`` cop from the Map
-
-        cop_obj : Cop
-            The full cop object.
-        """
         self.dynamic_elements.append(cop_obj)
         self.cops[cop_obj.name] = cop_obj
 
     def rem_cop(self, cop_obj):
-        """Remove a dynamic ``Robot`` cop
-
-        cop_obj :
-            Cop
-        """
         self.dynamic_elements.remove(cop_obj)
         del self.cops[cop_obj.name]
 
     def add_robber(self, robber):
         # <>TODO: Make generic imaginary robbers
-        """Add a dynamic ``Robot`` robber from the Map.
-
-        robber_obj : Robber
-            The full robber object.
-        """
         if self.plot_robbers is True:
             robber.visible = True
         elif self.plot_robbers is False:
@@ -197,11 +173,6 @@ class Map(object):
         self.robbers[robber.name] = robber
 
     def rem_robber(self, robber):
-        """Remove a dynamic ``Robot`` robber.
-
-        robber : obj
-            The robber.
-        """
         robber.patch.remove()
         self.dynamic_elements.remove(robber)
         try:
@@ -217,9 +188,6 @@ class Map(object):
         del self.robbers[robber.name]
 
     def found_robber(self, robber):
-        """Make the robber visible, remove it's particles.
-
-        """
         robber.visible = True
         robber.color = 'darkorange'
         try:
@@ -248,9 +216,6 @@ class Map(object):
         del self.probability_layers[name]
 
     def plot(self):
-        """Plot the static map.
-
-        """
         # <>TODO: Needs rework
         fig = plt.figure(1, figsize=(12, 10))
         ax = fig.add_subplot(111)
@@ -348,8 +313,6 @@ class Map(object):
         self.probability_target = msg.data
 
     def update(self, i=0):
-        """
-        """
         # self.shape_layer.update(i=i)
         for ax_name, ax in self.axes.iteritems():
             try:
@@ -368,19 +331,29 @@ class Map(object):
                 import cv2
                 from cv_bridge import CvBridgeError
 
-                extent = ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
-                self.fig.savefig(ax_name + '.png', bbox_inches=extent.expanded(1.1, 1.2))
+                extent = ax.get_window_extent().transformed(
+                    self.fig.dpi_scale_trans.inverted())
+                self.fig.savefig(ax_name + '.png',
+                                 bbox_inches=extent.expanded(1.1, 1.2))
                 img = cv2.imread(ax_name + '.png', 1)
                 try:
-                    self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+                    self.image_pub.publish(
+                        self.bridge.cv2_to_imgmsg(img, "bgr8"))
                 except CvBridgeError, e:
                     print e
+
 
 def set_up_fleming(map_):
     """Set up a map as the generic Fleming space configuration.
 
+    Parameters
+    ----------
+    map_ : Map 
+        The map to add elements.
+
     """
     # Make vicon field space object
+    # <>TODO: Remove field object?
     field_w = 7.5  # [m] field width
     field = MapArea('Field', [field_w, field_w], has_relations=False)
 
@@ -407,11 +380,10 @@ def set_up_fleming(map_):
                       [3*l/2 + w/2, 1.4, 0],
                       [0, 1.4 + l/2, 1],
                       [0, 1.4 + 3*l/2, 1],
-                     ])
+                      ])
 
     poses = poses * np.array([1, 1, 90])
 
-    n_walls = poses.shape[0]
     walls = []
     for i in range(poses.shape[0]):
         name = 'Wall ' + str(i)
@@ -423,10 +395,10 @@ def set_up_fleming(map_):
     # Make rectangular objects (desk, bookcase, etc)
     labels = ['Bookcase', 'Desk', 'Chair', 'Filing Cabinet',
               'Dining Table', 'Mars Poster', 'Cassini Poster',
-              'Fridge', 'Checkers Table','Fern']
+              'Fridge', 'Checkers Table', 'Fern']
     colors = ['sandybrown', 'sandybrown', 'brown', 'black',
               'brown', 'bisque', 'black',
-              'black','sandybrown','sage']
+              'black', 'sandybrown', 'sage']
     poses = np.array([[0, -1.2, 270],  # Bookcase
                       [-5.5, -2, 0],  # Desk
                       [3, -2, 270],  # Chair
@@ -437,7 +409,7 @@ def set_up_fleming(map_):
                       [-9.1, 3.3, 315],  # Fridge
                       [2.04, 2.66, 270],  # Checkers Table
                       [-2.475, 1.06, 270],  # Fern
-                     ])
+                      ])
     sizes = np.array([[0.18, 0.38],  # Bookcase
                       [0.61, 0.99],  # Desk
                       [0.46, 0.41],  # Chair
@@ -448,7 +420,7 @@ def set_up_fleming(map_):
                       [0.46, 0.46],  # Fridge
                       [0.5, 0.5],  # Checkers Table
                       [0.5, 0.5],  # Fern
-                     ])
+                      ])
 
     landmarks = []
     for i, pose in enumerate(poses):
@@ -467,19 +439,19 @@ def set_up_fleming(map_):
     # Create areas
     labels = ['Study', 'Library', 'Kitchen', 'Billiard Room', 'Hallway',
               'Dining Room']
-    colors = ['aquamarine','lightcoral', 'goldenrod', 'sage','cornflowerblue',
-              'orchid']
+    colors = ['aquamarine', 'lightcoral', 'goldenrod', 'sage',
+              'cornflowerblue', 'orchid']
     points = np.array([[[-7.0, -3.33], [-7.0, -1], [-2, -1], [-2, -3.33]],
-                       [[-2, -3.33], [-2, -1],[4.0, -1], [4.0, -3.33]],
-                       [[-9.5, 1.4], [-9.5, 3.68],[0, 3.68], [0, 1.4]],
-                       [[0, 1.4], [0, 3.68],[4, 3.68], [4, 1.4]],
-                       [[-9.5, -1], [-9.5, 1.4],[4, 1.4], [4, -1]],
-                       [[-9.5, -3.33], [-9.5, -1],[-7, -1], [-7, -3.33]],
-                      ])
+                       [[-2, -3.33], [-2, -1], [4.0, -1], [4.0, -3.33]],
+                       [[-9.5, 1.4], [-9.5, 3.68], [0, 3.68], [0, 1.4]],
+                       [[0, 1.4], [0, 3.68], [4, 3.68], [4, 1.4]],
+                       [[-9.5, -1], [-9.5, 1.4], [4, 1.4], [4, -1]],
+                       [[-9.5, -3.33], [-9.5, -1], [-7, -1], [-7, -3.33]],
+                       ])
 
     for i, pts in enumerate(points):
-        centroid = [pts[0,0] + np.abs(pts[2,0] - pts[0,0]) / 2,
-                    pts[0,1] + np.abs(pts[1,1] - pts[0,1]) / 2, 0 ]
+        centroid = [pts[0, 0] + np.abs(pts[2, 0] - pts[0, 0]) / 2,
+                    pts[0, 1] + np.abs(pts[1, 1] - pts[0, 1]) / 2, 0]
         area = MapArea(name=labels[i], shape_pts=pts, pose=centroid,
                        color_str=colors[i], map_bounds=map_.bounds)
         map_.add_area(area)

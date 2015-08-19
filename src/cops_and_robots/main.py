@@ -60,6 +60,7 @@ def main(config_file=None):
         distractors[distractor] = Distractor(distractor, **kwargs)
 
     # <>TODO: Replace with message passing
+    # <>TODO: Or give as required attribute at cop initialization (check with config)
     # Give cops references to the robber's actual poses
     for cop in cops.values():
         for robber_name, robber in robbers.iteritems():

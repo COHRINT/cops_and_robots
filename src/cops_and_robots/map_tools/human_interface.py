@@ -17,10 +17,12 @@ import logging
 
 from matplotlib.widgets import RadioButtons, Button
 
-# <>TEST STUB:
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+
+
+# <>TODO: @Refactor Create generic (experiment independent) interface?
 
 
 class HumanInterface(object):
@@ -32,21 +34,12 @@ class HumanInterface(object):
     ----------
     fig : figure handle
         The figure on which to generate the human interface.
-    targets : list of str, optional
-        The list of all robbers. Defaults to ['Roy','Pris'].
-    cop_names : list of str, optional
-        The list of all cops. Defaults to ['Deckard'].
-    groundings : dict of object and area lists
-        A dict containing all grounding elements for human sensor information
-        (i.e., in the phrase 'Roy is next to the bookshelf', `the bookshelf`
-        is the grounding). Defaults to
-        {'area' :
-         ['study', 'billiard room', 'hallway', 'dining room', 'kitchen'],
-         'object' : ['Deckard', 'bookshelf', 'chair', 'desk', 'table']
-         }
-    type_ : {'radio_buttons','textbox'}
+    human_sensor : human sensor object
+        The object that handles parsing and use of human sensor updates.
+    input_type : {'radio_buttons','textbox'}
         The type of human interface to generate.
-
+    measurement_types : dict
+        Dictionary of booleans relating to specific measurement types.
     """
     input_types = ['radio_buttons', 'textbox']
     measurement_types = {'velocity': False,
@@ -404,11 +397,11 @@ class HumanInterface(object):
                 custom_content = ''
 
             self.utterance = ' '.join(['I',
-                                             self.certainty,
-                                             self.target,
-                                             self.positivity,
-                                             custom_content
-                                             ]) + '.'
+                                       self.certainty,
+                                       self.target,
+                                       self.positivity,
+                                       custom_content
+                                       ]) + '.'
             logging.info('Human says: {}'.format(self.utterance))
 
             # Send result to human sensor

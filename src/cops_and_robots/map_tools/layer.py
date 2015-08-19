@@ -16,8 +16,9 @@ __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
 import logging
-
 import matplotlib.pyplot as plt
+
+# TODO: @Refactor Is this necessary? Especially the self.target
 
 
 class Layer(object):
