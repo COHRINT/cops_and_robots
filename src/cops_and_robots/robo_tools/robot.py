@@ -156,6 +156,7 @@ class Robot(iRobotCreate):
             `None` if the robot does not generate an animation packet, or a
             tuple of all animation parameters otherwise.
         """
+        # <>TODO: @Matt Figure out how to move this back to pose class.
         if self.pose_source == 'tf':
             self.pose2D.tf_update()
 

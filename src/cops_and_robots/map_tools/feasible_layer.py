@@ -6,15 +6,9 @@ regions. Point regions are simply all points not contained within
 solid physical objects, whereas pose regions are all locations to
 which a robot can reach without intersecting with a physical object.
 
-Note
-----
-    Currently, the feasible layer uses the shape layer to generate
-    the ideal feasible regions. However, a more realistic approach
-    would use the occupancy layer. This will likely be the approach
-    taken in future versions.
-
-    The feasible layer is the same for all robots. This is
-    not realistic, and will likely change in future versions.
+Notes
+-----
+Only handles static map elements, not dynamic elements.
 
 """
 __author__ = "Nick Sweet"
@@ -64,32 +58,39 @@ class FeasibleLayer(Layer):
         # self.define_feasible_regions()
 
     def define_feasible_regions(self, static_elements):
-        """Generate the feasible regions from a given shape layer.
+        """Generate the feasible regions from a dictionary of static map elements.
 
         Parameters
         ----------
-        shape_layer : ShapeLayer, optional
-            The shape layer from which to generate the feasible regions. If
-            no layer is provided, the entire map is deemed feasible.
+        static_elements : dict
+            A dictionary of map elements
         """
+        # TODO: feasible space should depend on map bounds, not layer bounds
         feasible_space = box(*self.bounds)
         self.point_region = feasible_space
         self.pose_region = feasible_space.buffer(-self.max_robot_radius)
 
         for element in static_elements:
+            # Ignore MapAreas
             if isinstance(element, MapObject):
                 self.point_region = self.point_region.difference(element.shape)
 
                 buffered_shape = element.shape.buffer(self.max_robot_radius)
                 self.pose_region = self.pose_region.difference(buffered_shape)
 
-    def plot(self, type_="pose", ax=None, alpha=0.5, plot_relations=False, **kwargs):
+    def plot(self, type_="pose", ax=None, alpha=0.5, **kwargs):
         """Plot either the pose or point feasible regions.
 
         Parameters
         ----------
         type_ : {'pose','point'}
             The type of feasible region to plot.
+        ax : figure axis
+            The axis to plot the feasible regoin on.
+        alpha : int
+            Feasible region patch transparency
+        **kwargs
+            Arguements passed to PolygonPatch
         """
         if type_ == "pose":
             p = self.pose_region

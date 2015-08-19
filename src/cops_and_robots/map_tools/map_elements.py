@@ -34,6 +34,8 @@ from cops_and_robots.fusion.softmax import (binary_range_model,
                                             range_model,
                                             intrinsic_space_model)
 
+# <>TODO: Add custom softmax shapes different from map shape
+
 
 class MapElement(object):
     """Generate an element based on a geometric shape, plus spatial relations.
@@ -76,7 +78,7 @@ class MapElement(object):
 
     """
     def __init__(self, name, shape_pts, pose=[0, 0, 0], visible=True,
-                 show_name=False, has_relations=False, plot_relations=False,
+                 has_relations=False, plot_relations=False,
                  blocks_camera=True, centroid_at_origin=True, map_bounds=None,
                  space_resolution=0.1, color_str='darkblue', alpha=0.5):
         # Define basic MapElement properties
@@ -265,7 +267,7 @@ class MapObject(MapElement):
         else:
             container_poly = Polygon(self.container_area.shape)
 
-        #If not rectangular, approx. with rectangular
+        # If not rectangular, approx. with rectangular
         shape = self.shape
 
         self.relations = binary_intrinsic_space_model(shape,
