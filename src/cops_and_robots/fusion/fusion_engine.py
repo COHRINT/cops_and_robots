@@ -31,7 +31,7 @@ import numpy as np
 from cops_and_robots.fusion.particle_filter import ParticleFilter
 from cops_and_robots.fusion.gauss_sum_filter import \
     GaussSumFilter
-from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+from cohrint_core.fusion_tools.gaussian_mixture import GaussianMixture
 
 
 class FusionEngine(object):

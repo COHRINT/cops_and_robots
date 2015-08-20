@@ -35,10 +35,10 @@ import numpy as np
 
 from shapely.geometry import Point
 
-from cops_and_robots.fusion.sensor import Sensor
-from cops_and_robots.fusion.softmax import Softmax, speed_model, binary_speed_model
-from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
-from cops_and_robots.fusion.variational_bayes import VariationalBayes
+from cohrint_core.fusion_tools.sensor import Sensor
+from cohrint_core.fusion_tools.softmax import Softmax, speed_model, binary_speed_model
+from cohrint_core.fusion_tools.gaussian_mixture import GaussianMixture
+from cohrint_core.fusion_tools.variational_bayes import VariationalBayes
 
 
 class Human(Sensor):

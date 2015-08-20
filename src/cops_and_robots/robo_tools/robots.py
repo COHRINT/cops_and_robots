@@ -1,13 +1,9 @@
 #!/usr/bin/env python
-"""Provides some common functionality for cop robots.
+"""Provides functionality for robots
 
-Much of a cop's functionality is defined by the ``robot`` module, but
-this module provides cops with the tools it uses to hunt the robbers,
-such as:
-    * sensors (both human and camera) to collect environment information;
-    * a fusion_engine (either particle or gaussian mixture) to make sense
-      of the environment information;
-    * animation to display its understanding of the world to the human.
+Each robot has its own class, mission_planner, and goal_planner.
+Basic robot functionality is provided by the robot class from the
+cohrint_core.robot_tools.robot module.
 
 """
 __author__ = "Nick Sweet"
@@ -20,18 +16,16 @@ __email__ = "nick.sweet@colorado.edu"
 __status__ = "Development"
 
 import logging
-import numpy as np
 
 from shapely.geometry import Point
 
-from cops_and_robots.robo_tools.robot import Robot, ImaginaryRobot
-from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
-from cops_and_robots.robo_tools.planner import MissionPlanner
+from cohrint_core.robo_tools.robot import Robot, ImaginaryRobot
+from cohrint_core.robo_tools.planner import MissionPlanner, GoalPlanner
 from cops_and_robots.fusion.fusion_engine import FusionEngine
 from cops_and_robots.fusion.camera import Camera
 from cops_and_robots.fusion.human import Human
 from cops_and_robots.fusion.question import Questioner
-from cops_and_robots.map_tools.map_elements import MapObject
+from cohrint_core.map_tools.map_elements import MapObject
 
 
 class Cop(Robot):
@@ -173,7 +167,8 @@ class Cop(Robot):
         """
 
         # Robot  MapObject
-        shape_pts = Point([0, 0, 0]).buffer(iRobotCreate.DIAMETER / 2)\
+        create_diameter = 0.34
+        shape_pts = Point([0, 0, 0]).buffer(create_diameter / 2)\
             .exterior.coords
 
         # <>TODO: Implement imaginary class for more robust models
@@ -296,7 +291,6 @@ class CopMissionPlanner(MissionPlanner):
                 elif filter_.recieved_human_update:
                     logging.info('{} recieved an update, but is not the target'
                                  .format(name))
-                    
 
         if self.mission_status is 'searching':
             if len(self.robot.missing_robbers) is 0:
@@ -318,3 +312,141 @@ class CopMissionPlanner(MissionPlanner):
                     logging.info('New target: {}'.format(self.target))
             except:
                 logging.info('{} is not in target order'.format(name))
+
+
+class Robber(Robot):
+    """The robber subclass of the generic Robot type.
+
+    .. image:: img/classes_Robber.png
+
+    Parameters
+    ----------
+    name : str
+        The robber's name.
+    **kwargs
+        Arguments passed to the ``Robber`` superclass.
+
+    Attributes
+    ----------
+    found : bool
+        Whether or not the robber knows its been found.
+
+    Attributes
+    ----------
+    mission_statuses : {'on the run', 'captured'}
+        The possible mission-level statuses of any robber, where:
+            * `stationary` means the robber is holding its position;
+            * `on the run` means the robber is moving around and avoiding the
+                cop;
+            * `detected` means the robber knows it has been detected by the
+                cop;
+            * `captured` means the robber has been captured by the cop and
+                is no longer moving.
+
+    """
+    mission_planner_defaults = {}
+    goal_planner_defaults = {'type_': 'simple',
+                             'use_target_as_goal': True}
+    path_planner_defaults = {'type_': 'direct'}
+
+    def __init__(self,
+                 name,
+                 pose=None,
+                 pose_source='python',
+                 map_cfg={},
+                 mission_planner_cfg={},
+                 goal_planner_cfg={},
+                 path_planner_cfg={},
+                 **kwargs):
+        # Use class defaults for kwargs not included
+        mp_cfg = Robber.mission_planner_defaults.copy()
+        mp_cfg.update(mission_planner_cfg)
+        gp_cfg = Robber.goal_planner_defaults.copy()
+        gp_cfg.update(goal_planner_cfg)
+        pp_cfg = Robber.path_planner_defaults.copy()
+        pp_cfg.update(path_planner_cfg)
+        super(Robber, self).__init__(name,
+                                     pose=pose,
+                                     pose_source=pose_source,
+                                     goal_planner_cfg=gp_cfg,
+                                     path_planner_cfg=pp_cfg,
+                                     map_cfg=map_cfg,
+                                     create_mission_planner=False,
+                                     color_str='red',
+                                     **kwargs)
+
+        self.found_robbers = {}
+        self.mission_planner = RobberMissionPlanner(self, **mp_cfg)
+
+
+class RobberMissionPlanner(MissionPlanner):
+    """The Cop subclass of the generic MissionPlanner
+    """
+    mission_statuses = ['on the run', 'captured']
+
+    def __init__(self, robot, mission_status='on the run'):
+
+        super(RobberMissionPlanner, self).__init__(robot,
+                                                   mission_status=mission_status)
+
+    def update(self):
+        """Update the robber's status
+
+        """
+        if self.robot.name in self.robot.found_robbers.keys():
+            self.mission_status = 'captured'
+        if self.mission_status is 'captured':
+            self.stop_all_movement()
+
+
+class Distractor(Robot):
+    """The Distractor subclass of the generic robot type.
+
+    Distractors act as distractions during search. They can be given
+    move goals, but do not interact with other robots
+
+    Parameters
+    ----------
+    name : str
+        The distractor's name.
+    pose : list of float, optional
+        The robots's initial [x, y, theta] (defaults to [0, 0.5, 90]).
+    planner_type: {'simple', 'particle', 'MAP'}
+        The robot's own type of planner.
+
+    Attributes
+    ----------
+    planner
+
+    """
+    mission_planner_defaults = {}
+    goal_planner_defaults = {'type_': 'stationary'}
+    path_planner_defaults = {'type_': 'direct'}
+
+    def __init__(self,
+                 name,
+                 pose=[0, 0, 90],
+                 pose_source='python',
+                 map_cfg={},
+                 mission_planner_cfg={},
+                 goal_planner_cfg={},
+                 path_planner_cfg={},
+                 **kwargs):
+        # Use class defaults for kwargs not included
+        mp_cfg = Distractor.mission_planner_defaults.copy()
+        mp_cfg.update(mission_planner_cfg)
+        gp_cfg = Distractor.goal_planner_defaults.copy()
+        gp_cfg.update(goal_planner_cfg)
+        pp_cfg = Distractor.path_planner_defaults.copy()
+        pp_cfg.update(path_planner_cfg)
+
+        # Superclass and compositional attributes
+        super(Distractor, self).__init__(name,
+                                         pose=pose,
+                                         pose_source=pose_source,
+                                         goal_planner_cfg=gp_cfg,
+                                         path_planner_cfg=pp_cfg,
+                                         map_cfg=map_cfg,
+                                         color_str='darkgreen')
+
+# <>TODO: add Mission Planner subclass for Distractor

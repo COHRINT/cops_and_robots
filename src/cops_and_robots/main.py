@@ -10,16 +10,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-from cops_and_robots.helpers.config import load_config
-from cops_and_robots.robo_tools.cop import Cop
-from cops_and_robots.robo_tools.robber import Robber
-from cops_and_robots.robo_tools.robot import Distractor
+from cohrint_core.helpers.config import load_config
+from cops_and_robots.robo_tools.robots import Cop, Robber, Distractor
 # <>TODO: @MATT @NICK Look into adding PyPubSub
 
 
 def main(config_file=None):
     # Load configuration files
-    cfg = load_config(config_file)
+    cfg = load_config(path=config_file)
     main_cfg = cfg['main']
     cop_cfg = cfg['cops']
     robber_cfg = cfg['robbers']
@@ -147,7 +145,8 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time):
     # plt.savefig('animation/frame_{}.png'.format(i))
 
 if __name__ == '__main__':
-    main()
+    main(config_file='/home/matt/catkin_ws/src/cops_and_robots_ros' +
+                     '/src/cops_and_robots/config_python.yaml')
 
 
 

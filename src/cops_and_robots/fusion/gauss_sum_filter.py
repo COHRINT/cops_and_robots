@@ -13,10 +13,11 @@ __status__ = "Development"
 import logging
 import numpy as np
 
-from cops_and_robots.fusion.gaussian_mixture import (GaussianMixture,
-                                                     fleming_prior,
-                                                     uniform_prior,
-                                                     )
+from cohrint_core.fusion_tools.gaussian_mixture import (GaussianMixture,
+                                                        fleming_prior,
+                                                        uniform_prior,
+                                                        )
+
 
 class GaussSumFilter(object):
     """docstring for GaussSumFilter
@@ -41,7 +42,6 @@ class GaussSumFilter(object):
 
     def _camera_update(self, camera):
         self.probability = camera.detect('gauss sum', prior=self.probability)
-
 
     def _human_update(self, human_sensor):
         self.recieved_human_update = False
@@ -74,5 +74,5 @@ class GaussSumFilter(object):
         self.recieved_human_update = False
 
     def update_mixand_motion(self):
-        #<>TODO: implement this
+        # <>TODO: implement this
         pass

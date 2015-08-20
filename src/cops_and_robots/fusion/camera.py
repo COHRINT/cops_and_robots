@@ -30,14 +30,14 @@ from matplotlib.colors import cnames
 from shapely.geometry import Point, Polygon, MultiPolygon
 from shapely import affinity
 
-from cops_and_robots.fusion.sensor import Sensor
-from cops_and_robots.fusion.softmax import camera_model_2D
-from cops_and_robots.fusion.variational_bayes import VariationalBayes
-from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+from cohrint_core.fusion_tools.sensor import Sensor
+from cohrint_core.fusion_tools.softmax import camera_model_2D
+from cohrint_core.fusion_tools.variational_bayes import VariationalBayes
+from cohrint_core.fusion_tools.gaussian_mixture import GaussianMixture
 
 # <>TODO: Remove test stub
-from cops_and_robots.map_tools.map_elements import MapObject
-from cops_and_robots.map_tools.shape_layer import ShapeLayer
+from cohrint_core.map_tools.map_elements import MapObject
+from cohrint_core.map_tools.shape_layer import ShapeLayer
 
 
 class Camera(Sensor):
