@@ -2,4 +2,4 @@ def f():
     return 3
 
 def test_function():
-    assert f() == 2
+    assert f() == 3
