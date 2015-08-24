@@ -421,15 +421,13 @@ function init() {
 	var specifications = [objects, areas, movementQualities];
 	
 	
+	// Takes out confusing options
 	targetsObj.onchange = function(){
 		if(targetsObj.value == "nothing"){
 			positivitiesObj.options[1].style.display="none";
 		}else{
 			positivitiesObj.options[1].style.display="inline";
 		}
-
-		$("area_targets option:selected") = $("obj_targets option:selected");
-		$("mv_targets option:selected") = $("obj_targets option:selected");
 	}
 
 	targetsArea.onchange = function(){
@@ -457,14 +455,31 @@ function init() {
 		}
 	}
 
-	// Combine first 3 colums to always have the same seleced options
-		// certaintyCases, targetCases, positivityCases
-		// take in id for each tabs options array, identify a change, append html to remove other tabs
-		//original selected and add it to the same value as in the other changed tab
+	// Connects first three code boxes on the different human sensory tabs
 
-	// for(i = 0; i < targetCases; i++){
+	// may need to change how the first option is selected add to js
+	// add in taget id matricies
+	// var targets = ('target_id_obj', 'target_id_area', 'target_id_mv');
+	// var m;
+	// for(i = 0; i < targetCases.length; i++){
+	// 	alert("here")
 	// 	targetCases[i].onchange = function(){
-
+	// 		for(j; j<targets[i].length; j++){
+	// 			if (typeof($('targets[i][j] option:selected')) !== 'undefined'){
+	// 				m = j;
+	// 				break;
+	// 			}
+	// 		}
+	// 		if(i==0){
+	// 			$(#targets[1][m]).attr("select=","selected");
+	// 			$(#targets[2][m]).attr("select=","selected");
+	// 		}else if(i==1){
+	// 			$(#targets[0][m]).attr("select=","selected");
+	// 			$(#targets[2][m]).attr("select=","selected");
+	// 		}else{
+	// 			$(#targets[0][m]).attr("select=","selected");
+	// 			$(#targets[1][m]).attr("select=","selected");
+	// 		}
 	// 	}
 	// }
 	

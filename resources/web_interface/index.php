@@ -6,22 +6,42 @@
 <?php
 $robots = array("Deckard", "Pris", "Roy", "Zhora");
 $targets = array("nothing", "a robber", "Roy", "Pris", "Zhora");
+$target_id_obj = array("obj_nothing", "obj_robber", "obj_roy", "obj_pris", "obj_zhora");
+$target_id_area = array("area_nothing", "area_robber", "area_roy", "area_pris", "area_zhora");
+$target_id_mv = array("mv_nothing", "mv_robber", "mv_roy", "mv_pris", "mv_zhora");
 // $certainties = array("I think", "I know");
 $certainties = array("I know");
+$cer_id_obj = array("obj_know");
+$cer_id_area = array("area_know");
+$cer_id_mv = array("mv_know");
 $positivities = array("is", "is not");
+$posi_id_obj = array("obj_is", "obj_is_not");
+$posi_id_area = array("area_is", "area_is_not");
+$posi_id_mv = array("mv_is", "mv_is_not");
 $object_relations = array("behind", "in front of", "left of", "right of", "near");
 $objects = array("the bookcase",  "the cassini poster", "the chair", "the checkers table", "the desk", "the dining table",  "the fern", "the filing cabinet", "the fridge", "the mars poster",  "Deckard");
+$obj_id_relations = array("behind", "front", "left", "right", "near");
+$obj_id_objs = array("bookcase",  "cPoster", "chair", "cTable", "desk", "dTable",  "fern", "cabinet", "fridge", "mPoster",  "Deckard");
 $area_relations = array("inside", "near", "outside");
 $areas = array("the study", "the billiard room", "the hallway", "the dining room", "the kitchen", "the library");
+$area_id_relations = array("inside", "near", "outside");
+$area_id_areas = array("study", "billiard", "hallway", "dining", "kitchen", "library");
 $movement_types = array("moving", "stopped");
 $movement_qualities = array("slowly", "moderately", "quickly");
+$mv_id_types = array("moving", "stopped");
+$mv_id_qualities  = array("slowly", "moderately", "quickly");
+
+
 
 $pos_obj = array($certainties, $targets, $positivities, $object_relations, $objects);
 $Id_obj = array("obj_certainties","obj_targets", "obj_positivities", "obj_relations", "obj");
+$id_objs = array($cer_id_obj, $target_id_obj, $posi_id_obj, $obj_id_relations, $obj_id_objs);
 $pos_area = array($certainties, $targets, $positivities, $area_relations, $areas);
 $Id_area = array("area_certainties","area_targets", "area_positivities", "area_relation", "area");
+$id_areas = array($cer_id_area, $target_id_area, $posi_id_area, $area_id_relations, $area_id_areas);
 $move = array($certainties, $targets, $positivities, $movement_types, $movement_qualities);
 $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "mv_qualities");
+$id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qualities);
 
 ?>
 
@@ -237,7 +257,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 		    				<div id='Position_obj' class='tab-pane active'>
 		    					<?php 
 		    						for($i = 0; $i < count($pos_obj); $i++){
-			    						PositionViaObject($pos_obj[$i], $Id_obj[$i]);
+			    						PositionViaObject($pos_obj[$i], $Id_obj[$i], $id_objs[$i]);
 			    					}
 		    					?>
 	    					</div> <!-- Pos_obj -->
@@ -245,7 +265,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 	    					<div id='position_area' class='tab-pane'>
 		    					<?php 
 		    						for($i = 0; $i < count($pos_area); $i++){
-		    							PositionViaArea($pos_area[$i], $Id_area[$i]);
+		    							PositionViaArea($pos_area[$i], $Id_area[$i], $id_areas[$i]);
 		    						}
 		    					?>
 	    					</div> <!-- Pos_area -->
@@ -253,7 +273,7 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 	    					<div id='Movement' class='tab-pane'>
 		    					<?php 
 		    						for($i = 0; $i < count($move); $i++){
-		    							Velocity($move[$i], $Id_move[$i]);
+		    							Velocity($move[$i], $Id_move[$i], $id_mvs[$i]);
 		    						}
 		    					?>
 	    					</div> <!-- Movement -->
@@ -318,42 +338,42 @@ $Id_move = array("mv_certainties","mv_targets", "mv_positivities", "mv_types", "
 
 <!-- PHP function -->
 
-	<?php function PositionViaObject(array $pos_obj, $Id_obj){ ?>
+	<?php function PositionViaObject(array $pos_obj, $Id_obj, $id_objs){ ?>
 		<div id="humanSensoryInputQuestions" class="bloc">
 		<select size="6" id="<?php echo $Id_obj ?>" class="form-control code-select"  >
 		<?php for($i = 0; $i < count($pos_obj); $i++){ 
 			if($i == 0){?>
-				<option selected="selected"> <?php echo $pos_obj[$i]; ?> </option>
+				<option id="<?php echo $id_objs ?>" selected="selected"> <?php echo $pos_obj[$i]; ?> </option>
 			<?php }else{ ?>
-				<option> <?php echo $pos_obj[$i]; ?> </option>
+				<option id="<?php echo $id_objs ?>"> <?php echo $pos_obj[$i]; ?> </option>
 			<?php } ?>
 		<?php } ?>
 			</select>
 		</div> <!-- Scrollbar blocker --> 
 	<?php } ?>
 
-	<?php function PositionViaArea(array $pos_area, $Id_area){ ?>
+	<?php function PositionViaArea(array $pos_area, $Id_area, $id_areas){ ?>
 		<div id="humanSensoryInputQuestions" class="bloc">
 			<select size="6" id="<?php echo $Id_area ?>" class="form-control code-select"  >
 		<?php for($i = 0; $i < count($pos_area); $i++){ 
 			if($i == 0){?>
-				<option selected="selected"> <?php echo $pos_area[$i]; ?> </option>
+				<option id="<?php echo $id_areas ?>" selected="selected"> <?php echo $pos_area[$i]; ?> </option>
 			<?php }else{ ?>
-				<option> <?php echo $pos_area[$i]; ?> </option>
+				<option id="<?php echo $id_areas ?>"> <?php echo $pos_area[$i]; ?> </option>
 			<?php } ?>
 		<?php } ?>
 			</select>
 		</div> <!-- Scrollbar blocker --> 
 	<?php } ?>
 
-	<?php function Velocity(array $move, $Id_move){ ?>
+	<?php function Velocity(array $move, $Id_move, $id_mvs){ ?>
 		<div id="humanSensoryInputQuestions" class="bloc">
 			<select size="6" id="<?php echo $Id_move ?>" class="form-control code-select"  >
 		<?php for($i = 0; $i < count($move); $i++){
 			if($i == 0){?>
-				<option selected="selected"> <?php echo $move[$i]; ?> </option>
+				<option id="<?php echo $id_mvs ?>" selected="selected"> <?php echo $move[$i]; ?> </option>
 			<?php }else{ ?>
-				<option> <?php echo $move[$i]; ?> </option>
+				<option id="<?php echo $id_mvs ?>"> <?php echo $move[$i]; ?> </option>
 			<?php } ?>
 		<?php } ?>
 			</select>
