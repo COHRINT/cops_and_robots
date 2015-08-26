@@ -1,0 +1,15 @@
+material Wood
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture wood.png
+        filtering anistropic
+        max_anisotropy 16
+      }
+    }
+  }
+}

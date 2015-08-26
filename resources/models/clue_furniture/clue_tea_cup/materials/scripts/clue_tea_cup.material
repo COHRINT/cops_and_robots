@@ -1,0 +1,15 @@
+material china
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture china.png
+        filtering anistropic
+        max_anisotropy 16
+      }
+    }
+  }
+}

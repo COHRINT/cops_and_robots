@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_chair">
+  	<static>true</static>
+    <link name="chair">
+      <visual name='visual'>
+        <geometry>
+          <mesh>
+            <uri>model://clue_chair/meshes/chair.stl</uri>
+            <scale> 0.001 0.001 0.001 </scale>
+          </mesh>
+        </geometry>
+        <material>
+           <!--  <texture>model://clue_chair/materials/textures/wood.png</texture>  -->
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>10 42 19 0 </emissive>
+        </material>
+      </visual>
+  </model>
+</sdf>

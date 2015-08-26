@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_billard_poster_noplugin">
+    <static>true</static>
+    <link name="poster1">
+
+      <visual name="poster_entire">
+        <pose>0 0 0.42 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.564 0.0001 0.84</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_billard_poster_noplugin/materials/scripts</uri>
+            <uri>model://clue_billard_poster_noplugin/materials/textures</uri>
+            <name>poster</name>
+          </script>
+        </material>
+      </visual>
+
+
+  </model>
+</sdf>

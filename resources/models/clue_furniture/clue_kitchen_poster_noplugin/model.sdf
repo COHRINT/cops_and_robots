@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_kitchen_poster_noplugin">
+    <static>true</static>
+    <link name="Poster">
+
+      <visual name="posterEntire">
+        <pose>0 0 0.325 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.836 0.0001 0.65</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_kitchen_poster_noplugin/materials/scripts</uri>
+            <uri>model://clue_kitchen_poster_noplugin/materials/textures</uri>
+            <name>paper</name>
+          </script>
+        </material>
+      </visual>
+
+
+  </model>
+</sdf>
