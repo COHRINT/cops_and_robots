@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_vern">
+  	<static>true</static>
+    <link name="plant">
+      <visual name='visual'>
+        <geometry>
+          <mesh>
+            <uri>model://clue_vern/meshes/plant.stl</uri>
+            <scale> 0.02 0.02 0.02 </scale>
+          </mesh>
+        </geometry>
+        <material>
+           <!-- <texture>model://clue_chair/materials/textures/wood.png</texture>  -->
+            <ambient>0 0 0 0</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>46 137 30 0</emissive>
+        </material>
+      </visual>
+  </model>
+</sdf>

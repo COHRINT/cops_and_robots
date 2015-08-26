@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_table_ghost">
+    <static>true</static>
+    <link name="link">
+
+      <collision name='base_collision'>
+        <pose>0 0 0.34 0 0 0</pose>
+        <geometry>
+          <box>
+             <size>0.99 0.62 0.01</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <visual name="table_top">
+        <transparency>0.5</transparency>
+        <pose>0 0 0.34 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.99 0.62 0.01</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_table_ghost/materials/scripts</uri>
+            <uri>model://clue_table_ghost/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+
+      <visual name="front_left_leg">
+        <transparency>0.5</transparency>
+        <pose>-0.475 0.24 0.17 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.14 0.34</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_table_ghost/materials/scripts</uri>
+            <uri>model://clue_table_ghost/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+
+      <visual name="front_right_leg">
+        <transparency>0.5</transparency>
+        <pose>-0.475 -0.24 0.17 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.14 0.34</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_table_ghost/materials/scripts</uri>
+            <uri>model://clue_table_ghost/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+
+      <visual name="back_right_leg">
+        <transparency>0.5</transparency>
+        <pose>0.475 0.24 0.17 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.14 0.34</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_table_ghost/materials/scripts</uri>
+            <uri>model://clue_table_ghost/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+
+      <visual name="back_left_leg">
+        <transparency>0.5</transparency>
+        <pose>0.475 -0.24 0.17 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.14 0.34</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_table_ghost/materials/scripts</uri>
+            <uri>model://clue_table_ghost/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

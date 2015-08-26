@@ -1,0 +1,15 @@
+material poster
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture poster1.png
+        filtering anistropic
+        max_anisotropy 16
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_game_table">
+  	<static>true</static>
+    <link name="game_table">
+      <visual name='visual'>
+        <geometry>
+          <mesh>
+            <uri>model://clue_game_table/meshes/game_table.stl</uri>
+            <scale> 0.02 0.02 0.02 </scale>
+          </mesh>
+        </geometry>
+        <material>
+         <!--  <texture>model://clue_game_table/materials/textures/wood.png</texture>  -->
+           <ambient>0 0 0 0</ambient>
+           <diffuse>1 0 0 1</diffuse>
+           <specular>0.1 0.1 0.1 1</specular>
+           <emissive>229 166 79 0</emissive>
+        </material>
+      </visual>
+  </model>
+</sdf>

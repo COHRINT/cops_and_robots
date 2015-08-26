@@ -1,0 +1,110 @@
+<?xml version='1.0'?>
+<sdf version='1.4'>
+  <model name="fleming_wall no plugin">
+  	<static>true</static>
+
+  	<link name='wall'>
+            <pose>0 0 0.0254 0 0 0</pose>
+
+ <!--            <collision name='base_collision'>
+              <geometry>
+                <box>
+                  <size>1.2192 0.1524 0.0508</size>
+                </box>
+              </geometry>
+            </collision> -->
+
+            <visual name='base_visual'>
+              <geometry>
+                <box>
+                  <size>1.2192 0.1524 0.0508</size>
+                </box>
+              </geometry>
+              <material>
+                <script>
+                  <uri>model://fleming_wall/materials/scripts</uri>
+                  <uri>model://fleming_wall/materials/textures</uri>
+                  <name>FlemingWall/Image</name>
+                </script>
+              </material>
+            </visual>
+
+<!--           <collision name='front_strut_collision'>
+            <pose>0 0.028575 0.0508 0 0 0</pose>
+            <geometry>
+                <box>
+                  <size>1.2192 0.0508 0.0508</size>
+                </box>
+              </geometry>
+            </collision> -->
+
+            <visual name='front_strut_visual'>
+              <pose>0 0.028575 0.0508 0 0 0</pose>
+              <geometry>
+                <box>
+                  <size>1.2192 0.0508 0.0508</size>
+                </box>
+              </geometry>
+              <material>
+                <script>
+                  <uri>model://fleming_wall/materials/scripts</uri>
+                  <uri>model://fleming_wall/materials/textures</uri>
+                  <name>FlemingWall/Image</name>
+                </script>
+              </material>
+            </visual>
+
+ <!--          <collision name='back_strut_collision'>
+            <pose>0 -0.028575 0.0508 0 0 0</pose>
+            <geometry>
+                <box>
+                  <size>1.2192 0.0508 0.0508</size>
+                </box>
+              </geometry>
+            </collision> -->
+
+            <visual name='back_strut_visual'>
+              <pose>0 -0.028575 0.0508 0 0 0</pose>
+              <geometry>
+                <box>
+                  <size>1.2192 0.0508 0.0508</size>
+                </box>
+              </geometry>
+              <material>
+                <script>
+                  <uri>model://fleming_wall/materials/scripts</uri>
+                  <uri>model://fleming_wall/materials/textures</uri>
+                  <name>FlemingWall/Image</name>
+                </script>
+              </material>
+            </visual> 
+
+<!--            <collision name='panel_collision'>
+            <pose>0 0 0.6604 0 0 0</pose>
+            <geometry>
+                <box>
+                  <size>1.2192 0.003175 0.6096</size>
+                </box>
+              </geometry>
+            </collision> -->
+
+            <visual name='panel_visual'>
+              <pose>0 0 0.3556 0 0 0</pose>
+              <geometry>
+                <box>
+                  <size>1.2192 0.003175 0.6096 </size>
+                </box>
+              </geometry>
+              <material>
+                <script>
+                  <uri>model://fleming_wall/materials/scripts</uri>
+                  <uri>model://fleming_wall/materials/textures</uri>
+                  <name>FlemingWall/Image</name>
+                </script>
+              </material>
+            </visual>                    
+  </link>
+
+
+  </model>
+</sdf>

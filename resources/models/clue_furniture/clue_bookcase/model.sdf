@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_bookcase">
+    <static>true</static>
+    <link name="bookcase">
+
+      <visual name="side_1">
+        <pose>0 0 0.30 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.14224 0.04094 0.60198</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_bookcase/materials/scripts</uri>
+            <uri>model://clue_bookcase/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+
+      <visual name="side_2">
+        <pose>-0 0.33655 0.30 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.14224 0.04094 0.60198</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_bookcase/materials/scripts</uri>
+            <uri>model://clue_bookcase/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+
+      <visual name="back">
+        <pose>-0.05207 0.16827 0.325755 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.29845 0.55245</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_bookcase/materials/scripts</uri>
+            <uri>model://clue_bookcase/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+
+      <visual name="shelf_1">
+        <pose>0.0381 0.16827 0.06858 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.13462 0.29845 0.0381</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_bookcase/materials/scripts</uri>
+            <uri>model://clue_bookcase/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+
+      <visual name="shelf_2">
+        <pose>0.0381 0.16827 0.38862 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.13462 0.29845 0.0381</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_bookcase/materials/scripts</uri>
+            <uri>model://clue_bookcase/materials/textures</uri>
+            <name>Wood</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+  <plugin name="ros_transform" filename="/usr/lib/libros_transform.so">
+    <targetLink>bookcase</targetLink>
+    <transformTopic>/vicon/bookcase/bookcase</transformTopic>
+  </plugin>
+
+  </model>
+</sdf>

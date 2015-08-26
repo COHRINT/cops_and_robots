@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_filing_cabinet">
+    <static>true</static>
+    <link name="filing">
+
+      <visual name="filing_entire">
+        <pose>0 0 0.251 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.495 0.366 0.502</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://clue_filing_cabinet/materials/scripts</uri>
+            <uri>model://clue_filing_cabinet/materials/textures</uri>
+            <name>metal</name>
+          </script>
+        </material>
+      </visual>
+
+
+  </model>
+</sdf>

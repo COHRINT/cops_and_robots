@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="clue_tea_cup">
+  	<static>true</static>
+    <link name="tea_cup">
+      <visual name='visual'>
+        <pose>-0.043340 0 0.084757 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://clue_tea_cup/meshes/teaCup.stl</uri>
+            <scale> 0.001 0.001 0.001 </scale>
+          </mesh>
+        </geometry>
+        <material>
+           <!--  <texture>model://clue_chair/materials/textures/wood.png</texture>  -->
+           <ambient>0 0 0 0</ambient>
+           <diffuse>1 0 0 1</diffuse>
+           <specular>0.1 0.1 0.1 1</specular>
+           <emissive>166 238 236 0</emissive>
+        </material>
+      </visual>
+  </model>
+</sdf>

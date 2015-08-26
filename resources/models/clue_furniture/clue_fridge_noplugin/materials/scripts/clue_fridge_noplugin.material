@@ -1,0 +1,15 @@
+material plastic
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture black.png
+        filtering anistropic
+        max_anisotropy 16
+      }
+    }
+  }
+}
