@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
-<sdf version="1.5">
-  <model name="deckard sim">
+<sdf version="1.4">
+  <model name="turtlebot">
     <link name="rack">
       <inertial>
         <pose>0.001453 -0.000453 0.029787 0 0 0</pose>
-  <!--       <inertia>
+        <inertia>
           <ixx>0.058640</ixx>
           <ixy>0.000124</ixy>
           <ixz>0.000615</ixz>
@@ -12,73 +12,79 @@
           <iyz>0.000014</iyz>
           <izz>1.532440</izz>
         </inertia>
-        <mass>2.234000</mass> -->
+        <mass>2.234000</mass>
       </inertial>
- <!--      <collision name="plate_0_collision">
+
+
+      <collision name="plate_0_collision">
         <pose>-0.043340 0 0.084757 0 0 0</pose>
         <geometry>
           <box>
             <size>0.233502 0.314845 0.006401</size>
           </box>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="plate_0_visual">
         <pose>-0.043340 0 0.084757 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://deckard/meshes/plate_0_logo.dae</uri>
+            <uri>model://turtlebot/meshes/plate_0_logo.dae</uri>
           </mesh>
         </geometry>
       </visual>
-<!--       <collision name="plate_1_collision">
+
+      <collision name="plate_1_collision">
         <pose>-0.002660 0 0.141907 0 0 0</pose>
         <geometry>
           <box>
             <size>0.314856 0.314856 0.006401</size>
           </box>
         </geometry>
-      </collision> -->
-      <!--       <visual name="plate_1_visual">
+      </collision>
+      <visual name="plate_1_visual">
         <pose>-0.002660 0 0.141907 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://turtlebot/meshes/plate_1_logo.dae</uri>
           </mesh>
         </geometry>
-      </visual>-->
- <!--      <collision name="plate_2_collision">
+      </visual>
+
+      <collision name="plate_2_collision">
         <pose>-0.002660 0 0.199108 0 0 0</pose>
         <geometry>
           <box>
             <size>0.314856 0.314856 0.006401</size>
           </box>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="plate_2_visual">
         <pose>-0.002660 0 0.199108 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://deckard/meshes/plate_1_logo.dae</uri>
+            <uri>model://turtlebot/meshes/plate_1_logo.dae</uri>
           </mesh>
         </geometry>
       </visual>
- <!--      <collision name="plate_3_collision">
+
+      <collision name="plate_3_collision">
         <pose>-0.015820 0 0.405457 0 0 0</pose>
         <geometry>
           <box>
             <size>0.288000 0.315000 0.006401</size>
           </box>
         </geometry>
-      </collision> -->
-      <!--<visual name="plate_3_visual">
+      </collision>
+      <visual name="plate_3_visual">
         <pose>-0.015820 0 0.405457 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://turtlebot/meshes/plate_2_logo.dae</uri>
           </mesh>
         </geometry>
-      </visual>-->
- <!--      <collision name="spacer_0_collision">
+      </visual>
+
+      <collision name="spacer_0_collision">
         <pose>-0.002540 0.111468 0.079992 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -86,7 +92,7 @@
             <length>0.003175</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="spacer_0_visual">
         <pose>-0.002540 0.111468 0.079992 0 0 0</pose>
         <geometry>
@@ -95,7 +101,8 @@
           </mesh>
         </geometry>
       </visual>
-  <!--     <collision name="spacer_1_collision">
+
+      <collision name="spacer_1_collision">
         <pose>-0.002540 -0.111468 0.079992 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -103,7 +110,7 @@
             <length>0.003175</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="spacer_1_visual">
         <pose>-0.002540 -0.111468 0.079992 0 0 0</pose>
         <geometry>
@@ -112,7 +119,8 @@
           </mesh>
         </geometry>
       </visual>
- <!--      <collision name="spacer_2_collision">
+
+      <collision name="spacer_2_collision">
         <pose>-0.072390 -0.111468 0.079992 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -120,7 +128,7 @@
             <length>0.003175</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="spacer_2_visual">
         <pose>-0.072390 -0.111468 0.079992 0 0 0</pose>
         <geometry>
@@ -129,7 +137,8 @@
           </mesh>
         </geometry>
       </visual>
- <!--      <collision name="spacer_3_collision">
+
+      <collision name="spacer_3_collision">
         <pose>-0.072390 0.111468 0.079992 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -137,7 +146,7 @@
             <length>0.003175</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="spacer_3_visual">
         <pose>-0.072390 0.111468 0.079992 0 0 0</pose>
         <geometry>
@@ -146,7 +155,8 @@
           </mesh>
         </geometry>
       </visual>
-<!--       <collision name="standoff_2in_0_collision">
+
+      <collision name="standoff_2in_0_collision">
         <pose>0.067640 0.131420 0.087980 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -154,7 +164,7 @@
             <length>0.063500</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_2in_0_visual">
         <pose>0.067640 0.131420 0.087980 0 0 0</pose>
         <geometry>
@@ -163,7 +173,8 @@
           </mesh>
         </geometry>
       </visual>
- <!--      <collision name="standoff_2in_1_collision">
+
+      <collision name="standoff_2in_1_collision">
         <pose>0.067640 -0.131420 0.087980 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -171,7 +182,7 @@
             <length>0.063500</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_2in_1_visual">
         <pose>0.067640 -0.131420 0.087980 0 0 0</pose>
         <geometry>
@@ -180,7 +191,8 @@
           </mesh>
         </geometry>
       </visual>
-  <!--     <collision name="standoff_2in_2_collision">
+
+      <collision name="standoff_2in_2_collision">
         <pose>-0.052832 -0.131420 0.087980 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -188,7 +200,7 @@
             <length>0.063500</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_2in_2_visual">
         <pose>-0.052832 -0.131420 0.087980 0 0 0</pose>
         <geometry>
@@ -197,7 +209,8 @@
           </mesh>
         </geometry>
       </visual>
-  <!--     <collision name="standoff_2in_3_collision">
+
+      <collision name="standoff_2in_3_collision">
         <pose>-0.052832 0.131420 0.087980 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -205,7 +218,7 @@
             <length>0.063500</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_2in_3_visual">
         <pose>-0.052832 0.131420 0.087980 0 0 0</pose>
         <geometry>
@@ -214,7 +227,8 @@
           </mesh>
         </geometry>
       </visual>
-  <!--     <collision name="standoff_2in_4_collision">
+
+      <collision name="standoff_2in_4_collision">
         <pose>0.067640 0.131420 0.145130 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -222,7 +236,7 @@
             <length>0.063500</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_2in_4_visual">
         <pose>0.067640 0.131420 0.145130 0 0 0</pose>
         <geometry>
@@ -231,7 +245,8 @@
           </mesh>
         </geometry>
       </visual>
-   <!--    <collision name="standoff_2in_5_collision">
+
+      <collision name="standoff_2in_5_collision">
         <pose>0.067640 -0.131420 0.145130 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -239,7 +254,7 @@
             <length>0.063500</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_2in_5_visual">
         <pose>0.067640 -0.131420 0.145130 0 0 0</pose>
         <geometry>
@@ -248,7 +263,8 @@
           </mesh>
         </geometry>
       </visual>
-<!--       <collision name="standoff_2in_6_collision">
+
+      <collision name="standoff_2in_6_collision">
         <pose>-0.052832 -0.131420 0.145130 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -256,7 +272,7 @@
             <length>0.063500</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_2in_6_visual">
         <pose>-0.052832 -0.131420 0.145130 0 0 0</pose>
         <geometry>
@@ -265,7 +281,8 @@
           </mesh>
         </geometry>
       </visual>
- <!--      <collision name="standoff_2in_7_collision">
+
+      <collision name="standoff_2in_7_collision">
         <pose>-0.052832 0.131420 0.145130 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -273,7 +290,7 @@
             <length>0.063500</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_2in_7_visual">
         <pose>-0.052832 0.131420 0.145130 0 0 0</pose>
         <geometry>
@@ -282,7 +299,8 @@
           </mesh>
         </geometry>
       </visual>
- <!--      <collision name="standoff_8in_0_collision">
+
+      <collision name="standoff_8in_0_collision">
         <pose>0.067640 0.131420 0.202280 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -290,16 +308,17 @@
             <length>0.203200</length>
           </cylinder>
         </geometry>
-      </collision> -->
-      <!--<visual name="standoff_8in_0_visual">
+      </collision>
+      <visual name="standoff_8in_0_visual">
         <pose>0.067640 0.131420 0.202280 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://turtlebot/meshes/68-02421-8000-RA_Turtlebot_F-F_Standoff.dae</uri>
           </mesh>
         </geometry>
-      </visual>-->
-<!--       <collision name="standoff_8in_1_collision">
+      </visual>
+
+      <collision name="standoff_8in_1_collision">
         <pose>0.067640 -0.131420 0.202280 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -307,16 +326,17 @@
             <length>0.203200</length>
           </cylinder>
         </geometry>
-      </collision> -->
-     <!-- <visual name="standoff_8in_1_visual">
+      </collision>
+      <visual name="standoff_8in_1_visual">
         <pose>0.067640 -0.131420 0.202280 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://turtlebot/meshes/68-02421-8000-RA_Turtlebot_F-F_Standoff.dae</uri>
           </mesh>
         </geometry>
-      </visual> -->
- <!--      <collision name="standoff_8in_2_collision">
+      </visual>
+
+      <collision name="standoff_8in_2_collision">
         <pose>-0.052832 -0.131420 0.202280 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -324,16 +344,17 @@
             <length>0.203200</length>
           </cylinder>
         </geometry>
-      </collision> -->
-     <!-- <visual name="standoff_8in_2_visual">
+      </collision>
+      <visual name="standoff_8in_2_visual">
         <pose>-0.052832 -0.131420 0.202280 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://turtlebot/meshes/68-02421-8000-RA_Turtlebot_F-F_Standoff.dae</uri>
           </mesh>
         </geometry>
-      </visual> -->
-<!--       <collision name="standoff_8in_3_collision">
+      </visual>
+
+      <collision name="standoff_8in_3_collision">
         <pose>-0.052832 0.131420 0.202280 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -341,16 +362,17 @@
             <length>0.203200</length>
           </cylinder>
         </geometry>
-      </collision> -->
-     <!-- <visual name="standoff_8in_3_visual">
+      </collision>
+      <visual name="standoff_8in_3_visual">
         <pose>-0.052832 0.131420 0.202280 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://turtlebot/meshes/68-02421-8000-RA_Turtlebot_F-F_Standoff.dae</uri>
           </mesh>
         </geometry>
-      </visual> -->
- <!--      <collision name="standoff_kinect_0_collision">
+      </visual>
+
+      <collision name="standoff_kinect_0_collision">
         <pose>-0.105098 0.098000 0.202308 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -358,7 +380,7 @@
             <length>0.008585</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_kinect_0_visual">
         <pose>-0.105098 0.098000 0.202308 0 0 0</pose>
         <geometry>
@@ -367,7 +389,8 @@
           </mesh>
         </geometry>
       </visual>
- <!--      <collision name="standoff_kinect_1_collision">
+
+      <collision name="standoff_kinect_1_collision">
         <pose>-0.105098 -0.098000 0.202308 0 0 0</pose>
         <geometry>
           <cylinder>
@@ -375,7 +398,7 @@
             <length>0.008585</length>
           </cylinder>
         </geometry>
-      </collision> -->
+      </collision>
       <visual name="standoff_kinect_1_visual">
         <pose>-0.105098 -0.098000 0.202308 0 0 0</pose>
         <geometry>
@@ -384,6 +407,7 @@
           </mesh>
         </geometry>
       </visual>
+
       <sensor name="laser" type="ray">
         <pose>-0.065000 0 0.092000 0 0 0</pose>
         <ray>
@@ -411,44 +435,18 @@
         </plugin>-->
         <update_rate>20</update_rate>
       </sensor>
-      <sensor name="camera" type="camera">
-        <pose>-0.087098 0 0.303857 0 0 0</pose>
-        <camera>
-          <horizontal_fov>1.047</horizontal_fov>
-          <image>
-            <width>320</width>
-            <height>240</height>
-          </image>
-          <clip>
-            <near>0.1</near>
-            <far>100</far>
-          </clip>
-        </camera>
-        <plugin name="deckard_camera_controller" filename="libgazebo_ros_camera.so">
-	        <always_on>1</always_on>
-	        <update_rate>30</update_rate>
-	        <cameraName>deckard/camera</cameraName>
-	        <imageTopicName>image_raw</imageTopicName>
-	        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-	        <frameName>camera_link</frameName>
-	        <hackBaseline>0.07</hackBaseline>
-	        <distortionK1>0.0</distortionK1>
-	        <distortionK2>0.0</distortionK2>
-	        <distortionK3>0.0</distortionK3>
-	        <distortionT1>0.0</distortionT1>
-	        <distortionT2>0.0</distortionT2>
-      	</plugin>
-        <visualize>False</visualize>
-      </sensor>
     </link>
+
     <include>
       <uri>model://create</uri>
     </include>
+
     <include>
       <uri>model://kinect</uri>
       <pose>-0.087098 0 0.303857 0 0 0</pose>
     </include>
-    <joint name="create_rack" type="revolute">
+
+    <joint name='create_rack' type='revolute'>
       <parent>create::base</parent>
       <child>rack</child>
       <axis>
@@ -457,10 +455,10 @@
           <lower>0</lower>
           <upper>0</upper>
         </limit>
-        <use_parent_model_frame>true</use_parent_model_frame>
       </axis>
     </joint>
-    <joint name="kinect_rack" type="revolute">
+
+    <joint name='kinect_rack' type='revolute'>
       <parent>kinect::link</parent>
       <child>rack</child>
       <axis>
@@ -469,7 +467,6 @@
           <lower>0</lower>
           <upper>0</upper>
         </limit>
-        <use_parent_model_frame>true</use_parent_model_frame>
       </axis>
     </joint>
 
