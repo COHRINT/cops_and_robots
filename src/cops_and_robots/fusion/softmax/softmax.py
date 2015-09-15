@@ -15,17 +15,10 @@ __status__ = "Development"
 
 import logging
 import numpy as np
-import copy
 
 from shapely.geometry import box, Polygon
-from shapely.affinity import scale
 
-import matplotlib.pyplot as plt
-from matplotlib.colors import ColorConverter
-from mpl_toolkits.mplot3d import Axes3D  # Seemingly unused, but for 3D plots
 from descartes.patch import PolygonPatch
-
-from cops_and_robots.helpers.visualizations import plot_multisurface
 
 import warnings  # To suppress nolabel warnings
 warnings.filterwarnings("ignore", message=".*cannot be automatically added.*")
@@ -128,9 +121,22 @@ class Softmax(object):
                    'RdPu']
     class_colors = ['grey', 'red', 'purple', 'orange', 'green', 'blue', 'pink']
 
+    # Load methods from external files
+    from _visualization import (plot,
+                                _plot_probs,
+                                _plot_probs_1D,
+                                _plot_probs_2D,
+                                _plot_probs_3D,
+                                _plot_dominant_classes,
+                                _plot_dominant_classes_1D,
+                                _plot_dominant_classes_2D,
+                                _plot_dominant_classes_3D,
+                                )
+
+
     def __init__(self, weights=None, biases=None, normals=None, offsets=None,
                  poly=None, steepness=None, rotation=None, state_spec='x y',
-                 bounds=[-5, -5, 5, 5], resolution=0.1, labels=None,
+                 bounds=None, resolution=0.1, labels=None,
                  auto_combine_mms=True, tol=10 ** -3):
 
         try:
@@ -148,6 +154,8 @@ class Softmax(object):
         self.offsets = offsets
         self.poly = poly
         self.steepness = steepness
+        if bounds is None:
+            bounds = [-5, -5, 5, 5]
         self.bounds = bounds
         self.state_spec = state_spec
         self.resolution = resolution
@@ -333,108 +341,6 @@ class Softmax(object):
         # Return the probability if looking for a single state
         if not using_state_space or not using_all_classes:
             return sm_class.probs
-
-    def plot(self, class_=None, show_plot=True, plot_3D=True, plot_probs=True,
-             plot_dominant_classes=True, plot_poly=False, plot_normals=False,
-             plot_subclasses=False, title='Softmax Classification', **kwargs):
-        """Display the class and/or PDF plots of the Softmax distribution.
-
-        The class plot shows only the critical classes (those that have the
-        greatest probability at any given state).
-
-        Parameters
-        ----------
-        plot_dominant_classes : bool, optional
-            Plot the critical classes. Defaults to `True`.
-        plot_probs : bool, optional
-            Plot the probability densities. Defaults to `True`.
-        plot_poly : bool, optional
-            Plot the polygon from which the boundaries are formed. Defaults to
-            `False`.
-        **kwargs
-            Keyword arguments for ``plot_dominant_classes``.
-        """
-
-        # Define probabilities lazily
-        if not hasattr(self, 'probs') and not plot_subclasses:
-                self.probability()
-        if not hasattr(self, 'subclass_probs') and plot_subclasses:
-                self.probability(find_subclass_probs=True)
-
-        # Plotting attributes
-        self.plot_3D = plot_3D
-        self.plot_subclasses = plot_subclasses
-
-        if plot_dominant_classes and plot_probs and class_ is None:
-            self.fig = plt.figure(figsize=(14, 8))
-            bbox_size = (-1.3, -0.175, 2.2, -0.075)
-
-            ax1 = self.fig.add_subplot(1, 2, 1)
-            if plot_3D and self.state.shape[1] > 1:
-                ax2 = self.fig.add_subplot(1, 2, 2, projection='3d')
-            else:
-                ax2 = self.fig.add_subplot(1, 2, 2)
-            self._plot_dominant_classes(ax1)
-            self._plot_probs(ax2)
-            axes = [ax1, ax2]
-
-        elif plot_dominant_classes and class_ is None:
-            self.fig = plt.figure(figsize=(8, 8))
-            ax1 = self.fig.add_subplot(111)
-            bbox_size = (0, -0.175, 1, -0.075)
-            self._plot_dominant_classes(**kwargs)
-            axes = [ax1]
-
-        elif plot_probs:
-            self.fig = plt.figure(figsize=(8, 8))
-
-            if class_ is not None:
-                self.classes[class_].plot(**kwargs)
-                axes = [self.fig.gca()]
-            else:
-                if plot_3D and self.state.shape[1] > 1:
-                    ax1 = self.fig.add_subplot(111, projection='3d')
-                else:
-                    ax1 = self.fig.add_subplot(111)
-                self._plot_probs(ax1,**kwargs)
-                axes = [ax1]
-            bbox_size = (0, -0.15, 1, -0.05)
-
-        # Create Proxy artists for legend labels
-        proxy = [None] * self.num_classes
-        for i in range(self.num_classes):
-            if self.class_labels[i] not in self.class_labels[:i]:
-                proxy_label = self.class_labels[i]
-            else:
-                proxy_label = "_nolegend_"
-            proxy[i] = plt.Rectangle((0, 0), 1, 1, fc=self.class_colors[i],
-                                     alpha=0.6, label=proxy_label,)
-
-        plt.legend(handles=proxy, loc='lower center', mode='expand', ncol=4,
-                   bbox_to_anchor=bbox_size, borderaxespad=0.)
-        plt.suptitle(title, fontsize=16)
-
-        # Plot polygon
-        if self.poly is not None and plot_poly and plot_dominant_classes:
-            patch = PolygonPatch(self.poly, facecolor='none', zorder=2,
-                                 linewidth=3, edgecolor='black',)
-            ax1.add_patch(patch)
-
-        # Plot normals
-        # <>TODO fix crashing issue with vertical normals
-        if self.normals is not None and plot_normals and plot_dominant_classes:
-            t = np.arange(self.bounds[0], self.bounds[2] + 1)
-            for i, normal in enumerate(self.normals):
-                if abs(normal[1]) < 0.0001:
-                    ax1.axvline(self.offsets[i], ls='--', lw=3, c='black')
-                else:
-                    slope = normal[0]
-                    y = slope * t - self.offsets[i]
-                    ax1.plot(t, y, ls='--', lw=3, c='black')
-
-        if show_plot:
-            plt.show()
-        return axes
 
     def learn_from_data(self, data):
         """Learn a softmax model from a given dataset.
@@ -646,6 +552,7 @@ class Softmax(object):
         classes (even those that share a label).
 
         """
+        from softmax_class import SoftmaxClass
 
         # Find unique class_labels
         unique_labels = []
@@ -735,6 +642,9 @@ class Softmax(object):
         # Define distribution over a gridded state space
         if bounds is None:
             bounds = self.bounds[:]
+        elif self.bounds is None:
+            bounds = [-5, -5, 5, 5]
+            self.bounds = bounds
         else:
             self.bounds = bounds
         if state_spec == 'x':
@@ -827,6 +737,8 @@ class Softmax(object):
         """Sets labels and colors for all classes.
 
         """
+        from cops_and_robots.fusion.softmax import SoftmaxClass
+
         # Check for unique labels
         if labels is not None:
             # Define a counter for non-unique label names
@@ -868,199 +780,6 @@ class Softmax(object):
 
         if self.auto_combine_mms:
             self._combine_mms()
-
-    def _plot_probs(self, ax=None, class_=None):
-        if self.state.shape[1] == 1:
-            if ax is None:
-                ax = self.fig.gca()
-            self._plot_probs_1D(ax, class_)
-        elif self.state.ndim == 2:
-            if ax is None and self.plot_3D:
-                ax = self.fig.gca(projection='3d')
-            elif ax is None:
-                ax = self.fig.gca()
-            self._plot_probs_2D(ax, class_)
-        elif self.state.ndim == 3:
-            if ax is None:
-                ax = self.fig.gca(projection='3d')
-            self._plot_probs_3D(ax, class_)
-        else:
-            raise ValueError('The state vector must be able to be represented '
-                             'in 1D, 2D or 3D to be plotted.')
-
-        # Shrink current axis's height by 10% on the bottom
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                         box.width, box.height * 0.9])
-
-    def _plot_probs_1D(self, ax, class_):
-        if type(class_) is str:
-            try:
-                class_ = self.classes[class_].id
-            except KeyError:
-                logging.debug('Couldn\'t find class {}. Looking in subclasses.'
-                              .format(class_))
-                class_ = self.subclasses[class_].id
-                if not hasattr(self, 'subclass_probs'):
-                    self.probability(find_subclass_probs=True)
-                self.plot_subclasses = True
-            except e:
-                logging.error('Couldn\'t find {} as a class or subclass.'
-                               .format(class_))
-                raise e
-        if self.plot_subclasses:
-            Z = self.subclass_probs[:]
-        else:
-            Z = self.probs[:]
-
-
-        if class_ is not None:
-            ax.plot(self.X[0, :], Z[:,class_], color=self.class_colors[class_])
-            ax.fill_between(self.X[0, :], 0, Z[:,class_], color=self.class_colors[class_],
-                            alpha=0.4)
-        else:
-            for i in range(self.num_classes):
-                ax.plot(self.X[0, :], Z[:,i], color=self.class_colors[i])
-                ax.fill_between(self.X[0, :], 0, Z[:,i], color=self.class_colors[i],
-                                alpha=0.4)
-
-        ax.set_xlim(self.bounds[0], self.bounds[2])
-        ax.set_ylim(0, 1)
-        ax.set_xlabel('x')
-        ax.set_ylabel('Probability P(D=i|X)')
-        ax.set_title('Class Probabilities')
-
-    def _plot_probs_2D(self, ax, class_):
-        if class_ is not None:
-            if type(class_) is str:
-                try:
-                    class_ = self.classes[class_].id
-                except KeyError:
-                    logging.debug('Couldn\'t find class {}. Looking in subclasses.'
-                                  .format(class_))
-                    class_ = self.subclasses[class_].id
-                    if not hasattr(self, 'subclass_probs'):
-                        self.probability(find_subclass_probs=True)
-                    self.plot_subclasses = True
-                except e:
-                    logging.error('Couldn\'t find {} as a class or subclass.'
-                                   .format(class_))
-                    raise e
-            if self.plot_subclasses:
-                Z = self.subclass_probs[:, class_].reshape(self.X.shape[0], self.X.shape[1])
-            else:
-                Z = self.probs[:, class_].reshape(self.X.shape[0], self.X.shape[1])
-        elif self.plot_subclasses:
-            Z = self.subclass_probs.reshape(self.X.shape[0], self.X.shape[1],
-                                            self.num_subclasses)
-        else:
-            Z = self.probs.reshape(self.X.shape[0], self.X.shape[1],
-                                   self.num_classes)
-
-        if self.plot_3D:
-
-            if class_ is not None:
-                ax.plot_surface(self.X, self.Y, Z, cstride=2, rstride=2,
-                                linewidth=0, antialiased=False,
-                                cmap=plt.get_cmap(self.class_cmaps[class_]))
-            else:
-                plot_multisurface(self.X, self.Y, Z, ax, cstride=4, rstride=4)
-
-            ax.set_xlim(self.bounds[0], self.bounds[2])
-            ax.set_ylim(self.bounds[1], self.bounds[3])
-            ax.set_zlabel('Probability P(D=i|X)')
-        else:
-            levels = np.linspace(0, np.max(Z), 50)
-            # <>TODO: Fix contourf plotting for multiple classes
-            for i in range(self.num_classes):
-                ax.contourf(self.X, self.Y, Z[:,:,i], levels=levels,
-                            cmap=plt.get_cmap(self.class_cmaps[i]), alpha=0.8)
-
-        ax.set_xlabel('x1')
-        ax.set_ylabel('x2')
-        ax.set_title('Class Probabilities')
-
-    def _plot_probs_3D(self, ax, class_):
-        pass
-
-    def _plot_dominant_classes(self, ax=None, plot_poly=False):
-        """Plot only the critical classes.
-
-        Critical classes are defined as the classes with highest probability
-        for a given state vector `x`.
-
-        """
-        # <>TODO: Fix the checking of the state vector to allow, say, 1 x y x^2
-        # Plot based on the dimension of the state vector
-        if ax is None:
-            ax = self.fig.gca()
-
-        if self.state.shape[1] == 1:
-            self._plot_dominant_classes_1D(ax)
-        elif self.state.ndim == 2:
-            self._plot_dominant_classes_2D(ax)
-        elif self.state.ndim == 3:
-            self._plot_dominant_classes_3D(ax)
-        else:
-            raise ValueError('The state vector must be able to be represented '
-                             'in 1D, 2D or 3D to be plotted.')
-
-        # Shrink current axis's height by 10% on the bottom
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                         box.width, box.height * 0.9])
-
-    def _plot_dominant_classes_1D(self, ax):
-
-        if self.plot_subclasses:
-            probs = self.subclass_probs
-        else:
-            probs = self.probs
-
-        res = 1 / self.X.size
-        fake_X, fake_Y = np.mgrid[self.bounds[0]:self.bounds[2] + res:res,
-                                  0:0.1]
-        max_pdf_indices = np.argmax(probs, axis=1)
-        max_colors = np.take(self.class_colors, max_pdf_indices)
-        cc = ColorConverter()
-        max_colors_rgb = np.array([cc.to_rgb(_) for _ in max_colors])
-
-        ax.bar(self.X.T, np.ones_like(self.X.T), color=max_colors_rgb,
-               linewidth=0, alpha=1)
-
-        ax.set_xlim(self.bounds[0], self.bounds[2])
-        ax.set_ylim(0, 0.01)
-        ax.set_yticks([])
-
-        ax.set_xlabel('x')
-        ax.set_title('Critical Classes')
-
-    def _plot_dominant_classes_2D(self, ax):
-
-        if self.plot_subclasses:
-            probs = self.subclass_probs
-        else:
-            probs = self.probs
-
-        # <>TODO: come up with more elegant solution than scatter plot
-        # Identify colors of critical classes for each state
-        np.set_printoptions(threshold=np.nan)
-        max_pdf_indices = np.argmax(probs, axis=1)
-        max_colors = np.take(self.class_colors, max_pdf_indices)
-        cc = ColorConverter()
-        max_colors_rgb = np.array([cc.to_rgb(_) for _ in max_colors])
-
-        ax.scatter(self.X, self.Y, c=max_colors_rgb, marker='s', s=100,
-                   linewidths=0, alpha=1)
-
-        ax.set_xlim(self.bounds[0], self.bounds[2])
-        ax.set_ylim(self.bounds[1], self.bounds[3])
-        ax.set_xlabel('x1')
-        ax.set_ylabel('x2')
-        ax.set_title('Critical Classes')
-
-    def _plot_dominant_classes_3D(self):
-        pass
 
 
 def normals_from_polygon(polygon):
@@ -1109,538 +828,28 @@ def normals_from_polygon(polygon):
 
     return normals, offsets
 
-
-###############################################################################
-# Individual Softmax Class
-###############################################################################
-
-class SoftmaxClass(object):
-    """short description of SoftmaxClass
-
-    long description of SoftmaxClass
-    
-    Parameters
-    ----------
-    param : param_type, optional
-        param_description
-
-    Attributes
-    ----------
-    attr : attr_type
-        attr_description
-
-    Methods
-    ----------
-    attr : attr_type
-        attr_description
-
-    """
-
-    def __init__(self, id_, label, weights, bias, softmax_collection,
-                 steepness=1,color='grey', cmap='Greys'):
-        self.id = id_
-        self.label = label
-        self.weights = np.asarray(weights)
-        self.bias = np.asarray(bias)
-        self.softmax_collection = softmax_collection
-        self.steepness = np.asarray(steepness)
-        self.color = color
-        self.cmap = cmap
-        self.ndim = self.weights.shape[0]
-
-        self.subclasses = {}
-        self.num_subclasses = 0
-
-    def add_subclass(self, subclass):
-        """Add a subclass to this softmax class.
-        """
-        subclass_label = self.label
-        if len(self.subclasses) > 0:
-
-            # Number unnumbered subclass
-            for sc_label, sc in self.subclasses.iteritems():
-                i = sc_label.find('__')
-                if i == -1:
-                    old_sc = self.subclasses[sc_label]
-                    del self.subclasses[sc_label]
-                    sc_label = sc_label + '__0'
-                    self.subclasses[sc_label] = sc
-
-            # Number current subclass
-            subclass_label = subclass_label + '__' + str(self.num_subclasses)
-
-        self.subclasses[subclass_label] = subclass
-
-        self.num_subclasses += 1
-
-    def probability(self, state=None, find_subclass_probs=False):
-        """Find the probability for this class at a given state.
-
-        Parameters
-        ----------
-        state : array_like
-            A a 1-dimensional array containing the state values of all `N`
-            states at which to find the probabilities of each class
-            specified.
-
-        Returns
-        -------
-        An array_like object containing the probabilities of the class(es)
-        specified.
-
-        """
-        p = self.softmax_collection.probability(state=state, class_=self.label,
-                                                find_subclass_probs=find_subclass_probs)
-        return p
-
-    def plot(self, ax=None, fill_between=True, plot_3D=True, **kwargs):
-        if self.ndim < 2:
-            self._plot_1D(ax=ax, fill_between=fill_between)
-        elif self.ndim == 2:
-            self._plot_2D(ax=ax, plot_3D=plot_3D)
-        else:
-            logging.error('No plot available at higher dimensions than 2!')
-
-    def _plot_1D(self, ax=None, fill_between=True, **kwargs):
-        fig = plt.gcf()
-        if ax is None:
-            ax = fig.add_subplot(111)
-
-        if hasattr(self,'probs'):
-            del self.probs
-        if not hasattr(self.softmax_collection, 'probs'):
-            self.softmax_collection.probability()
-        self.probs = self.softmax_collection.probs[:, self.id]
-        self.X = self.softmax_collection.X[0,:]
-
-        ax.plot(self.X, self.probs, color=self.color,
-                **kwargs)
-        if fill_between:
-            ax.fill_between(self.X, 0, self.probs,
-                            color=self.color, alpha=0.4)
-
-        bounds = self.softmax_collection.bounds
-        ax.set_xlim(bounds[0], bounds[2])
-        ax.set_ylim(0, 1)
-        ax.set_xlabel('x')
-        ax.set_ylabel('Probability P(D=i|X)')
-        ax.set_title('Class Probabilities')
-
-    def _plot_2D(self, ax=None, plot_3D=True, **kwargs):
-        fig = plt.gcf()
-        if ax is None:
-            if plot_3D:
-                ax = fig.add_subplot(111, projection='3d')
-            else:
-                ax = fig.add_subplot(111)
-
-        if hasattr(self,'probs'):
-            del self.probs
-        if not hasattr(self.softmax_collection, 'probs'):
-            self.softmax_collection.probability()
-
-        X = self.softmax_collection.X
-        Y = self.softmax_collection.Y
-        Z = self.softmax_collection.probs[:, self.id].reshape(X.shape[0], X.shape[1])
-        bounds = self.softmax_collection.bounds
-
-        if plot_3D:
-            ax.plot_surface(X, Y, Z, cstride=2, rstride=2, linewidth=0,
-                            antialiased=False, cmap=plt.get_cmap(self.cmap))
-
-            ax.set_zlabel('Probability P(D=i|X)')
-        else:
-            levels = np.linspace(0, np.max(Z), 50)
-            ax.contourf(X, Y, Z, levels=levels, cmap=plt.get_cmap(self.cmap),
-                        alpha=0.8)
-
-        ax.set_xlim(bounds[0], bounds[2])
-        ax.set_ylim(bounds[1], bounds[3])
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_title('Class Probabilities')
-
-
-###############################################################################
-# Binary Softmax
-###############################################################################
-class BinarySoftmax(Softmax):
-    """A collection of Binary versions of Softmax distributions.
-
-    While the Softmax class can take m>=2 class labels to create m mutually
-    exclusive and exhaustive distributions,the BinarySoftmax class takes
-    m>=2 class labels to create m sets of 2 distributions. Each set contains
-    one of the previous Softmax distributions and its complement.
-
-    For example, given a one-dimensional speed model with m=3 class labels
-    'stopped', 'slowly', and 'quickly', the new BinarySoftmax model creates
-    'stopped' and 'not stopped', 'slowly' and 'not slowly', and 'quickly' and
-    'not quickly'. Each set is mutually exclusive and exhaustive, but there is
-    no longer a dependency between the original labels.
-
-    Parameters
-    ----------
-    param : param_type, optional
-        param_description
-
-    Attributes
-    ----------
-    attr : attr_type
-        attr_description
-
-    Methods
-    ----------
-    attr : attr_type
-        attr_description
-
-    """
-
-    def __init__(self, softmax_model, allowed_relations=None, bounds=None):
-        super(BinarySoftmax, self).__init__(weights=np.zeros((2, 2)),
-                                            biases=np.zeros(2),
-                                            labels=['Null', 'NaC'],
-                                            bounds=bounds,
-                                            )
-        self.softmax_model = softmax_model
-
-        # Remove unwanted bits of the softmax superclass
-        del self.weights
-        del self.biases
-        del self.classes
-        del self.class_cmaps
-        del self.class_colors
-        del self.class_labels
-        del self.normals
-        del self.num_classes
-        del self.num_params
-        del self.offsets
-        del self.poly
-
-        self.categorical_to_binary()
-
-    def categorical_to_binary(self):
-        """Transforms a m>2 class softmax model to multiple binary models.
-        """
-        self.binary_models = {}
-
-        # Create new binary softmax model for each class
-        for class_label in self.softmax_model.class_labels:
-            new_softmax = copy.deepcopy(self.softmax_model)
-            
-            # If MMS model use subclass labels
-            if hasattr(new_softmax, 'subclasses'):
-                new_softmax.labels = []
-                for l in new_softmax.subclass_labels:
-                    j = l.find('__')
-                    if j > -1:
-                        l = l[:j] 
-                    new_softmax.labels.append(l)
-                del new_softmax.subclasses
-            else:
-                new_softmax.labels = new_softmax.class_labels
-            del new_softmax.classes
-            
-            if hasattr(new_softmax,'probs'):
-                del new_softmax.probs
-            if hasattr(new_softmax,'subclass_probs'):
-                del new_softmax.subclass_probs
-
-            for i, new_label in enumerate(new_softmax.labels):
-                if new_label != class_label:
-                    new_label = 'not ' + class_label
-                    new_softmax.labels[i] = new_label.title()
-
-            new_softmax.num_classes = len(new_softmax.labels)
-            new_softmax._define_classes(new_softmax.labels)
-
-            self.binary_models[class_label] = new_softmax
-
-    def probability(self, state=None, class_=None):
-        # if class_ == None:
-        #     class_ = 
-        if 'Not ' in class_:
-            not_label = class_
-            label = class_.replace('Not ', '')
-            p = self.binary_models[label].probability(state, not_label)
-        else:
-            label = class_
-            p = self.binary_models[label].probability(state, label)
-        return p
-
-    def trim_categories(self):
-        pass
-    # <>TODO: Subclass dict to BinaryDict, allowing us to call any class from
-    # a binary MMS model
-    # @property
-    # def classes(self):
-    #     for binary_model in self.binary_models:
-    #         try:
-    #             class_ = binary_model[key]
-    #             return class_
-    #         except KeyError:
-    #             logging.debug('No class {} in {}.'.format(key, binary_model))
-    #         except e:
-    #             raise e
-
-
-###############################################################################
-# Pre-defined Softmax, Multimodal Softmax and Binary Softmax models
-###############################################################################
-
-def _make_regular_2D_poly(n_sides=3, origin=(0, 0), theta=0, max_r=1):
-    x = [max_r * np.cos(2 * np.pi * n / n_sides + theta) + origin[0]
-         for n in range(n_sides)]
-    y = [max_r * np.sin(2 * np.pi * n / n_sides + theta) + origin[1]
-         for n in range(n_sides)]
-    pts = zip(x,y)
-
-    logging.debug('Generated points:\n{}'.format('\n'.join(map(str,pts))))
-
-    return Polygon(pts)
-
-
-def camera_model_2D(min_view_dist=0., max_view_dist=2):
-    """Generate a softmax model for a two dimensional camera.
-
-    A softmax model decomposing the space into five subclasses: four
-    `no-detection` subclasses, and one `detection` subclass. This uses the
-    Microsoft Kinect viewcone specifications of 57 degrees viewing angle.
-
-    Classes are numbered as such:
-    <>TODO: insert image of what it looks like
-
-    Parameters
-    ----------
-    min_view_dist : float, optional
-        The minimum view distance for the camera. Note that this is not a hard
-        boundary, and specifies the distance at which an object has a 5% chance
-        of detection. The default it 0 meters, which implies no minimum view
-        distance.
-    min_view_dist : float, optional
-        The minimum view distance for the camera. Note that this is not a hard
-        boundary, and specifies the distance at which an object has a 5% chance
-        of detection. The default is 1 meter.
-
-    """
-    # Define view cone centered at origin
-    horizontal_view_angle = 57  # from Kinect specifications (degrees)
-    min_y = min_view_dist * np.tan(np.radians(horizontal_view_angle / 2))
-    max_y = max_view_dist * np.tan(np.radians(horizontal_view_angle / 2))
-    camera_poly = Polygon([(min_view_dist,  min_y),
-                           (max_view_dist,  max_y),
-                           (max_view_dist, -max_y),
-                           (min_view_dist, -min_y)])
-
-    if min_view_dist > 0:
-        steepness = [100, 100, 2.5, 100, 100]
-        labels = ['Detection', 'No Detection', 'No Detection', 'No Detection',
-                  'No Detection']
-    else:
-        steepness = [100, 100, 2.5, 100,]
-        labels = ['Detection', 'No Detection', 'No Detection', 'No Detection']
-
-    bounds = [-11.25, -3.75, 3.75, 3.75]
-    camera = Softmax(poly=camera_poly, labels=labels,
-                     steepness=steepness, bounds=bounds)
-    return camera
-
-
-def speed_model():
-    """Generate a one-dimensional Softmax model for speeds.
-    """
-    labels = ['Stopped', 'Slow', 'Medium', 'Fast']
-    sm = Softmax(weights=np.array([[0], [150], [175], [200]]),
-                 biases=np.array([0, -2.5, -6, -14]),
-                 state_spec='x', labels=labels,
-                 bounds=[0, 0, 0.4, 0.4])
-    return sm
-
-
-def binary_speed_model():
-    sm = speed_model()
-    bsm = BinarySoftmax(sm)
-    return bsm
-
-
-def pentagon_model():
-    poly = _make_regular_2D_poly(5, max_r=2, theta=np.pi/3.1)
-    labels = ['Interior',
-              'Mall Terrace Entrance',
-              'Heliport Facade',
-              'South Parking Entrance', 
-              'Concourse Entrance',
-              'River Terrace Entrance', 
-             ]
-    steepness = 5
-    sm = Softmax(poly=poly, labels=labels, resolution=0.1, steepness=5)
-    return sm
-
-
-def range_model(poly=None, spread=1, bounds=None):
-    if poly == None:
-        poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
-    labels = ['Inside'] + ['Near'] * 4
-    steepnesses = [10] * 5
-    sm = Softmax(poly=poly, labels=labels, resolution=0.1,
-                 steepness=steepnesses, bounds=bounds)
-
-    steepnesses = [11] * 5
-    # far_bounds = _make_regular_2D_poly(4, max_r=3, theta=np.pi/4)
-    larger_poly = scale(poly, 2, 2)
-    labels = ['Inside'] + ['Outside'] * 4
-    sm_far = Softmax(poly=poly, labels=labels, resolution=0.1,
-                 steepness=steepnesses, bounds=bounds)
-
-    new_weights = sm_far.weights[1:]
-    new_biases = sm_far.biases[1:] - spread
-    new_labels = ['Outside'] * 4
-    new_steepnesses = steepnesses[1:]
-
-    sm.add_classes(new_weights, new_biases, new_labels, new_steepnesses)
-    return sm
-
-
-def binary_range_model(poly=None, bounds=None):
-    dsm = range_model(poly, bounds=bounds)
-    bdsm = BinarySoftmax(dsm, bounds=bounds)
-    return bdsm
-
-
-def intrinsic_space_model(poly=None, bounds=None):
-    if poly == None:
-        poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
-
-    # <>TODO: If sides != 4, find a way to make it work!
-    # NOTE: front and back are intrinsic, left and right are extrinsic
-    labels = ['Inside', 'Front', 'Right', 'Back', 'Left']
-    steepness = 3
-    sm = Softmax(poly=poly, labels=labels, resolution=0.1,
-                 steepness=steepness, bounds=bounds)
-    return sm
-
-
-def binary_intrinsic_space_model(poly=None, bounds=None, allowed_relations=None,
-                                 container_poly=None):
-    if bounds is None:
-        bounds = [-5, -5, 5, 5]
-    ism = intrinsic_space_model(poly, bounds=bounds)
-
-    if container_poly is not None:
-        n, o = normals_from_polygon(container_poly)
-
-        steepness = 10
-        outside_weights = n * steepness + ism.weights[1:] 
-        outside_biases = o * steepness + ism.biases[1:] 
-
-        labels = ['Outside'] * 4
-        # labels = ['Outside_Front','Outside_Left','Outside_Back','Outside_Right']
-        ism.add_classes(outside_weights, outside_biases, labels)
-
-    
-    # <>TODO: remove this debug stub
-    # axes = ism.plot(plot_poly=True)
-    # patch = PolygonPatch(container_poly, facecolor='white', zorder=5,
-    #                      linewidth=5, edgecolor='brown',)
-    # axes[0].add_patch(patch)
-    # plt.show()
-
-    bism = BinarySoftmax(ism, bounds=bounds)
-    return bism
-
-
-def run_demos():
-    logging.info('Preparing Softmax models for demo...')
-    # Regular Softmax models #################################################
-
-    # Speed model
-    sm = speed_model()
-    title='Softmax Speed Model'
-    logging.info('Building {}'.format(title))
-    sm.plot(show_plot=False, plot_3D=False, title=title)
-
-    # Pentagon Model
-    pm = pentagon_model()
-    title='Softmax Area Model (The Pentagon)'
-    logging.info('Building {}'.format(title))
-    pm.plot(show_plot=False, title=title)
-
-    # Range model
-    x = [-2, 0, 2, 2]
-    y = [-3, -1, -1, -3]
-    pts = zip(x,y)
-    poly = Polygon(pts)
-    rm = range_model(poly)
-    rm = intrinsic_space_model(poly)
-    title='Softmax Intrinsic Space Model (Irregular)'
-    logging.info('Building {}'.format(title))
-    rm.plot(show_plot=False, title=title)
-
-    # Multimodal softmax models ##############################################
-
-    # Range model (irregular poly)
-    x = [-2, 0, 2, 2]
-    y = [-3, -1, -1, -3]
-    pts = zip(x,y)
-    poly = Polygon(pts)
-    rm = range_model(poly)
-    title='MMS Range Model (Irregular)'
-    logging.info('Building {}'.format(title))
-    rm.plot(show_plot=False, title=title)
-
-    # Camera model (with movement)
-    cm = camera_model_2D()
-    cm.move([-2,-2, 90])
-    title='MMS Camera Model'
-    logging.info('Building {}'.format(title))
-    cm.plot(show_plot=False, title=title)
-    cm.move([-5,-2, 90])
-    title='MMS Camera Model (moved, detect only)'
-    logging.info('Building {}'.format(title))
-    cm.plot(show_plot=False, class_='Detection', title=title)
-
-    # Binary softmax models ##################################################
-
-    # Binary speed model 
-    bsm = binary_speed_model()
-    title='Binary MMS Speed Model'
-    logging.info('Building {}'.format(title))
-    bsm.binary_models['Medium'].plot(show_plot=False, title=title)
-
-    # Binary Pentagon Model - Individual and multiple plots
-    pent = pentagon_model()
-    bpent = BinarySoftmax(pent)
-    title='Binary MMS Pentagon Model (Not Heliport only)'
-    logging.info('Building {}'.format(title))
-    bpent.binary_models['Heliport Facade'].plot(show_plot=False, class_='Not Heliport Facade',
-                                                title=title)
-    title='Binary MMS Pentagon Model (Interior)'
-    bpent.binary_models['Interior'].plot(show_plot=False, title=title)
-
-    # Binary Range Model
-    bdsm = binary_range_model()
-    title='Binary MMS Range Model'
-    logging.info('Building {}'.format(title))
-    bdsm.binary_models['Near'].plot(show_plot=False, title=title)
-    plt.show()
-
-    # Binary intrinsic space model
-    bism = binary_intrinsic_space_model()
-    title='Binary MMS Intrinsic Space Model'
-    logging.info('Building {}'.format(title))
-    bism.binary_models['Front'].plot(show_plot=False, title=title)
+# # Load functions from external files
+# from cops_and_robots.fusion.softmax._models import *
+# from cops_and_robots.fusion.softmax._synthesis import *
+# import cops_and_robots.fusion.softmax as softmax
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     np.set_printoptions(precision=10, suppress=True)
+    from _models import demo_models
 
-    # run_demos()
+    demo_models()
+    # batch_vs_lp()
+    # batch_test(visualize=True, create_combinations=True)
+    # measurements = ['Inside', 'Right']
+    # lp_test(measurements, verbose=False, visualize=True)
 
-    poly = box(1,1,2,3)
-    container_poly = box(-3,-4,3,4)
-    # container_poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
-    # bism = binary_intrinsic_space_model(poly=poly)
-    bism = binary_intrinsic_space_model(poly=poly, container_poly=container_poly)
-    title = 'Binary MMS Intrinsic Space Model'
-    bism.binary_models['Front'].plot(show_plot=False, title=title)
-    plt.show()
+    # poly = box(1,1,2,3)
+    # container_poly = box(-3,-4,3,4)
+    # # container_poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
+    # # bism = binary_intrinsic_space_model(poly=poly)
+    # bism = binary_intrinsic_space_model(poly=poly, container_poly=container_poly)
+    # title = 'Binary MMS Intrinsic Space Model'
+    # bism.binary_models['Front'].plot(show_plot=False, title=title)
+    # plt.show()
+
