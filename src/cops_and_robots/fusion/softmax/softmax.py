@@ -130,7 +130,7 @@ class Softmax(object):
                                 _plot_dominant_classes_2D,
                                 _plot_dominant_classes_3D,
                                 )
-
+    from _synthesis import find_neighbours
 
     def __init__(self, weights=None, biases=None, normals=None, offsets=None,
                  poly=None, steepness=None, rotation=None, state_spec='x y',
