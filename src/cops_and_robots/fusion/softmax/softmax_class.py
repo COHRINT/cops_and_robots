@@ -29,13 +29,16 @@ class SoftmaxClass(object):
 
     """
 
+    # Load methods from external files
+    from _synthesis import find_class_neighbours
+
     def __init__(self, id_, label, weights, bias, softmax_collection,
                  steepness=1,color='grey', cmap='Greys'):
         self.id = id_
         self.label = label
         self.weights = np.asarray(weights)
         self.bias = np.asarray(bias)
-        self.softmax_collection = softmax_collection
+        self.softmax_collection = softmax_collection  #<>TODO: rename to 'parent_model'
         self.steepness = np.asarray(steepness)
         self.color = color
         self.cmap = cmap

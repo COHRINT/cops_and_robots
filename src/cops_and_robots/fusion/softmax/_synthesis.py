@@ -7,94 +7,11 @@ from cvxopt import matrix, solvers
 import matplotlib.pyplot as plt
 from descartes.patch import PolygonPatch
 
-from _models import _make_regular_2D_poly, intrinsic_space_model
-from softmax import Softmax
-
-def find_redundant_constraints(G_full, h_full, break_index=-1, verbose=False):
-    """Determine which constraints effect the feasible region."""
-    result = []
-    redundant_constraints = []
-    for i, _ in enumerate(G_full):
-        if i > break_index and break_index > 0:
-            break
-        A = np.delete(G_full, i, axis=0)
-        b = np.delete(h_full, i)
-
-        # Objective function: max c.x (or min -c.x)
-        c = -G_full[i] # use the constraint as the objective basis
-        beta = h_full[i] # maximum in the constraint basis
-
-        # <>TODO: Check to make sure c is a dense column matrix
-
-        A = matrix(np.asarray(A,dtype=np.float))
-        b = matrix(np.asarray(b,dtype=np.float))
-        c = matrix(np.asarray(c,dtype=np.float))
-        solvers.options['show_progress'] = False
-        sol = solvers.lp(c,A,b)
-
-        optimal_pt = np.asarray(sol['x']).reshape(G_full.shape[1])
-        # If dual is infeasible, max is unbounded (i.e. infinity)
-        if sol['status'] == 'dual infeasible':
-            optimal_val = np.inf
-        else:
-            optimal_val = -np.asarray(sol['primal objective'])
-        is_redundant = optimal_val <= beta
-        if is_redundant:
-            redundant_constraints.append(i)
-        
-        if verbose:
-            logging.info('Without constraint {}, we have the following:'.format(i))
-            logging.info(np.asarray(sol['x']))
-            logging.info('\tOptimal value (z_i) {} at point {}.'
-                  .format(optimal_val, optimal_pt))
-            logging.info('\tRemoved constraint maximum (b_i) of {}.'.format(beta))
-            logging.info('\tRedundant? {}\n\n'.format(is_redundant))
-        result.append({'optimal value': optimal_val, 
-                       'optimal point': optimal_pt,
-                       'is redundant': is_redundant
-                       })
-
-    return result, redundant_constraints
-
-def remove_redundant_constraints(A, b, **kwargs):
-    _, redundant_constraints = find_redundant_constraints(A, b, **kwargs)
-    A = np.delete(A, redundant_constraints, axis=0)
-    b = np.delete(b, redundant_constraints)
-    return A, b
-
-def generate_inequalities(softmax_model, measurement):
-    """Produce inequalities in the form Ax \leq b
-    """
-    
-    # Identify the measurement and index
-    for i, label in enumerate(softmax_model.class_labels):
-        if label == measurement:
-            using_subclasses = False
-            break
-    else:
-        if hasattr(softmax_model,'subclasses'):
-            for i, label in enumerate(softmax_model.subclass_labels):
-                if label == measurement:
-                    using_subclasses = True
-                    break 
-        logging.error('Measurement not found!')
-
-    # Look at log-odds boundaries
-    A = np.empty_like(np.delete(softmax_model.weights, 0, axis=0))
-    b = np.empty_like(np.delete(softmax_model.biases, 0))
-    k = 0
-    for j, weights in enumerate(softmax_model.weights):
-        if j == i:
-            continue
-
-        A[k] = -(softmax_model.weights[i] - softmax_model.weights[j])
-        b[k] = (softmax_model.biases[i] - softmax_model.biases[j])
-        k += 1
-    return A, b
-
 def product_model(models):
     """Generate a product model from multiple softmax models.
     """
+    from softmax import Softmax
+
     n = len(models)  # number of measurements
 
     # Figure out how many terms are needed in denominator
@@ -136,41 +53,181 @@ def product_model(models):
 
     return sm
 
-def product_test(visualize=False, create_combinations=False):
+def find_redundant_constraints(G_full, h_full, break_index=-1, verbose=False):
+    """Determine which constraints effect the feasible region."""
+    result = []
+    redundant_constraints = []
+    for i, _ in enumerate(G_full):
+        if i > break_index and break_index > 0:
+            break
+        G = np.delete(G_full, i, axis=0)
+        h = np.delete(h_full, i)
+
+        # Objective function: max c.x (or min -c.x)
+        c = -G_full[i]  # use the constraint as the objective basis
+        beta = h_full[i]  # maximum in the constraint basis
+
+        # <>TODO: Check to make sure c is a dense column matrix
+
+        G = matrix(np.asarray(G, dtype=np.float))
+        h = matrix(np.asarray(h, dtype=np.float))
+        c = matrix(np.asarray(c, dtype=np.float))
+        solvers.options['show_progress'] = False
+        sol = solvers.lp(c,G,h)
+        optimal_pt = sol['x']
+
+        # If dual is infeasible, max is unbounded (i.e. infinity)
+        if sol['status'] == 'dual infeasible' or optimal_pt is None:
+            optimal_val = np.inf
+        else:
+            optimal_val = -np.asarray(sol['primal objective'])
+            optimal_pt = np.asarray(optimal_pt).reshape(G_full.shape[1])
+        is_redundant = optimal_val <= beta
+        if is_redundant:
+            redundant_constraints.append(i)
+        
+        if verbose:
+            logging.info('Without constraint {}, we have the following:'.format(i))
+            logging.info(np.asarray(sol['x']))
+            logging.info('\tOptimal value (z_i) {} at point {}.'
+                  .format(optimal_val, optimal_pt))
+            logging.info('\tRemoved constraint maximum (b_i) of {}.'.format(beta))
+            logging.info('\tRedundant? {}\n\n'.format(is_redundant))
+        result.append({'optimal value': optimal_val, 
+                       'optimal point': optimal_pt,
+                       'is redundant': is_redundant
+                       })
+
+    return result, redundant_constraints
+
+def remove_redundant_constraints(G, h, **kwargs):
+    """Remove redundant inequalities from a set of inequalities Gx <= h.
+    """
+    _, redundant_constraints = find_redundant_constraints(G, h, **kwargs)
+    G = np.delete(G, redundant_constraints, axis=0)
+    h = np.delete(h, redundant_constraints)
+    return G, h
+
+def generate_inequalities(softmax_model, measurement):
+    """Produce inequalities in the form Gx <= h
+    """
+    # Identify the measurement and index
+    for i, label in enumerate(softmax_model.class_labels):
+        if label == measurement:
+            using_subclasses = False
+            break
+    else:
+        if hasattr(softmax_model,'subclasses'):
+            for i, label in enumerate(softmax_model.subclass_labels):
+                if label == measurement:
+                    using_subclasses = True
+                    break 
+        logging.error('Measurement not found!')
+
+    # Look at log-odds boundaries
+    G = np.empty_like(np.delete(softmax_model.weights, 0, axis=0))
+    h = np.empty_like(np.delete(softmax_model.biases, 0))
+    k = 0
+    for j, weights in enumerate(softmax_model.weights):
+        if j == i:
+            continue
+        G[k] = -(softmax_model.weights[i] - softmax_model.weights[j])
+        h[k] = (softmax_model.biases[i] - softmax_model.biases[j])
+        k += 1
+
+    return G, h
+
+def geometric_model(models, measurements, verbose=False):
+    """Generate one softmax model from others using geometric constraints.
+    """
+    from softmax import Softmax
+
+    # Get the full, redundant set of inequalities from all models
+    G_full = []
+    h_full = []
+    for i, sm in enumerate(models):
+        G, h = generate_inequalities(sm, measurements[i])
+        G_full.append(G)
+        h_full.append(h)
+    G_full = np.asarray(G_full).reshape(-1, G.shape[1])
+    h_full = np.asarray(h_full).reshape(-1)
+
+    # Remove redundant constraints to get weights and biases
+    G, h = remove_redundant_constraints(G_full, h_full, verbose=verbose)
+    new_weights = np.vstack(([0,0], G))
+    new_biases = np.hstack((0, -h))
+
+    # Generate a label for the important class, and generic ones for the rest
+    labels = [" + ".join(measurements)]
+    for i in range(h.size):
+        labels.append('Class ' + str(i + 1))
+    sm = Softmax(new_weights, new_biases, labels=labels)
+    return sm
+
+def find_neighbours(self):
+    """Method of a Softmax model to find neighbours for all its classes.
+    """
+    for label, class_ in self.classes.iteritems():
+        class_.find_class_neighbours()
+    # print "{} has neighbours: {}".format(class_.label, class_.neighbours)
+
+def find_class_neighbours(self):
+    """Method of a Softmax class to find its neighbour classes.
+    """
+    G, h = generate_inequalities(self.softmax_collection, self.label)
+    results, _ = find_redundant_constraints(G, h)
+
+    neighbours = []
+    i = 0
+    for j in range(len(results) + 1):
+        if j == self.id:
+            continue
+        if not results[i]['is redundant']:
+            label = self.softmax_collection.class_labels[j]
+            neighbours.append(label)
+        i += 1
+    self.neighbours = neighbours
+
+def nearest_neighbours_model(models, measurements):
+    """Generate one softmax model from each measurement class' neighbours.
+    """
+    from softmax import Softmax
+
+    nn_models = []
+    for i, model in enumerate(models):
+        nn_weights = []
+        nn_biases = []
+        nn_labels = []
+
+        model.find_neighbours()
+        measurement = measurements[i]
+        nn_weights.append(model.classes[measurement].weights)
+        nn_biases.append(model.classes[measurement].bias)
+        nn_labels.append(measurement)
+
+        neighbours = model.classes[measurement].neighbours
+        for neighbour in neighbours:
+            nn_weights.append(model.classes[neighbour].weights)
+            nn_biases.append(model.classes[neighbour].bias)
+            nn_labels.append(neighbour)
+        nn_weights =  np.asarray(nn_weights)
+        nn_biases =  np.asarray(nn_biases)
+
+        sm = Softmax(weights=nn_weights,
+                     biases=nn_biases,
+                     labels=nn_labels
+                     )
+        nn_models.append(sm)
+
+    nn_sm = product_model(nn_models)
+    return nn_sm
+
+def product_test(models, visualize=False, create_combinations=False):
     """
     """
-    # Create base models
-    poly1 = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
-    poly2 = _make_regular_2D_poly(4, origin=[1,1.5], max_r=2, theta=np.pi/4)
-    bounds = [-5, -5, 5, 5]
-    sm1 = intrinsic_space_model(poly=poly1, bounds=bounds)
-    sm2 = intrinsic_space_model(poly=poly2, bounds=bounds)
+    sm3 = product_model(models)
 
-    sm3 = product_model([sm1, sm2])
-
-    # # Create intersection model
-    # M = sm1.num_classes * sm2.num_classes
-    # intersection_weights = np.empty((M, sm1.weights.shape[1]))
-    # intersection_biases = np.empty(M)
-    # i = 0
-    # for weight1 in sm1.weights:
-    #     for weight2 in sm2.weights:
-    #         intersection_weights[i] = weight1 + weight2
-    #         i += 1
-    # i = 0
-    # for bias1 in sm1.biases:
-    #     for bias2 in sm2.biases:
-    #         intersection_biases[i] = bias1 + bias2
-    #         i += 1
-    # i = 0
-    # labels = []
-    # for label1 in sm1.class_labels:
-    #     for label2 in sm2.class_labels:
-    #         labels.append(label1 + ' + ' + label2)
-
-    # sm3 = Softmax(intersection_weights,intersection_biases, labels=labels)
-
-     # Create 'front + interior'
+    # Manually create 'front + interior'
     fi_weights = np.array([sm2.weights[0],
                            sm2.weights[1],
                            sm2.weights[2],
@@ -320,7 +377,7 @@ def test_box_constraints(verbose=False):
     A,b = remove_redundant_constraints(G_full, h_full, verbose=verbose)
     return A, b
 
-def lp_test(measurements, verbose=False, visualize=False):
+def geometric_model_test(measurements, verbose=False, visualize=False):
     poly1 = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
     poly2 = _make_regular_2D_poly(4, origin=[1,1.5], max_r=2, theta=np.pi/4)
     bounds = [-5, -5, 5, 5]
@@ -360,10 +417,134 @@ def lp_test(measurements, verbose=False, visualize=False):
 
     return sm3
 
+def test_synthesis_techniques(visualize=True):
+    from _models import _make_regular_2D_poly, intrinsic_space_model
+
+    # Create the softmax models to be combined
+    poly1 = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
+    poly2 = _make_regular_2D_poly(4, origin=[1,1.5], max_r=2, theta=np.pi/4)
+    poly3 = _make_regular_2D_poly(4, max_r=3, theta=np.pi/4)
+    sm1 = intrinsic_space_model(poly=poly1)
+    sm2 = intrinsic_space_model(poly=poly2)
+    sm3 = intrinsic_space_model(poly=poly3)
+    measurements = ['Front', 'Inside', 'Inside']
+    joint_measurement = " + ".join(measurements)
+    models = [sm1, sm2, sm3]
+
+    # Synthesize the softmax models
+    product_sm = product_model(models)
+    neighbour_sm = nearest_neighbours_model(models, measurements)
+    geometric_sm = geometric_model(models, measurements)
+
+    # Find their differences
+    neighbour_diff = prob_difference(product_sm, neighbour_sm, joint_measurement)
+    geometric_diff = prob_difference(product_sm, geometric_sm, joint_measurement)
+
+    if visualize:
+        fig = plt.figure(figsize=(16,10))
+
+        # Plot critical regions
+        ax = fig.add_subplot(3,3,1)
+        product_sm.plot(plot_poly=True, plot_probs=False, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title('Product Model ({} terms)'
+            .format(product_sm.biases.size))
+
+        ax = fig.add_subplot(3,3,2)
+        neighbour_sm.plot(plot_poly=True, plot_probs=False, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title('Nearest Neighbour Model ({} terms)'
+            .format(neighbour_sm.biases.size))
+
+        ax = fig.add_subplot(3,3,3)
+        geometric_sm.plot(plot_poly=True, plot_probs=False, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title('Geometric Model ({} terms)'
+            .format(geometric_sm.biases.size))
+
+        # Plot probabilities of measurements
+        ax = fig.add_subplot(3,3,4, projection='3d')
+        product_sm.plot(class_=joint_measurement, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title("Product Class: '{}'".format(joint_measurement))
+
+        ax = fig.add_subplot(3,3,5, projection='3d')
+        neighbour_sm.plot(class_=joint_measurement, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title("Nearest Neighbour Class: '{}'"
+                      .format(joint_measurement))
+
+        ax = fig.add_subplot(3,3,6, projection='3d')
+        geometric_sm.plot(class_=joint_measurement, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title("Geometric Class: '{}'".format(joint_measurement))
+
+        # Plot probability difference
+        bounds = [-5, -5, 5, 5]
+
+        ax = fig.add_subplot(3,3,8)
+        c = ax.pcolormesh(product_sm.X, product_sm.Y, neighbour_diff,)
+                          # vmin=0, vmax=diff_max)
+        plt.colorbar(c)
+        ax.set_title("Difference between Neighbour and Product")
+        ax.set_xlim(bounds[0],bounds[2])
+        ax.set_ylim(bounds[1],bounds[3])
+
+        ax = fig.add_subplot(3,3,9)
+        c = ax.pcolormesh(product_sm.X, product_sm.Y, geometric_diff,)
+                          # vmin=0, vmax=diff_max)
+        plt.colorbar(c)
+        ax.set_title("Difference between Geometric and Product")
+        ax.set_xlim(bounds[0],bounds[2])
+        ax.set_ylim(bounds[1],bounds[3])
+
+        # fig.subplots_adjust(right=0.8)
+        # cax = fig.add_axes([0.85, 0.15, 0.025, 0.7])
+        # fig.colorbar(c, cax=cax)
+
+        plt.show()
+
+
+def prob_difference(sm1, sm2, joint_measurement):
+    #<>TODO: use arbitrary bounds
+    bounds = [-5, -5, 5, 5]
+    res = 0.1
+
+    probs1 = sm1.probability(class_=joint_measurement)
+    probs1 = probs1.reshape(101,101)
+    del sm1.probs
+    max_i = np.unravel_index(probs1.argmax(), probs1.shape)
+    min_i = np.unravel_index(probs1.argmin(), probs1.shape)
+    sm1stats = {'max prob': probs1.max(),
+                'max prob coord': np.array(max_i) * res + np.array(bounds[0:2]),
+                'min prob': probs1.min(),
+                'min prob coord': np.array(min_i) * res + np.array(bounds[0:2]),
+                'avg prob': probs1.mean(),
+                }
+
+    probs2 = sm2.probability(class_=joint_measurement)
+    probs2 = probs2.reshape(101,101)
+    del sm2.probs
+    sm2stats = {'max prob': probs2.max(),
+                'max prob coord': np.array(max_i) * res + np.array(bounds[0:2]),
+                'min prob': probs2.min(),
+                'min prob coord': np.array(min_i) * res + np.array(bounds[0:2]),
+                'avg prob': probs2.mean(),
+                }
+
+    prob_diff = probs2 - probs1
+    prob_diff = prob_diff.reshape(101,101)
+
+    diffstats = {'max diff': prob_diff.max(),
+                 'min diff': prob_diff.min(),
+                 'avg diff': prob_diff.mean()
+                 }
+    return prob_diff
+
 def product_vs_lp():
     measurements = ['Front', 'Inside']
     sm1 = product_test(visualize=False)
-    sm2 = lp_test(measurements, visualize=False)
+    sm2 = geometric_model_test(measurements, visualize=False)
     combined_measurements =  [measurements[0] + ' + ' + measurements[1]]* 2
     compare_probs(sm1, sm2, measurements=combined_measurements)
 
@@ -467,7 +648,9 @@ def compare_probs(sm1, sm2, measurements, visualize=True, verbose=True):
 if __name__ == '__main__':
     np.set_printoptions(precision=2, suppress=True)
 
+    test_synthesis_techniques()
+
     # product_vs_lp()
-    product_test(visualize=True, create_combinations=True)
+    # product_test(visualize=True, create_combinations=True)
     # measurements = ['Inside', 'Right']
-    # lp_test(measurements, verbose=False, visualize=True)
+    # geometric_model_test(measurements, verbose=False, visualize=True)
