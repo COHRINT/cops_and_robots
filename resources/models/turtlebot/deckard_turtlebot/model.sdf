@@ -1,0 +1,246 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="deckard turtlebot">
+<!--   	<include>
+
+[gazebo_gui-3] process has died [pid 6369, exit code 137, 
+
+  		<uri> model://create_gazebo.urdf.xacro</uri>
+  	</include> -->
+    <link name="rack">
+      <inertial>
+        <pose>0.001453 -0.000453 0.029787 0 0 0</pose>
+      </inertial>
+
+      <visual name="plate_0_visual">
+        <pose>-0.043340 0 0.084757 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://deckard_turtlebot/meshes/plate_0_logo.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="plate_2_visual">
+        <pose>-0.002660 0 0.199108 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://deckard_turtlebot/meshes/plate_1_logo.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="spacer_0_visual">
+        <pose>-0.002540 0.111468 0.079992 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="spacer_1_visual">
+        <pose>-0.002540 -0.111468 0.079992 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="spacer_2_visual">
+        <pose>-0.072390 -0.111468 0.079992 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="spacer_3_visual">
+        <pose>-0.072390 0.111468 0.079992 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-02403-125_Spacer.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_2in_0_visual">
+        <pose>0.067640 0.131420 0.087980 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_2in_1_visual">
+        <pose>0.067640 -0.131420 0.087980 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_2in_2_visual">
+        <pose>-0.052832 -0.131420 0.087980 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_2in_3_visual">
+        <pose>-0.052832 0.131420 0.087980 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_2in_4_visual">
+        <pose>0.067640 0.131420 0.145130 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_2in_5_visual">
+        <pose>0.067640 -0.131420 0.145130 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_2in_6_visual">
+        <pose>-0.052832 -0.131420 0.145130 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_2in_7_visual">
+        <pose>-0.052832 0.131420 0.145130 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04552-2000-RA_Turtlebot_M-F_Standoff.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_kinect_0_visual">
+        <pose>-0.105098 0.098000 0.202308 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="standoff_kinect_1_visual">
+        <pose>-0.105098 -0.098000 0.202308 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://turtlebot/meshes/68-04556-RA_Kinect_Standoff_Assy.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <sensor name="laser" type="ray">
+        <pose>-0.065000 0 0.092000 0 0 0</pose>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>180</samples>
+              <resolution>1.000000</resolution>
+              <min_angle>-2.268928</min_angle>
+              <max_angle>2.268928</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.080000</min>
+            <max>10</max>
+            <resolution>0.010000</resolution>
+          </range>
+        </ray>
+        <update_rate>20</update_rate>
+      </sensor>
+      <sensor name="camera" type="camera">
+        <pose>-0.087098 0 0.303857 0 0 0</pose>
+        <camera>
+          <horizontal_fov>1.047</horizontal_fov>
+          <image>
+            <width>320</width>
+            <height>240</height>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>100</far>
+          </clip>
+        </camera>
+
+
+        <plugin name="deckard_camera_controller" filename="libgazebo_ros_camera.so">
+	        <always_on>1</always_on>
+	        <update_rate>30</update_rate>
+	        <cameraName>deckard/camera</cameraName>
+	        <imageTopicName>image_raw</imageTopicName>
+	        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+	        <frameName>camera_link</frameName>
+	        <hackBaseline>0.07</hackBaseline>
+	        <distortionK1>0.0</distortionK1>
+	        <distortionK2>0.0</distortionK2>
+	        <distortionK3>0.0</distortionK3>
+	        <distortionT1>0.0</distortionT1>
+	        <distortionT2>0.0</distortionT2>
+      	</plugin>
+
+
+	<!-- When I just use this I get this error: exit code 139, but deckered shows up-->      	
+		<plugin name="create_controller" filename="libgazebo_ros_create.so">
+      	  <alwaysOn>true</alwaysOn>
+      	  <node_namespace>turtlebot_node</node_namespace>
+      	  <left_wheel_joint>left_wheel_joint</left_wheel_joint>
+      	  <right_wheel_joint>right_wheel_joint</right_wheel_joint>
+      	  <front_castor_joint>front_castor_joint</front_castor_joint>
+      	  <rear_castor_joint>rear_castor_joint</rear_castor_joint>
+      	  <wheel_separation>.260</wheel_separation>
+      	  <wheel_diameter>0.066</wheel_diameter>
+      	  <base_geom>base_footprint_collision_base_link</base_geom>
+      	  <updateRate>40</updateRate>
+      	  <torque>1.0</torque>
+      	</plugin>
+
+
+
+        <visualize>False</visualize>
+      </sensor>
+    </link>
+    <include>
+      <uri>model://create</uri>
+    </include>
+    <include>
+      <uri>model://kinect</uri>
+      <pose>-0.087098 0 0.303857 0 0 0</pose>
+    </include>
+    <joint name="create_rack" type="revolute">
+      <parent>create::base</parent>
+      <child>rack</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+        </limit>
+        <use_parent_model_frame>true</use_parent_model_frame>
+      </axis>
+    </joint>
+    <joint name="kinect_rack" type="revolute">
+      <parent>kinect::link</parent>
+      <child>rack</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+        </limit>
+        <use_parent_model_frame>true</use_parent_model_frame>
+      </axis>
+    </joint>
+
+  </model>
+</sdf>
