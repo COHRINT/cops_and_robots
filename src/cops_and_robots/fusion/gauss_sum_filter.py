@@ -17,6 +17,8 @@ from cops_and_robots.fusion.gaussian_mixture import (GaussianMixture,
                                                      fleming_prior,
                                                      uniform_prior,
                                                      )
+from cops_and_robots.fusion.variational_bayes import VariationalBayes
+
 
 class GaussSumFilter(object):
     """docstring for GaussSumFilter
@@ -32,6 +34,9 @@ class GaussSumFilter(object):
 
         self.probability = fleming_prior()
 
+        # Set up the VB fusion parameters
+        self.vb = VariationalBayes()
+
     def update(self, camera, human_sensor=None):
         if self.finished:
             return
@@ -40,17 +45,58 @@ class GaussSumFilter(object):
         self._human_update(human_sensor)
 
     def _camera_update(self, camera):
-        self.probability = camera.detect('gauss sum', prior=self.probability)
 
+        mu, sigma, beta = self.vb.update(measurement='No Detection',
+                                         likelihood=camera.detection_model,
+                                         prior=self.probability,
+                                         use_LWIS=True,
+                                         poly=camera.detection_model.poly
+                                         )
+        gm = GaussianMixture(beta, mu, sigma)
+        gm.camera_viewcone = camera.detection_model.poly  # for plotting
+        self.probability = gm
 
     def _human_update(self, human_sensor):
+        hs = human_sensor
         self.recieved_human_update = False
         if human_sensor.new_update:
-            gm = human_sensor.detect(self.target_name, 'gauss sum',
-                                     prior=self.probability)
-            if gm is not None:
-                self.probability = gm
+            wrong_target = hs.get_measurement(self.target_name)
+            if wrong_target:
+                return
+
+            if not hasattr(hs.grounding, 'relations') \
+                or hs.grounding.name.lower() == 'deckard':
+                logging.info("Defining relations because {} didn't have any."
+                             .format(hs.grounding.name))
+                hs.grounding.define_relations()
+
+
+            # Position update
+            label = hs.relation
+            if hs.target_name == 'nothing' and hs.positivity == 'is not':
+                label = 'a robot'
+            elif hs.target_name == 'nothing' or hs.positivity == 'is not':
+                label = 'Not ' + label
+
+            # Perform fusion
+            likelihood = hs.grounding.relations.binary_models[hs.relation]
+            prior = self.probability
+            mu, sigma, beta = hs.vb.update(measurement=label,
+                                           likelihood=likelihood,
+                                           prior=prior,
+                                           use_LWIS=False,
+                                           )
+
+            # Weight the posterior by the human's false alarm rate
+            gm = GaussianMixture(beta, mu, sigma)
+            alpha = hs.false_alarm_prob / 2
+            posterior = prior.combine_gms(gm, alpha)
+
+
+            if posterior is not None:
+                self.probability = posterior
                 self.recieved_human_update = True
+
 
     def robber_detected(self, robber_pose):
         """Update the particle filter for a detected robber.

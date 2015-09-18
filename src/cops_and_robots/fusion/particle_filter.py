@@ -171,7 +171,14 @@ class ParticleFilter(object):
             A camera sensor object.
 
         """
-        camera.detect('particle', self.particles)
+        # Update particle probabilities in view cone frame
+        for i, particle in enumerate(self.particles):
+            if camera.viewcone.shape.contains(Point(particle[1:3])):
+                self.particles[i, 0] *= (1 - camera.detection_model
+                    .probability(state=particle[1:3], class_='Detection'))
+
+        # Renormalize
+        self.particles[:, 0] /= sum(self.particles[:, 0])
 
     def _human_update(self, human_sensor):
         """Update the particle filter's values from a human sensor update.
@@ -186,6 +193,36 @@ class ParticleFilter(object):
         self.recieved_human_update = human_sensor.detect(self.target_name,
                                                          'particle',
                                                          self.particles)
+
+        hs = human_sensor
+        if not hasattr(hs.grounding, 'relations'):
+            hs.grounding.define_relations()
+
+        # <>TODO: include certainty
+        if hs.detection_type == 'position':
+            label = hs.relation
+            if hs.target_name == 'nothing' and hs.positivity == 'not':
+                label = 'a robot'
+            elif hs.target_name == 'nothing' or hs.positivity == 'not':
+                label = 'Not ' + label
+
+            for i, particle in enumerate(self.particles):
+                state = particle[1:3]
+                particle[0] *= hs.grounding.relations.probability(state=state, class_=label)
+
+        elif hs.detection_type == 'movement':
+            label = hs.movement
+            if hs.target_name == 'nothing' and hs.positivity == 'not':
+                label = 'a robot'
+            elif hs.target_name == 'nothing' or hs.positivity == 'not':
+                label = 'Not ' + label
+
+            for i, particle in enumerate(self.particles):
+                state = np.sqrt(particle[3] ** 2 + particle[4] ** 2)
+                particle[0] *= hs.speed_model.probability(state=state, class_=label)
+
+        # Renormalize
+        self.particles[:, 0] /= sum(self.particles[:, 0])
 
     def resample(self):
         """Sample or resample distribution to generate new particles
