@@ -117,15 +117,9 @@ class Human(Sensor):
         self.utterance = msg.data
         self.new_update = True
 
-    def detect(self, filter_name, type_="particle", particles=None, prior=None):
+    def get_measurement(self, filter_name):
         """Update a fusion engine's probability from human sensor updates.
 
-        Parameters
-        ----------
-        particles : array_like
-            The particle list, assuming [x,y,p], where x and y are position
-            data and p is the particle's associated probability. `None` if not
-            using particles.
         """
 
         if not self.parse_utterance():
@@ -136,7 +130,8 @@ class Human(Sensor):
         if self.target_name not in ['nothing', 'a robot', filter_name]:
             logging.debug('Target {} is not in {} Looking for {}.'
                 .format(filter_name, self.utterance, self.target_name))
-            return
+            wrong_target = True
+            return wrong_target
 
         if self.relation != '':
             self.translate_relation()
@@ -147,13 +142,15 @@ class Human(Sensor):
         else:
             logging.error("No relations or movements found in utterance.")
 
-        if type_ == 'particle':
-            self.detect_particles(particles)
-            return True
-        elif type_ == 'gauss sum':
-            return self.detect_probability(prior)
-        else:
-            logging.error('Wrong detection model specified.')
+        # Swap left-and-right for Deckard, as those are ego-centric
+        if self.grounding.name.lower() == 'deckard':
+            if self.relation == 'Right':
+                self.relation = 'Left'
+            elif self.relation == 'Left':
+                self.relation = 'Right'
+
+        wrong_target = False
+        return wrong_target
 
     def parse_utterance(self):
         """ Parse the input string into workable values.
@@ -269,75 +266,3 @@ class Human(Sensor):
             translated_movement = 'moving quickly'
         self.movement = translated_movement
 
-    def detect_particles(self, particles):
-        """Update particles based on sensor model.
-
-        Parameters
-        ----------
-        particles : array_like
-            The particle list, assuming [p,x,y,x_dot,y_dot], where x and y are
-            position data and p is the particle's associated probability.
-
-        """
-
-        if not hasattr(self.grounding, 'relations'):
-            self.grounding.define_relations()
-
-        # <>TODO: include certainty
-        if self.detection_type == 'position':
-            label = self.relation
-            if self.target_name == 'nothing' and self.positivity == 'not':
-                label = 'a robot'
-            elif self.target_name == 'nothing' or self.positivity == 'not':
-                label = 'Not ' + label
-
-            for i, particle in enumerate(particles):
-                state = particle[1:3]
-                particle[0] *= self.grounding.relations.probability(state=state, class_=label)
-
-        elif self.detection_type == 'movement':
-            label = self.movement
-            if self.target_name == 'nothing' and self.positivity == 'not':
-                label = 'a robot'
-            elif self.target_name == 'nothing' or self.positivity == 'not':
-                label = 'Not ' + label
-
-            for i, particle in enumerate(particles):
-                state = np.sqrt(particle[3] ** 2 + particle[4] ** 2)
-                particle[0] *= self.speed_model.probability(state=state, class_=label)
-
-        # Renormalize
-        particles[:, 0] /= sum(particles[:, 0])
-
-    def detect_probability(self, prior):
-        if not hasattr(self.grounding, 'relations') \
-            or self.grounding.name.lower() == 'deckard':
-            logging.info("Defining relations because {} didn't have any."
-                         .format(self.grounding.name))
-            self.grounding.define_relations()
-
-        if self.grounding.name.lower() == 'deckard':
-            if self.relation == 'Right':
-                self.relation = 'Left'
-            elif self.relation == 'Left':
-                self.relation = 'Right'
-
-        # Position update
-        label = self.relation
-        if self.target_name == 'nothing' and self.positivity == 'is not':
-            label = 'a robot'
-        elif self.target_name == 'nothing' or self.positivity == 'is not':
-            label = 'Not ' + label
-
-        likelihood = self.grounding.relations.binary_models[self.relation]
-        mu, sigma, beta = self.vb.update(measurement=label,
-                                         likelihood=likelihood,
-                                         prior=prior,
-                                         use_LWIS=False,
-                                         )
-
-        gm = GaussianMixture(beta, mu, sigma)
-        alpha = self.false_alarm_prob / 2
-        posterior = prior.combine_gms(gm, alpha)
-        # Weight based on human possibly being wrong
-        return posterior
