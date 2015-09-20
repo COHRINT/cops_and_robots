@@ -55,6 +55,10 @@ class GaussSumFilter(object):
         gm = GaussianMixture(beta, mu, sigma)
         gm.camera_viewcone = camera.detection_model.poly  # for plotting
         self.probability = gm
+        # print 'means \n'
+        # print self.probability.means
+        # print 'covariance \n'
+        # print self.probability.covariances
 
     def _human_update(self, human_sensor):
         hs = human_sensor
