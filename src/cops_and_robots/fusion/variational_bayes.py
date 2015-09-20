@@ -396,12 +396,12 @@ class VariationalBayes(object):
                 np.delete(other_priors.covariances, mixand_ids, axis=0)
 
             # Retain total weight of intersection weights for renormalization
-            max_intersecion_weight = sum(weights)
+            max_intersection_weight = sum(weights)
 
             # Create new prior
             prior = GaussianMixture(weights, means, covariances)
             logging.debug('Using only mixands {} for VBIS fusion. Total weight {}'
-                         .format(mixand_ids, max_intersecion_weight))
+                         .format(mixand_ids, max_intersection_weight))
 
 
         # Parameters for all new mixands
@@ -412,16 +412,20 @@ class VariationalBayes(object):
         log_beta_hat = np.zeros(K) # Weight estimates
 
         for u, mixand_weight in enumerate(prior.weights):
+            print u
             mix_sm_corr = 0
 
             # Check to see if the mixand is completely contained within
             # the softmax class (i.e. doesn't need an update)
             mixand = GaussianMixture(1, prior.means[u], prior.covariances[u])
             mixand_samples = mixand.rvs(self.num_mixand_samples)
-            p_hat_ru_samples = likelihood.classes[measurement].probability(state=mixand_samples)
+            print mixand_samples.shape
+            p_hat_ru_samples = likelihood.classes[measurement].probability(state=mixand_samples[:,0:2])
+            print p_hat_ru_samples
             mix_sm_corr = np.sum(p_hat_ru_samples) / self.num_mixand_samples
 
             if mix_sm_corr > self.mix_sm_corr_thresh:
+                print mix_sm_corr
                 logging.debug('Mixand {}\'s correspondence with {} was {},'
                              'above the threshold of {}, so VBIS was skipped.'
                              .format(u, measurement, mix_sm_corr, self.mix_sm_corr_thresh))
@@ -437,7 +441,7 @@ class VariationalBayes(object):
             # Otherwise complete the full VBIS update
             ordered_subclasses = iter(sorted(relevant_subclasses.iteritems()))
             for label, subclass in ordered_subclasses:
-
+                print label
                 # Compute \hat{P}_s(r|u)
                 mixand_samples = mixand.rvs(self.num_mixand_samples)
                 p_hat_ru_samples = subclass.probability(state=mixand_samples)
@@ -463,6 +467,7 @@ class VariationalBayes(object):
                 log_beta_hat[h] = log_beta_vbis
                 mu_hat[h,:] = mu_vbis
                 var_hat[h,:] = var_vbis
+                print mu_hat
                 h += 1
 
         # Renormalize and truncate (based on weight threshold)
@@ -472,7 +477,7 @@ class VariationalBayes(object):
 
         # Reattach untouched prior values
         if update_intersections_only:
-            beta_hat = unnormalized_beta_hats * max_intersecion_weight
+            beta_hat = unnormalized_beta_hats * max_intersection_weight
             beta_hat = np.hstack((other_priors.weights, beta_hat))
             mu_hat = np.vstack((other_priors.means, mu_hat))
             var_hat = np.concatenate((other_priors.covariances, var_hat))
