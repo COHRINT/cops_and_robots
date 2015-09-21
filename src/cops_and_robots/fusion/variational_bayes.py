@@ -495,7 +495,7 @@ class VariationalBayes(object):
         var_hat = var_hat[beta_hat > self.weight_threshold, :]
         beta_hat = beta_hat[beta_hat > self.weight_threshold]
 
-                # Check if covariances are positive semidefinite
+        # Check if covariances are positive semidefinite
         for i, var in enumerate(var_hat):
             try:
                 assert np.all(np.linalg.det(var) > 0)

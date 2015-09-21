@@ -89,9 +89,9 @@ class GaussianMixture(object):
         """Probability density function at state x.
 
         Will return a probability distribution relative to the shape of the
-        input and the dimensionality of the normal. For example, if x is 5x2 
-        with a 2-dimensional normal, pdf is 5x1; if x is 5x5x2 
-        with a 2-dimensional normal, pdf is 5x5.
+        input and the dimensionality of the normal distribution. For example, 
+        if x is 5x2 with a 2-dimensional normal distribution, pdf is 5x1; 
+        if x is 5x5x2 with a 2-dimensional normal distribution, pdf is 5x5.
         """
 
         # Look over the whole state space
