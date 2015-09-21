@@ -252,3 +252,15 @@ def demo_models():
     bism.binary_models['Front'].plot(show_plot=False, title=title)
     plt.show()
 
+if __name__ == '__main__':
+    x = [-2, 0, 2, 2]
+    y = [-3, -1, -1, -3]
+    pts = zip(x,y)
+    poly = Polygon(pts)
+    rm = range_model(poly)
+
+    title='Softmax Intrinsic Space Model (Irregular)'
+    logging.info('Building {}'.format(title))
+    # rm.plot(title=title)
+    s = [[2,3], [4,5]]
+    print rm.probability(state=s)
