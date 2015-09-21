@@ -134,6 +134,7 @@ class Softmax(object):
 
     def __init__(self, weights=None, biases=None, normals=None, offsets=None,
                  poly=None, steepness=None, rotation=None, state_spec='x y',
+                 state_labels=['x1', 'x2'],
                  bounds=None, resolution=0.1, labels=None,
                  auto_combine_mms=True, tol=10 ** -3):
 
@@ -156,10 +157,12 @@ class Softmax(object):
             bounds = [-5, -5, 5, 5]
         self.bounds = bounds
         self.state_spec = state_spec
+        self.state_labels = state_labels
         self.resolution = resolution
         self.tol = tol
         self.has_subclasses = False
         self.auto_combine_mms = auto_combine_mms
+        self.res = resolution
 
         # Define possibly unspecfied values
         if self.biases is None and self.weights is not None:
@@ -225,12 +228,23 @@ class Softmax(object):
         if state is None:  # Assume we're asking about the entire state space
             # Lazily create state space
             if not hasattr(self, 'state'):
-                self._define_state(self.state_spec, self.resolution)
+                self._define_state()
             state = self.state
             using_state_space = True
+            dummy_weights = np.zeros(0)
         else:  # Use a specific state
             state = np.array(state)
-            state = state.reshape(-1,self.weights.shape[1])
+
+            # old state version
+            # state = state.reshape(-1,self.weights.shape[1])
+
+            # Allow for computation of dummy states (i.e. if state arrives as
+            # an mxn, where n > ndim, append zero weights)
+            a = state.shape[1] - self.weights.shape[1]
+            if a < 0:
+                logging.exception('State is smaller than number of dimensions!')
+            dummy_weights = np.zeros(a)
+
             using_state_space = False
 
         # Define the classes to be looped over for the normalizer
@@ -284,12 +298,14 @@ class Softmax(object):
         # Subtract a constant from all exponent terms to prevent overflow:
         # http://ufldl.stanford.edu/wiki/index.php/Exercise:Softmax_Regression
         for _, sm_class in all_classes.iteritems():
-            m = state .dot (sm_class.weights) + sm_class.bias
+            weights = np.hstack((sm_class.weights, dummy_weights))
+            m = state .dot (weights) + sm_class.bias
             M = np.maximum(m, M)
 
         # Define the softmax normalization term
         for _, sm_class in all_classes.iteritems():
-            exp_term = np.dot(state, sm_class.weights) + sm_class.bias
+            weights = np.hstack((sm_class.weights, dummy_weights))
+            exp_term = np.dot(state, weights) + sm_class.bias
             normalizer += np.exp(exp_term - M)
 
         # Find class probabilities
@@ -300,11 +316,12 @@ class Softmax(object):
                 if len(sm_class.subclasses) > 0:
                     exp_term = 0
                     for _, subclass in sm_class.subclasses.iteritems():
-                        exp_term += np.exp(np.dot(state, subclass.weights)
+                        weights = np.hstack((subclass.weights, dummy_weights))
+                        exp_term += np.exp(np.dot(state, weights)
                                            + subclass.bias - M)
                 else:
-                    exp_term = np.exp(np.dot(state, sm_class.weights)
-                                      + sm_class.bias - M)
+                    weights = np.hstack((sm_class.weights, dummy_weights))
+                    exp_term = np.exp(np.dot(state, weights) + sm_class.bias - M)
                 sm_class.probs = exp_term / normalizer
 
                 # Assign probabilities to the softmax collection
@@ -314,7 +331,8 @@ class Softmax(object):
         # Find subclass probabilities
         if find_subclass_probs:
             for _, sm_class in subclasses.iteritems():
-                exp_term = np.exp(np.dot(state, sm_class.weights)
+                weights = np.hstack((sm_class.weights, dummy_weights))
+                exp_term = np.exp(np.dot(state, weights)
                                       + sm_class.bias - M)
                 sm_class.probs = exp_term / normalizer
 
@@ -610,7 +628,7 @@ class Softmax(object):
             subclass.bias = self.biases[i]
             self.classes[label].add_subclass(subclass)
 
-    def _define_state(self, state_spec, res, bounds=None):
+    def _define_state(self, state_spec=None, res=None, bounds=None):
         """Create a numeric state vector from a specification.
 
         Possible specifications:
@@ -634,10 +652,13 @@ class Softmax(object):
         (10201, 3)
 
         """
+        # Input checking & defaults
+        if state_spec is None:
+            state_spec = self.state_spec
 
-        # <>TODO: Fix for n-dimensional
-        # <>TODO: Use SymPy
-        # Define distribution over a gridded state space
+        if res is None:
+            res = self.res
+
         if bounds is None:
             bounds = self.bounds[:]
         elif self.bounds is None:
@@ -645,6 +666,10 @@ class Softmax(object):
             self.bounds = bounds
         else:
             self.bounds = bounds
+
+        # <>TODO: Fix for n-dimensional
+        # <>TODO: Use SymPy
+        # Define distribution over a gridded state space
         if state_spec == 'x':
             #<>TODO: implement bound dimension checking
             self.X = np.linspace(bounds[0], bounds[2],
@@ -846,4 +871,3 @@ if __name__ == '__main__':
     # title = 'Binary MMS Intrinsic Space Model'
     # bism.binary_models['Front'].plot(show_plot=False, title=title)
     # plt.show()
-

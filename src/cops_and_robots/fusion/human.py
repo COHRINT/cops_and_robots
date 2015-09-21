@@ -117,7 +117,7 @@ class Human(Sensor):
         self.utterance = msg.data
         self.new_update = True
 
-    def get_measurement(self, filter_name):
+    def get_measurement(self):
         """Update a fusion engine's probability from human sensor updates.
 
         """
@@ -125,13 +125,6 @@ class Human(Sensor):
         if not self.parse_utterance():
             logging.debug('No utterance to parse!')
             return
-
-        # End detect loop if not the right target
-        if self.target_name not in ['nothing', 'a robot', filter_name]:
-            logging.debug('Target {} is not in {} Looking for {}.'
-                .format(filter_name, self.utterance, self.target_name))
-            wrong_target = True
-            return wrong_target
 
         if self.relation != '':
             self.translate_relation()
@@ -149,8 +142,26 @@ class Human(Sensor):
             elif self.relation == 'Left':
                 self.relation = 'Right'
 
-        wrong_target = False
-        return wrong_target
+        # Define relations lazily, or for dynamic targets
+        if not hasattr(self.grounding, 'relations') \
+            or self.grounding.name.lower() == 'deckard':
+            logging.info("Defining relations because {} didn't have any."
+                         .format(self.grounding.name))
+            self.grounding.define_relations()
+
+        # Position update
+        relation_label = self.relation
+        if self.target_name == 'nothing' and self.positivity == 'is not':
+            relation_label = relation_label.replace('Not ', '')
+        elif self.target_name == 'nothing' or self.positivity == 'is not':
+            relation_label = 'Not ' + relation_label
+
+        parsed_measurement = {'grounding': self.grounding,
+                              'relation': relation_label,
+                              'relation class': self.relation,
+                              'target': self.target_name
+                              }
+        return parsed_measurement
 
     def parse_utterance(self):
         """ Parse the input string into workable values.
