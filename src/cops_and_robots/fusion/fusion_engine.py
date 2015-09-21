@@ -60,17 +60,19 @@ class FusionEngine(object):
         models. Default is 2000.
 
     """
+
     def __init__(self,
                  filter_type,
                  missing_robber_names,
                  feasible_layer,
                  motion_model='stationary',
-                 total_particles=2000):
-        super(FusionEngine, self).__init__()
+                 total_particles=2000,
+                 ):
 
         self.filter_type = filter_type
         self.filters = {}
         self.missing_robber_names = missing_robber_names
+
 
         n = len(missing_robber_names)
 
@@ -111,10 +113,11 @@ class FusionEngine(object):
         """
         # Update camera values (viewcone, selected zone, etc.)
         for sensorname, sensor in sensors.iteritems():
+            #<>TODO: Fix this - it shouldn't be in the fusion engine's update
             if sensorname == 'camera':
                 sensor.update_viewcone(robot_pose)
 
-        # Update probabilities (particle and/or GMM)
+        # Update the filter probabilities
         for robber in robbers.values():
             if not self.filters[robber.name].finished:
                 self.filters[robber.name].update(sensors['camera'],

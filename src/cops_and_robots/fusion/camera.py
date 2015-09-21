@@ -109,8 +109,8 @@ class Camera(Sensor):
         self.offset = (0, 0, 0)  # [m] offset (x,y,theta) from center of robot
         self._move_viewcone(robot_pose)
 
-        # Set up the VB fusion parameters
-        self.vb = VariationalBayes()
+        # # Set up the VB fusion parameters
+        # self.vb = VariationalBayes()
 
     def update_viewcone(self, robot_pose):
         """Update the camera's viewcone position and scale.
@@ -195,54 +195,6 @@ class Camera(Sensor):
                                              origin=self.view_pose[0:2])
         # else:
         #     self.viewcone.shape = self.ideal_viewcone.shape
-
-    def detect(self, filter_type, particles=None, prior=None):
-        """Update a fusion engine's probability from camera detections.
-
-        Parameters
-        ----------
-        filter_type : {'particle','gauss sum'}
-            The type of filter to update.
-        particles : array_like, optional
-            The particle list, assuming [x,y,p], where x and y are position
-            data and p is the particle's associated probability.
-
-        """
-        if filter_type == 'particle':
-            self._detect_particles(particles)
-        else:
-            posterior = self._detect_probability(prior)
-            return posterior
-
-    def _detect_particles(self, particles):
-        """Update particles based on sensor model.
-
-        particles : array_like
-            The particle list, assuming [x,y,p], where x and y are position
-            data and p is the particle's associated probability.
-        """
-
-        # Update particle probabilities in view cone frame
-        for i, particle in enumerate(particles):
-            if self.viewcone.shape.contains(Point(particle[1:3])):
-                particles[i, 0] *= (1 - self.detection_model
-                    .probability(state=particle[1:3], class_='Detection'))
-
-        # Renormalize
-        particles[:, 0] /= sum(particles[:, 0])
-
-    def _detect_probability(self, prior):
-
-        mu, sigma, beta = self.vb.update(measurement='No Detection',
-                                         likelihood=self.detection_model,
-                                         prior=prior,
-                                         use_LWIS=True,
-                                         poly=self.detection_model.poly
-                                         )
-        gm = GaussianMixture(beta, mu, sigma)
-        gm.camera_viewcone = self.detection_model.poly  # for plotting
-        return gm
-
 
 if __name__ == '__main__':
 
