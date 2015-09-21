@@ -162,6 +162,14 @@ def geometric_model(models, measurements, verbose=False, state_spec='x y', bound
     """
     from softmax import Softmax
 
+    #<>TODO: extend to MMS, via:
+    # 1. identify a softmax subclass
+    # 2. remove redundant constraints of that subclass,
+    #    using all other (subclasses? classes?)
+    # 3. for each new, irredundant subclass, add zero weights/biases
+    #    and make sure they have the same label
+
+
     # Get the full, redundant set of inequalities from all models
     G_full = []
     h_full = []
