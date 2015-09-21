@@ -45,12 +45,22 @@ class SoftmaxClass(object):
         self.ndim = self.weights.shape[0]
 
         self.subclasses = {}
+        self.has_subclasses = False
         self.num_subclasses = 0
 
     def add_subclass(self, subclass):
         """Add a subclass to this softmax class.
         """
         subclass_label = self.label
+        self.has_subclasses = True
+
+        if len(self.subclasses) == 0:
+            self.weights = subclass.weights
+            self.bias = subclass.bias
+        else:
+            self.weights = np.vstack((self.weights, subclass.weights))
+            self.bias = np.hstack((self.bias, subclass.bias))
+
         if len(self.subclasses) > 0:
 
             # Number unnumbered subclass

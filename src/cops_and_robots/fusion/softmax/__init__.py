@@ -14,3 +14,7 @@ from cops_and_robots.fusion.softmax._models import (binary_intrinsic_space_model
                                                     camera_model_2D,
                                                     demo_models,
                                                     )
+from cops_and_robots.fusion.softmax._synthesis import (geometric_model,
+                                                       neighbourhood_model,
+                                                       product_model,
+                                                       )
