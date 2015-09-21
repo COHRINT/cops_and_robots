@@ -231,6 +231,7 @@ class Softmax(object):
                 self._define_state()
             state = self.state
             using_state_space = True
+            dummy_weights = np.zeros(0)
         else:  # Use a specific state
             state = np.array(state)
 
