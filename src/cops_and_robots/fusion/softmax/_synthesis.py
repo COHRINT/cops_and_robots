@@ -759,7 +759,7 @@ if __name__ == '__main__':
     np.set_printoptions(precision=2, suppress=True)
 
     # test_1D()
-    test_synthesis_techniques(use_MMS=True, visualize=True)
+    test_synthesis_techniques(use_MMS=False, visualize=True)
 
     # product_vs_lp()
     # product_test(visualize=True, create_combinations=True)

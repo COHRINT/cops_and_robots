@@ -262,5 +262,5 @@ if __name__ == '__main__':
     title='Softmax Intrinsic Space Model (Irregular)'
     logging.info('Building {}'.format(title))
     # rm.plot(title=title)
-    s = [[2,3], [4,5]]
+    s = [[2,3,4,5,5,6], [4,5,4,5,5,5]]
     print rm.probability(state=s)
