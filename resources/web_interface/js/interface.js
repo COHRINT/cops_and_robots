@@ -459,29 +459,32 @@ function init() {
 
 	// may need to change how the first option is selected add to js
 	// add in taget id matricies
-	// var targets = ('target_id_obj', 'target_id_area', 'target_id_mv');
-	// var m;
-	// for(i = 0; i < targetCases.length; i++){
-	// 	alert("here")
-	// 	targetCases[i].onchange = function(){
-	// 		for(j; j<targets[i].length; j++){
-	// 			if (typeof($('targets[i][j] option:selected')) !== 'undefined'){
-	// 				m = j;
-	// 				break;
-	// 			}
-	// 		}
-	// 		if(i==0){
-	// 			$(#targets[1][m]).attr("select=","selected");
-	// 			$(#targets[2][m]).attr("select=","selected");
-	// 		}else if(i==1){
-	// 			$(#targets[0][m]).attr("select=","selected");
-	// 			$(#targets[2][m]).attr("select=","selected");
-	// 		}else{
-	// 			$(#targets[0][m]).attr("select=","selected");
-	// 			$(#targets[1][m]).attr("select=","selected");
-	// 		}
-	// 	}
-	// }
+
+	var targets = ('target_id_obj', 'target_id_area', 'target_id_mv');
+	var m;
+	for(i = 0; i < targetCases.length; i++){
+		targetCases[i].onchange = function(){
+			// issues start here
+			for(j = 0; j < $('#targets[i]').length; j++){
+				console.log($('#targets[i]').length);
+				if (typeof($('#targets[i][j] option:selected')) !== 'undefined'){
+					m = j;
+					break;
+					console.log(m);
+				}
+			}
+			// if(i==0){
+			// 	targets[1][m].attr("option ", "selected");
+			// 	targets[2][m].attr("option ", "selected");
+			// }else if(i==1){
+			// 	targets[0][m].attr("option ", "selected");
+			// 	targets[2][m].attr("option ", "selected");
+			// }else{
+			// 	targets[0][m].attr("option ", "selected");
+			// 	targets[1][m].attr("option ", "selected");
+			// }
+		}
+	}
 	
 	
 	// Publish through ros every time 'submit' is pressed

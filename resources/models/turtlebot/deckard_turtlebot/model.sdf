@@ -2,9 +2,6 @@
 <sdf version="1.5">
   <model name="deckard turtlebot">
 <!--   	<include>
-
-[gazebo_gui-3] process has died [pid 6369, exit code 137, 
-
   		<uri> model://create_gazebo.urdf.xacro</uri>
   	</include> -->
     <link name="rack">
@@ -203,7 +200,7 @@
       	  <base_geom>base_footprint_collision_base_link</base_geom>
       	  <updateRate>40</updateRate>
       	  <torque>1.0</torque>
-      	</plugin>
+    </plugin>
 
 
 

@@ -1,7 +1,19 @@
 <!-- PLEASE SEE AND UPDATE INSTRUCTIONS HERE: https://github.com/COHRINT/Cops-and-Robots/wiki/Operating-Procedures -->
 
-<link href="css/interface.css" type="text/css" rel="stylesheet" />
-<link href="css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Derterimine if run on local host or on recuv server -->
+<?php 
+$local_host = array( '127.0.0.1', '::1' );
+if(in_array( $_SERVER['REMOTE_ADDR'], $local_host) ){
+    $starting_path = "";
+}else{
+	$starting_path = "wp-content/custom/cops_and_robots_interface/"; 
+}
+?>
+
+
+<link href='<?php echo $starting_path.'css/interface.css'?>' type="text/css" rel="stylesheet" />
+<link href='<?php echo $starting_path.'css/bootstrap.min.css'?>' rel="stylesheet">
 
 <?php
 $robots = array("Deckard", "Pris", "Roy", "Zhora");
@@ -131,7 +143,8 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 
 				<div class="tab-content embed-responsive embed-responsive-4by3">
 					<div class="tab-pane active" id="gzweb_map"> 
-						<iframe id='gazeboMap' class="embed-responsive-item" src="http://localhost:8080" height="416" width="555" allowfullscreen="" frameborder="0"></iframe>
+						<!-- <iframe id='gazeboMap' class="embed-responsive-item" src="http://localhost:8080" height="416" width="555" allowfullscreen="" frameborder="0"></iframe> -->
+						<iframe id='gazeboMap' class="embed-responsive-item" src="http://192.168.20.110:8080" height="416" width="555" allowfullscreen="" frameborder="0"></iframe>
 					</div>
 					<div class="tab-pane" id="prob_map"> 
 						<iframe id='probMap' class="embed-responsive-item" src="http://192.168.20.110:1234/stream_viewer?topic=/python_probability_map" height="416" width="555" allowfullscreen="" frameborder="0"></iframe>
@@ -343,7 +356,7 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 		<select size="6" id="<?php echo $Id_obj ?>" class="form-control code-select"  >
 		<?php for($i = 0; $i < count($pos_obj); $i++){ 
 			if($i == 0){?>
-				<option id="<?php echo $id_objs ?>" selected="selected"> <?php echo $pos_obj[$i]; ?> </option>
+				<option id="<?php echo $id_objs ?>" selected> <?php echo $pos_obj[$i]; ?> </option>
 			<?php }else{ ?>
 				<option id="<?php echo $id_objs ?>"> <?php echo $pos_obj[$i]; ?> </option>
 			<?php } ?>
@@ -357,7 +370,7 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 			<select size="6" id="<?php echo $Id_area ?>" class="form-control code-select"  >
 		<?php for($i = 0; $i < count($pos_area); $i++){ 
 			if($i == 0){?>
-				<option id="<?php echo $id_areas ?>" selected="selected"> <?php echo $pos_area[$i]; ?> </option>
+				<option id="<?php echo $id_areas ?>" selected> <?php echo $pos_area[$i]; ?> </option>
 			<?php }else{ ?>
 				<option id="<?php echo $id_areas ?>"> <?php echo $pos_area[$i]; ?> </option>
 			<?php } ?>
@@ -371,7 +384,7 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 			<select size="6" id="<?php echo $Id_move ?>" class="form-control code-select"  >
 		<?php for($i = 0; $i < count($move); $i++){
 			if($i == 0){?>
-				<option id="<?php echo $id_mvs ?>" selected="selected"> <?php echo $move[$i]; ?> </option>
+				<option id="<?php echo $id_mvs ?>" selected> <?php echo $move[$i]; ?> </option>
 			<?php }else{ ?>
 				<option id="<?php echo $id_mvs ?>"> <?php echo $move[$i]; ?> </option>
 			<?php } ?>
@@ -381,17 +394,13 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 	<?php } ?>
 
 
-
-
-
-
 <script type="text/javascript" src="http://cdn.robotwebtools.org/EaselJS/current/easeljs.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/keyboardteleopquadrotor.js"></script>
-<script type="text/javascript" src="js/interface.js"></script>
+<script src='<?php echo $starting_path.'js/bootstrap.min.js'?>' ></script>
+<script type="text/javascript" src='<?php echo $starting_path.'js/keyboardteleopquadrotor.js'?>' ></script>
+<script type="text/javascript" src='<?php echo $starting_path.'js/interface.js'?>' ></script>
 
