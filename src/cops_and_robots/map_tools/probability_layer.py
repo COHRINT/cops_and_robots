@@ -78,9 +78,9 @@ class ProbabilityLayer(Layer):
         if probability is None:
             probability = self.filter.probability
 
-        levels = np.linspace(0, np.max(probability.pdf(self.pos)),
+        levels = np.linspace(0, np.max(probability.pdf(self.pos, dims=[0,1])),
                              self.z_levels)
-        self.contourf = self.ax.contourf(self.X, self.Y, probability.pdf(self.pos),
+        self.contourf = self.ax.contourf(self.X, self.Y, probability.pdf(self.pos, dims=[0,1]),
                            cmap=self.cmap, alpha=self.alpha, levels=levels, antialiased=True,
                            **kwargs)
 

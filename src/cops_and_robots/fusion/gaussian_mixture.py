@@ -85,7 +85,7 @@ class GaussianMixture(object):
         return '\n' + df.to_string()
             
 
-    def pdf(self, x=None, ):
+    def pdf(self, x=None, dims=None):
         """Probability density function at state x.
 
         Will return a probability distribution relative to the shape of the
@@ -99,6 +99,7 @@ class GaussianMixture(object):
             if not hasattr(self, 'pos'):
                 self._discretize()
             x = self.pos
+            print 'x', x
 
         # Ensure proper output shape
         x = np.atleast_1d(x)
@@ -109,16 +110,22 @@ class GaussianMixture(object):
         else:
             shape = x.shape
 
+        # print shape
         pdf = np.zeros(shape)
         for i, weight in enumerate(self.weights):
-            if self.ndims > 2:
-                mean = self.means[i][0:2]
-                covariance = self.covariances[i][0:2,0:2]
-                # print covariance
-            else:
+            logging.debug('Means: \n {}'.format(self.means[i]))
+            logging.debug('Covariance: \n {}'.format(self.covariances[i]))
+            if dims is None:
                 mean = self.means[i]
                 covariance = self.covariances[i]
+            else:
+                mean = [self.means[i][j] for j in dims]
+                covariance = [self.covariances[i][j, k] for j in dims for k in dims]
+                covariance = np.reshape(covariance, [len(dims), len(dims)])
 
+            logging.debug('State: \n {}'.format(x))
+            logging.debug('Means: \n {}'.format(mean))
+            logging.debug('Covariance: \n {}'.format(covariance))
             gaussian_pdf = multivariate_normal.pdf(x, mean, covariance,
                                                    allow_singular=True)
             pdf += weight * gaussian_pdf
@@ -160,7 +167,7 @@ class GaussianMixture(object):
         if not hasattr(self, 'pos'):
             self._discretize(bounds, grid_spacing)
         
-        prob = self.pdf(self.pos)
+        prob = self.pdf(self.pos, dims=[0, 1])
         MAP_i = np.unravel_index(prob.argmax(), prob.shape)
         MAP_point = np.array([self.xx[MAP_i[0]][0], self.yy[0][MAP_i[1]]])
         MAP_prob = prob[MAP_i]
@@ -325,7 +332,7 @@ class GaussianMixture(object):
         if not hasattr(self,'pos'):
             self._discretize()
 
-        p_i = self.pdf(self.pos) 
+        p_i = self.pdf(self.pos, dims=[0, 1]) #TODO: change to 4 dims.
         # p_i /= p_i.sum()  # normalize input probability
         # H = np.sum(entr(p_i)) * self.grid_spacing ** self.ndims # sum of elementwise entropy values
         H = -np.sum(p_i * np.log(p_i)) * self.grid_spacing ** self.ndims # sum of elementwise entropy values

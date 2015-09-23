@@ -99,6 +99,13 @@ class VariationalBayes(object):
         xis, alpha, mu_hat, var_hat, prior_mean, prior_var = \
             self._check_inputs(likelihood, init_mean, init_var, init_alpha, init_xi, prior)
 
+        print prior.means[0].shape
+        dummy_weights = np.zeros((w.shape[0], prior.means[0].shape[0]-w.shape[1]))
+        # dummy_weights = np.expand_dims(dummy_weights, axis=0)
+        print 'dummy weights', dummy_weights.shape
+        print w.shape
+        w = np.hstack((w, dummy_weights))
+        print w
 
         converged = False
         EM_step = 0
@@ -286,6 +293,7 @@ class VariationalBayes(object):
         if num_samples is None:
             num_samples = self.num_importance_samples
 
+        logging.debug('use_LWIS: {}'.format(use_LWIS))
         if use_LWIS:
             q_mu = np.asarray(prior.means[0])
             log_c_hat = np.nan
@@ -300,6 +308,7 @@ class VariationalBayes(object):
 
         # Importance distribution
         q = GaussianMixture(1, q_mu, q_var)
+        logging.debug('q mean = {}'.format(q.means))
 
         # Importance sampling correction
         w = np.zeros(num_samples)  # Importance weights
@@ -310,7 +319,9 @@ class VariationalBayes(object):
         else:
             measurement_class = likelihood.classes[measurement]
 
+
         # Compute parameters using samples
+        logging.debug('prior mean: '.format(prior.means))
         w = prior.pdf(x) * measurement_class.probability(state=x) / q.pdf(x)
         w /= np.sum(w)  # Normalize weights
 
@@ -412,20 +423,24 @@ class VariationalBayes(object):
         log_beta_hat = np.zeros(K) # Weight estimates
 
         for u, mixand_weight in enumerate(prior.weights):
-            print u
             mix_sm_corr = 0
 
             # Check to see if the mixand is completely contained within
             # the softmax class (i.e. doesn't need an update)
             mixand = GaussianMixture(1, prior.means[u], prior.covariances[u])
+            logging.debug('prior.means[u]: {}'.format(prior.means[u]))
+            logging.debug('prior.covariances[u]: {}'.format(prior.covariances[u]))
+            logging.debug('mixand.means: {}'.format(mixand.means))
+            logging.debug('mixand.covariances: {}'.format(mixand.covariances))
+            logging.debug('type means: {}'.format(type(prior.means[u])))
             mixand_samples = mixand.rvs(self.num_mixand_samples)
-            print mixand_samples.shape
             p_hat_ru_samples = likelihood.classes[measurement].probability(state=mixand_samples[:,0:2])
-            print p_hat_ru_samples
+            # logging.debug('p_hat_ru_samples: {}'.format(p_hat_ru_samples))
             mix_sm_corr = np.sum(p_hat_ru_samples) / self.num_mixand_samples
+            logging.debug('gm and softmax correlation: {}, threshold: {}'
+                          .format(mix_sm_corr, self.mix_sm_corr_thresh))
 
             if mix_sm_corr > self.mix_sm_corr_thresh:
-                print mix_sm_corr
                 logging.debug('Mixand {}\'s correspondence with {} was {},'
                              'above the threshold of {}, so VBIS was skipped.'
                              .format(u, measurement, mix_sm_corr, self.mix_sm_corr_thresh))
@@ -441,15 +456,18 @@ class VariationalBayes(object):
             # Otherwise complete the full VBIS update
             ordered_subclasses = iter(sorted(relevant_subclasses.iteritems()))
             for label, subclass in ordered_subclasses:
-                print label
+                # print label
                 # Compute \hat{P}_s(r|u)
                 mixand_samples = mixand.rvs(self.num_mixand_samples)
                 p_hat_ru_samples = subclass.probability(state=mixand_samples)
                 p_hat_ru_sampled = np.sum(p_hat_ru_samples) / self.num_mixand_samples
-
+                logging.debug('Starting vbis_update')
+                logging.debug('mixand.means: {}'.format(mixand.means))
+                logging.debug('mixand.covariances: {}'.format(mixand.covariances))
                 mu_vbis, var_vbis, log_c_hat = \
                     self.vbis_update(label, subclass.softmax_collection,
                                      mixand, use_LWIS=use_LWIS)
+                logging.debug('Finished vbis_update')
 
                 # Compute log odds of r given u
                 if np.isnan(log_c_hat):  # from LWIS update
@@ -467,7 +485,6 @@ class VariationalBayes(object):
                 log_beta_hat[h] = log_beta_vbis
                 mu_hat[h,:] = mu_vbis
                 var_hat[h,:] = var_vbis
-                print mu_hat
                 h += 1
 
         # Renormalize and truncate (based on weight threshold)

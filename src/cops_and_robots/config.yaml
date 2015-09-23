@@ -2,7 +2,7 @@
 main:
   logging_level: INFO #['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
   numpy_print_precision: 2
-  use_ROS: False # True if any robot is in the real world
+  use_ROS: True # True if any robot is in the real world
   ROS_node_name: 'Python_Node'
   max_run_time: 10  # in seconds, -1 for infinite
   log_time: False
@@ -12,7 +12,7 @@ cops:
     pose: [0, 0, 90]  # [x(meters), y(meters), theta(degrees)]
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
-    web_interface_topic: python # python or rostopic name
+    web_interface_topic: human_sensor # python or rostopic name
     ask_every_ten: False  #<>TODO: add this to questioner_cfg
     other_robot_names: 
       robbers: ['Roy', 'Pris']
@@ -33,9 +33,9 @@ cops:
       publish_to_ROS: False
     human_cfg:
       false_alarm_prob: 0.2
-      web_interface_topic: python  # ['python' or a rostopic name ('human_sensor')]
+      web_interface_topic: human_sensor  # ['python' or a rostopic name ('human_sensor')]
     questioner_cfg:
-      use_ROS: False
+      use_ROS: True
       target_order: ['Pris', 'Roy']
       target_weights: [11, 10]
       repeat_annoyance: 0.8  # max penalty to a repeated question
