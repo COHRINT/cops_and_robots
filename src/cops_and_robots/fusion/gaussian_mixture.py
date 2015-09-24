@@ -244,7 +244,7 @@ class GaussianMixture(object):
         return ellipse_patches
 
     def plot(self, title=None, alpha=1.0, **kwargs):
-        if not hasattr(self,'ax'):
+        if not hasattr(self,'ax') or 'ax' in kwargs:
             self.plot_setup(**kwargs)
         if title is None:
             title = 'Gaussian Mixture ({} mixands)'.format(self.num_mixands)

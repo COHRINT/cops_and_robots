@@ -352,7 +352,10 @@ class VariationalBayes(object):
             update_intersections_only = True
 
         h = 0
-        relevant_subclasses = likelihood.classes[measurement].subclasses
+        if likelihood.classes[measurement].has_subclasses:
+            relevant_subclasses = likelihood.classes[measurement].subclasses
+        else:
+            relevant_subclasses = {measurement: likelihood.classes[measurement]}
         num_relevant_subclasses = len(relevant_subclasses)
 
         # Use intersecting priors only

@@ -6,6 +6,9 @@ import itertools
 from cvxopt import matrix, solvers
 import matplotlib.pyplot as plt
 from descartes.patch import PolygonPatch
+from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import time
 
 # PRODUCT MODEL ###############################################################
 
@@ -142,7 +145,7 @@ def generate_inequalities(softmax_model, measurement):
                 if label == measurement:
                     using_subclasses = True
                     break 
-        logging.error('Measurement not found!')
+            # logging.error('Measurement not found!')
 
     # Look at log-odds boundaries
     G = np.empty_like(np.delete(softmax_model.weights, 0, axis=0))
@@ -196,7 +199,7 @@ def geometric_model(models, measurements, verbose=False, state_spec='x y', bound
 
 # NEIGHBOURHOOD MODEL ###############################################################
 
-def find_neighbours(self):
+def find_neighbours(self, class_=None):
     """Method of a Softmax model to find neighbours for all its classes.
     """
     if self.has_subclasses:
@@ -230,15 +233,26 @@ def find_class_neighbours(self):
         i += 1
     self.neighbours = neighbours
 
-def neighbourhood_model(models, measurements):
+def neighbourhood_model(models, measurements, iteration=1):
     """Generate one softmax model from each measurement class' neighbours.
+
+    Called at two separate times. 
     """
     from softmax import Softmax
 
     neighbourhood_models = []
     for i, model in enumerate(models):
         # Find neighbours for (sub)classes and initialize neighbourhood params
-        model.find_neighbours()
+        if iteration == 1:
+            model.find_neighbours()  #<>TODO: this should happen offline
+        else:
+            measurement_class = model.classes[measurements[0]]
+            if measurement_class.has_subclasses:
+                for _, subclass in measurement_class.subclasses.iteritems():
+                    subclass.find_class_neighbours()
+            else:
+                measurement_class.find_class_neighbours()
+
         class_label = measurements[i]
         if model.has_subclasses:
             classes = model.subclasses
@@ -445,8 +459,9 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
 
     # Create the softmax models to be combined
     poly1 = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
-    poly2 = _make_regular_2D_poly(4, origin=[2,1.5], max_r=2, theta=np.pi/4)
+    poly2 = _make_regular_2D_poly(4, origin=[2,1.5], max_r=3, theta=np.pi/4)
     poly3 = _make_regular_2D_poly(4, max_r=4, theta=np.pi/4)
+    polygons = [poly1, poly2, poly3]
     
     if use_MMS:
         sm1 = range_model(poly=poly1)
@@ -457,81 +472,204 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
         sm1 = intrinsic_space_model(poly=poly1)
         sm2 = intrinsic_space_model(poly=poly2)
         sm3 = intrinsic_space_model(poly=poly3)
-        measurements = ['Front', 'Inside', 'Front']
+        measurements = ['Front', 'Inside', 'Inside']
     joint_measurement = " + ".join(measurements)
     models = [sm1, sm2, sm3]
 
     # Synthesize the softmax models
+    logging.info('Synthesizing product model...')
+    s = time.time()
     product_sm = product_model(models)
+    e = time.time()
+    logging.info('Took {} seconds\n'.format((e - s)))
+
+    logging.info('Synthesizing neighbourhood model (iter 1)...')
+    s = time.time()
     neighbour_sm = neighbourhood_model(models, measurements)
-    # geometric_sm = geometric_model(models, measurements)
+    e = time.time()
+    logging.info('Took {} seconds\n'.format((e - s)))
+
+    logging.info('Synthesizing neighbourhood model (iter 2)...')
+    s = time.time()
+    neighbour_sm2 = neighbourhood_model([neighbour_sm], [joint_measurement], iteration=2)
+    e = time.time()
+    logging.info('Took {} seconds\n'.format((e - s)))
+    
+    logging.info('Synthesizing geometric model...')
+    s = time.time()
+    geometric_sm = geometric_model(models, measurements)
+    e = time.time()
+    logging.info('Took {} seconds\n'.format((e - s)))
 
     # Find their differences
     neighbour_diff = prob_difference(product_sm, neighbour_sm, joint_measurement)
-    # geometric_diff = prob_difference(product_sm, geometric_sm, joint_measurement)
+    neighbour_diff2 = prob_difference(product_sm, neighbour_sm2, joint_measurement)
+    geometric_diff = prob_difference(product_sm, geometric_sm, joint_measurement)
+
+    # Fuse all of them with a normal
+    prior = GaussianMixture(1, -np.ones(2), 3*np.eye(2))
+    from cops_and_robots.fusion.variational_bayes import VariationalBayes
+    vb = VariationalBayes()
+
+    logging.info('Fusing Product model...')
+    s = time.time()
+    mu, sigma, beta = vb.update(measurement=joint_measurement,
+                                likelihood=product_sm,
+                                prior=prior,
+                                )
+    if beta.size == 1:
+        logging.info('Got a posterior with mean {} and covariance: \n {}'
+                     .format(mu, sigma))
+    product_post = GaussianMixture(beta, mu, sigma)
+    e = time.time()
+    logging.info('Took {} seconds\n'.format((e - s)))
+
+    logging.info('\n Fusing Neighbourhood model 1...')
+    s = time.time()
+    mu, sigma, beta = vb.update(measurement=joint_measurement,
+                                likelihood=neighbour_sm,
+                                prior=prior,
+                                )
+    if beta.size == 1:
+        logging.info('Got a posterior with mean {} and covariance: \n {}'
+                     .format(mu, sigma))
+    neighbour_post = GaussianMixture(beta, mu, sigma)
+    e = time.time()
+    logging.info('Took {} seconds\n'.format((e - s)))
+
+    logging.info('Fusing Neighbourhood model 2...')
+    s = time.time()
+    mu, sigma, beta = vb.update(measurement=joint_measurement,
+                                likelihood=neighbour_sm2,
+                                prior=prior,
+                                )
+    if beta.size == 1:
+        logging.info('Got a posterior with mean {} and covariance: \n {}'
+                     .format(mu, sigma))
+    neighbour2_post = GaussianMixture(beta, mu, sigma)
+    e = time.time()
+    logging.info('Took {} seconds\n'.format((e - s)))
+
+    logging.info('Fusing Geometric model...')
+    s = time.time()
+    mu, sigma, beta = vb.update(measurement=joint_measurement,
+                                likelihood=geometric_sm,
+                                prior=prior,
+                                )
+    if beta.size == 1:
+        logging.info('Got a posterior with mean {} and covariance: \n {}'
+                     .format(mu, sigma))
+    geometric_post = GaussianMixture(beta, mu, sigma)
+    e = time.time()
+    logging.info('Took {} seconds\n'.format((e - s)))
+
 
     if visualize:
-        fig = plt.figure(figsize=(16,10))
+        fig = plt.figure(figsize=(18,10))
+        bounds = [-5,-5,5,5]
 
-        # Plot critical regions
-        ax = fig.add_subplot(3,3,1)
-        product_sm.plot(plot_poly=True, plot_probs=False, ax=ax, fig=fig, show_plot=False,
+        # Plot critical regions (and polys on the product model)
+        ax = fig.add_subplot(3,4,1)
+        product_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
                  plot_legend=False)
         ax.set_title('Product Model ({} terms)'
             .format(product_sm.biases.size))
-
-        ax = fig.add_subplot(3,3,2)
-        neighbour_sm.plot(plot_poly=True, plot_probs=False, ax=ax, fig=fig, show_plot=False,
-                 plot_legend=False)
-        ax.set_title('Nearest Neighbour Model ({} terms)'
-            .format(neighbour_sm.biases.size))
-
-        # ax = fig.add_subplot(3,3,3)
-        # geometric_sm.plot(plot_poly=True, plot_probs=False, ax=ax, fig=fig, show_plot=False,
-        #          plot_legend=False)
-        # ax.set_title('Geometric Model ({} terms)'
-        #     .format(geometric_sm.biases.size))
-
-        # Plot probabilities of measurements
-        ax = fig.add_subplot(3,3,4, projection='3d')
-        product_sm.plot(class_=joint_measurement, ax=ax, fig=fig, show_plot=False,
-                 plot_legend=False)
-        ax.set_title("Product Class: '{}'".format(joint_measurement))
-
-        ax = fig.add_subplot(3,3,5, projection='3d')
-        neighbour_sm.plot(class_=joint_measurement, ax=ax, fig=fig, show_plot=False,
-                 plot_legend=False)
-        ax.set_title("Nearest Neighbour Class: '{}'"
-                      .format(joint_measurement))
-
-        # ax = fig.add_subplot(3,3,6, projection='3d')
-        # geometric_sm.plot(class_=joint_measurement, ax=ax, fig=fig, show_plot=False,
-        #          plot_legend=False)
-        # ax.set_title("Geometric Class: '{}'".format(joint_measurement))
-
-        # Plot probability difference
-        bounds = [-5, -5, 5, 5]
-
-        ax = fig.add_subplot(3,3,8)
-        c = ax.pcolormesh(product_sm.X, product_sm.Y, neighbour_diff,)
-                          # vmin=0, vmax=diff_max)
-        plt.colorbar(c)
-        ax.set_title("Difference between Neighbour and Product")
+        for poly in polygons:
+            patch = PolygonPatch(poly, facecolor='none', zorder=2,
+                                  linewidth=1, edgecolor='black',)
+            ax.add_patch(patch)
+        plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
 
-        # ax = fig.add_subplot(3,3,9)
-        # c = ax.pcolormesh(product_sm.X, product_sm.Y, geometric_diff,)
-        #                   # vmin=0, vmax=diff_max)
-        # plt.colorbar(c)
-        # ax.set_title("Difference between Geometric and Product")
-        # ax.set_xlim(bounds[0],bounds[2])
-        # ax.set_ylim(bounds[1],bounds[3])
+        ax = fig.add_subplot(3,4,2)
+        neighbour_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title('Neighbourhood Model 1 ({} terms)'
+            .format(neighbour_sm.biases.size))
+        plt.axis('scaled')
+        ax.set_xlim(bounds[0],bounds[2])
+        ax.set_ylim(bounds[1],bounds[3])
 
-        # # fig.subplots_adjust(right=0.8)
-        # # cax = fig.add_axes([0.85, 0.15, 0.025, 0.7])
-        # # fig.colorbar(c, cax=cax)
+        ax = fig.add_subplot(3,4,3)
+        neighbour_sm2.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title('Neighbourhood Model 2 ({} terms)'
+            .format(neighbour_sm2.biases.size))
+        plt.axis('scaled')
+        ax.set_xlim(bounds[0],bounds[2])
+        ax.set_ylim(bounds[1],bounds[3])
 
+        ax = fig.add_subplot(3,4,4)
+        geometric_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
+                 plot_legend=False)
+        ax.set_title('Geometric Model ({} terms)'
+            .format(geometric_sm.biases.size))
+        plt.axis('scaled')
+        ax.set_xlim(bounds[0],bounds[2])
+        ax.set_ylim(bounds[1],bounds[3])
+
+        # Plot prior
+        ax = fig.add_subplot(3,4,5)
+        title = 'Prior Distribution'
+        prior.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+
+        # Plot probability differences
+        ax = fig.add_subplot(3,4,6)
+        plt.axis('scaled')
+        c = ax.pcolormesh(product_sm.X, product_sm.Y, neighbour_diff,)
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        plt.colorbar(c, cax)
+        ax.set_title("Neighbour1 minus Product")
+        ax.set_xlim(bounds[0],bounds[2])
+        ax.set_ylim(bounds[1],bounds[3])
+
+        ax = fig.add_subplot(3,4,7)
+        plt.axis('scaled')
+        c = ax.pcolormesh(product_sm.X, product_sm.Y, neighbour_diff2,)
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        plt.colorbar(c, cax)
+        ax.set_title("Neighbour2 minus Product")
+        ax.set_xlim(bounds[0],bounds[2])
+        ax.set_ylim(bounds[1],bounds[3])
+
+        ax = fig.add_subplot(3,4,8)
+        plt.axis('scaled')
+        c = ax.pcolormesh(product_sm.X, product_sm.Y, geometric_diff,)
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        plt.colorbar(c, cax)
+        ax.set_title("Geometric minus Product")
+        ax.set_xlim(bounds[0],bounds[2])
+        ax.set_ylim(bounds[1],bounds[3])
+
+        # Plot posteriors
+        ax = fig.add_subplot(3,4,9)
+        title = 'Product Posterior'
+        product_post.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+
+        ax = fig.add_subplot(3,4,10)
+        title = 'Neighbourhood 1 Posterior'
+        neighbour_post.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+
+        ax = fig.add_subplot(3,4,11)
+        title = 'Neighbourhood 2 Posterior'
+        neighbour2_post.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+
+        ax = fig.add_subplot(3,4,12)
+        title = 'Geometric Posterior'
+        geometric_post.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+        
+        if use_MMS:
+            type_ = 'MMS'
+        else:
+            type_ = 'Softmax'
+
+        fig.suptitle("{} combination of '{}' (small, medium & large boxes, respectively)"
+                     .format(type_, joint_measurement),
+                     fontsize=15)
         plt.show()
 
 def product_test(models, visualize=False, create_combinations=False):
@@ -757,6 +895,8 @@ def test_box_constraints(verbose=False):
 
 if __name__ == '__main__':
     np.set_printoptions(precision=2, suppress=True)
+    logging.getLogger().setLevel(logging.INFO)
+
 
     # test_1D()
     test_synthesis_techniques(use_MMS=False, visualize=True)

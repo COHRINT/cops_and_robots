@@ -28,9 +28,9 @@ def main(config_file=None):
     # Set up logging and printing
     logger_level = logging.getLevelName(main_cfg['logging_level'])
     logger_format = '[%(levelname)-7s] %(funcName)-30s %(message)s'
-    logging.basicConfig(format=logger_format,
-                        level=logger_level,
-                        )
+
+    logging.getLogger().setLevel(logger_level)
+    logging.getLogger().handlers[0].setFormatter(logging.Formatter(logger_format))
     np.set_printoptions(precision=main_cfg['numpy_print_precision'],
                         suppress=True)
 

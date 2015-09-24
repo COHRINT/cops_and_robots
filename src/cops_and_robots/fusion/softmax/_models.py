@@ -101,21 +101,22 @@ def pentagon_model():
 def range_model(poly=None, spread=1, bounds=None):
     if poly == None:
         poly = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
-    labels = ['Inside'] + ['Near'] * 4
-    steepnesses = [10] * 5
+    num_classes = len(poly.exterior.coords)
+    labels = ['Inside'] + ['Near'] * (num_classes - 1)
+    steepnesses = [10] * num_classes
     sm = Softmax(poly=poly, labels=labels, resolution=0.1,
                  steepness=steepnesses, bounds=bounds)
 
-    steepnesses = [11] * 5
+    steepnesses = [11] * num_classes
     # far_bounds = _make_regular_2D_poly(4, max_r=3, theta=np.pi/4)
     larger_poly = scale(poly, 2, 2)
-    labels = ['Inside'] + ['Outside'] * 4
+    labels = ['Inside'] + ['Outside'] * (num_classes - 1)
     sm_far = Softmax(poly=poly, labels=labels, resolution=0.1,
                  steepness=steepnesses, bounds=bounds)
 
     new_weights = sm_far.weights[1:]
     new_biases = sm_far.biases[1:] - spread
-    new_labels = ['Outside'] * 4
+    new_labels = ['Outside'] * (num_classes - 1)
     new_steepnesses = steepnesses[1:]
 
     sm.add_classes(new_weights, new_biases, new_labels, new_steepnesses)
@@ -253,14 +254,19 @@ def demo_models():
     plt.show()
 
 if __name__ == '__main__':
-    x = [-2, 0, 2, 2]
-    y = [-3, -1, -1, -3]
+    a = 2  # half-width
+    b = 1  # horizontal inset
+    c = 1  # vertical inset
+    d = 3  # half-height
+    x = [-a, -a, -b, -b, -a, -a, a, a, b, b, a, a, -a]
+    y = [-d, -c, -c,  c,  c,  d, d, c, c, -c, -c, -d, -d]
     pts = zip(x,y)
     poly = Polygon(pts)
     rm = range_model(poly)
+    # print rm.weights.shape
 
     title='Softmax Intrinsic Space Model (Irregular)'
     logging.info('Building {}'.format(title))
-    # rm.plot(title=title)
-    s = [[2,3,4,5,5,6], [4,5,4,5,5,5]]
-    print rm.probability(state=s)
+    rm.plot(title=title, plot_poly=True)
+    # s = [[2,3,4,5,5,6], [4,5,4,5,5,5]]
+    # print rm.probability(state=s)
