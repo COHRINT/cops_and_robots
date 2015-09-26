@@ -115,9 +115,12 @@ class Softmax(object):
             (\\mathbf{w}_j - \\mathbf{w}_k)
 
     """
-    class_cmaps = ['Greys', 'Reds', 'Purples', 'Oranges', 'Greens', 'Blues',
-                   'RdPu']
-    class_colors = ['grey', 'red', 'purple', 'orange', 'green', 'blue', 'pink']
+    class_cmaps = ['Greys', 'Reds', 'Purples', 'Oranges', 'Greens', 'Blues', 
+                    'RdPu', 'BuGn', 'BuPu', 'OrRd', 'PuRd', 'YlOrBr', 'bone', 
+                    'copper']
+    class_colors = ['grey', 'red', 'purple', 'orange', 'green', 'blue', 'pink',
+                    'seagreen', 'darkviolet', 'orangered', 'deeppink', 
+                    'sandybrown', 'lightgray', 'navajowhite']
 
     # Load methods from external files
     from _visualization import (plot,

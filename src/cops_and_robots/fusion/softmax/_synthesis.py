@@ -53,7 +53,6 @@ def product_model(models):
     bias_combs = list(itertools.product(*model_biases))
     label_combs = list(itertools.product(*model_labels))
 
-
     # Evaluate all combinations of model parameters 
     product_weights = np.empty((M, models[0].weights.shape[1]))
     product_biases = np.empty(M)
@@ -77,6 +76,7 @@ def find_redundant_constraints(G_full, h_full, break_index=-1, verbose=False):
     """Determine which constraints effect the feasible region."""
     result = []
     redundant_constraints = []
+    feasible = []
     for i, _ in enumerate(G_full):
         if i > break_index and break_index > 0:
             break
@@ -94,6 +94,7 @@ def find_redundant_constraints(G_full, h_full, break_index=-1, verbose=False):
         c = matrix(np.asarray(c, dtype=np.float))
         solvers.options['show_progress'] = False
         sol = solvers.lp(c,G,h)
+
         optimal_pt = sol['x']
 
         # If dual is infeasible, max is unbounded (i.e. infinity)
@@ -102,6 +103,12 @@ def find_redundant_constraints(G_full, h_full, break_index=-1, verbose=False):
         else:
             optimal_val = -np.asarray(sol['primal objective'])
             optimal_pt = np.asarray(optimal_pt).reshape(G_full.shape[1])
+
+        if sol['status'] == 'primal infeasible':
+            feasible.append(False)
+        else:
+            feasible.append((True))
+
         is_redundant = optimal_val <= beta
         if is_redundant:
             redundant_constraints.append(i)
@@ -118,32 +125,35 @@ def find_redundant_constraints(G_full, h_full, break_index=-1, verbose=False):
                        'is redundant': is_redundant
                        })
 
+    if not all(feasible):
+        redundant_constraints = None
+
     return result, redundant_constraints
 
 def remove_redundant_constraints(G, h, **kwargs):
     """Remove redundant inequalities from a set of inequalities Gx <= h.
     """
     _, redundant_constraints = find_redundant_constraints(G, h, **kwargs)
+    if redundant_constraints is None:
+        return None, None
+
     G = np.delete(G, redundant_constraints, axis=0)
     h = np.delete(h, redundant_constraints)
+
     return G, h
 
 def generate_inequalities(softmax_model, measurement):
     """Produce inequalities in the form Gx <= h
     """
-    # MMS
-
 
     # Identify the measurement and index
     for i, label in enumerate(softmax_model.class_labels):
         if label == measurement:
-            using_subclasses = False
             break
     else:
         if softmax_model.has_subclasses:
             for i, label in enumerate(softmax_model.subclass_labels):
                 if label == measurement:
-                    using_subclasses = True
                     break 
             # logging.error('Measurement not found!')
 
@@ -160,18 +170,86 @@ def generate_inequalities(softmax_model, measurement):
 
     return G, h
 
-def geometric_model(models, measurements, verbose=False, state_spec='x y', bounds=None):
+def geometric_model(models, measurements, show_comp_models=False, *args, **kwargs):
+    """
+    Could be MMS or softmax models
+    """
+
+    minclass_measurements = []  # Lowest level (class or subclass)
+    for i, model in enumerate(models):
+        model_minclass_measurements = []
+
+        if model.has_subclasses:
+            for subclass_label in model.subclass_labels:
+                test_label = measurements[i] + '__'
+                if test_label in subclass_label:
+                    model_minclass_measurements.append(subclass_label)
+
+            # Has subclasses, but measurement is not a subclass
+            if len(model_minclass_measurements) == 0:
+                model_minclass_measurements = [measurements[i]]
+        else:
+            model_minclass_measurements = [measurements[i]]
+
+        minclass_measurements.append(model_minclass_measurements)
+
+    # Find the softmax model from each combination of subclasses
+    measurement_combs = list(itertools.product(*minclass_measurements))
+    comp_models = []
+    for measurement_comb in measurement_combs:
+        sm = geometric_softmax_model(models, measurement_comb, *args, **kwargs)
+        if sm is not None:
+            comp_models.append(sm)
+
+    # Visualize the component models
+    if show_comp_models:
+        fig = plt.figure()
+        s = int(np.ceil(np.sqrt(len(comp_models))))
+
+        hr_translation ={'Near__0': 'Front',
+                         'Near__1': 'Left',
+                         'Near__2': 'Back',
+                         'Near__3': 'Right',
+                        }
+
+        for i, comp_model in enumerate(comp_models):
+            ax = fig.add_subplot(s,s,i +1)
+            comp_model.plot(ax=ax, fig=fig, plot_probs=False, 
+                            plot_legend=False, show_plot=False)
+
+            # Print human readable titles
+            hr_title = []
+            for meas in comp_model.class_labels[0].split(' + '):
+                a = meas.find('__')
+                if a == -1:
+                    hr_title.append(meas)
+                else:
+                    hr_title.append(hr_translation[meas])
+
+            ax.set_title(" + ".join(hr_title))
+
+    #Change label names
+    from softmax import Softmax
+
+    joint_measurement = " + ".join(measurements)
+    for i, comp_model in enumerate(comp_models):
+        weights = comp_model.weights
+        biases = comp_model.biases
+        labels = [joint_measurement] + comp_model.class_labels[1:]
+
+        comp_models[i] = Softmax(weights, biases, labels=labels)
+        comp_models[i].parent_labels = comp_model.class_labels[0]
+        logging.info(comp_model.class_labels)
+
+    if len(comp_models) == 1:
+        return comp_models[0]
+    else:
+        return comp_models
+
+def geometric_softmax_model(models, measurements, verbose=False, state_spec='x y', bounds=None):
     """Generate one softmax model from others using geometric constraints.
     """
     from softmax import Softmax
-
-    #<>TODO: extend to MMS, via:
-    # 1. identify a softmax subclass
-    # 2. remove redundant constraints of that subclass,
-    #    using all other (subclasses? classes?)
-    # 3. for each new, irredundant subclass, add zero weights/biases
-    #    and make sure they have the same label
-
 
     # Get the full, redundant set of inequalities from all models
     G_full = []
@@ -185,6 +263,8 @@ def geometric_model(models, measurements, verbose=False, state_spec='x y', bound
 
     # Remove redundant constraints to get weights and biases
     G, h = remove_redundant_constraints(G_full, h_full, verbose=verbose)
+    if G is None:
+        return None
     z = np.zeros((G.shape[1]))
     new_weights = np.vstack((z, G))
     new_biases = np.hstack((0, -h))
@@ -210,28 +290,6 @@ def find_neighbours(self, class_=None):
     for label, class_ in classes.iteritems():
         class_.find_class_neighbours()
     # print "{} has neighbours: {}".format(class_.label, class_.neighbours)
-
-def find_class_neighbours(self):
-    """Method of a Softmax class to find its neighbour classes.
-
-    Applies to subclasses as well as classes.
-    """
-    G, h = generate_inequalities(self.softmax_collection, self.label)
-    results, _ = find_redundant_constraints(G, h)
-
-    neighbours = []
-    i = 0
-    for j in range(len(results) + 1):
-        if j == self.id:
-            continue
-        if not results[i]['is redundant']:
-            if self.softmax_collection.has_subclasses:
-                label = self.softmax_collection.subclass_labels[j]
-            else:
-                label = self.softmax_collection.class_labels[j]
-            neighbours.append(label)
-        i += 1
-    self.neighbours = neighbours
 
 def neighbourhood_model(models, measurements, iteration=1):
     """Generate one softmax model from each measurement class' neighbours.
@@ -319,40 +377,22 @@ def neighbourhood_model(models, measurements, iteration=1):
 
 # HELPERS #####################################################################
 
-def prob_difference(sm1, sm2, joint_measurement):
+def prob_difference(models, joint_measurement):
     #<>TODO: use arbitrary bounds
-    bounds = [-5, -5, 5, 5]
-    res = 0.1
 
-    probs1 = sm1.probability(class_=joint_measurement)
-    probs1 = probs1.reshape(101,101)
-    del sm1.probs
-    max_i = np.unravel_index(probs1.argmax(), probs1.shape)
-    min_i = np.unravel_index(probs1.argmin(), probs1.shape)
-    sm1stats = {'max prob': probs1.max(),
-                'max prob coord': np.array(max_i) * res + np.array(bounds[0:2]),
-                'min prob': probs1.min(),
-                'min prob coord': np.array(min_i) * res + np.array(bounds[0:2]),
-                'avg prob': probs1.mean(),
-                }
+    probs = []
+    for model in models:
+        prob = model.probability(class_=joint_measurement)
+        prob = prob.reshape(101,101)
+        del model.probs
 
-    probs2 = sm2.probability(class_=joint_measurement)
-    probs2 = probs2.reshape(101,101)
-    del sm2.probs
-    sm2stats = {'max prob': probs2.max(),
-                'max prob coord': np.array(max_i) * res + np.array(bounds[0:2]),
-                'min prob': probs2.min(),
-                'min prob coord': np.array(min_i) * res + np.array(bounds[0:2]),
-                'avg prob': probs2.mean(),
-                }
+        probs.append(prob)
 
-    prob_diff = probs2 - probs1
+    prob_diff = -probs[0]
+    for prob in probs[1:]:
+        prob_diff += prob
     prob_diff = prob_diff.reshape(101,101)
 
-    diffstats = {'max diff': prob_diff.max(),
-                 'min diff': prob_diff.min(),
-                 'avg diff': prob_diff.mean()
-                 }
     return prob_diff
 
 def compare_probs(sm1, sm2, measurements, visualize=True, verbose=True):
@@ -454,57 +494,95 @@ def compare_probs(sm1, sm2, measurements, visualize=True, verbose=True):
 
 # TESTS #######################################################################
 
-def test_synthesis_techniques(visualize=True, use_MMS=False):
+def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, use_MMS=False,
+                              show_comp_models=False):
     from _models import _make_regular_2D_poly, intrinsic_space_model, range_model
 
     # Create the softmax models to be combined
     poly1 = _make_regular_2D_poly(4, max_r=2, theta=np.pi/4)
     poly2 = _make_regular_2D_poly(4, origin=[2,1.5], max_r=3, theta=np.pi/4)
     poly3 = _make_regular_2D_poly(4, max_r=4, theta=np.pi/4)
-    polygons = [poly1, poly2, poly3]
-    
+    poly4 = _make_regular_2D_poly(4, max_r=1, origin=[-1.5,0], theta=np.pi/4)
+    poly5 = _make_regular_2D_poly(4, max_r=3, origin=[1.5,0],theta=np.pi/4)
+
     if use_MMS:
-        sm1 = range_model(poly=poly1)
-        sm2 = range_model(poly=poly2)
-        sm3 = range_model(poly=poly3)
-        measurements = ['Near', 'Near', 'Inside']
+        if test_set == 1:
+            sm1 = range_model(poly=poly1)
+            sm2 = range_model(poly=poly2)
+            sm3 = range_model(poly=poly3)
+            models = [sm1, sm2, sm3]
+            measurements = ['Near', 'Near', 'Inside']
+            polygons = [poly1, poly2, poly3]
+        elif test_set == 2:
+            sm4 = range_model(poly=poly4)
+            sm5 = range_model(poly=poly5)
+            models = [sm4, sm5]
+            measurements = ['Near', 'Inside']
+            polygons = [poly4, poly5]
     else:
-        sm1 = intrinsic_space_model(poly=poly1)
-        sm2 = intrinsic_space_model(poly=poly2)
-        sm3 = intrinsic_space_model(poly=poly3)
-        measurements = ['Front', 'Inside', 'Inside']
+        if test_set == 1:
+            sm1 = intrinsic_space_model(poly=poly1)
+            sm2 = intrinsic_space_model(poly=poly2)
+            sm3 = intrinsic_space_model(poly=poly3)
+            measurements = ['Front', 'Inside', 'Inside']
+            models = [sm1, sm2, sm3]
+            polygons = [poly1, poly2, poly3]
+        else:
+            sm4 = intrinsic_space_model(poly=poly4)
+            sm5 = intrinsic_space_model(poly=poly5)
+            measurements = ['Left', 'Inside',]
+            models = [sm4, sm5]
+            polygons = [poly4, poly5]
     joint_measurement = " + ".join(measurements)
-    models = [sm1, sm2, sm3]
+
+    if visualize_base:
+        fig = plt.figure()
+        s = len(models)
+        for i, model in enumerate(models):
+            ax = fig.add_subplot(1,s,i + 1)
+            if model.has_subclasses:
+                ps = True
+            else:
+                ps = False
+            model.plot(ax=ax, fig=fig, plot_probs=False, plot_legend=True,
+                       show_plot=False, plot_subclasses=ps)
+            ax.set_title("{}".format(measurements[i]))
 
     # Synthesize the softmax models
     logging.info('Synthesizing product model...')
     s = time.time()
     product_sm = product_model(models)
     e = time.time()
-    logging.info('Took {} seconds\n'.format((e - s)))
+    product_time = e - s
+    logging.info('Took {} seconds\n'.format((product_time)))
 
     logging.info('Synthesizing neighbourhood model (iter 1)...')
     s = time.time()
     neighbour_sm = neighbourhood_model(models, measurements)
     e = time.time()
-    logging.info('Took {} seconds\n'.format((e - s)))
+    neighbour_time = e - s
+    logging.info('Took {} seconds\n'.format((neighbour_time)))
 
     logging.info('Synthesizing neighbourhood model (iter 2)...')
     s = time.time()
     neighbour_sm2 = neighbourhood_model([neighbour_sm], [joint_measurement], iteration=2)
     e = time.time()
-    logging.info('Took {} seconds\n'.format((e - s)))
-    
+    neighbour2_time = e - s
+    logging.info('Took {} seconds\n'.format((neighbour2_time)))
+
     logging.info('Synthesizing geometric model...')
     s = time.time()
-    geometric_sm = geometric_model(models, measurements)
+    geometric_sm_models = geometric_model(models, measurements, show_comp_models=show_comp_models)
     e = time.time()
-    logging.info('Took {} seconds\n'.format((e - s)))
+    geometric_time = e - s
+    logging.info('Took {} seconds\n'.format((geometric_time)))
 
     # Find their differences
-    neighbour_diff = prob_difference(product_sm, neighbour_sm, joint_measurement)
-    neighbour_diff2 = prob_difference(product_sm, neighbour_sm2, joint_measurement)
-    geometric_diff = prob_difference(product_sm, geometric_sm, joint_measurement)
+    neighbour_diff = prob_difference([product_sm, neighbour_sm], joint_measurement)
+    neighbour_diff2 = prob_difference([product_sm, neighbour_sm2], joint_measurement)
+    if not type(geometric_sm_models) == list:
+        geometric_sm_models = [geometric_sm_models]
+    geometric_diff = prob_difference([product_sm] + geometric_sm_models, joint_measurement)
 
     # Fuse all of them with a normal
     prior = GaussianMixture(1, -np.ones(2), 3*np.eye(2))
@@ -522,9 +600,10 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
                      .format(mu, sigma))
     product_post = GaussianMixture(beta, mu, sigma)
     e = time.time()
-    logging.info('Took {} seconds\n'.format((e - s)))
+    product_fusion_time = e - s
+    logging.info('Took {} seconds\n'.format((product_time)))
 
-    logging.info('\n Fusing Neighbourhood model 1...')
+    logging.info('Fusing Neighbourhood model 1...')
     s = time.time()
     mu, sigma, beta = vb.update(measurement=joint_measurement,
                                 likelihood=neighbour_sm,
@@ -535,7 +614,8 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
                      .format(mu, sigma))
     neighbour_post = GaussianMixture(beta, mu, sigma)
     e = time.time()
-    logging.info('Took {} seconds\n'.format((e - s)))
+    neighbour_fusion_time = e - s
+    logging.info('Took {} seconds\n'.format((neighbour_time)))
 
     logging.info('Fusing Neighbourhood model 2...')
     s = time.time()
@@ -548,21 +628,44 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
                      .format(mu, sigma))
     neighbour2_post = GaussianMixture(beta, mu, sigma)
     e = time.time()
-    logging.info('Took {} seconds\n'.format((e - s)))
+    neighbour2_fusion_time = e - s
+    logging.info('Took {} seconds\n'.format((neighbour2_time)))
 
     logging.info('Fusing Geometric model...')
     s = time.time()
-    mu, sigma, beta = vb.update(measurement=joint_measurement,
-                                likelihood=geometric_sm,
-                                prior=prior,
-                                )
-    if beta.size == 1:
-        logging.info('Got a posterior with mean {} and covariance: \n {}'
-                     .format(mu, sigma))
-    geometric_post = GaussianMixture(beta, mu, sigma)
-    e = time.time()
-    logging.info('Took {} seconds\n'.format((e - s)))
+    mixtures = []
+    raw_weights = []
+    ems = ['Near + Inside__0', 'Near + Inside__2', 'Near + Inside__3',]
+    for i, geometric_sm in enumerate(geometric_sm_models):
+        exact_measurements = geometric_sm.parent_labels.split(' + ')
 
+        mu, sigma, beta = vb.update(measurement=joint_measurement,
+                                    likelihood=geometric_sm,
+                                    prior=prior,
+                                    get_raw_beta=True,
+                                    # exact_likelihoods=models,
+                                    # exact_measurements=exact_measurements,
+                                    )
+        new_mixture = GaussianMixture(beta, mu, sigma)
+        mixtures.append(new_mixture)
+        raw_weights.append(beta)
+
+    # Renormalize raw weights
+    raw_weights = np.array(raw_weights)
+    raw_weights /= raw_weights.sum()
+
+    # if beta.size == 1:
+    #     logging.info('Got a posterior with mean {} and covariance: \n {}'
+    #                  .format(mu, sigma))
+    geometric_post = mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
+    e = time.time()
+    geometric_fusion_time = e - s
+    logging.info('Took {} seconds\n'.format((geometric_time)))
+
+    # Compute KLDs
+    neighbour_kld = neighbour_post.compute_kld(product_post)
+    neighbour2_kld = neighbour2_post.compute_kld(product_post)
+    geometric_kld = geometric_post.compute_kld(product_post)
 
     if visualize:
         fig = plt.figure(figsize=(18,10))
@@ -572,11 +675,13 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
         ax = fig.add_subplot(3,4,1)
         product_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
                  plot_legend=False)
-        ax.set_title('Product Model ({} terms)'
-            .format(product_sm.biases.size))
+        ax.set_title('Product Model ({:.0f} terms, {:.2f}s)'
+            .format(product_sm.biases.size, product_time))
         for poly in polygons:
+            from shapely.affinity import translate
+            poly = translate(poly,-0.25, -0.25)
             patch = PolygonPatch(poly, facecolor='none', zorder=2,
-                                  linewidth=1, edgecolor='black',)
+                                  linewidth=1.5, edgecolor='black',)
             ax.add_patch(patch)
         plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
@@ -585,8 +690,8 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
         ax = fig.add_subplot(3,4,2)
         neighbour_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
                  plot_legend=False)
-        ax.set_title('Neighbourhood Model 1 ({} terms)'
-            .format(neighbour_sm.biases.size))
+        ax.set_title('Neighbour Model 1 ({:.0f} terms, {:.2f}s)'
+            .format(neighbour_sm.biases.size, neighbour_time))
         plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
@@ -594,8 +699,8 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
         ax = fig.add_subplot(3,4,3)
         neighbour_sm2.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
                  plot_legend=False)
-        ax.set_title('Neighbourhood Model 2 ({} terms)'
-            .format(neighbour_sm2.biases.size))
+        ax.set_title('Neighbour Model 2 ({:.0f} terms, {:.2f}s)'
+            .format(neighbour_sm2.biases.size, neighbour2_time))
         plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
@@ -603,8 +708,8 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
         ax = fig.add_subplot(3,4,4)
         geometric_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
                  plot_legend=False)
-        ax.set_title('Geometric Model ({} terms)'
-            .format(geometric_sm.biases.size))
+        ax.set_title('Geometric Model ({:.0f} terms, {:.2f}s)'
+            .format(geometric_sm.biases.size, geometric_time))
         plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
@@ -612,7 +717,7 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
         # Plot prior
         ax = fig.add_subplot(3,4,5)
         title = 'Prior Distribution'
-        prior.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+        prior.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
 
         # Plot probability differences
         ax = fig.add_subplot(3,4,6)
@@ -647,27 +752,31 @@ def test_synthesis_techniques(visualize=True, use_MMS=False):
 
         # Plot posteriors
         ax = fig.add_subplot(3,4,9)
-        title = 'Product Posterior'
-        product_post.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+        title = 'Product Posterior ({:.2f}s)'\
+            .format(product_fusion_time)
+        product_post.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
 
         ax = fig.add_subplot(3,4,10)
-        title = 'Neighbourhood 1 Posterior'
-        neighbour_post.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+        title = 'Neighbour 1 Posterior (KLD {:.2f}, {:.2f}s)'\
+            .format(neighbour_kld, neighbour_fusion_time)
+        neighbour_post.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
 
         ax = fig.add_subplot(3,4,11)
-        title = 'Neighbourhood 2 Posterior'
-        neighbour2_post.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+        title = 'Neighbour 2 Posterior (KLD {:.2f}, {:.2f}s)'\
+            .format(neighbour2_kld, neighbour2_fusion_time)
+        neighbour2_post.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
 
         ax = fig.add_subplot(3,4,12)
-        title = 'Geometric Posterior'
-        geometric_post.plot(ax=ax, fig=fig, bounds=bounds, title=title)
+        title = 'Geometric Posterior (KLD {:.2f}, {:.2f}s)'\
+            .format(geometric_kld, geometric_fusion_time)
+        geometric_post.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
         
         if use_MMS:
             type_ = 'MMS'
         else:
             type_ = 'Softmax'
 
-        fig.suptitle("{} combination of '{}' (small, medium & large boxes, respectively)"
+        fig.suptitle("{} combination of '{}'"
                      .format(type_, joint_measurement),
                      fontsize=15)
         plt.show()
@@ -774,7 +883,7 @@ def test_1D():
     from _models import speed_model
     sm = speed_model()
 
-    geometric_sm = geometric_model([sm], ['Medium'], state_spec='x', bounds=[0, 0, 0.4, 0.4])
+    geometric_sm = geometric_softmax_model([sm], ['Medium'], state_spec='x', bounds=[0, 0, 0.4, 0.4])
     # print geometric_sm.bounds
 
     fig = plt.figure(figsize=(14,6))
@@ -899,7 +1008,7 @@ if __name__ == '__main__':
 
 
     # test_1D()
-    test_synthesis_techniques(use_MMS=False, visualize=True)
+    test_synthesis_techniques(test_set=1, use_MMS=True, visualize=True)
 
     # product_vs_lp()
     # product_test(visualize=True, create_combinations=True)

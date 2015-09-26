@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import pytest
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from scipy.stats import multivariate_normal, norm, entropy
 from descartes.patch import PolygonPatch
@@ -243,7 +244,7 @@ class GaussianMixture(object):
             ellipse_patches.append(patch)
         return ellipse_patches
 
-    def plot(self, title=None, alpha=1.0, **kwargs):
+    def plot(self, title=None, alpha=1.0, show_colorbar=False, **kwargs):
         if not hasattr(self,'ax') or 'ax' in kwargs:
             self.plot_setup(**kwargs)
         if title is None:
@@ -254,6 +255,10 @@ class GaussianMixture(object):
                                          cmap=plt.get_cmap('jet'),
                                          alpha=alpha,
                                          )
+        if show_colorbar:
+            divider = make_axes_locatable(self.ax)
+            cax = divider.append_axes("right", size="5%", pad=0.1)
+            plt.colorbar(self.contourf, cax)
         self.ax.set_title(title)
 
         if self.show_ellipses:
@@ -323,13 +328,41 @@ class GaussianMixture(object):
         H = -np.sum(p_i * np.log(p_i)) * self.grid_spacing ** self.ndims # sum of elementwise entropy values
         return H
 
-    def combine_gms(self, other_gm, self_gm_weight=0.5):
+    def compute_kld(self, other_gm):
+        """Computes the KLD of self from another GM.
+
+        Use a truth GM as other_gm.
+        """
+        if not hasattr(self,'pos'):
+            self._discretize()
+        if not hasattr(other_gm,'pos'):
+            other_gm._discretize()
+
+        q_i = self.pdf(self.pos)
+        p_i = other_gm.pdf(other_gm.pos)
+
+        kld = np.sum(p_i * np.log(p_i / q_i)) * self.grid_spacing ** self.ndims
+        return kld
+
+    def combine_gms(self, other_gms, self_gm_weight=0.5, raw_weights=None):
         """Merge two gaussian mixtures together, weighing the original by alpha.
         """
-        alpha = self_gm_weight
-        beta_hat = np.hstack((self.weights * alpha, other_gm.weights * (1 - alpha)))
-        mu_hat = np.vstack((self.means, other_gm.means))
-        var_hat = np.concatenate((self.covariances, other_gm.covariances))
+        if type(other_gms) is not list:
+            other_gms = [other_gms]
+
+        alpha = 1/(len(other_gms) + 1) #<>TODO: allow custom weights
+        beta_hat = self.weights * alpha
+        mu_hat = self.means
+        var_hat = self.covariances
+        for other_gm in other_gms:
+            beta_hat = np.hstack((beta_hat, other_gm.weights * alpha))
+            mu_hat = np.vstack((mu_hat, other_gm.means))
+            var_hat = np.concatenate((var_hat, other_gm.covariances))
+        if raw_weights is not None:
+            beta_hat = raw_weights
+
+        logging.info(beta_hat)
+
         return GaussianMixture(beta_hat, mu_hat, var_hat)
 
     def _input_check(self):
