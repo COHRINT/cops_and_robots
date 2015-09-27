@@ -43,7 +43,7 @@ class ProbabilityLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, filter_, grid_size=0.2, z_levels=100, alpha=0.6,
+    def __init__(self, filter_, grid_size=0.1, z_levels=100, alpha=0.6,
                  colorbar_visible=False, show_ellipses=False,
                 **kwargs):
         super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)
@@ -78,9 +78,16 @@ class ProbabilityLayer(Layer):
         if probability is None:
             probability = self.filter.probability
 
-        levels = np.linspace(0, np.max(probability.pdf(self.pos)),
-                             self.z_levels)
-        self.contourf = self.ax.contourf(self.X, self.Y, probability.pdf(self.pos),
+        try:
+            probs = probability.pdf(self.pos)  # if not yet discretized
+        except:
+            probs = probability  # if already discretized
+            probs = probs.reshape(self.X.shape[0],
+                                  self.X.shape[1],
+                                  )
+
+        levels = np.linspace(0, np.max(probs), self.z_levels)
+        self.contourf = self.ax.contourf(self.X, self.Y, probs,
                            cmap=self.cmap, alpha=self.alpha, levels=levels, antialiased=True,
                            **kwargs)
 

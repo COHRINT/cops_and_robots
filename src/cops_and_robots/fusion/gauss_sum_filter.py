@@ -37,9 +37,9 @@ class GaussSumFilter(object):
                  motion_model='stationary',
                  v_params=[0, 0.1], 
                  state_spec='x y x_dot y_dot',
-                 fusion_method='full batch',
+                 fusion_method='grid',
                  synthesis_technique='product',
-                 window=2,
+                 window=1,
                  ):
         self.target_name = target_name
         self.relevant_targets = ['nothing', 'a robot', self.target_name]
@@ -65,6 +65,9 @@ class GaussSumFilter(object):
         self._human_update(human_sensor)
 
     def _camera_update(self, camera):
+        if self.fusion_method == 'grid':
+            self._camera_grid_update(camera)
+            return
 
         mu, sigma, beta = self.vb.update(measurement='No Detection',
                                          likelihood=camera.detection_model,
@@ -75,6 +78,24 @@ class GaussSumFilter(object):
         gm = GaussianMixture(beta, mu, sigma)
         gm.camera_viewcone = camera.detection_model.poly  # for plotting
         self.probability = gm
+
+    def _camera_grid_update(self, camera):
+        if not hasattr(self, 'pos'):
+            self._set_up_grid()
+
+        if type(self.probability) is GaussianMixture:
+            self.probability = self.probability.pdf(self.pos)
+
+        prior_prob = self.probability
+        measurement = 'No Detection'
+        likelihood_prob = camera.detection_model.probability(state=self.pos,
+                                                             class_=measurement
+                                                             )
+
+        posterior = likelihood_prob * prior_prob
+        posterior /= posterior.sum()
+
+        self.probability = posterior
 
     def _human_update(self, human_sensor):
         hs = human_sensor
@@ -92,13 +113,14 @@ class GaussSumFilter(object):
                     .format(measurement['target'], hs.utterance, self.target_name))
                 return
 
+            logging.info(self.fusion_method)
             if self.fusion_method == 'recursive':
                 self.recursive_fusion(measurement, human_sensor)
-            elif self.fusion_method == 'full batch' or 'windowed batch':
+            elif self.fusion_method == 'full batch' \
+                or self.fusion_method == 'windowed batch':
                 self.batch_fusion(measurement, human_sensor)
             elif self.fusion_method == 'grid':
                 self.grid_fusion(measurement, human_sensor)
-
 
     def recursive_fusion(self, measurement, human_sensor):
         """Performs fusion once per pass."""
@@ -145,7 +167,34 @@ class GaussSumFilter(object):
             self.gm_fusion(likelihood, measurement_label, human_sensor)
 
     def grid_fusion(self, measurement, human_sensor):
-        pass
+        if not hasattr(self, 'pos'):
+            self._set_up_grid()
+
+        if type(self.probability) is GaussianMixture:
+            self.probability = self.probability.pdf(self.pos)
+
+        prior_prob = self.probability
+
+        measurement_label = measurement['relation']
+        relation_class = measurement['relation class']
+        grounding = measurement['grounding']
+        likelihood = grounding.relations.binary_models[relation_class]
+        likelihood_prob = likelihood.probability(class_=measurement_label, 
+                                                 state=self.pos)
+
+        posterior = likelihood_prob * prior_prob
+        posterior /= posterior.sum()
+
+        self.probability = posterior
+
+    def _set_up_grid(self, grid_size=0.1):
+        bounds = self.feasible_layer.bounds
+        self.X, self.Y = np.mgrid[bounds[0]:bounds[2]:grid_size,
+                                  bounds[1]:bounds[3]:grid_size]
+        self.pos = np.empty(self.X.shape + (2,))
+        self.pos = np.dstack((self.X, self.Y))
+        self.pos = np.reshape(self.pos, (self.X.size, 2))
+
 
     def gm_fusion(self, likelihood, measurement_label, human_sensor):
         prior = self.probability

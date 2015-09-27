@@ -252,8 +252,11 @@ class Cop(Robot):
                 if name == 'combined':
                     continue
                 priors[name] = filter_.probability
-                priors[name]._discretize(bounds=self.map.bounds,
-                                          grid_spacing=0.1)
+                try:
+                    priors[name]._discretize(bounds=self.map.bounds,
+                                              grid_spacing=0.1)
+                except:
+                    logging.debug('Prior unable to be discretized (may already be!)')
             self.questioner.ask(priors)
 
 

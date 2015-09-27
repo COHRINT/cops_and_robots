@@ -250,8 +250,8 @@ class Map(object):
     def _setup_axes(self):
         self.axes = {}
         if len(self.robbers) == 1:
-            print self.robbers
-            self.axes['Roy'] = self.fig.add_subplot(111)
+            name = self.robbers.iterkeys().next()
+            self.axes[name] = self.fig.add_subplot(111)
         elif self.combined_only:
             self.axes['combined'] = self.fig.add_subplot(111)
         else:

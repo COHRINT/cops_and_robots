@@ -380,7 +380,7 @@ class VariationalBayes(object):
         num_relevant_subclasses = len(relevant_subclasses)
 
         # Use intersecting priors only
-        if update_intersections_only:
+        if update_intersections_only and hasattr(prior, 'std_ellipses'):
             other_priors = prior.copy()
             weights = []
             means = []

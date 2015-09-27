@@ -601,7 +601,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     product_post = GaussianMixture(beta, mu, sigma)
     e = time.time()
     product_fusion_time = e - s
-    logging.info('Took {} seconds\n'.format((product_time)))
+    logging.info('Took {} seconds\n'.format((product_fusion_time)))
 
     logging.info('Fusing Neighbourhood model 1...')
     s = time.time()
@@ -615,7 +615,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     neighbour_post = GaussianMixture(beta, mu, sigma)
     e = time.time()
     neighbour_fusion_time = e - s
-    logging.info('Took {} seconds\n'.format((neighbour_time)))
+    logging.info('Took {} seconds\n'.format((neighbour_fusion_time)))
 
     logging.info('Fusing Neighbourhood model 2...')
     s = time.time()
@@ -629,7 +629,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     neighbour2_post = GaussianMixture(beta, mu, sigma)
     e = time.time()
     neighbour2_fusion_time = e - s
-    logging.info('Took {} seconds\n'.format((neighbour2_time)))
+    logging.info('Took {} seconds\n'.format((neighbour2_fusion_time)))
 
     logging.info('Fusing Geometric model...')
     s = time.time()
@@ -660,7 +660,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     geometric_post = mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
     e = time.time()
     geometric_fusion_time = e - s
-    logging.info('Took {} seconds\n'.format((geometric_time)))
+    logging.info('Took {} seconds\n'.format((geometric_fusion_time)))
 
     # Compute KLDs
     neighbour_kld = neighbour_post.compute_kld(product_post)

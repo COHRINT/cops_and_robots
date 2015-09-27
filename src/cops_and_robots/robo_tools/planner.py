@@ -332,19 +332,27 @@ class GoalPlanner(object):
         # If no target is specified, do default behavior
         if target is None:
             if len(fusion_engine.filters) > 1:
-                posterior = fusion_engine.filters['combined'].probability
+                target_filter = fusion_engine.filters['combined']
             else:
-                posterior = next(fusion_engine.filters.iteritems()).probability
+                target_filter = next(fusion_engine.filters.iteritems())
         else:
             try:
-                posterior = fusion_engine.filters[target].probability
+                target_filter = fusion_engine.filters[target]
                 logging.info('Looking for {}'.format(target))
             except:
                 logging.warn('No gauss sum filter found for specified target')
                 return None
+        posterior = target_filter.probability
 
         bounds = self.feasible_layer.bounds
-        MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
+        try:
+            MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
+        except AttributeError:
+            pt = np.unravel_index(posterior.argmax(), target_filter.X.shape)
+            MAP_point = (target_filter.X[pt[0],0],
+                         target_filter.Y[0,pt[1]]
+                         )
+
 
         # Select randomly from max_particles
         goal_pose = np.append(MAP_point, theta)

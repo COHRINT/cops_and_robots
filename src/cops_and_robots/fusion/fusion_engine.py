@@ -154,6 +154,34 @@ class FusionEngine(object):
             sensors['human'].utterance = ''
             sensors['human'].target = ''
         else:
+
+            # Fuse grid-based filters
+            if hasattr(self.filters.itervalues().next(), 'pos'):
+                for label, filter_ in self.filters.iteritems():
+                    filter_prob = filter_.probability
+                    # try:
+                    #     logging.info('{} has max prob {}'.format(label, filter_prob.max()))
+                    # except:
+                    #     pass
+
+                    # Get the filter probability
+                    if type(filter_prob) is GaussianMixture:
+                        try:
+                            pos = filter_.pos
+                        except AttributeError:
+                            filter_._set_up_grid()
+                            pos = filter_.pos
+                        filter_prob = filter_prob.pdf(pos)
+
+                    # Fuse it in with the rest
+                    try:
+                        prob *= filter_prob
+                    except NameError:
+                        prob = filter_prob
+                prob /= prob.sum()
+                self.filters['combined'].probability = prob
+                return
+
             # Pre-allocate parameter arrays
             num_mixands = 0
             all_done = True
