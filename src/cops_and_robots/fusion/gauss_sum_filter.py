@@ -37,9 +37,9 @@ class GaussSumFilter(object):
                  motion_model='stationary',
                  v_params=[0, 0.1], 
                  state_spec='x y x_dot y_dot',
-                 fusion_method='grid',
-                 synthesis_technique='product',
-                 window=1,
+                 fusion_method='windowed batch',
+                 synthesis_technique='geometric',
+                 window=2,
                  ):
         self.target_name = target_name
         self.relevant_targets = ['nothing', 'a robot', self.target_name]
@@ -57,12 +57,46 @@ class GaussSumFilter(object):
         # Set up the VB fusion parameters
         self.vb = VariationalBayes()
 
-    def update(self, camera, human_sensor=None):
+        self.recently_fused_update = False
+
+    def update(self, camera, human_sensor=None, frame=None, save_file=None):
         if self.finished:
             return
         self.update_mixand_motion()
         self._camera_update(camera)
         self._human_update(human_sensor)
+        if save_file is not None:
+            if self.recently_fused_update:
+                self.save_probability(frame, save_file)
+                self.recently_fused_update = False
+            self.save_MAP(frame, save_file)
+
+    def save_probability(self, frame, save_file):
+        if self.fusion_method == 'windowed batch':
+            save_file = save_file + 'windowed_batch_' + str(self.window)
+        else:
+            save_file = save_file + self.fusion_method.replace(' ', '_')
+        filename = save_file + '_' + self.target_name  +'_posterior_' + str(frame)
+        np.save(filename, self.probability)
+
+    def save_MAP(self, frame, save_file):
+        bounds = self.feasible_layer.bounds
+        try:
+            MAP_point, MAP_prob = self.probability.max_point_by_grid(bounds)
+        except AttributeError:
+            pt = np.unravel_index(self.probability.argmax(), self.X.shape)
+            MAP_point = (self.X[pt[0],0],
+                         self.Y[0,pt[1]]
+                         )
+        MAP_point = np.array(MAP_point)
+
+
+        if self.fusion_method == 'windowed batch':
+            save_file = save_file + 'windowed_batch_' + str(self.window)
+        else:
+            save_file = save_file + self.fusion_method.replace(' ', '_')
+        filename = save_file + '_' + self.target_name  +'_MAP_' + str(frame)
+        np.save(filename, MAP_point)
 
     def _camera_update(self, camera):
         if self.fusion_method == 'grid':
@@ -132,6 +166,8 @@ class GaussSumFilter(object):
 
         self.gm_fusion(likelihood, measurement_label, human_sensor)
 
+        self.recently_fused_update = True
+
     def batch_fusion(self, measurement, human_sensor):
         self.measurements.append(measurement)
 
@@ -159,12 +195,14 @@ class GaussSumFilter(object):
             elif self.synthesis_technique == 'geometric':
                 likelihood = geometric_model(models, measurement_labels)
 
+            # Perform fusion
+            self.gm_fusion(likelihood, measurement_label, human_sensor)
+
             # Discard measurements for windowed, increase window size for full
             if self.fusion_method == 'windowed batch':
                 self.measurements = []
             elif self.fusion_method == 'full batch':
                 self.window += self.window
-            self.gm_fusion(likelihood, measurement_label, human_sensor)
 
     def grid_fusion(self, measurement, human_sensor):
         if not hasattr(self, 'pos'):
@@ -185,7 +223,10 @@ class GaussSumFilter(object):
         posterior = likelihood_prob * prior_prob
         posterior /= posterior.sum()
 
+        self.recently_fused_update = True
+
         self.probability = posterior
+
 
     def _set_up_grid(self, grid_size=0.1):
         bounds = self.feasible_layer.bounds
@@ -198,16 +239,55 @@ class GaussSumFilter(object):
 
     def gm_fusion(self, likelihood, measurement_label, human_sensor):
         prior = self.probability
-        mu, sigma, beta = self.vb.update(measurement=measurement_label,
-                                         likelihood=likelihood,
-                                         prior=prior,
-                                         use_LWIS=False,
-                                         )
 
-        # Weight the posterior by the human's false alarm rate
-        gm = GaussianMixture(beta, mu, sigma)
-        alpha = human_sensor.false_alarm_prob / 2
-        posterior = prior.combine_gms(gm, alpha)
+
+        if type(likelihood) is list:
+            mixtures = []
+            raw_weights = []
+            for u, mixand_weight in enumerate(prior.weights):
+
+                prior_mixand = GaussianMixture(1, prior.means[u], prior.covariances[u])
+                
+                for i, geometric_sm in enumerate(likelihood):
+
+                    mu, sigma, beta = self.vb.update(measurement=measurement_label,
+                                                likelihood=geometric_sm,
+                                                prior=prior_mixand,
+                                                get_raw_beta=True,
+                                                )
+                    new_mixture = GaussianMixture(beta, mu, sigma)
+
+                    # Weight the posterior by the human's false alarm rate
+                    # alpha = human_sensor.false_alarm_prob / 2
+                    # new_mixture = prior_mixand.combine_gms([new_mixture], alpha)
+
+                    mixtures.append(new_mixture)
+                    raw_weights.append(beta * mixand_weight)
+
+            # Renormalize raw weights
+            raw_weights = np.array(raw_weights).reshape(-1)
+            raw_weights /= raw_weights.sum()
+
+            try:
+                posterior = mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
+            except IndexError:  # inconsistent measurements!
+                posterior = prior
+
+            logging.info('PRIOR: {}'.format(prior.weights))
+            logging.info('POSTERIOR: {}'.format(posterior.weights))
+        else:
+            mu, sigma, beta = self.vb.update(measurement=measurement_label,
+                                             likelihood=likelihood,
+                                             prior=prior,
+                                             use_LWIS=False,
+                                             )
+
+            # Weight the posterior by the human's false alarm rate
+            gm = GaussianMixture(beta, mu, sigma)
+            alpha = human_sensor.false_alarm_prob / 2
+            posterior = prior.combine_gms(gm, alpha)
+
+        self.recently_fused_update = True
 
         if posterior is not None:
             self.probability = posterior

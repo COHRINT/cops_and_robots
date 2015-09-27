@@ -99,7 +99,7 @@ class FusionEngine(object):
             raise ValueError("FusionEngine must be of type 'particle' or "
                              "'gauss sum'.")
 
-    def update(self, robot_pose, sensors, robbers):
+    def update(self, robot_pose, sensors, robbers, frame=None, save_file=None):
         """Update fusion_engine agnostic to fusion type.
 
         Parameters
@@ -121,7 +121,10 @@ class FusionEngine(object):
         for robber in robbers.values():
             if not self.filters[robber.name].finished:
                 self.filters[robber.name].update(sensors['camera'],
-                                                 sensors['human'])
+                                                 sensors['human'],
+                                                 frame=frame,
+                                                 save_file=save_file,
+                                                 )
         self._update_combined(sensors, robbers)
         sensors['human'].new_update = False  # done checking human, no more update
 

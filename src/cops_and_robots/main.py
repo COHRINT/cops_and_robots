@@ -24,13 +24,18 @@ def main(config_file=None):
     cop_cfg = cfg['cops']
     robber_cfg = cfg['robbers']
     distractor_cfg = cfg['distractors']
-
-    # Set up logging and printing
+ 
+   # Set up logging and printing
     logger_level = logging.getLevelName(main_cfg['logging_level'])
     logger_format = '[%(levelname)-7s] %(funcName)-30s %(message)s'
 
-    logging.getLogger().setLevel(logger_level)
-    logging.getLogger().handlers[0].setFormatter(logging.Formatter(logger_format))
+    try:
+        logging.getLogger().setLevel(logger_level)
+        logging.getLogger().handlers[0].setFormatter(logging.Formatter(logger_format))
+    except IndexError:
+        logging.basicConfig(format=logger_format,
+                            level=logger_level,
+                           )
     np.set_printoptions(precision=main_cfg['numpy_print_precision'],
                         suppress=True)
 
@@ -90,6 +95,8 @@ def main(config_file=None):
     logging.info('Simulation started with {} chasing {}.'
                  .format(cop_str, robber_str))
 
+    playback_mode()
+
     # Start the simulation
     fig = cops['Deckard'].map.fig
     fusion_engine = cops['Deckard'].fusion_engine
@@ -111,6 +118,27 @@ def headless_mode(cops, robbers, distractors, main_cfg, sim_start_time):
         # if i == 101:
         #     break
 
+def playback_mode():
+    """Plays 1 or more recorded rosbags. 
+    """
+    # <>TODO: parametrize the inputs
+    import subprocess
+
+    rosbag_folder = 'data/ACC 2016/rosbags/'
+    rosbags = {
+               # 'Test 1': 'test1-human-only.bag',
+               # 'Test 2': 'test2-human-only.bag',
+               # 'Test 3': 'test3-human-only.bag',
+               'Test 4': 'test4.bag',
+               # 'Test 5': 'test5.bag',
+              }
+    for _, rosbag in rosbags.iteritems():
+        rosbag_file = rosbag_folder + rosbag
+        proc = subprocess.Popen(['rosbag','play',rosbag_file])
+    # bag = rosbag.Bag(rosbag_file)
+    # for topic, msg, t in bag.read_messages(topics=['/human_sensor', '/tf']):
+    #     print msg
+    # bag.close()
 
 def animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time):
     """Animate the exploration of the environment from a cop's perspective.

@@ -240,8 +240,9 @@ class Cop(Robot):
                 idistractor.pose2D.pose)
 
         # Update probability model
+        save_file = 'data/ACC 2016/output/'
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
-                                  self.missing_robbers)
+                                  self.missing_robbers, frame=i, save_file=save_file)
 
         # Ask a question every 10th step
         if i % 15 == 9 and self.fusion_engine.filter_type == 'gauss sum' and \

@@ -344,20 +344,27 @@ class GaussianMixture(object):
         kld = np.sum(p_i * np.log(p_i / q_i)) * self.grid_spacing ** self.ndims
         return kld
 
-    def combine_gms(self, other_gms, self_gm_weight=0.5, raw_weights=None):
+    def combine_gms(self, other_gms, self_gm_weight=None, raw_weights=None):
         """Merge two gaussian mixtures together, weighing the original by alpha.
         """
         if type(other_gms) is not list:
             other_gms = [other_gms]
 
-        alpha = 1/(len(other_gms) + 1) #<>TODO: allow custom weights
-        beta_hat = self.weights * alpha
+        if self_gm_weight is None:
+            alpha = 1/(len(other_gms) + 1) #<>TODO: allow custom weights
+            self_alpha = alpha
+        else:
+            self_alpha = self_gm_weight
+            alpha = (1 - self_alpha) / (len(other_gms))
+
+        beta_hat = self.weights * self_alpha
         mu_hat = self.means
         var_hat = self.covariances
         for other_gm in other_gms:
             beta_hat = np.hstack((beta_hat, other_gm.weights * alpha))
             mu_hat = np.vstack((mu_hat, other_gm.means))
             var_hat = np.concatenate((var_hat, other_gm.covariances))
+
         if raw_weights is not None:
             beta_hat = raw_weights
 

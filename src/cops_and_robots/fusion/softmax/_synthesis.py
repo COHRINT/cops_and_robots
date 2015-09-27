@@ -239,7 +239,6 @@ def geometric_model(models, measurements, show_comp_models=False, *args, **kwarg
 
         comp_models[i] = Softmax(weights, biases, labels=labels)
         comp_models[i].parent_labels = comp_model.class_labels[0]
-        logging.info(comp_model.class_labels)
 
     if len(comp_models) == 1:
         return comp_models[0]
@@ -517,7 +516,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
             sm4 = range_model(poly=poly4)
             sm5 = range_model(poly=poly5)
             models = [sm4, sm5]
-            measurements = ['Near', 'Inside']
+            measurements = ['Inside', 'Inside']
             polygons = [poly4, poly5]
     else:
         if test_set == 1:
@@ -585,7 +584,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     geometric_diff = prob_difference([product_sm] + geometric_sm_models, joint_measurement)
 
     # Fuse all of them with a normal
-    prior = GaussianMixture(1, -np.ones(2), 3*np.eye(2))
+    prior = GaussianMixture([0.8,0.2], [-np.ones(2), 4*np.ones(2)], [3*np.eye(2), 2*np.eye(2)])
     from cops_and_robots.fusion.variational_bayes import VariationalBayes
     vb = VariationalBayes()
 
@@ -632,31 +631,30 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     logging.info('Took {} seconds\n'.format((neighbour2_fusion_time)))
 
     logging.info('Fusing Geometric model...')
-    s = time.time()
     mixtures = []
     raw_weights = []
-    ems = ['Near + Inside__0', 'Near + Inside__2', 'Near + Inside__3',]
-    for i, geometric_sm in enumerate(geometric_sm_models):
-        exact_measurements = geometric_sm.parent_labels.split(' + ')
+    s = time.time()
+    # ems = ['Near + Inside__0', 'Near + Inside__2', 'Near + Inside__3',]
+    for u, mixand_weight in enumerate(prior.weights):
+        prior_mixand = GaussianMixture(1, prior.means[u], prior.covariances[u])
+        for i, geometric_sm in enumerate(geometric_sm_models):
+            # exact_measurements = geometric_sm.parent_labels.split(' + ')
 
-        mu, sigma, beta = vb.update(measurement=joint_measurement,
-                                    likelihood=geometric_sm,
-                                    prior=prior,
-                                    get_raw_beta=True,
-                                    # exact_likelihoods=models,
-                                    # exact_measurements=exact_measurements,
-                                    )
-        new_mixture = GaussianMixture(beta, mu, sigma)
-        mixtures.append(new_mixture)
-        raw_weights.append(beta)
+            mu, sigma, beta = vb.update(measurement=joint_measurement,
+                                        likelihood=geometric_sm,
+                                        prior=prior_mixand,
+                                        get_raw_beta=True,
+                                        # exact_likelihoods=models,
+                                        # exact_measurements=exact_measurements,
+                                        )
+            new_mixture = GaussianMixture(beta, mu, sigma)
+            mixtures.append(new_mixture)
+            raw_weights.append(beta * mixand_weight)
 
     # Renormalize raw weights
     raw_weights = np.array(raw_weights)
     raw_weights /= raw_weights.sum()
 
-    # if beta.size == 1:
-    #     logging.info('Got a posterior with mean {} and covariance: \n {}'
-    #                  .format(mu, sigma))
     geometric_post = mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
     e = time.time()
     geometric_fusion_time = e - s
@@ -1008,7 +1006,7 @@ if __name__ == '__main__':
 
 
     # test_1D()
-    test_synthesis_techniques(test_set=1, use_MMS=True, visualize=True)
+    test_synthesis_techniques(test_set=2, use_MMS=True, visualize=True)
 
     # product_vs_lp()
     # product_test(visualize=True, create_combinations=True)
