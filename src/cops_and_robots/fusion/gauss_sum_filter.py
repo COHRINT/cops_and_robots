@@ -37,7 +37,7 @@ class GaussSumFilter(object):
                  motion_model='stationary',
                  v_params=[0, 0.1], 
                  state_spec='x y x_dot y_dot',
-                 fusion_method='windowed batch',
+                 fusion_method='recursive',
                  synthesis_technique='geometric',
                  window=2,
                  rosbag_process=None,
@@ -62,6 +62,7 @@ class GaussSumFilter(object):
         self.recently_fused_update = False
         self.rosbag_process = rosbag_process
         self.human_measurement_count = 0
+        self.frame = 0
 
     def update(self, camera, human_sensor=None, save_file=None):
         if self.finished:
@@ -71,13 +72,13 @@ class GaussSumFilter(object):
         self.rosbag_process.stdout.flush()
 
         self.update_mixand_motion()
-        # self._camera_update(camera)
+        self._camera_update(camera)
         self._human_update(human_sensor)
         if save_file is not None:
-            if self.recently_fused_update:
-                self.save_probability(save_file)
-                self.recently_fused_update = False
-            # self.save_MAP(frame, save_file)
+            # if self.recently_fused_update:
+            #     self.save_probability(save_file)
+            #     self.recently_fused_update = False
+            self.save_MAP(save_file)
 
     def save_probability(self, save_file):
         if self.fusion_method == 'windowed batch':
@@ -87,24 +88,25 @@ class GaussSumFilter(object):
         filename = save_file + '_' + self.target_name  +'_posterior_' + str(self.human_measurement_count)
         np.save(filename, self.probability)
 
-    # def save_MAP(self, frame, save_file):
-    #     bounds = self.feasible_layer.bounds
-    #     try:
-    #         MAP_point, MAP_prob = self.probability.max_point_by_grid(bounds)
-    #     except AttributeError:
-    #         pt = np.unravel_index(self.probability.argmax(), self.X.shape)
-    #         MAP_point = (self.X[pt[0],0],
-    #                      self.Y[0,pt[1]]
-    #                      )
-    #     MAP_point = np.array(MAP_point)
+    def save_MAP(self, save_file):
+        self.frame += 1
+        bounds = self.feasible_layer.bounds
+        try:
+            MAP_point, MAP_prob = self.probability.max_point_by_grid(bounds)
+        except AttributeError:
+            pt = np.unravel_index(self.probability.argmax(), self.X.shape)
+            MAP_point = (self.X[pt[0],0],
+                         self.Y[0,pt[1]]
+                         )
+        MAP_point = np.array(MAP_point)
 
 
-    #     if self.fusion_method == 'windowed batch':
-    #         save_file = save_file + 'windowed_batch_' + str(self.window)
-    #     else:
-    #         save_file = save_file + self.fusion_method.replace(' ', '_')
-    #     filename = save_file + '_' + self.target_name  +'_MAP_' + str(frame)
-    #     np.save(filename, MAP_point)
+        if self.fusion_method == 'windowed batch':
+            save_file = save_file + 'windowed_batch_' + str(self.window)
+        else:
+            save_file = save_file + self.fusion_method.replace(' ', '_')
+        filename = save_file + '_' + self.target_name  +'_MAP_' + str(self.frame)
+        np.save(filename, MAP_point)
 
     def _camera_update(self, camera):
         if self.fusion_method == 'grid':
@@ -160,9 +162,9 @@ class GaussSumFilter(object):
                     .format(measurement['target'], hs.utterance, self.target_name))
                 return
 
-            # # NO FUSION
-            # self.recently_fused_update = True
-            # return
+            # NO FUSION
+            self.recently_fused_update = True
+            return
 
             logging.info('Stopped rosbag to do fusion...')
             self.rosbag_process.stdin.write(' ')  # stop 

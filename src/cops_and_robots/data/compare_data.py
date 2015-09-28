@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 
-def load_data(method_name, trial_name='', sensors_used='human_camera'):
+def load_posteriors(method_name, trial_name='', sensors_used='human_camera'):
 
     posteriors = {}
     for measurement_i in range(100):
@@ -18,7 +18,7 @@ def load_data(method_name, trial_name='', sensors_used='human_camera'):
             if type(np.atleast_1d(posterior)[0]) is GaussianMixture:
                 posterior = np.atleast_1d(posterior)[0]
 
-            print filename
+            # print filename
             posteriors[measurement_i] = posterior
             # if trial_name != '':
             #     print method_name + trial_name + '_' +  measurement_i
@@ -27,6 +27,27 @@ def load_data(method_name, trial_name='', sensors_used='human_camera'):
             pass
 
     return posteriors
+
+def load_MAPs(method_name, trial_name='', sensors_used='human_camera'):
+    MAPs = []
+    for frame in range(10000):
+        try:
+            frame = str(frame)
+            filename = "ACC 2016/MAP_" + sensors_used + "/" + method_name + trial_name + '/'\
+                + method_name + '_Pris_MAP_' + frame + '.npy'
+            MAP = np.load(filename)
+
+            # print MAP
+            MAPs.append(np.atleast_1d(MAP))
+            # if trial_name != '':
+            #     print method_name + trial_name + '_' +  measurement_i
+            #     print posterior
+        except:
+            pass
+
+    MAPs = np.array(MAPs)
+    print MAPs.shape
+    return MAPs
 
 def compare_posteriors(test_posterior, true_posterior):
 
@@ -85,7 +106,7 @@ def compare_all(sensors_used='human_only'):
               ]
     posteriors = {}
     for i, method in enumerate(methods):
-        posteriors[method + trials[i]] = load_data(method, trials[i], sensors_used=sensors_used)
+        posteriors[method + trials[i]] = load_posteriors(method, trials[i], sensors_used=sensors_used)
 
     klds = {'recursive':{},
             # 'full_batch':{},
@@ -110,7 +131,60 @@ def compare_all(sensors_used='human_only'):
                 logging.error('No shared posterior at measurement_i {}.'.format(measurement_i))
 
     # print klds
-    plot_comparison(klds, sensors_used)
+    # plot_comparison(klds, sensors_used)
+
+    # Compare MAPs
+    MAPs = {}
+    for i, method in enumerate(methods):
+        MAP = load_MAPs(method, trials[i], sensors_used=sensors_used)
+        if MAP.size > 0:
+            MAPs[method + trials[i]] = MAP
+
+    plot_MAPs(MAPs, sensors_used)
+
+def plot_MAPs(MAPs, sensors_used):
+    fig = plt.figure(figsize=(14,6))
+    ax = fig.add_subplot(111)
+
+    colors = {'grid': 'black',
+              'recursive': 'red',
+              'full_batch': 'green',
+              'windowed_batch_1': 'orange',
+              'windowed_batch_2': 'cornflowerblue',
+              'windowed_batch_2_trial2': 'royalblue',
+              'windowed_batch_2_trial3': 'blue',
+              'windowed_batch_5': 'purple',
+              'no_measurement': 'green'
+                  }
+    markers = {'grid': '.',
+               'recursive': 'x',
+               'full_batch': 'o',
+               'windowed_batch_1': '^',
+               'windowed_batch_2': 's',
+               'windowed_batch_2_trial2': 's',
+               'windowed_batch_2_trial3': 's',
+               'windowed_batch_5': 'p',
+               'no_measurement': '*',
+               }
+
+    for method, MAP in MAPs.iteritems():
+        ms = 7
+        if method == 'grid':
+            ms *= 2
+        ax.plot(MAP[:,0], MAP[:,1], ls='', label=method, markersize=ms,
+                color=colors[method], marker=markers[method],
+                alpha=0.9,
+                )
+        ax.set_aspect('equal')
+
+    ax.set_xlabel('x (meters)')
+    ax.set_ylabel('y (meters)')
+    if sensors_used == 'human_camera':
+        ax.set_title('Greedy Path for each Fusion Method (human sensor + camera)')
+    else:
+        ax.set_title('Greedy Path for each Fusion Method (human sensor only)')
+    plt.legend()
+    plt.show()
 
 def plot_comparison(method_klds, sensors_used='human_camera'):
 
@@ -126,14 +200,14 @@ def plot_comparison(method_klds, sensors_used='human_camera'):
                'no_measurement': '*',
                }
     colors = {'recursive': 'red',
-               'full_batch': 'green',
-               'windowed_batch_1': 'orange',
-               'windowed_batch_2': 'cornflowerblue',
-               'windowed_batch_2_trial2': 'royalblue',
-               'windowed_batch_2_trial3': 'blue',
-               'windowed_batch_5': 'purple',
-               'no_measurement': 'grey'
-               }
+              'full_batch': 'green',
+              'windowed_batch_1': 'orange',
+              'windowed_batch_2': 'cornflowerblue',
+              'windowed_batch_2_trial2': 'royalblue',
+              'windowed_batch_2_trial3': 'blue',
+              'windowed_batch_5': 'purple',
+              'no_measurement': 'green'
+              }
 
     for method, klds in method_klds.iteritems():
         y = klds.values()
@@ -152,4 +226,4 @@ def plot_comparison(method_klds, sensors_used='human_camera'):
     plt.show()
 
 if __name__ == '__main__':
-    compare_all()
+    compare_all('human_camera')
