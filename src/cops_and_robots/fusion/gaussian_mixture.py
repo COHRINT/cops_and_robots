@@ -258,8 +258,9 @@ class GaussianMixture(object):
         if show_colorbar:
             divider = make_axes_locatable(self.ax)
             cax = divider.append_axes("right", size="5%", pad=0.1)
-            plt.colorbar(self.contourf, cax)
-        self.ax.set_title(title)
+            cbar = plt.colorbar(self.contourf, cax)
+            cbar.ax.tick_params(labelsize=20) 
+        self.ax.set_title(title, fontsize=20)
 
         if self.show_ellipses:
             if hasattr(self.distribution, 'camera_viewcone'):
@@ -270,8 +271,8 @@ class GaussianMixture(object):
                                                               poly=poly)
         return self.contourf
 
-    def plot_setup(self, fig=None, ax=None, bounds=None, levels=None,
-                   resolution=0.1, show_ellipses=False):
+    def plot_setup(self, fig=None, ax=None, bounds=None, levels=None, 
+                   num_levels=50, resolution=0.1, show_ellipses=False):
         self.show_ellipses = show_ellipses
         if fig is None:
             self.fig = plt.gcf()
@@ -292,7 +293,7 @@ class GaussianMixture(object):
         # Set levels
         if levels is None:
             max_prob = np.max(self.pdf(self.pos))
-            self.levels = np.linspace(0, max_prob * 1.2, 50)
+            self.levels = np.linspace(0, max_prob * 1.2, num_levels)
         else:
             self.levels = levels
         

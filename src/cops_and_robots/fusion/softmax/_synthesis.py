@@ -203,7 +203,7 @@ def geometric_model(models, measurements, show_comp_models=False, *args, **kwarg
 
     # Visualize the component models
     if show_comp_models:
-        fig = plt.figure()
+        # fig = plt.figure()
         s = int(np.ceil(np.sqrt(len(comp_models))))
 
         hr_translation ={'Near__0': 'Front',
@@ -213,7 +213,10 @@ def geometric_model(models, measurements, show_comp_models=False, *args, **kwarg
                         }
 
         for i, comp_model in enumerate(comp_models):
-            ax = fig.add_subplot(s,s,i +1)
+            # ax = fig.add_subplot(s,s,i +1)
+            fig = plt.figure(figsize=(10,10))
+            ax = fig.add_subplot(111)
+
             comp_model.plot(ax=ax, fig=fig, plot_probs=False, 
                             plot_legend=False, show_plot=False)
 
@@ -226,7 +229,8 @@ def geometric_model(models, measurements, show_comp_models=False, *args, **kwarg
                 else:
                     hr_title.append(hr_translation[meas])
 
-            ax.set_title(" + ".join(hr_title))
+            ax.set_title(" + ".join(hr_title), fontsize=20)
+            plt.show()
 
     #Change label names
     from softmax import Softmax
@@ -382,7 +386,8 @@ def prob_difference(models, joint_measurement):
     probs = []
     for model in models:
         prob = model.probability(class_=joint_measurement)
-        prob = prob.reshape(101,101)
+        sq = int(np.ceil(np.sqrt(prob.size)))
+        prob = prob.reshape(sq,sq)
         del model.probs
 
         probs.append(prob)
@@ -390,7 +395,7 @@ def prob_difference(models, joint_measurement):
     prob_diff = -probs[0]
     for prob in probs[1:]:
         prob_diff += prob
-    prob_diff = prob_diff.reshape(101,101)
+    prob_diff = prob_diff.reshape(sq,sq)
 
     return prob_diff
 
@@ -516,7 +521,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
             sm4 = range_model(poly=poly4)
             sm5 = range_model(poly=poly5)
             models = [sm4, sm5]
-            measurements = ['Inside', 'Inside']
+            measurements = ['Near', 'Inside']
             polygons = [poly4, poly5]
     else:
         if test_set == 1:
@@ -535,7 +540,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     joint_measurement = " + ".join(measurements)
 
     if visualize_base:
-        fig = plt.figure()
+        fig = plt.figure(figsize=(10,10))
         s = len(models)
         for i, model in enumerate(models):
             ax = fig.add_subplot(1,s,i + 1)
@@ -584,7 +589,11 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     geometric_diff = prob_difference([product_sm] + geometric_sm_models, joint_measurement)
 
     # Fuse all of them with a normal
-    prior = GaussianMixture([0.8,0.2], [-np.ones(2), 4*np.ones(2)], [3*np.eye(2), 2*np.eye(2)])
+    # prior = GaussianMixture([0.8,0.2], [-np.ones(2), 4*np.ones(2)], [3*np.eye(2), 2*np.eye(2)])
+    prior = GaussianMixture([0.25, 0.25, 0.25, 0.25], 
+                            [-2*np.ones(2), 2*np.ones(2), np.array([-2,2]), np.array([2,-2])], 
+                            [2*np.eye(2), 2*np.eye(2), 2*np.eye(2), 2*np.eye(2),]
+                            )
     from cops_and_robots.fusion.variational_bayes import VariationalBayes
     vb = VariationalBayes()
 
@@ -666,69 +675,100 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     geometric_kld = geometric_post.compute_kld(product_post)
 
     if visualize:
-        fig = plt.figure(figsize=(18,10))
+        # fig = plt.figure(figsize=(18,10))
         bounds = [-5,-5,5,5]
+        num_levels = 500
 
         # Plot critical regions (and polys on the product model)
-        ax = fig.add_subplot(3,4,1)
-        product_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,1)
+        product_sm.plot(plot_probs=False, ax=ax, fig=fig, title='', show_plot=False,
                  plot_legend=False)
-        ax.set_title('Product Model ({:.0f} terms, {:.2f}s)'
-            .format(product_sm.biases.size, product_time))
+        # ax.set_title('Product Model ({:.0f} terms, {:.3f}s)'
+        ax.set_title('{:.0f} terms, {:.3f}s synthesis'
+            .format(product_sm.biases.size, product_time),
+            fontsize=20)
         for poly in polygons:
             from shapely.affinity import translate
-            poly = translate(poly,-0.25, -0.25)
+            poly = translate(poly, -0.05, -0.05)
             patch = PolygonPatch(poly, facecolor='none', zorder=2,
-                                  linewidth=1.5, edgecolor='black',)
+                                  linewidth=2.5, edgecolor='black',)
             ax.add_patch(patch)
         plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
 
-        ax = fig.add_subplot(3,4,2)
-        neighbour_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,2)
+        neighbour_sm.plot(plot_probs=False, ax=ax, fig=fig, title='', show_plot=False,
                  plot_legend=False)
-        ax.set_title('Neighbour Model 1 ({:.0f} terms, {:.2f}s)'
-            .format(neighbour_sm.biases.size, neighbour_time))
+        # ax.set_title('Neighbour Model 1 ({:.0f} terms, {:.3f}s)'
+        ax.set_title('{:.0f} terms, {:.3f}s synthesis'
+            .format(neighbour_sm.biases.size, neighbour_time),
+            fontsize=20)
         plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
 
-        ax = fig.add_subplot(3,4,3)
-        neighbour_sm2.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,3)
+        neighbour_sm2.plot(plot_probs=False, ax=ax, fig=fig, title='', show_plot=False,
                  plot_legend=False)
-        ax.set_title('Neighbour Model 2 ({:.0f} terms, {:.2f}s)'
-            .format(neighbour_sm2.biases.size, neighbour2_time))
+        # ax.set_title('Neighbour Model 2 ({:.0f} terms, {:.3f}s)'
+        ax.set_title('{:.0f} terms, {:.3f}s synthesis'
+            .format(neighbour_sm2.biases.size, neighbour2_time),
+            fontsize=20)
         plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
 
-        ax = fig.add_subplot(3,4,4)
-        geometric_sm.plot(plot_probs=False, ax=ax, fig=fig, show_plot=False,
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,4)
+        geometric_sm.plot(plot_probs=False, ax=ax, fig=fig, title='', show_plot=False,
                  plot_legend=False)
-        ax.set_title('Geometric Model ({:.0f} terms, {:.2f}s)'
-            .format(geometric_sm.biases.size, geometric_time))
+        # ax.set_title('Geometric Model ({:.0f} terms, {:.3f}s)'
+        ax.set_title('{:.0f} terms, {:.3f}s synthesis'
+            .format(geometric_sm.biases.size, geometric_time),
+            fontsize=20)
         plt.axis('scaled')
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
 
         # Plot prior
-        ax = fig.add_subplot(3,4,5)
-        title = 'Prior Distribution'
-        prior.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,5)
+        # title = 'Prior Distribution'
+        title = ''
+        prior.plot(ax=ax, fig=fig, num_levels=num_levels, bounds=bounds, title=title, show_colorbar=True)
+        ax.set_title('')
+        ax.set_xlabel(r'$X_1$')
+        ax.set_ylabel(r'$X_2$')
+        plt.suptitle('')
 
         # Plot probability differences
-        ax = fig.add_subplot(3,4,6)
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,6)
         plt.axis('scaled')
         c = ax.pcolormesh(product_sm.X, product_sm.Y, neighbour_diff,)
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
-        plt.colorbar(c, cax)
-        ax.set_title("Neighbour1 minus Product")
+        cbar = plt.colorbar(c, cax)
+        cbar.ax.tick_params(labelsize=20) 
+
+        ax.set_title("")
+        # ax.set_title("Neighbour1 minus Product")
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
 
-        ax = fig.add_subplot(3,4,7)
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,7)
         plt.axis('scaled')
         c = ax.pcolormesh(product_sm.X, product_sm.Y, neighbour_diff2,)
         divider = make_axes_locatable(ax)
@@ -738,36 +778,65 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
 
-        ax = fig.add_subplot(3,4,8)
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,8)
         plt.axis('scaled')
         c = ax.pcolormesh(product_sm.X, product_sm.Y, geometric_diff,)
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
-        plt.colorbar(c, cax)
-        ax.set_title("Geometric minus Product")
+        cbar = plt.colorbar(c, cax)
+        cbar.ax.tick_params(labelsize=20) 
+
+        ax.set_title("")
+        # ax.set_title("Geometric minus Product")
         ax.set_xlim(bounds[0],bounds[2])
         ax.set_ylim(bounds[1],bounds[3])
 
         # Plot posteriors
-        ax = fig.add_subplot(3,4,9)
-        title = 'Product Posterior ({:.2f}s)'\
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,9)
+        # title = 'Product Posterior ({:.3f}s)'\
+        title = '{:.3f}s fusion'\
             .format(product_fusion_time)
-        product_post.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
+        product_post.plot(ax=ax, fig=fig, num_levels=num_levels, bounds=bounds, title=title, show_colorbar=True)
+        ax.set_xlabel(r'$X_1$')
+        ax.set_ylabel(r'$X_2$')
+        plt.suptitle('')
 
-        ax = fig.add_subplot(3,4,10)
-        title = 'Neighbour 1 Posterior (KLD {:.2f}, {:.2f}s)'\
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,10)
+        # title = 'Neighbour 1 Posterior (KLD {:.2f}, {:.3f}s)'\
+        title = 'KLD of {:.2f}, {:.3f}s fusion'\
             .format(neighbour_kld, neighbour_fusion_time)
-        neighbour_post.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
+        neighbour_post.plot(ax=ax, fig=fig, num_levels=num_levels, bounds=bounds, title=title, show_colorbar=True)
+        ax.set_xlabel(r'$X_1$')
+        ax.set_ylabel(r'$X_2$')
+        plt.suptitle('')
 
-        ax = fig.add_subplot(3,4,11)
-        title = 'Neighbour 2 Posterior (KLD {:.2f}, {:.2f}s)'\
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,11)
+        # title = 'Neighbour 2 Posterior (KLD {:.2f}, {:.3f}s)'\
+        title = 'KLD of {:.2f}, {:.3f}s fusion'\
             .format(neighbour2_kld, neighbour2_fusion_time)
-        neighbour2_post.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
+        neighbour2_post.plot(ax=ax, fig=fig, num_levels=num_levels, bounds=bounds, title=title, show_colorbar=True)
+        ax.set_xlabel(r'$X_1$')
+        ax.set_ylabel(r'$X_2$')
+        plt.suptitle('')
 
-        ax = fig.add_subplot(3,4,12)
-        title = 'Geometric Posterior (KLD {:.2f}, {:.2f}s)'\
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(111)
+        # ax = fig.add_subplot(3,4,12)
+        # title = 'Geometric Posterior (KLD {:.2f}, {:.3f}s)'\
+        title = 'KLD of {:.2f}, {:.3f}s fusion'\
             .format(geometric_kld, geometric_fusion_time)
-        geometric_post.plot(ax=ax, fig=fig, bounds=bounds, title=title, show_colorbar=True)
+        geometric_post.plot(ax=ax, fig=fig, num_levels=num_levels, bounds=bounds, title=title, show_colorbar=True)
+        ax.set_xlabel(r'$X_1$')
+        ax.set_ylabel(r'$X_2$')
+        plt.suptitle('')
         
         if use_MMS:
             type_ = 'MMS'
@@ -1006,7 +1075,7 @@ if __name__ == '__main__':
 
 
     # test_1D()
-    test_synthesis_techniques(test_set=2, use_MMS=True, visualize=True)
+    test_synthesis_techniques(test_set=1, use_MMS=False, visualize=True)
 
     # product_vs_lp()
     # product_test(visualize=True, create_combinations=True)
