@@ -40,6 +40,7 @@ class GaussSumFilter(object):
                  fusion_method='windowed batch',
                  synthesis_technique='geometric',
                  window=2,
+                 rosbag_process=None,
                  ):
         self.target_name = target_name
         self.relevant_targets = ['nothing', 'a robot', self.target_name]
@@ -53,50 +54,57 @@ class GaussSumFilter(object):
         self.measurements = []
 
         self.probability = fleming_prior()
+        self.original_prior = fleming_prior()
 
         # Set up the VB fusion parameters
         self.vb = VariationalBayes()
 
         self.recently_fused_update = False
+        self.rosbag_process = rosbag_process
+        self.human_measurement_count = 0
 
-    def update(self, camera, human_sensor=None, frame=None, save_file=None):
+    def update(self, camera, human_sensor=None, save_file=None):
         if self.finished:
             return
+
+        self.rosbag_process.stdin.flush()
+        self.rosbag_process.stdout.flush()
+
         self.update_mixand_motion()
-        self._camera_update(camera)
+        # self._camera_update(camera)
         self._human_update(human_sensor)
         if save_file is not None:
             if self.recently_fused_update:
-                self.save_probability(frame, save_file)
+                self.save_probability(save_file)
                 self.recently_fused_update = False
-            self.save_MAP(frame, save_file)
+            # self.save_MAP(frame, save_file)
 
-    def save_probability(self, frame, save_file):
+    def save_probability(self, save_file):
         if self.fusion_method == 'windowed batch':
             save_file = save_file + 'windowed_batch_' + str(self.window)
         else:
             save_file = save_file + self.fusion_method.replace(' ', '_')
-        filename = save_file + '_' + self.target_name  +'_posterior_' + str(frame)
+        filename = save_file + '_' + self.target_name  +'_posterior_' + str(self.human_measurement_count)
         np.save(filename, self.probability)
 
-    def save_MAP(self, frame, save_file):
-        bounds = self.feasible_layer.bounds
-        try:
-            MAP_point, MAP_prob = self.probability.max_point_by_grid(bounds)
-        except AttributeError:
-            pt = np.unravel_index(self.probability.argmax(), self.X.shape)
-            MAP_point = (self.X[pt[0],0],
-                         self.Y[0,pt[1]]
-                         )
-        MAP_point = np.array(MAP_point)
+    # def save_MAP(self, frame, save_file):
+    #     bounds = self.feasible_layer.bounds
+    #     try:
+    #         MAP_point, MAP_prob = self.probability.max_point_by_grid(bounds)
+    #     except AttributeError:
+    #         pt = np.unravel_index(self.probability.argmax(), self.X.shape)
+    #         MAP_point = (self.X[pt[0],0],
+    #                      self.Y[0,pt[1]]
+    #                      )
+    #     MAP_point = np.array(MAP_point)
 
 
-        if self.fusion_method == 'windowed batch':
-            save_file = save_file + 'windowed_batch_' + str(self.window)
-        else:
-            save_file = save_file + self.fusion_method.replace(' ', '_')
-        filename = save_file + '_' + self.target_name  +'_MAP_' + str(frame)
-        np.save(filename, MAP_point)
+    #     if self.fusion_method == 'windowed batch':
+    #         save_file = save_file + 'windowed_batch_' + str(self.window)
+    #     else:
+    #         save_file = save_file + self.fusion_method.replace(' ', '_')
+    #     filename = save_file + '_' + self.target_name  +'_MAP_' + str(frame)
+    #     np.save(filename, MAP_point)
 
     def _camera_update(self, camera):
         if self.fusion_method == 'grid':
@@ -129,12 +137,17 @@ class GaussSumFilter(object):
         posterior = likelihood_prob * prior_prob
         posterior /= posterior.sum()
 
+        self.recently_fused_update = True
+
         self.probability = posterior
 
     def _human_update(self, human_sensor):
         hs = human_sensor
         self.recieved_human_update = False
         if human_sensor.new_update:
+
+            self.human_measurement_count += 1
+
             measurement = hs.get_measurement()
 
             # Break if the target doesn't apply to this filter
@@ -147,6 +160,17 @@ class GaussSumFilter(object):
                     .format(measurement['target'], hs.utterance, self.target_name))
                 return
 
+            # # NO FUSION
+            # self.recently_fused_update = True
+            # return
+
+            logging.info('Stopped rosbag to do fusion...')
+            self.rosbag_process.stdin.write(' ')  # stop 
+            self.rosbag_process.stdin.flush()
+            import time
+            time.sleep(0.5)
+
+
             logging.info(self.fusion_method)
             if self.fusion_method == 'recursive':
                 self.recursive_fusion(measurement, human_sensor)
@@ -155,6 +179,10 @@ class GaussSumFilter(object):
                 self.batch_fusion(measurement, human_sensor)
             elif self.fusion_method == 'grid':
                 self.grid_fusion(measurement, human_sensor)
+
+            self.rosbag_process.stdin.write(' ')  # start rosbag
+            self.rosbag_process.stdin.flush()
+            logging.info('Restarted rosbag!')
 
     def recursive_fusion(self, measurement, human_sensor):
         """Performs fusion once per pass."""
@@ -238,8 +266,11 @@ class GaussSumFilter(object):
 
 
     def gm_fusion(self, likelihood, measurement_label, human_sensor):
-        prior = self.probability
-
+        
+        if self.fusion_method == 'full batch':
+            prior = self.original_prior
+        else:
+            prior = self.probability
 
         if type(likelihood) is list:
             mixtures = []
@@ -271,6 +302,7 @@ class GaussSumFilter(object):
             try:
                 posterior = mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
             except IndexError:  # inconsistent measurements!
+                logging.error('ERROR! inconsistent measurements.')
                 posterior = prior
 
             logging.info('PRIOR: {}'.format(prior.weights))

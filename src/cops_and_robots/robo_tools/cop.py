@@ -93,6 +93,7 @@ class Cop(Robot):
                  camera_cfg={},
                  questioner_cfg={},
                  human_cfg={},
+                 rosbag_process=None,
                  **kwargs):
         # Use class defaults for kwargs not included
         mp_cfg = Cop.mission_planner_defaults.copy()
@@ -138,7 +139,9 @@ class Cop(Robot):
         self.fusion_engine = FusionEngine(fusion_engine_type,
                                           self.missing_robber_names,
                                           self.map.feasible_layer,
-                                          robber_model)
+                                          robber_model,
+                                          rosbag_process=rosbag_process
+                                          )
         self.sensors = {}
         self.sensors['camera'] = Camera((0, 0, 0),
                                         element_dict=self.map.element_dict,
@@ -242,7 +245,7 @@ class Cop(Robot):
         # Update probability model
         save_file = 'data/ACC 2016/output/'
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
-                                  self.missing_robbers, frame=i, save_file=save_file)
+                                  self.missing_robbers, save_file=save_file)
 
         # Ask a question every 10th step
         if i % 15 == 9 and self.fusion_engine.filter_type == 'gauss sum' and \

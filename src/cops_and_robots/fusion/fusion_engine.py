@@ -67,6 +67,7 @@ class FusionEngine(object):
                  feasible_layer,
                  motion_model='stationary',
                  total_particles=2000,
+                 rosbag_process=None,
                  ):
 
         self.filter_type = filter_type
@@ -93,13 +94,14 @@ class FusionEngine(object):
                                                       particles_per_filter)
         elif self.filter_type == 'gauss sum':
             for i, name in enumerate(missing_robber_names):
-                self.filters[name] = GaussSumFilter(name, feasible_layer)
+                self.filters[name] = GaussSumFilter(name, feasible_layer, 
+                                                    rosbag_process=rosbag_process)
             self.filters['combined'] = GaussSumFilter('combined', feasible_layer)
         else:
             raise ValueError("FusionEngine must be of type 'particle' or "
                              "'gauss sum'.")
 
-    def update(self, robot_pose, sensors, robbers, frame=None, save_file=None):
+    def update(self, robot_pose, sensors, robbers, save_file=None):
         """Update fusion_engine agnostic to fusion type.
 
         Parameters
@@ -122,7 +124,6 @@ class FusionEngine(object):
             if not self.filters[robber.name].finished:
                 self.filters[robber.name].update(sensors['camera'],
                                                  sensors['human'],
-                                                 frame=frame,
                                                  save_file=save_file,
                                                  )
         self._update_combined(sensors, robbers)

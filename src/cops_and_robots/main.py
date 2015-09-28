@@ -48,9 +48,10 @@ def main(config_file=None):
         logging.getLogger().addHandler(handler)
 
     # Create cops with config params
+    rosbag_process = playback_mode()
     cops = {}
     for cop, kwargs in cop_cfg.iteritems():
-        cops[cop] = Cop(cop, **kwargs)
+        cops[cop] = Cop(cop, rosbag_process=rosbag_process, **kwargs)
         logging.info('{} added to simulation'.format(cop))
 
     # Create robbers with config params
@@ -95,7 +96,6 @@ def main(config_file=None):
     logging.info('Simulation started with {} chasing {}.'
                  .format(cop_str, robber_str))
 
-    playback_mode()
 
     # Start the simulation
     fig = cops['Deckard'].map.fig
@@ -122,9 +122,9 @@ def playback_mode():
     """Plays 1 or more recorded rosbags. 
     """
     # <>TODO: parametrize the inputs
-    import subprocess
+    from subprocess import Popen, PIPE, STDOUT
 
-    rosbag_folder = 'data/ACC 2016/rosbags/'
+    rosbag_folder = 'data/ACC\ 2016/rosbags/'
     rosbags = {
                # 'Test 1': 'test1-human-only.bag',
                # 'Test 2': 'test2-human-only.bag',
@@ -134,7 +134,10 @@ def playback_mode():
               }
     for _, rosbag in rosbags.iteritems():
         rosbag_file = rosbag_folder + rosbag
-        proc = subprocess.Popen(['rosbag','play',rosbag_file])
+        cmd = 'rosbag play -q ' + rosbag_file
+        proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        logging.info('Created a rosbag process {}!'.format(proc.pid))
+    return proc
     # bag = rosbag.Bag(rosbag_file)
     # for topic, msg, t in bag.read_messages(topics=['/human_sensor', '/tf']):
     #     print msg

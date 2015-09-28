@@ -89,9 +89,13 @@ def find_redundant_constraints(G_full, h_full, break_index=-1, verbose=False):
 
         # <>TODO: Check to make sure c is a dense column matrix
 
-        G = matrix(np.asarray(G, dtype=np.float))
-        h = matrix(np.asarray(h, dtype=np.float))
-        c = matrix(np.asarray(c, dtype=np.float))
+        try:
+            G = matrix(np.asarray(G, dtype=np.float))
+            h = matrix(np.asarray(h, dtype=np.float))
+            c = matrix(np.asarray(c, dtype=np.float))
+        except:
+            logging.error('ERROR! Not able to convert arrays into matrices.')
+            return None, None
         solvers.options['show_progress'] = False
         sol = solvers.lp(c,G,h)
 
