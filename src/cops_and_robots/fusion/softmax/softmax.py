@@ -138,7 +138,7 @@ class Softmax(object):
     def __init__(self, weights=None, biases=None, normals=None, offsets=None,
                  poly=None, steepness=None, rotation=None, state_spec='x y',
                  state_labels=['x1', 'x2'],
-                 bounds=None, resolution=0.1, labels=None,
+                 bounds=None, resolution=0.01, labels=None,
                  auto_combine_mms=True, tol=10 ** -3):
 
         try:
@@ -165,7 +165,8 @@ class Softmax(object):
         self.tol = tol
         self.has_subclasses = False
         self.auto_combine_mms = auto_combine_mms
-        self.res = resolution
+        self.res = resolution  #<>TODO: fix! this isn't working
+        # self.res = 0.05
 
         # Define possibly unspecfied values
         if self.biases is None and self.weights is not None:

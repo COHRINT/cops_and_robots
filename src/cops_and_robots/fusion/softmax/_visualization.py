@@ -114,8 +114,11 @@ def plot(self, class_=None, show_plot=True, plot_3D=True, plot_probs=True,
             proxy[i] = plt.Rectangle((0, 0), 1, 1, fc=self.class_colors[i],
                                      alpha=0.6, label=proxy_label,)
 
-        plt.legend(handles=proxy, loc='lower center', mode='expand', ncol=4,
-                   bbox_to_anchor=bbox_size, borderaxespad=0.)
+        plt.legend(handles=proxy, loc='lower center', mode='expand', ncol=5,
+                   bbox_to_anchor=(0, 1.0 ,1, 0), borderaxespad=0.)
+
+        # plt.legend(handles=proxy, loc='lower center', mode='expand', ncol=4,
+        #            bbox_to_anchor=bbox_size, borderaxespad=0.)
     plt.suptitle(title, fontsize=16)
 
     # Plot polygon
@@ -326,13 +329,13 @@ def _plot_dominant_classes_2D(self, ax, **kwargs):
     cc = ColorConverter()
     max_colors_rgb = np.array([cc.to_rgb(_) for _ in max_colors])
 
-    ax.scatter(self.X, self.Y, c=max_colors_rgb, marker='s', s=100,
+    ax.scatter(self.X, self.Y, c=max_colors_rgb, marker='s', s=50,
                linewidths=0, alpha=1)
 
     ax.set_xlim(self.bounds[0], self.bounds[2])
     ax.set_ylim(self.bounds[1], self.bounds[3])
-    ax.set_xlabel('x1')
-    ax.set_ylabel('x2')
+    ax.set_xlabel(r'$X_1$')
+    ax.set_ylabel(r'$X_2$')
     ax.set_title('Critical Classes')
 
 def _plot_dominant_classes_3D(self, **kwargs):
