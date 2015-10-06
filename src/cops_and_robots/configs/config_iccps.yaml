@@ -1,0 +1,74 @@
+# YAML
+main:
+  logging_level: INFO #['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+  numpy_print_precision: 2
+  use_ROS: False # True if any robot is in the real world
+  ROS_node_name: 'Python_Node'
+  max_run_time: 10  # in seconds, -1 for infinite
+  log_time: False
+  record_data: ['robot positions', 'grid probability']
+  playback_rosbags: 
+      # Test 4: 'test4.bag'
+
+cops:
+  Deckard:
+    pose: [0, 0, 90]  # [x(meters), y(meters), theta(degrees)]
+    robber_model: static  # ['static','clockwise','counterclockwise','random walk']
+    pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
+    web_interface_topic: python # python or rostopic name
+    ask_every_ten: True  #<>TODO: add this to questioner_cfg
+    other_robot_names: 
+      robbers: ['Roy']  #['Roy', 'Pris']
+      distractors: []  #['Zhora']
+    mission_planner_cfg:
+      target_order: ['Roy']  #['Roy', 'Pris']
+    goal_planner_cfg:
+      type_: MAP  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
+    path_planner_cfg:
+      type_: 'direct'  # ['direct', 'a_star'] 
+    camera_cfg:
+      max_view_dist: 1.0
+      min_view_dist: 0.0
+    map_cfg:
+      plot_robbers: True # True for all, False for none, or list of robbers to plot
+      map_name: fleming
+      combined_only: False
+      publish_to_ROS: False
+    human_cfg:
+      false_alarm_prob: 0.2  # probability human will answer a question correctly
+      web_interface_topic: python  # ['python' or a rostopic name ('human_sensor')]
+    questioner_cfg:
+      use_ROS: False
+      # human_answer_chance: 0.9  # probability human will answer a question
+      target_order: ['Roy']  # ['Pris', 'Roy']
+      target_weights: [1] #[11, 10]
+      repeat_annoyance: 0.8  # max penalty to a repeated question
+      repeat_time_penalty: 300  # seconds during which a repeat question is penalized
+
+robbers:
+  Roy:
+    pose_source: python  # ['python' or a ros topic string like '/roy/odom']
+    goal_planner_cfg:
+      type_: simple  # ['stationary', 'simple', 'trajectory']
+    path_planner_cfg:
+      type_: 'direct'  # ['direct', 'a_star'] 
+  # Pris:
+  #   pose_source: tf  # ['python' or a ros topic string like '/zhora/odom']
+  #   goal_planner_cfg:
+  #     type_: stationary  # ['stationary', 'simple', 'trajectory']
+  #   path_planner_cfg:
+  #     type_: 'direct'  # ['direct', 'a_star'] 
+
+distractors:
+  # Zhora:
+  #   pose_source: tf  # ['python' or a ros topic string like '/pris/odom']
+  #   goal_planner_cfg:
+  #     type_: stationary  # ['stationary', 'simple', 'trajectory']
+  #   path_planner_cfg:
+  #     type_: 'direct'  # ['direct', 'a_star'] 
+
+human_interface:
+  measurement_types:
+    velocity: False
+    area: True
+    object: True

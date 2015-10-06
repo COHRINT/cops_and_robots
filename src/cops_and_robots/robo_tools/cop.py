@@ -243,7 +243,8 @@ class Cop(Robot):
                 idistractor.pose2D.pose)
 
         # Update probability model
-        save_file = 'data/ACC 2016/output/'
+        # save_file = 'data/ACC 2016/output/'
+        save_file = None
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
                                   self.missing_robbers, save_file=save_file)
 
