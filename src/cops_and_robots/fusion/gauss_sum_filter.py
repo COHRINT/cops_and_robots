@@ -39,7 +39,7 @@ class GaussSumFilter(object):
                  state_spec='x y x_dot y_dot',
                  fusion_method='recursive',
                  synthesis_technique='geometric',
-                 window=2,
+                 window=1,
                  rosbag_process=None,
                  ):
         self.target_name = target_name
@@ -68,16 +68,19 @@ class GaussSumFilter(object):
         if self.finished:
             return
 
-        self.rosbag_process.stdin.flush()
-        self.rosbag_process.stdout.flush()
+        try:
+            self.rosbag_process.stdin.flush()
+            self.rosbag_process.stdout.flush()
+        except AttributeError:
+            logging.debug('Not playing rosbag')
 
         self.update_mixand_motion()
         self._camera_update(camera)
         self._human_update(human_sensor)
         if save_file is not None:
-            # if self.recently_fused_update:
-            #     self.save_probability(save_file)
-            #     self.recently_fused_update = False
+            if self.recently_fused_update:
+                self.save_probability(save_file)
+                self.recently_fused_update = False
             self.save_MAP(save_file)
 
     def save_probability(self, save_file):
@@ -162,16 +165,12 @@ class GaussSumFilter(object):
                     .format(measurement['target'], hs.utterance, self.target_name))
                 return
 
-            # NO FUSION
-            self.recently_fused_update = True
-            return
-
-            logging.info('Stopped rosbag to do fusion...')
-            self.rosbag_process.stdin.write(' ')  # stop 
-            self.rosbag_process.stdin.flush()
-            import time
-            time.sleep(0.5)
-
+            if self.rosbag_process is not None:
+                logging.info('Stopped rosbag to do fusion...')
+                self.rosbag_process.stdin.write(' ')  # stop 
+                self.rosbag_process.stdin.flush()
+                import time
+                time.sleep(0.5)
 
             logging.info(self.fusion_method)
             if self.fusion_method == 'recursive':
@@ -182,9 +181,10 @@ class GaussSumFilter(object):
             elif self.fusion_method == 'grid':
                 self.grid_fusion(measurement, human_sensor)
 
-            self.rosbag_process.stdin.write(' ')  # start rosbag
-            self.rosbag_process.stdin.flush()
-            logging.info('Restarted rosbag!')
+            if self.rosbag_process is not None:
+                self.rosbag_process.stdin.write(' ')  # start rosbag
+                self.rosbag_process.stdin.flush()
+                logging.info('Restarted rosbag!')
 
     def recursive_fusion(self, measurement, human_sensor):
         """Performs fusion once per pass."""
@@ -291,8 +291,8 @@ class GaussSumFilter(object):
                     new_mixture = GaussianMixture(beta, mu, sigma)
 
                     # Weight the posterior by the human's false alarm rate
-                    # alpha = human_sensor.false_alarm_prob / 2
-                    # new_mixture = prior_mixand.combine_gms([new_mixture], alpha)
+                    alpha = human_sensor.false_alarm_prob / 2
+                    new_mixture = prior_mixand.combine_gms([new_mixture], alpha)
 
                     mixtures.append(new_mixture)
                     raw_weights.append(beta * mixand_weight)
@@ -303,12 +303,10 @@ class GaussSumFilter(object):
 
             try:
                 posterior = mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
-            except IndexError:  # inconsistent measurements!
-                logging.error('ERROR! inconsistent measurements.')
+            except IndexError:
+                logging.error('ERROR! Cannot combine GMs.')
                 posterior = prior
 
-            logging.info('PRIOR: {}'.format(prior.weights))
-            logging.info('POSTERIOR: {}'.format(posterior.weights))
         else:
             mu, sigma, beta = self.vb.update(measurement=measurement_label,
                                              likelihood=likelihood,

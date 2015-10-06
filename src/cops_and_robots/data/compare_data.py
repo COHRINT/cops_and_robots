@@ -46,7 +46,6 @@ def load_MAPs(method_name, trial_name='', sensors_used='human_camera'):
             pass
 
     MAPs = np.array(MAPs)
-    print MAPs.shape
     return MAPs
 
 def compare_posteriors(test_posterior, true_posterior):
@@ -79,68 +78,9 @@ def compare_posteriors(test_posterior, true_posterior):
 
     grid_spacing = 0.1
     ndims = 2
-    kld = np.sum(p_i * np.log(p_i / q_i)) * grid_spacing ** ndims
+    kld = np.nansum(p_i * np.log(p_i / q_i)) * grid_spacing ** ndims
 
     return kld
-
-def compare_all(sensors_used='human_only'):
-    methods = ['grid',
-               'recursive',
-               # 'full_batch',
-               'windowed_batch_1',
-               'windowed_batch_2',
-               # 'windowed_batch_5',
-               'windowed_batch_2',  # trial2
-               # 'windowed_batch_2',  # trial3
-               'no_measurement',
-               ]
-    trials = ['',
-              '',
-              # 'full_batch',
-              '',
-              '',
-              # '',
-              '_trial2',
-              # '_trial3',
-              '',
-              ]
-    posteriors = {}
-    for i, method in enumerate(methods):
-        posteriors[method + trials[i]] = load_posteriors(method, trials[i], sensors_used=sensors_used)
-
-    klds = {'recursive':{},
-            # 'full_batch':{},
-            'windowed_batch_1':{},
-            'windowed_batch_2':{},
-            'windowed_batch_5':{},
-            'windowed_batch_2_trial2':{},
-            'windowed_batch_2_trial3':{},
-            'no_measurement':{},
-            }
-    for i, method in enumerate(methods[1:]):
-        
-        test_posterior = posteriors[method + trials[i+1]]
-        true_posterior = posteriors['grid']
-
-        for measurement_i, posterior in test_posterior.iteritems():
-            try:
-                true_posterior_at_measurement_i = posteriors['grid'][measurement_i]
-                kld = compare_posteriors(posterior, true_posterior_at_measurement_i)
-                klds[method + trials[i+1]][measurement_i] = kld
-            except KeyError:
-                logging.error('No shared posterior at measurement_i {}.'.format(measurement_i))
-
-    # print klds
-    # plot_comparison(klds, sensors_used)
-
-    # Compare MAPs
-    MAPs = {}
-    for i, method in enumerate(methods):
-        MAP = load_MAPs(method, trials[i], sensors_used=sensors_used)
-        if MAP.size > 0:
-            MAPs[method + trials[i]] = MAP
-
-    plot_MAPs(MAPs, sensors_used)
 
 def plot_MAPs(MAPs, sensors_used):
     fig = plt.figure(figsize=(14,6))
@@ -168,14 +108,18 @@ def plot_MAPs(MAPs, sensors_used):
                }
 
     for method, MAP in MAPs.iteritems():
-        ms = 7
+        ms = 0
         if method == 'grid':
             ms *= 2
-        ax.plot(MAP[:,0], MAP[:,1], ls='', label=method, markersize=ms,
+        x = range(MAP.shape[0])
+        y = np.linalg.norm(MAP - np.array([-6,0.5]), ord=2, axis=1)
+        # x = MAP[:,0]
+        # y = MAP[:,1]
+        ax.plot(x, y, ls='-', linewidth=4, label=method, markersize=ms,
                 color=colors[method], marker=markers[method],
                 alpha=0.9,
                 )
-        ax.set_aspect('equal')
+        # ax.set_aspect('equal')
 
     ax.set_xlabel('x (meters)')
     ax.set_ylabel('y (meters)')
@@ -203,27 +147,106 @@ def plot_comparison(method_klds, sensors_used='human_camera'):
               'full_batch': 'green',
               'windowed_batch_1': 'orange',
               'windowed_batch_2': 'cornflowerblue',
-              'windowed_batch_2_trial2': 'royalblue',
-              'windowed_batch_2_trial3': 'blue',
+              'windowed_batch_2_trial2': 'blue',
+              'windowed_batch_2_trial3': 'darkblue',
               'windowed_batch_5': 'purple',
               'no_measurement': 'green'
               }
 
+    handles = []
+    labels = []
     for method, klds in method_klds.iteritems():
         y = klds.values()
         x = [int(measurement_i) for measurement_i in klds.keys()]
-        ax.scatter(x,y, marker=markers[method], s=100, lw=2, facecolor='none', edgecolor=colors[method],
-                   label=method)
-    plt.legend(loc=2)
+        label = method.title().replace('_',' ')
+        label = label.replace('Trial2','(Trial 2)')
+        label = label.replace('Trial3','(Trial 3)')
+        label = label.replace('Batch 1',r'Batch $\omega=1$')
+        label = label.replace('Batch 2',r'Batch $\omega=2$')
+        label = label.replace('Batch 5',r'Batch $\omega=5$')
+
+        h = ax.scatter(x,y, marker=markers[method], s=100, lw=2.5, facecolor='none', 
+                   edgecolor=colors[method], label=label)
+        handles.append(h)
+        labels.append(label)
+
+    # # Sort legend
+    # labels, handles = zip(*sorted(zip(labels, handles)))
+
+    plt.legend(loc=2, handles=handles, labels=labels)
     ax.set_ylim([0,0.15])
     if sensors_used == 'human_camera':
-        ax.set_title('Accuracy of fusion strategies (Human sensor + camera)')
+        ax.set_title('Accuracy of fusion strategies (human sensor + camera)', fontsize=16)
     else:
-        ax.set_title('Accuracy of fusion strategies (Human sensor only)')
-    ax.set_xlabel('Measurement number')
-    ax.set_ylabel('KLD with respect to grid fusion')
+        ax.set_title('Accuracy of fusion strategies (human sensor only)', fontsize=16)
+    ax.set_xticks(range(0,20,2))
+    ax.set_xlabel('Measurement number', fontsize=16)
+    ax.set_ylabel('KLD (nats) with respect to grid fusion', fontsize=16)
 
+    plt.tight_layout()
     plt.show()
+
+def compare_all(sensors_used='human_only'):
+    methods = ['grid',
+               'recursive',
+               # 'full_batch',
+               'windowed_batch_1',
+               'windowed_batch_2',
+               'windowed_batch_2',  # trial2
+               'windowed_batch_2',  # trial3
+               'windowed_batch_5',
+               # 'no_measurement',
+               ]
+    trials = ['',
+              '',
+              # 'full_batch',
+              '',
+              '',
+              '_trial2',
+              '_trial3',
+              '',
+              # '',
+              ]
+    posteriors = {}
+    for i, method in enumerate(methods):
+        post = load_posteriors(method, trials[i], sensors_used=sensors_used)
+        if len(post) > 0:
+            posteriors[method + trials[i]] = post
+    klds = {'recursive':{},
+            # 'full_batch':{},
+            'windowed_batch_1':{},
+            'windowed_batch_2':{},
+            'windowed_batch_2_trial2':{},
+            'windowed_batch_2_trial3':{},
+            'windowed_batch_5':{},
+            # 'no_measurement':{},
+            }
+    
+    for i, method in enumerate(methods[1:]):
+        
+        test_posterior = posteriors[method + trials[i+1]]
+        true_posterior = posteriors['grid']
+
+        for measurement_i, posterior in test_posterior.iteritems():
+            try:
+                true_posterior_at_measurement_i = posteriors['grid'][measurement_i]
+                kld = compare_posteriors(posterior, true_posterior_at_measurement_i)
+                klds[method + trials[i+1]][measurement_i] = kld
+            except KeyError:
+                logging.error('No shared posterior at measurement_i {}.'.format(measurement_i))
+
+    # print klds
+    plot_comparison(klds, sensors_used)
+
+    # Compare MAPs
+    MAPs = {}
+    for i, method in enumerate(methods):
+        MAP = load_MAPs(method, trials[i], sensors_used=sensors_used)
+        if MAP.size > 0:
+            MAPs[method + trials[i]] = MAP
+
+    # plot_MAPs(MAPs, sensors_used)
+
 
 if __name__ == '__main__':
     compare_all('human_camera')

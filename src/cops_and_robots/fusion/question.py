@@ -70,7 +70,7 @@ class Questioner(object):
     def generate_questions(self):
         if self.human_sensor is None:
             certainties =['know if']
-            targets =['a robot', 'nothing', 'Roy', 'Pris', 'Zhora']
+            targets =['a robot', 'nothing',] + target_order
             positivities = ['is']
             groundings = {'object':{
                                    'Deckard': ['in front of', 'behind', 'left of', 'right of', 'near'],

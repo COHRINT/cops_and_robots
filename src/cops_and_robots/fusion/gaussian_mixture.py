@@ -315,6 +315,13 @@ class GaussianMixture(object):
                 patch.remove()
             del self.ellipse_patches
 
+    def as_grid(self):
+        """Return the probability distribution as a grid over the state space.
+        """
+        if not hasattr(self, 'pos'):
+            self._discretize()
+        return self.pdf(self.pos)
+
     def entropy(self):
         """
         """
@@ -345,18 +352,18 @@ class GaussianMixture(object):
         kld = np.sum(p_i * np.log(p_i / q_i)) * self.grid_spacing ** self.ndims
         return kld
 
-    def combine_gms(self, other_gms, self_gm_weight=None, raw_weights=None):
+    def combine_gms(self, other_gms, self_weight=None, raw_weights=None):
         """Merge two gaussian mixtures together, weighing the original by alpha.
         """
         if type(other_gms) is not list:
             other_gms = [other_gms]
 
-        if self_gm_weight is None:
+        if self_weight is None:
             alpha = 1/(len(other_gms) + 1) #<>TODO: allow custom weights
             self_alpha = alpha
         else:
-            self_alpha = self_gm_weight
-            alpha = (1 - self_alpha) / (len(other_gms))
+            self_alpha = self_weight
+            alpha = (1 - self_alpha) / len(other_gms)
 
         beta_hat = self.weights * self_alpha
         mu_hat = self.means
@@ -368,8 +375,6 @@ class GaussianMixture(object):
 
         if raw_weights is not None:
             beta_hat = raw_weights
-
-        logging.info(beta_hat)
 
         return GaussianMixture(beta_hat, mu_hat, var_hat)
 

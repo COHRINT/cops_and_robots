@@ -5,8 +5,11 @@
 import logging
 import time
 import sys
+import os
 
 import numpy as np
+import pandas as pd
+from pandas import HDFStore
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -48,7 +51,11 @@ def main(config_file=None):
         logging.getLogger().addHandler(handler)
 
     # Create cops with config params
-    rosbag_process = playback_mode()
+    if main_cfg['playback_rosbags'] is None:
+        rosbag_process = None
+    else:
+        rosbag_process = playback_mode(main_cfg['playback_rosbags'])
+
     cops = {}
     for cop, kwargs in cop_cfg.iteritems():
         cops[cop] = Cop(cop, rosbag_process=rosbag_process, **kwargs)
@@ -62,8 +69,11 @@ def main(config_file=None):
 
     # Create distractors with config params
     distractors = {}
-    for distractor, kwargs in distractor_cfg.iteritems():
-        distractors[distractor] = Distractor(distractor, **kwargs)
+    try:
+        for distractor, kwargs in distractor_cfg.iteritems():
+            distractors[distractor] = Distractor(distractor, **kwargs)
+    except AttributeError:
+        logging.debug('No distractors available!')
 
     # <>TODO: Replace with message passing
     # <>TODO: Or give as required attribute at cop initialization (check with config)
@@ -96,6 +106,8 @@ def main(config_file=None):
     logging.info('Simulation started with {} chasing {}.'
                  .format(cop_str, robber_str))
 
+    # Set up data logging
+    storage = Storage()
 
     # Start the simulation
     fig = cops['Deckard'].map.fig
@@ -103,35 +115,31 @@ def main(config_file=None):
     cops['Deckard'].map.setup_plot(fusion_engine)
     sim_start_time = time.time()
 
+
     if cop_cfg['Deckard']['map_cfg']['publish_to_ROS']:
-        headless_mode(cops, robbers, distractors, main_cfg, sim_start_time)
+        headless_mode(cops, robbers, distractors, main_cfg, sim_start_time, storage)
     else:
-        animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time)
+        animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time, storage)
 
 
-def headless_mode(cops, robbers, distractors, main_cfg, sim_start_time):
+def headless_mode(cops, robbers, distractors, main_cfg, sim_start_time, 
+                  storage):
     i = 0
     while cops['Deckard'].mission_planner.mission_status != 'stopped':
-        update(i, cops, robbers, distractors, main_cfg, sim_start_time)
+        update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage)
+
         i += 1
         # For ending early
         # if i == 101:
         #     break
 
-def playback_mode():
-    """Plays 1 or more recorded rosbags. 
+def playback_mode(rosbags):
+    """Plays 1 or more recorded rosbags while the simulation executes.
     """
     # <>TODO: parametrize the inputs
     from subprocess import Popen, PIPE, STDOUT
 
     rosbag_folder = 'data/ACC\ 2016/rosbags/'
-    rosbags = {
-               # 'Test 1': 'test1-human-only.bag',
-               # 'Test 2': 'test2-human-only.bag',
-               # 'Test 3': 'test3-human-only.bag',
-               'Test 4': 'test4.bag',
-               # 'Test 5': 'test5.bag',
-              }
     for _, rosbag in rosbags.iteritems():
         rosbag_file = rosbag_folder + rosbag
         cmd = 'rosbag play -q ' + rosbag_file
@@ -143,14 +151,15 @@ def playback_mode():
     #     print msg
     # bag.close()
 
-def animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time):
+def animated_exploration(fig, cops, robbers, distractors, main_cfg, 
+                         sim_start_time, storage):
     """Animate the exploration of the environment from a cop's perspective.
 
     """
     # <>TODO fix frames (i.e. stop animation once done)
     ani = animation.FuncAnimation(fig,
                                   update,
-                                  fargs=[cops, robbers, distractors, main_cfg, sim_start_time],
+                                  fargs=[cops, robbers, distractors, main_cfg, sim_start_time, storage],
                                   interval=10,
                                   blit=False,
                                   repeat=False,
@@ -159,7 +168,7 @@ def animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_ti
     plt.show()
 
 
-def update(i, cops, robbers, distractors, main_cfg, sim_start_time):
+def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
     logging.debug('Main update frame {}'.format(i))
 
     for cop_name, cop in cops.iteritems():
@@ -175,13 +184,75 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time):
     if main_cfg['log_time']:
         logging.info('Frame {} at time {}.'.format(i, time.time() - sim_start_time))
 
+    # Save data
+    d = {}
+    if 'robot positions' in storage.records:
+        d['Deckard position'] = cops['Deckard'].pose2D.pose
+        d['Roy position'] = robbers['Roy'].pose2D.pose
+        # d['robot positions'] = {}
+        # for name, cop in cops.iteritems():
+        #     d['robot positions'][name] = cop.pose2D.pose
+        # for name, robber in robbers.iteritems():
+        #     d['robot positions'][name] = robber.pose2D.pose
+
+    if 'grid probability' in storage.records:
+        #<>TODO: assume more than Roy and Deckard
+        d['grid probability'] = cops['Deckard'].fusion_engine.filters['Roy'].probability.as_grid()
+        d['grid probability'] = d['grid probability'].flatten()
+
+    storage.save_frame(i, d)
+
+    #<>TODO: have general 'save animation' setting
     # plt.savefig('animation/frame_{}.png'.format(i))
+
+class Storage(object):
+    """docstring for Storage"""
+
+    def __init__(self, filename='data', use_prefix=True, use_suffix=True):
+        self.file_path = 'data/ICCPS 2016/'
+        self.set_filename(filename, use_prefix, use_suffix)
+
+        self.store = HDFStore(self.filename)
+        self.records = ['grid probability', 'robot positions']
+        
+
+    def set_filename(self, filename, use_prefix, use_suffix):
+        if not os.path.exists(self.file_path):
+            os.makedirs(self.file_path)
+
+        if use_prefix:
+            self.filename_prefix = 'cnr_'
+        else:
+            self.filename_prefix = ''
+
+        if use_suffix:
+            self.filename_suffix = '_trial'
+        else:
+            self.filename_suffix = ''
+        self.filename_extension = '.hd5'
+
+        self.filename = self.file_path + self.filename_prefix + filename \
+            + self.filename_suffix + self.filename_extension
+
+        # Check for duplicate files
+        i = 0
+        while os.path.isfile(self.filename):
+            i += 1
+            ind = self.filename.find(self.filename_suffix)
+            l = len(self.filename_suffix)
+            self.filename = self.filename[:ind + l] + '_' + str(i) + self.filename_extension
+
+    def save_frame(self, frame_i, data):
+        """Expects data as a dict
+        """
+        for key, value in data.iteritems():
+            df = pd.DataFrame(value)
+            key = key.lower().replace(' ', '_')
+            self.store.append(key + '_' + str(frame_i), df)
+
 
 if __name__ == '__main__':
     main()
-
-
-
 
 
 

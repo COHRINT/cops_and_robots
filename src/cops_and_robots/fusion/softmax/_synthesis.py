@@ -207,7 +207,7 @@ def geometric_model(models, measurements, show_comp_models=False, *args, **kwarg
 
     # Visualize the component models
     if show_comp_models:
-        # fig = plt.figure()
+        fig = plt.figure()
         s = int(np.ceil(np.sqrt(len(comp_models))))
 
         hr_translation ={'Near__0': 'Front',
@@ -217,9 +217,9 @@ def geometric_model(models, measurements, show_comp_models=False, *args, **kwarg
                         }
 
         for i, comp_model in enumerate(comp_models):
-            # ax = fig.add_subplot(s,s,i +1)
-            fig = plt.figure(figsize=(10,10))
-            ax = fig.add_subplot(111)
+            ax = fig.add_subplot(s,s,i +1)
+            # fig = plt.figure(figsize=(10,10))
+            # ax = fig.add_subplot(111)
 
             comp_model.plot(ax=ax, fig=fig, plot_probs=False, 
                             plot_legend=False, show_plot=False)
@@ -502,8 +502,8 @@ def compare_probs(sm1, sm2, measurements, visualize=True, verbose=True):
 
 # TESTS #######################################################################
 
-def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, use_MMS=False,
-                              show_comp_models=False):
+def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=True, use_MMS=False,
+                              show_comp_models=True):
     from _models import _make_regular_2D_poly, intrinsic_space_model, range_model
 
     # Create the softmax models to be combined
@@ -527,6 +527,21 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
             models = [sm4, sm5]
             measurements = ['Near', 'Inside']
             polygons = [poly4, poly5]
+        elif test_set == 3:
+            poly1 = _make_regular_2D_poly(4, max_r=2, origin=[2,2], theta=np.pi/4)
+            poly2 = _make_regular_2D_poly(4, max_r=2, origin=[-2,-2], theta=np.pi/4)
+            poly3 = _make_regular_2D_poly(4, max_r=10, theta=np.pi/4)
+            poly4 = _make_regular_2D_poly(4, max_r=1, origin=[0,0], theta=np.pi/4)
+            poly5 = _make_regular_2D_poly(4, max_r=2, origin=[-2,2],theta=np.pi/4)
+
+            sm1 = range_model(poly=poly1)
+            sm2 = range_model(poly=poly2)
+            sm3 = range_model(poly=poly3)
+            sm4 = range_model(poly=poly4)
+            sm5 = range_model(poly=poly5)
+            models = [sm1, sm2, sm3, sm5, sm5]
+            measurements = ['Near', 'Near', 'Inside','Outside','Near']
+            polygons = [poly1, poly2, poly3, poly4, poly5]
     else:
         if test_set == 1:
             sm1 = intrinsic_space_model(poly=poly1)
@@ -555,6 +570,7 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
             model.plot(ax=ax, fig=fig, plot_probs=False, plot_legend=True,
                        show_plot=False, plot_subclasses=ps)
             ax.set_title("{}".format(measurements[i]))
+        plt.show()
 
     # Synthesize the softmax models
     logging.info('Synthesizing product model...')
@@ -594,9 +610,14 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
 
     # Fuse all of them with a normal
     # prior = GaussianMixture([0.8,0.2], [-np.ones(2), 4*np.ones(2)], [3*np.eye(2), 2*np.eye(2)])
-    prior = GaussianMixture([0.25, 0.25, 0.25, 0.25], 
-                            [-2*np.ones(2), 2*np.ones(2), np.array([-2,2]), np.array([2,-2])], 
-                            [2*np.eye(2), 2*np.eye(2), 2*np.eye(2), 2*np.eye(2),]
+    # prior = GaussianMixture([0.25, 0.25, 0.25, 0.25], 
+    #                         [-2*np.ones(2), 2*np.ones(2), np.array([-2,2]), np.array([2,-2])], 
+    #                         [2*np.eye(2), 2*np.eye(2), 2*np.eye(2), 2*np.eye(2),]
+    #                         )
+    prior = GaussianMixture(np.ones(80), 
+                            np.random.random((80,2))*20 - 10,
+                            np.tile(2*np.eye(2),(80,1,1)),
+                            max_num_mixands=80,
                             )
     from cops_and_robots.fusion.variational_bayes import VariationalBayes
     vb = VariationalBayes()
@@ -672,6 +693,9 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=False, 
     e = time.time()
     geometric_fusion_time = e - s
     logging.info('Took {} seconds\n'.format((geometric_fusion_time)))
+
+    logging.info(geometric_post.weights.size)
+
 
     # Compute KLDs
     neighbour_kld = neighbour_post.compute_kld(product_post)
@@ -1079,7 +1103,8 @@ if __name__ == '__main__':
 
 
     # test_1D()
-    test_synthesis_techniques(test_set=1, use_MMS=False, visualize=True)
+    test_synthesis_techniques(test_set=3, use_MMS=True, visualize=True,
+                              visualize_base=False, show_comp_models=False)
 
     # product_vs_lp()
     # product_test(visualize=True, create_combinations=True)

@@ -179,11 +179,11 @@ class Human(Sensor):
         for str_ in self.target_names:
             if str_ in self.utterance:
 
-                #<>TODO: REMOVE THIS HORRIBLE HACK!
-                if str_ == 'Roy':
-                    str_ = 'Pris'
-                elif str_ == 'Pris':
-                    str_ = 'Roy'
+                # #<>TODO: REMOVE THIS HORRIBLE HACK!
+                # if str_ == 'Roy':
+                #     str_ = 'Pris'
+                # elif str_ == 'Pris':
+                #     str_ = 'Roy'
 
 
                 self.target_name = str_
