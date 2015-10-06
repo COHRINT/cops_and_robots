@@ -79,7 +79,7 @@ class ProbabilityLayer(Layer):
             probability = self.filter.probability
 
         try:
-            probs = probability.pdf(self.pos)  # if not yet discretized
+            probs = probability.pdf(self.pos, dims=[0,1])  # if not yet discretized
         except:
             probs = probability  # if already discretized
             probs = probs.reshape(self.X.shape[0],

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 """MODULE_DESCRIPTION"""
 
 __author__ = "Nick Sweet"
@@ -12,6 +13,8 @@ __status__ = "Development"
 
 import logging
 import numpy as np
+import scipy as sp
+import math
 
 from cops_and_robots.fusion.gaussian_mixture import (GaussianMixture,
                                                      fleming_prior,
@@ -77,6 +80,8 @@ class GaussSumFilter(object):
         self.update_mixand_motion()
         self._camera_update(camera)
         self._human_update(human_sensor)
+        # self.truncate_gaussians()
+
         if save_file is not None:
             if self.recently_fused_update:
                 self.save_probability(save_file)
@@ -125,6 +130,10 @@ class GaussSumFilter(object):
         gm = GaussianMixture(beta, mu, sigma)
         gm.camera_viewcone = camera.detection_model.poly  # for plotting
         self.probability = gm
+        # print 'means \n'
+        # print self.probability.means
+        # print 'covariance \n'
+        # print self.probability.covariances
 
     def _camera_grid_update(self, camera):
         if not hasattr(self, 'pos'):
@@ -347,5 +356,182 @@ class GaussSumFilter(object):
         self.recieved_human_update = False
 
     def update_mixand_motion(self):
-        #<>TODO: implement this
+        dt = 0.1
+        F = np.array([[1, 0, dt, 0],
+                      [0, 1, 0, dt],
+                      [0, 0, 1, 0],
+                      [0, 0, 0, 1]])
+
+        Gamma = np.array([[0.5*dt**2, 0],
+                          [0, 0.5*dt**2],
+                          [dt, 0],
+                          [0, dt]])
+        Q = np.array([[.05, 0],
+                      [0, .05]])
+
+        weights = self.probability.weights
+        means = self.probability.means
+        # means = F*means
+        covariances = self.probability.covariances
+        for i, covariance in enumerate(covariances):
+            covariances[i] = np.dot(np.dot(F, covariance), np.transpose(F)) + \
+                np.dot(np.dot(Gamma, Q), np.transpose(Gamma))
+
+        self.probability = GaussianMixture(weights=weights, means=means, covariances=covariances)
+
+
+
+
+    def truncate_gaussians(self):
+        # To start, just use map bounds
+        bounds = self.feasible_layer.bounds
+        logging.debug('Constraints: {}'.format(bounds))
+
+        weights = self.probability.weights
+        means = self.probability.means
+        covariances = self.probability.covariances
+
+        # V = np.array([[bounds[0],bounds[2]],[bounds[1],bounds[3]]])
+        # Bcon, upper_bound = vert2con(V.T)
+
+        Bcon = np.array([[1/bounds[0], 0, 0, 0],
+                         [1/bounds[2], 0, 0, 0],
+                         [0, 1/bounds[1], 0, 0],
+                         [0, 1/bounds[3], 0, 0],
+                         # [0, 0, 1, 1],
+                         # [0, 0, -1, -1,],
+                         ])
+        upper_bound = np.array([[1],
+                                [1],
+                                [1],
+                                [1],
+                                # [1],
+                                # [1],
+                                ])
+        lower_bound = -np.inf*np.ones((4, 1))
+
+        new_means = []
+        new_covariances = []
+        for i, mean in enumerate(means):
+            covariance = covariances[i]
+            new_mean, new_covariance, wt = self.iterative_gaussian_trunc_update(mean,
+                                              covariance, Bcon, lower_bound, upper_bound)
+            new_means.append(new_mean)
+            new_covariances.append(new_covariance)
+
+        self.probability = GaussianMixture(weights=weights, means=new_means,
+                                           covariances=new_covariances)
+
+
+    def vert2con(V):
+        # will assume convhull
         pass
+
+
+    def iterative_gaussian_trunc_update(self, mean, covariance, Bcon,
+                                        lower_bound, upper_bound,
+                                        dosort=False, dosplit=False):
+        if dosplit:
+            pass
+
+        if dosort:
+            pass
+            # probreductionmeasure = np.zeros(upperbound.shape)
+            # for ii in range(Bcon):
+            #     probreductionmeasure[ii] = (upperbound[ii]-Bcon[ii]*mean) / \
+            #     np.sqrt(Bcon[ii] .dot covariance .dot Bcon[ii].T)
+        else:
+            Bmat = Bcon
+            ubound = upper_bound
+            lbound = lower_bound
+
+        # Initialize mean and covariance matrix to be updated
+        muTilde = mean
+        SigmaTilde = covariance
+        # print SigmaTilde
+
+        # do iterative constraint updates
+        for ii in range(Bmat.shape[0]):
+            phi_ii = Bmat[ii].T
+
+            # Eigenvalue decomp
+            Tii, Wii = np.linalg.eig(SigmaTilde)
+            # Take real parts
+            Tii = np.real(Tii)
+            Wii = np.real(Wii)
+            # Make a diagonal matrix
+            Tii = np.diag(Tii)
+            
+            # print 'eigenvector', Wii
+            # print np.sqrt(Wii)
+            # print 'Eigenvalues', Tii.T
+            # print phi_ii
+
+            # Find orthonogonal Sii via Gram-Schmidt
+            P = np.sqrt(Wii) .dot (Tii.T) .dot (phi_ii)
+            P = np.expand_dims(P, axis=0)
+
+            # print 'P', P
+
+            tau_ii = np.sqrt(phi_ii.T .dot (SigmaTilde) .dot (phi_ii))
+            Qtilde, Rtilde = np.linalg.qr(P)
+
+            # print 'R', Rtilde
+            # print tau_ii
+            # print Qtilde
+            # Sii = (Rtilde[0][0] / tau_ii) * (Qtilde.T)
+
+            # Compute transformed lower and upper 1D constraint bounds
+            # print 'mu', muTilde
+            # print 'phi', phi_ii
+            # print phi_ii.T .dot (muTilde)
+            # print lbound[ii]
+            cii = (lbound[ii] - phi_ii.T .dot (muTilde)) / tau_ii
+            dii = (ubound[ii] - phi_ii.T .dot (muTilde)) / tau_ii
+
+            print 'cii', cii
+            print 'dii', dii
+
+            # compute renormalization stats
+            alphaiiden = np.maximum(sp.special.erf(dii/np.sqrt(2)) - sp.special.erf(cii/np.sqrt(2)), np.finfo(float).eps)
+            alphaii = np.sqrt(2/np.pi) / alphaiiden
+            muii = alphaii * np.exp(-0.5 * cii ** 2) - np.exp(-0.5 * dii ** 2)
+
+            # check for -/+ inf bounds to avoid nans
+            if np.isinf(cii).all() and not np.isinf(dii).all():
+                sig2ii = alphaii * ( -np.exp(-0.5*dii ** 2) * (dii-2*muii) ) + muii ** 2 + 1
+            elif np.isinf(dii).all() and not np.isinf(cii).all():
+                sig2ii = alphaii * ( np.exp(-0.5*cii ** 2) * (cii-2*muii) ) + muii ** 2 + 1
+            elif np.isinf(dii).all() and np.isinf(cii).all():
+                sig2ii = muii ** 2 + 1
+            else:
+                sig2ii = alphaii * ( np.exp(-0.5*cii ** 2)*(cii-2*muii) - \
+                    np.exp(-0.5*dii ** 2)*(dii-2*muii) ) + muii ** 2 + 1
+
+            if sig2ii <= 0:
+                logging.error('Something''s wrong: sig2ii <=0!') 
+
+            # get mean and covariance of transformed state estimate:
+            ztilde_ii = np.concatenate((np.expand_dims(muii, axis=0), np.zeros((muTilde.shape[0]-1, 1))), axis=0)
+            Ctilde_ii = np.diag(np.concatenate((np.expand_dims(sig2ii, axis=0), np.ones((muTilde.shape[0]-1,1)))));
+
+            # recover updated estimate in original state space for next/final pass
+            muTilde = Tii * np.sqrt(Wii) * Sii.T * ztilde_ii + muTilde
+            SigmaTilde = Tii * np.sqrt(Wii)*Sii.T * Ctilde_ii * Sii * np.sqrt(Wii) * Tii.T
+            print Tii
+            print Wii
+            print 'Sii', Sii.T
+            print Ctilde_ii
+
+            # ensure symmetry:
+            SigmaTilde = 0.5 * (SigmaTilde + SigmaTilde.T)
+            print SigmaTilde
+
+        muOut = muTilde
+        SigmaOut = SigmaTilde
+        # compute updated likelihood
+        # pass
+        wtOut = 1
+
+        return muOut, SigmaOut, wtOut #lkOut
+
