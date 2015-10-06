@@ -44,7 +44,7 @@ class ProbabilityLayer(Layer):
 
     """
     def __init__(self, filter_, grid_size=0.2, z_levels=100, alpha=0.6,
-                 colorbar_visible=False, show_ellipses=True,
+                 colorbar_visible=False, show_ellipses=False,
                 **kwargs):
         super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)
         self.filter = filter_
