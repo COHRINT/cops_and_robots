@@ -40,9 +40,9 @@ class GaussSumFilter(object):
                  motion_model='stationary',
                  v_params=[0, 0.1], 
                  state_spec='x y x_dot y_dot',
-                 fusion_method='full batch',
-                 synthesis_technique='product',
-                 window=2,
+                 fusion_method='windowed batch',
+                 synthesis_technique='neighbourhood',
+                 window=1,
                  ):
         self.target_name = target_name
         self.relevant_targets = ['nothing', 'a robot', self.target_name]
