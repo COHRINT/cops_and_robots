@@ -127,7 +127,18 @@ class GaussSumFilter(object):
                                          use_LWIS=True,
                                          poly=camera.detection_model.poly
                                          )
-        gm = GaussianMixture(beta, mu, sigma)
+        bounds = self.feasible_layer.bounds
+        
+        try:
+            pos = self.probability.pos
+        except AttributeError:
+            pos = None
+
+        try:
+            pos_all = self.probability.pos_all
+        except AttributeError:
+            pos_all = None
+        gm = GaussianMixture(beta, mu, sigma, bounds=bounds, pos=pos, pos_all=pos_all)
         gm.camera_viewcone = camera.detection_model.poly  # for plotting
         self.probability = gm
         # print 'means \n'
@@ -324,9 +335,19 @@ class GaussSumFilter(object):
                                              )
 
             # Weight the posterior by the human's false alarm rate
-            gm = GaussianMixture(beta, mu, sigma)
+            bounds  = self.feasible_layer.bounds
+            try:
+                pos = prior.pos
+            except AttributeError:
+                pos = None
+            try:
+                pos_all = prior.pos_all
+            except AttributeError:
+                pos_all = None
+            gm = GaussianMixture(beta, mu, sigma, bounds=bounds, pos=pos, pos_all=pos_all)
             alpha = human_sensor.false_alarm_prob / 2
             posterior = prior.combine_gms(gm, alpha)
+
 
         self.recently_fused_update = True
 
@@ -377,7 +398,17 @@ class GaussSumFilter(object):
             covariances[i] = np.dot(np.dot(F, covariance), np.transpose(F)) + \
                 np.dot(np.dot(Gamma, Q), np.transpose(Gamma))
 
-        self.probability = GaussianMixture(weights=weights, means=means, covariances=covariances)
+        bounds = self.probability.bounds
+        try:
+            pos = self.probability.pos
+        except AttributeError:
+            pos = None
+
+        try:
+            pos_all = self.probability.pos_all
+        except AttributeError:
+            pos_all = None
+        self.probability = GaussianMixture(weights=weights, means=means, covariances=covariances, bounds=bounds, pos=pos, pos_all=pos_all)
 
 
 

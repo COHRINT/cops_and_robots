@@ -99,13 +99,9 @@ class VariationalBayes(object):
         xis, alpha, mu_hat, var_hat, prior_mean, prior_var = \
             self._check_inputs(likelihood, init_mean, init_var, init_alpha, init_xi, prior)
 
-        print prior.means[0].shape
+
         dummy_weights = np.zeros((w.shape[0], prior.means[0].shape[0]-w.shape[1]))
-        # dummy_weights = np.expand_dims(dummy_weights, axis=0)
-        print 'dummy weights', dummy_weights.shape
-        print w.shape
         w = np.hstack((w, dummy_weights))
-        print w
 
         converged = False
         EM_step = 0

@@ -65,13 +65,18 @@ class GaussianMixture(object):
     """
 
     def __init__(self, weights=1, means=0, covariances=1, ellipse_color='red',
-                 max_num_mixands=20):
+                 max_num_mixands=20, bounds=None, pos=None, pos_all=None):
         self.weights = np.asarray(weights, dtype=np.float)
         self.means = np.asarray(means, dtype=np.float)
         self.covariances = np.asarray(covariances, dtype=np.float)
         self.ellipse_color = ellipse_color
         self.max_num_mixands = max_num_mixands
         self.num_mixands = self.weights.size
+        self.bounds = bounds
+        if pos is not None:
+            self.pos = pos
+        if pos_all is not None:
+            self.pos_all = pos_all
         self._input_check()
 
     def __str__(self):
@@ -97,10 +102,14 @@ class GaussianMixture(object):
 
         # Look over the whole state space
         if x is None:
-            if not hasattr(self, 'pos'):
-                self._discretize()
-            x = self.pos
-            print 'x', x
+            if dims is None:
+                if not hasattr(self, 'pos_all'):
+                    self._discretize(all_dims=True)
+                x = self.pos_all
+            else:
+                if not hasattr(self, 'pos'):
+                    self._discretize()
+                x = self.pos
 
         # Ensure proper output shape
         x = np.atleast_1d(x)
@@ -168,6 +177,7 @@ class GaussianMixture(object):
         if not hasattr(self, 'pos'):
             self._discretize(bounds, grid_spacing)
         
+
         prob = self.pdf(self.pos, dims=[0, 1])
         MAP_i = np.unravel_index(prob.argmax(), prob.shape)
         MAP_point = np.array([self.xx[MAP_i[0]][0], self.yy[0][MAP_i[1]]])
@@ -330,12 +340,22 @@ class GaussianMixture(object):
                 patch.remove()
             del self.ellipse_patches
 
-    def as_grid(self):
+    def as_grid(self, all_dims=True):
         """Return the probability distribution as a grid over the state space.
         """
-        if not hasattr(self, 'pos'):
-            self._discretize()
-        return self.pdf(self.pos)
+        
+        if all_dims:
+            try:
+                pdf = self.pdf(self.pos_all)
+            except AttributeError:
+                self._discretize(all_dims=True)
+                pdf = self.pdf(self.pos_all)
+        else:
+            if not hasattr(self, 'pos'):
+                self._discretize(all_dims=False)
+            pdf = self.pdf(self.pos)
+
+        return pdf
 
     def entropy(self):
         """
@@ -391,7 +411,19 @@ class GaussianMixture(object):
         if raw_weights is not None:
             beta_hat = raw_weights
 
-        return GaussianMixture(beta_hat, mu_hat, var_hat)
+        try:
+            pos = self.pos
+        except AttributeError:
+            pos = None
+        try:
+            pos_all = self.pos_all
+        except AttributeError:
+            pos_all = None
+        bounds = self.bounds
+
+        gm = GaussianMixture(beta_hat, mu_hat, var_hat, bounds=bounds, pos=pos, pos_all=pos_all)
+
+        return gm
 
     def _input_check(self):
         # Check if weights sum are normalized
@@ -463,13 +495,14 @@ class GaussianMixture(object):
         # Merge if necessary
         self._merge()
 
-    def _discretize(self, bounds=None, grid_spacing=0.1):
+    def _discretize(self, bounds=None, grid_spacing=0.1, all_dims=False):
+        
         self.grid_spacing = grid_spacing
-        if bounds is None:
+        if bounds is None and self.bounds is None:
             b = [-10, 10]  # bounds in any dimension
             bounds = [[d] * self.ndims for d in b]  # apply bounds to each dim
             self.bounds = [d for dim in bounds for d in dim]  # flatten bounds
-        else:
+        elif self.bounds is None:
             self.bounds = bounds
 
         # Create grid
@@ -486,8 +519,10 @@ class GaussianMixture(object):
             pos[:, :, 0] = xx; pos[:, :, 1] = yy
             self.xx = xx; self.yy = yy
             self.pos = pos
+
         elif self.ndims > 2:
-            logging.warn('Using first two variables as x and y')
+
+            logging.debug('Using first two variables as x and y')
             xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]
                               + grid_spacing:grid_spacing,
                               self.bounds[1]:self.bounds[3]
@@ -496,6 +531,27 @@ class GaussianMixture(object):
             pos[:, :, 0] = xx; pos[:, :, 1] = yy
             self.xx = xx; self.yy = yy
             self.pos = pos
+            logging.info(self.pos.shape)
+            logging.info(self.bounds)
+
+
+            if all_dims:
+                #<>TODO: use more than the ndims == 4 case
+                full_bounds = self.bounds[0:2] + [-0.5, -0.5] \
+                    + self.bounds[2:] + [0.5, 0.5]
+                v_spacing = 0.1
+                grid = np.mgrid[full_bounds[0]:full_bounds[4]:grid_spacing,
+                                full_bounds[1]:full_bounds[5]:grid_spacing,
+                                full_bounds[2]:full_bounds[6]:v_spacing,
+                                full_bounds[3]:full_bounds[7]:v_spacing,
+                                ]
+                pos = np.empty(grid[0].shape + (4,))
+                pos[:, :, :, :, 0] = grid[0]
+                pos[:, :, :, :, 1] = grid[1]
+                pos[:, :, :, :, 2] = grid[2]
+                pos[:, :, :, :, 3] = grid[3]
+
+                self.pos_all = pos
         else:
             logging.error('This should be impossible, a gauss mixture with no variables')
             raise ValueError
@@ -827,50 +883,54 @@ def ellipses_test(num_std=2):
 
 
 def fleming_prior():
-    return GaussianMixture(weights=[32,
-                                        14,
-                                        15,
-                                        14,
-                                        14,
-                                        14],
-                                means=[[-5.5, 2, 0, 0],  # Kitchen
-                                       [2, 2, 0, 0],  # Billiard Room
-                                       [-4, -0.5, 0, 0],  # Hallway
-                                       [-9, -2.5, 0, 0],  # Dining Room
-                                       [-4, -2.5, 0, 0],  # Study
-                                       [1.5, -2.5, 0, 0],  # Library
-                                       ],
-                                covariances=[[[5.0, 0.0, 0, 0],  # Kitchen
-                                              [0.0, 2.0, 0, 0],
-                                              [0, 0, 0.1, 0],
-                                              [0, 0, 0, 0.1],
-                                              ],
-                                             [[1.0, 0.0, 0, 0],  # Billiard Rooom
-                                              [0.0, 2.0, 0, 0],
-                                              [0, 0, 0.1, 0],
-                                              [0, 0, 0, 0.1],
-                                              ],
-                                             [[7.5, 0.0, 0, 0],  # Hallway
-                                              [0.0, 0.5, 0, 0],
-                                              [0, 0, 0.1, 0],
-                                              [0, 0, 0, 0.1],
-                                              ],
-                                             [[2.0, 0.0, 0, 0],  # Dining Room
-                                              [0.0, 1.0, 0, 0],
-                                              [0, 0, 0.1, 0],
-                                              [0, 0, 0, 0.1],
-                                              ],
-                                             [[2.0, 0.0, 0, 0],  # Study
-                                              [0.0, 1.0, 0, 0],
-                                              [0, 0, 0.1, 0],
-                                              [0, 0, 0, 0.1],
-                                              ],
-                                             [[2.0, 0.0, 0, 0],  # Library
-                                              [0.0, 1.0, 0, 0],
-                                              [0, 0, 0.1, 0],
-                                              [0, 0, 0, 0.1],
-                                              ]
-                                             ])
+    bounds = [-9.5, -3.33, 4, 3.68]
+    gm = GaussianMixture(weights=[32,
+                                14,
+                                15,
+                                14,
+                                14,
+                                14],
+                        means=[[-5.5, 2, 0, 0],  # Kitchen
+                               [2, 2, 0, 0],  # Billiard Room
+                               [-4, -0.5, 0, 0],  # Hallway
+                               [-9, -2.5, 0, 0],  # Dining Room
+                               [-4, -2.5, 0, 0],  # Study
+                               [1.5, -2.5, 0, 0],  # Library
+                               ],
+                        covariances=[[[5.0, 0.0, 0, 0],  # Kitchen
+                                      [0.0, 2.0, 0, 0],
+                                      [0, 0, 0.1, 0],
+                                      [0, 0, 0, 0.1],
+                                      ],
+                                     [[1.0, 0.0, 0, 0],  # Billiard Rooom
+                                      [0.0, 2.0, 0, 0],
+                                      [0, 0, 0.1, 0],
+                                      [0, 0, 0, 0.1],
+                                      ],
+                                     [[7.5, 0.0, 0, 0],  # Hallway
+                                      [0.0, 0.5, 0, 0],
+                                      [0, 0, 0.1, 0],
+                                      [0, 0, 0, 0.1],
+                                      ],
+                                     [[2.0, 0.0, 0, 0],  # Dining Room
+                                      [0.0, 1.0, 0, 0],
+                                      [0, 0, 0.1, 0],
+                                      [0, 0, 0, 0.1],
+                                      ],
+                                     [[2.0, 0.0, 0, 0],  # Study
+                                      [0.0, 1.0, 0, 0],
+                                      [0, 0, 0.1, 0],
+                                      [0, 0, 0, 0.1],
+                                      ],
+                                     [[2.0, 0.0, 0, 0],  # Library
+                                      [0.0, 1.0, 0, 0],
+                                      [0, 0, 0.1, 0],
+                                      [0, 0, 0, 0.1],
+                                      ]
+                                     ],
+                        bounds=bounds)
+    return gm
+
 
 
 def uniform_prior(num_mixands=10, bounds=None):

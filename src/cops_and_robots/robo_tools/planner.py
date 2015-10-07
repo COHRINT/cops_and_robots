@@ -213,6 +213,7 @@ class GoalPlanner(object):
         # <>TODO: Extend this to deterministically view the target's face(s)
 
         # Define a circle as view_distance from the target_pose
+        
         view_circle = Point(target_pose[0:2])\
             .buffer(self.view_distance).exterior
 
@@ -353,6 +354,7 @@ class GoalPlanner(object):
                          target_filter.Y[0,pt[1]]
                          )
 
+        logging.info("MAP: {}".format(MAP_point))
 
         # Select randomly from max_particles
         goal_pose = np.append(MAP_point, theta)

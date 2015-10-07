@@ -52,20 +52,8 @@ robbers:
       type_: simple  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
       type_: 'direct'  # ['direct', 'a_star'] 
-  # Pris:
-  #   pose_source: tf  # ['python' or a ros topic string like '/zhora/odom']
-  #   goal_planner_cfg:
-  #     type_: stationary  # ['stationary', 'simple', 'trajectory']
-  #   path_planner_cfg:
-  #     type_: 'direct'  # ['direct', 'a_star'] 
 
 distractors:
-  # Zhora:
-  #   pose_source: tf  # ['python' or a ros topic string like '/pris/odom']
-  #   goal_planner_cfg:
-  #     type_: stationary  # ['stationary', 'simple', 'trajectory']
-  #   path_planner_cfg:
-  #     type_: 'direct'  # ['direct', 'a_star'] 
 
 human_interface:
   measurement_types:

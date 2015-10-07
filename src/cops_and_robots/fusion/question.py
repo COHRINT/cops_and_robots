@@ -160,7 +160,7 @@ class Questioner(object):
         q_weights = np.empty_like(self.all_questions, dtype=np.float64)
         for prior_name, prior in priors.iteritems():
             prior_entropy = prior.entropy()
-            flat_prior_pdf = prior.pdf().flatten()
+            flat_prior_pdf = prior.pdf(dims=[0,1]).flatten()
 
             for i, likelihood_obj in enumerate(self.all_likelihoods):
                 question = likelihood_obj['question']
