@@ -213,7 +213,7 @@ class Storage(object):
         self.set_filename(filename, use_prefix, use_suffix)
 
         self.store = HDFStore(self.filename)
-        self.records = ['grid probability', 'robot positions']
+        self.records = [] #['grid probability', 'robot positions']
         
 
     def set_filename(self, filename, use_prefix, use_suffix):

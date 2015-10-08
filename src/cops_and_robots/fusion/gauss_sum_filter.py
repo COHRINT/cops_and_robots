@@ -345,8 +345,10 @@ class GaussSumFilter(object):
             except AttributeError:
                 pos_all = None
             gm = GaussianMixture(beta, mu, sigma, bounds=bounds, pos=pos, pos_all=pos_all)
+            logging.info(gm)
             alpha = human_sensor.false_alarm_prob / 2
             posterior = prior.combine_gms(gm, alpha)
+            logging.info(posterior)
 
 
         self.recently_fused_update = True
