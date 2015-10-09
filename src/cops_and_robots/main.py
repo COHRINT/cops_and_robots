@@ -231,7 +231,8 @@ class Storage(object):
             self.records = {'grid probability':'2D', 
                             'robot positions':'all'
                             }
-        
+
+        self.dfs = {}
 
     def set_filename(self, filename, use_prefix, use_suffix):
         if not os.path.exists(self.file_path):
@@ -263,9 +264,15 @@ class Storage(object):
         """Expects data as a dict
         """
         for key, value in data.iteritems():
-            df = pd.DataFrame(value)
             key = key.lower().replace(' ', '_')
-            self.store.append(key + '_' + str(frame_i), df)
+            logging.info(frame_i)
+            try:
+                new_df = pd.DataFrame(value, columns=[str(frame_i + 1)])
+                self.dfs[key] = self.dfs[key].join(new_df)
+            except:
+                self.dfs[key] = pd.DataFrame(value)
+
+            self.store.put(key, self.dfs[key])
 
 
 if __name__ == '__main__':

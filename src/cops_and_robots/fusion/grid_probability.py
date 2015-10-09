@@ -23,6 +23,7 @@ class Grid(object):
     def __init__(self, bounds, res, prior=None):
         self.bounds = bounds
         self.res = res
+        self._discretize()
 
         self.prob = prior
 
