@@ -755,8 +755,14 @@ class PathPlanner(object):
 class Controller(object):
     """The Controller class generates moves the robot through a path."""
     def __init__(self, robot):
-        self.max_move_distance = 0.2  # [m] per time step
-        self.max_rotate_distance = 15  # [deg] per time step
+        #<>TODO: fix this hack
+
+        if robot.name == 'Roy':
+            self.max_move_distance = 0.3  # [m] per time step
+            self.max_rotate_distance = 30  # [deg] per time step
+        else:
+            self.max_move_distance = 0.2  # [m] per time step
+            self.max_rotate_distance = 15  # [deg] per time step
         self.robot = robot
         self.distance_allowance = 0.1  # [m] acceptable distance to a goal
         self.rotation_allowance = 0.5  # [deg] acceptable rotation to a goal

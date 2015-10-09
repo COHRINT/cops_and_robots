@@ -65,7 +65,7 @@ class GaussianMixture(object):
     """
 
     def __init__(self, weights=1, means=0, covariances=1, ellipse_color='red',
-                 max_num_mixands=80, bounds=None, pos=None, pos_all=None):
+                 max_num_mixands=20, bounds=None, pos=None, pos_all=None):
         self.weights = np.asarray(weights, dtype=np.float)
         self.means = np.asarray(means, dtype=np.float)
         self.covariances = np.asarray(covariances, dtype=np.float)
@@ -357,7 +357,7 @@ class GaussianMixture(object):
         else:
             if not hasattr(self, 'pos'):
                 self._discretize(all_dims=False)
-            pdf = self.pdf(self.pos)
+            pdf = self.pdf(self.pos, dims=[0,1])
 
         return pdf
 

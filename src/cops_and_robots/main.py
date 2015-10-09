@@ -27,6 +27,7 @@ def main(config_file=None):
     cop_cfg = cfg['cops']
     robber_cfg = cfg['robbers']
     distractor_cfg = cfg['distractors']
+    storage_cfg = cfg['data_logging']
  
    # Set up logging and printing
     logger_level = logging.getLevelName(main_cfg['logging_level'])
@@ -107,7 +108,7 @@ def main(config_file=None):
                  .format(cop_str, robber_str))
 
     # Set up data logging
-    storage = Storage()
+    storage = Storage(storage_cfg)
 
     # Start the simulation
     fig = cops['Deckard'].map.fig
@@ -186,20 +187,30 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
 
     # Save data
     d = {}
-    if 'robot positions' in storage.records:
-        d['Deckard position'] = cops['Deckard'].pose2D.pose
-        d['Roy position'] = robbers['Roy'].pose2D.pose
-        # d['robot positions'] = {}
-        # for name, cop in cops.iteritems():
-        #     d['robot positions'][name] = cop.pose2D.pose
-        # for name, robber in robbers.iteritems():
-        #     d['robot positions'][name] = robber.pose2D.pose
+    for record, record_value in storage.records.iteritems():
+        if 'robot positions' == record:
+            if record_value == 'all':
+                d['Deckard position'] = cops['Deckard'].pose2D.pose
+                d['Roy position'] = robbers['Roy'].pose2D.pose
 
-    if 'grid probability' in storage.records:
-        #<>TODO: assume more than Roy and Deckard
-        d['grid probability'] = cops['Deckard'].fusion_engine.filters['Roy'].probability.as_grid()
-        d['grid probability'] = d['grid probability'].flatten()
+        if 'grid probability' == record:
+            if record_value == '4D':
+                all_dims = True
+            else:
+                all_dims = False
+            #<>TODO: assume more than Roy and Deckard
+            d['grid probability'] = cops['Deckard'].fusion_engine\
+                .filters['Roy'].probability.as_grid(all_dims)
+            d['grid probability'] = d['grid probability'].flatten()
 
+    import time
+    try:
+        last_time = current_time
+    except:
+        last_time = 0
+    current_time = time.time()
+    logging.info('Time {}'.format(current_time - last_time))
+    last_time = current_time
     storage.save_frame(i, d)
 
     #<>TODO: have general 'save animation' setting
@@ -208,12 +219,17 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
 class Storage(object):
     """docstring for Storage"""
 
-    def __init__(self, filename='data', use_prefix=True, use_suffix=True):
+    def __init__(self, storage_cfg=None, filename='data', use_prefix=True, use_suffix=True):
         self.file_path = 'data/ICCPS 2016/'
         self.set_filename(filename, use_prefix, use_suffix)
 
         self.store = HDFStore(self.filename)
-        self.records = [] #['grid probability', 'robot positions']
+        if storage_cfg is not None:
+            self.records = storage_cfg['record_data']
+        else:
+            self.records = {'grid probability':'2D', 
+                            'robot positions':'all'
+                            }
         
 
     def set_filename(self, filename, use_prefix, use_suffix):

@@ -6,9 +6,13 @@ main:
   ROS_node_name: 'Python_Node'
   max_run_time: 10  # in seconds, -1 for infinite
   log_time: False
-  record_data: [] #['robot positions', 'grid probability']
   playback_rosbags: 
       # Test 4: 'test4.bag'
+
+data_logging:
+  record_data: 
+    robot positions: all
+    grid probability: 4D #2D or 4D 
 
 cops:
   Deckard:
