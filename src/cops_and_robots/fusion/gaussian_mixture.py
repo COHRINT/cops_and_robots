@@ -89,7 +89,6 @@ class GaussianMixture(object):
         ind = ['Weight'] + ['Mean'] * self.ndims + ['Variance'] * self.ndims ** 2
         df = pd.DataFrame(d, index=ind)
         return '\n' + df.to_string()
-            
 
     def pdf(self, x=None, dims=None):
         """Probability density function at state x.
@@ -171,6 +170,12 @@ class GaussianMixture(object):
             rvs[range_] = multivariate_normal.rvs(mean, covariance, size_i)
 
         return rvs
+
+    def dynamics_update(self):
+        pass
+
+    def measurment_update(self, likelihood):
+        pass
 
     def max_point_by_grid(self, bounds=None, grid_spacing=0.1):
         #<>TODO: set for n-dimensional
@@ -635,6 +640,7 @@ class GaussianMixture(object):
         self.means = np.delete(self.means, deleted_mixands, axis=0)
         self.covariances = np.delete(self.covariances, deleted_mixands, axis=0)
 
+
 def entr(p_i):
     if p_i > 0:
        return -p_i * np.log(p_i)
@@ -642,6 +648,7 @@ def entr(p_i):
         return 0
     else:
       return -np.inf
+
 
 def merge_mixands(mix_i, mix_j):
     """Use moment-preserving merge (0th, 1st, 2nd moments) to combine mixands.
@@ -934,7 +941,6 @@ def fleming_prior():
                                      ],
                         bounds=bounds)
     return gm
-
 
 
 def uniform_prior(num_mixands=10, bounds=None):

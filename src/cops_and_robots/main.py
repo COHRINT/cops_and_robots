@@ -117,7 +117,7 @@ def main(config_file=None):
     sim_start_time = time.time()
 
 
-    if cop_cfg['Deckard']['map_cfg']['publish_to_ROS']:
+    if cop_cfg['Deckard']['map_cfg']['publish_to_ROS'] or main_cfg['headless_mode']:
         headless_mode(cops, robbers, distractors, main_cfg, sim_start_time, storage)
     else:
         animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time, storage)
@@ -131,8 +131,8 @@ def headless_mode(cops, robbers, distractors, main_cfg, sim_start_time,
 
         i += 1
         # For ending early
-        # if i == 101:
-        #     break
+        if i >= main_cfg['max run time']:
+            break
 
 def playback_mode(rosbags):
     """Plays 1 or more recorded rosbags while the simulation executes.
@@ -158,11 +158,16 @@ def animated_exploration(fig, cops, robbers, distractors, main_cfg,
 
     """
     # <>TODO fix frames (i.e. stop animation once done)
+    max_run_time = main_cfg['max run time']
+    if max_run_time < 0:
+        max_run_time = 10000000  #<>TODO: not like this
+
     ani = animation.FuncAnimation(fig,
                                   update,
                                   fargs=[cops, robbers, distractors, main_cfg, sim_start_time, storage],
                                   interval=10,
                                   blit=False,
+                                  frames=max_run_time,
                                   repeat=False,
                                   )
     # <>TODO: break from non-blocking plt.show() gracefully
@@ -205,6 +210,10 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
 
     storage.save_frame(i, d)
 
+    max_run_time = main_cfg['max run time']
+    if i >= max_run_time - 1 and max_run_time > 0:
+        plt.close('all')
+        logging.info('Simulation ended!')
     #<>TODO: have general 'save animation' setting
     # plt.savefig('animation/frame_{}.png'.format(i))
 

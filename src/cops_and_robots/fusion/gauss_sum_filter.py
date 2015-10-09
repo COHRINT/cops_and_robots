@@ -141,10 +141,6 @@ class GaussSumFilter(object):
         gm = GaussianMixture(beta, mu, sigma, bounds=bounds, pos=pos, pos_all=pos_all)
         gm.camera_viewcone = camera.detection_model.poly  # for plotting
         self.probability = gm
-        # print 'means \n'
-        # print self.probability.means
-        # print 'covariance \n'
-        # print self.probability.covariances
 
     def _camera_grid_update(self, camera):
         if not hasattr(self, 'pos'):
@@ -255,36 +251,14 @@ class GaussSumFilter(object):
                 self.window += self.window
 
     def grid_fusion(self, measurement, human_sensor):
-        if not hasattr(self, 'pos'):
-            self._set_up_grid()
-
-        if type(self.probability) is GaussianMixture:
-            self.probability = self.probability.pdf(self.pos)
-
-        prior_prob = self.probability
-
         measurement_label = measurement['relation']
         relation_class = measurement['relation class']
         grounding = measurement['grounding']
         likelihood = grounding.relations.binary_models[relation_class]
-        likelihood_prob = likelihood.probability(class_=measurement_label, 
-                                                 state=self.pos)
 
-        posterior = likelihood_prob * prior_prob
-        posterior /= posterior.sum()
+        self.probability.measurment_update(likelihood_prob, measurement)
 
         self.recently_fused_update = True
-
-        self.probability = posterior
-
-
-    def _set_up_grid(self, grid_size=0.1):
-        bounds = self.feasible_layer.bounds
-        self.X, self.Y = np.mgrid[bounds[0]:bounds[2]:grid_size,
-                                  bounds[1]:bounds[3]:grid_size]
-        self.pos = np.empty(self.X.shape + (2,))
-        self.pos = np.dstack((self.X, self.Y))
-        self.pos = np.reshape(self.pos, (self.X.size, 2))
 
 
     def gm_fusion(self, likelihood, measurement_label, human_sensor):
@@ -295,6 +269,7 @@ class GaussSumFilter(object):
             prior = self.probability
 
         if type(likelihood) is list:
+            # <>TODO: clean up this section!
             mixtures = []
             raw_weights = []
             for u, mixand_weight in enumerate(prior.weights):
