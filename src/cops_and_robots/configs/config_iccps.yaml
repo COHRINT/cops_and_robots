@@ -12,7 +12,7 @@ main:
 data_logging:
   record_data: 
     robot positions: all
-    grid probability: 4D #2D or 4D 
+    grid probability: 2D #2D or 4D 
 
 cops:
   Deckard:

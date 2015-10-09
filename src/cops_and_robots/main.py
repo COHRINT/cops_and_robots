@@ -203,14 +203,6 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
                 .filters['Roy'].probability.as_grid(all_dims)
             d['grid probability'] = d['grid probability'].flatten()
 
-    import time
-    try:
-        last_time = current_time
-    except:
-        last_time = 0
-    current_time = time.time()
-    logging.info('Time {}'.format(current_time - last_time))
-    last_time = current_time
     storage.save_frame(i, d)
 
     #<>TODO: have general 'save animation' setting
