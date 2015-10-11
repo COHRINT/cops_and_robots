@@ -171,7 +171,8 @@ def animated_exploration(fig, cops, robbers, distractors, main_cfg,
                                   repeat=False,
                                   )
     # <>TODO: break from non-blocking plt.show() gracefully
-    # ani.save('camera_and_feasible_region.gif', writer='imagemagick', fps=10);
+    filename = os.path.dirname(__file__) + '/answerer_working_astar.gif'
+    # ani.save(filename, writer='imagemagick', fps=10);
     plt.show()
 
 
@@ -222,7 +223,7 @@ class Storage(object):
     """docstring for Storage"""
 
     def __init__(self, storage_cfg=None, filename='data', use_prefix=True, use_suffix=True):
-        self.file_path = directory = os.path.dirname(__file__) + 'data/ICCPS 2016/'
+        self.file_path = directory = os.path.dirname(__file__) + '/data/ICCPS 2016/'
         self.set_filename(filename, use_prefix, use_suffix)
 
         self.store = HDFStore(self.filename)

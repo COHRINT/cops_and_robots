@@ -342,6 +342,23 @@ class Map(object):
                 except CvBridgeError, e:
                     print e
 
+            # Print questions and answers
+            if hasattr(self, 'questioner'):
+                if hasattr(self.questioner, 'recent_answer'):
+                    str_ = self.questioner.recent_question + ' ' \
+                        + self.questioner.recent_answer
+
+                    if hasattr(self, 'q_text'):
+                        self.q_text.remove()
+
+                    bbox = {'facecolor': 'white',
+                            'alpha': 0.8,
+                            'boxstyle':'round',
+                            }
+                    self.q_text = ax.annotate(str_, xy=(-5, -4.5), 
+                                              xycoords='data', annotation_clip=False,
+                                              fontsize=16, bbox=bbox)
+
 
 def set_up_fleming(map_):
     """Set up a map as the generic Fleming space configuration.

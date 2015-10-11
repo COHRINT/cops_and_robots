@@ -152,7 +152,6 @@ class GaussSumFilter(object):
                 self.rosbag_process.stdin.flush()
                 time.sleep(0.5)
 
-            logging.info(self.fusion_method)
             if self.fusion_method == 'recursive':
                 self.recursive_fusion(measurement, human_sensor)
             elif self.fusion_method == 'full batch' \

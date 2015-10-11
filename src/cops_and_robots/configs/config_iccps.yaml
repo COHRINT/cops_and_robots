@@ -32,7 +32,7 @@ cops:
     goal_planner_cfg:
       type_: MAP  # ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
     path_planner_cfg:
-      type_: 'direct'  # ['direct', 'a_star'] 
+      type_: 'a_star'  # ['direct', 'a_star'] 
     camera_cfg:
       max_view_dist: 1.0
       min_view_dist: 0.0
@@ -59,7 +59,7 @@ robbers:
     goal_planner_cfg:
       type_: simple  # ['stationary', 'simple', 'trajectory']
     path_planner_cfg:
-      type_: 'direct'  # ['direct', 'a_star'] 
+      type_: 'a_star'  # ['direct', 'a_star'] 
 
 distractors:
 

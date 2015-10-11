@@ -242,6 +242,7 @@ class Questioner(object):
 
             if self.auto_answer:
                 self.answer_question(self.weighted_questions[0], robot_positions)
+                self.recent_question = self.weighted_questions[0][2]
                 return
 
             # Assign values to the ROS message
@@ -325,7 +326,11 @@ class Questioner(object):
             logging.error('No answer available to the question "{}"!'
                           .format(question_str))
         else:
-            logging.info('{} {}'.format(question_str, str(answer).upper()))
+            if answer:
+                self.recent_answer = 'Yes'
+            else:
+                self.recent_answer = 'No'
+            logging.info('{} {}'.format(question_str, self.recent_answer))
 
         statement = self.question_to_statement(question_str, answer)
         self.human_sensor.utterance = statement

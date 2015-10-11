@@ -160,6 +160,7 @@ class Cop(Robot):
         self.map.add_human_sensor(self.sensors['human'])
         self.questioner = Questioner(human_sensor=self.sensors['human'],
                                      **q_cfg)
+        self.map.questioner = self.questioner
 
     def make_others(self):
         # <>TODO: Make generic, so each robot has an idea of all others
