@@ -249,8 +249,7 @@ class Cop(Robot):
                                   self.missing_robbers, save_file=save_file)
 
         # Ask a question every 10th step
-        if i % 15 == 9 and self.fusion_engine.filter_type == 'gauss sum' and \
-           self.ask_every_ten:
+        if i % 15 == 9 and self.ask_every_ten:
             # <>TODO: Key error, make sure target is reassigned.
             priors = {}
             for name, filter_ in self.fusion_engine.filters.iteritems():
@@ -262,7 +261,12 @@ class Cop(Robot):
                                               grid_spacing=0.1)
                 except:
                     logging.debug('Prior unable to be discretized (may already be!)')
-            self.questioner.ask(priors)
+            
+            #<>TODO: Generalize
+            pos = self.missing_robbers['Roy'].pose2D.pose[:2]
+            pos = np.array([pos])
+            robot_positions = {'Roy': pos}
+            self.questioner.ask(priors, robot_positions=robot_positions)
 
 
 class CopMissionPlanner(MissionPlanner):

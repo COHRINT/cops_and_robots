@@ -190,7 +190,7 @@ class Grid(Probability):
 
     def _create_STM(self):
         n = self.pos.shape[0]
-        directory = 'STMs'
+        directory = os.path.dirname(__file__) + '/STMs'
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -235,13 +235,13 @@ class Grid(Probability):
             
             progress = state_i/n * 100
             if state_i % 100 == 0:
-                logging.info('Progress: {:.2f}%'.format(progress))
+                logging.info('Progress: {:.0f}% complete of {} by {} state transition matrix'
+                             .format(progress, n, n))
 
         # Sparsify and save
         self.state_transition_matrix = csr_matrix(state_transition_matrix)
         logging.info('Saved STM as {}.'.format(filename))
         np.save(filename, self.state_transition_matrix)
-        logging.info('STM TYPE: {}'.format(type(self.state_transition_matrix)))
 
 
 def test_dynamics_update():

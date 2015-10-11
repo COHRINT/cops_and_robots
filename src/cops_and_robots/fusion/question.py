@@ -9,12 +9,14 @@ import numpy as np
 class Questioner(object):
 
     def __init__(self, human_sensor=None, target_order=None, target_weights=1,
-                 use_ROS=False, repeat_annoyance=0.5, repeat_time_penalty=60):
+                 use_ROS=False, repeat_annoyance=0.5, repeat_time_penalty=60,
+                 auto_answer=False):
         self.human_sensor = human_sensor
         self.use_ROS = use_ROS
         self.target_order = target_order
         self.repeat_annoyance = repeat_annoyance
         self.repeat_time_penalty = repeat_time_penalty
+        self.auto_answer = auto_answer
 
         # Set up target order and 
         target_weights = np.asarray(target_weights, dtype=np.float32)
@@ -160,7 +162,7 @@ class Questioner(object):
         q_weights = np.empty_like(self.all_questions, dtype=np.float64)
         for prior_name, prior in priors.iteritems():
             prior_entropy = prior.entropy()
-            flat_prior_pdf = prior.pdf(dims=[0,1]).flatten()
+            flat_prior_pdf = prior.as_grid().flatten()
 
             for i, likelihood_obj in enumerate(self.all_likelihoods):
                 question = likelihood_obj['question']
@@ -196,7 +198,6 @@ class Questioner(object):
         for q in self.weighted_questions:
             logging.debug(q)
 
-
     def _calculate_VOI(self, likelihood, flat_prior_pdf, prior_entropy=None):
         """Calculates the value of a specific question's information.
 
@@ -224,19 +225,24 @@ class Questioner(object):
             log_post_unnormalized = np.log(post_unnormalized)
             log_sensor_marginal = np.log(sensor_marginal)
 
-            VOI += -np.sum(post_unnormalized * (log_post_unnormalized - 
+            VOI += -np.nansum(post_unnormalized * (log_post_unnormalized - 
                 log_sensor_marginal)) * grid_spacing ** 2
 
         VOI += -prior_entropy
         return -VOI  # keep value positive
 
-    def ask(self, priors, num_questions_to_ask=5, ask_human=True):
+    def ask(self, priors, num_questions_to_ask=5, ask_human=True,
+            robot_positions=None):
         if self.is_hovered and self.use_ROS:
             pass
         else:
             # Get questions sorted by weight
             self.weigh_questions(priors)
             questions_to_ask = self.weighted_questions[:num_questions_to_ask]
+
+            if self.auto_answer:
+                self.answer_question(self.weighted_questions[0], robot_positions)
+                return
 
             # Assign values to the ROS message
             if self.use_ROS:
@@ -268,6 +274,63 @@ class Questioner(object):
                 self.human_sensor.utterance = statement
                 self.human_sensor.new_update = True
                 self.all_likelihoods[q[1]]['time_last_answered'] = time.time()
+
+    def answer_question(self, question, robot_positions):
+        qid = question[1]
+        question_str = question[2]
+
+        # assume target is Roy
+        true_position = robot_positions['Roy']
+
+        groundings = self.human_sensor.groundings
+        positivities = self.human_sensor.positivities
+        map_bounds = None
+        answer = None
+        for _, grounding_type in groundings.iteritems():
+
+            for grounding_name, grounding in grounding_type.iteritems():
+                if grounding_name.find('the') == -1:
+                    grounding_name = 'the ' + grounding_name
+
+                if hasattr(grounding, 'relations') and map_bounds is None:
+                    map_bounds =  grounding.relations.binary_models\
+                        .itervalues().next().bounds
+
+                if not hasattr(grounding, 'relations'):
+                    grounding.define_relations()
+
+                relation_names = grounding.relations.binary_models.keys()
+
+                for relation in relation_names:
+
+                    if grounding_name.lower() in question_str \
+                        and relation.lower() in question_str:
+
+                        p_D_x = grounding.relations.probability(class_=relation,
+                                                                state=true_position
+                                                                )
+                        sample = np.random.random()
+                        if sample < p_D_x:
+                            answer = True
+                        else:
+                            answer = False
+                        break
+                else:
+                    continue
+                break
+            else:
+                continue
+            break
+        if answer is None:
+            logging.error('No answer available to the question "{}"!'
+                          .format(question_str))
+        else:
+            logging.info('{} {}'.format(question_str, str(answer).upper()))
+
+        statement = self.question_to_statement(question_str, answer)
+        self.human_sensor.utterance = statement
+        self.human_sensor.new_update = True
+        self.all_likelihoods[qid]['time_last_answered'] = time.time()
 
 
     def hover_callback(self, data):

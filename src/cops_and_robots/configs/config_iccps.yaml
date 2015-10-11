@@ -14,6 +14,8 @@ data_logging:
   record_data: 
     robot positions: all
     grid probability: 2D #2D or 4D 
+    questions: True
+    answers: True
 
 cops:
   Deckard:
@@ -21,7 +23,7 @@ cops:
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
     web_interface_topic: python # python or rostopic name
-    ask_every_ten: False  #<>TODO: add this to questioner_cfg
+    ask_every_ten: True  #<>TODO: add this to questioner_cfg
     other_robot_names: 
       robbers: ['Roy']  #['Roy', 'Pris']
       distractors: []  #['Zhora']
@@ -44,6 +46,7 @@ cops:
       web_interface_topic: python  # ['python' or a rostopic name ('human_sensor')]
     questioner_cfg:
       use_ROS: False
+      auto_answer: True
       # human_answer_chance: 0.9  # probability human will answer a question
       target_order: ['Roy']  # ['Pris', 'Roy']
       target_weights: [1] #[11, 10]

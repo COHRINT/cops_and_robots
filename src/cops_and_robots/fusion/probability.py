@@ -54,7 +54,7 @@ class Probability(object):
             self._discretize()
 
         p_i = self.prob #TODO: change to 4 dims.
-        H = -np.sum(p_i * np.log(p_i)) * self.res ** self.ndims # sum of elementwise entropy values
+        H = -np.nansum(p_i * np.log(p_i)) * self.res ** self.ndims # sum of elementwise entropy values
         return H
 
     def compute_kld(self, other_gm):
@@ -66,7 +66,7 @@ class Probability(object):
         q_i = self.prob
         p_i = other_gm.prob
 
-        kld = np.sum(p_i * np.log(p_i / q_i)) * self.res ** self.ndims
+        kld = np.nansum(p_i * np.log(p_i / q_i)) * self.res ** self.ndims
         return kld
 
 

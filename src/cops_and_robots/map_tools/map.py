@@ -235,7 +235,7 @@ class Map(object):
         ax.annotate('Hallway', [-3.5, 0])
         plt.show()
 
-    def setup_plot(self, fusion_engine=None, show_human_interface=True):
+    def setup_plot(self, fusion_engine=None, show_human_interface=False):
         """Create the initial plot for the animation.
         """
         logging.info('Setting up plot')

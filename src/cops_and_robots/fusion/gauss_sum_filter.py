@@ -159,7 +159,7 @@ class GaussSumFilter(object):
                 or self.fusion_method == 'windowed batch':
                 self.batch_fusion(measurement, human_sensor)
             elif self.fusion_method == 'grid':
-                self.grid_fusion(measurement, human_sensor)
+                self.recursive_fusion(measurement, human_sensor)
 
             if self.rosbag_process is not None:
                 self.rosbag_process.stdin.write(' ')  # start rosbag
@@ -220,14 +220,14 @@ class GaussSumFilter(object):
         grounding = measurement['grounding']
         likelihood = grounding.relations.binary_models[relation_class]
 
-        self.probability.measurment_update(likelihood_prob, measurement)
+        self.probability.measurement_update(likelihood_prob, measurement)
 
         self.recently_fused_update = True
 
 
     def fusion(self, likelihood, measurement, human_sensor):
         # prior = self.probability.copy()
-        self.probability.measurment_update(likelihood, measurement)
+        self.probability.measurement_update(likelihood, measurement)
 
         #<>TODO: include human false alarm rate
         self.recently_fused_update = True
