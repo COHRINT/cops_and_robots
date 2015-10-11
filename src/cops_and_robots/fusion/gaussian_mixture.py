@@ -80,15 +80,16 @@ class GaussianMixture(object):
         self._input_check()
 
     def __str__(self):
-        d = {}
-        for i, weight in enumerate(self.weights):
-            d['Mixand {}'.format(i)] = np.hstack((weight,
-                                                  self.means[i],
-                                                  self.covariances[i].flatten()
-                                                  ))
-        ind = ['Weight'] + ['Mean'] * self.ndims + ['Variance'] * self.ndims ** 2
-        df = pd.DataFrame(d, index=ind)
-        return '\n' + df.to_string()
+        return 'Gaussian Mixture ({} mixands)'.format(self.weights.size)
+        # d = {}
+        # for i, weight in enumerate(self.weights):
+        #     d['Mixand {}'.format(i)] = np.hstack((weight,
+        #                                           self.means[i],
+        #                                           self.covariances[i].flatten()
+        #                                           ))
+        # ind = ['Weight'] + ['Mean'] * self.ndims + ['Variance'] * self.ndims ** 2
+        # df = pd.DataFrame(d, index=ind)
+        # return '\n' + df.to_string()
 
     def pdf(self, x=None, dims=None):
         """Probability density function at state x.
@@ -193,9 +194,6 @@ class GaussianMixture(object):
         MAP_prob = prob[MAP_i]
         return MAP_point, MAP_prob
 
-    def copy(self):
-        return deepcopy(self)
-
     def std_ellipses(self, num_std=1, resolution=20):
         """
         Generates `num_std` sigma error ellipses for each mixand.
@@ -278,77 +276,6 @@ class GaussianMixture(object):
             ellipse_patches.append(patch)
         return ellipse_patches
 
-    def plot(self, title=None, alpha=1.0, show_colorbar=False, **kwargs):
-        if not hasattr(self,'ax') or 'ax' in kwargs:
-            self.plot_setup(**kwargs)
-        if title is None:
-            title = 'Gaussian Mixture ({} mixands)'.format(self.num_mixands)
-        self.contourf = self.ax.contourf(self.xx, self.yy,
-                                         self.pdf(self.pos),
-                                         levels=self.levels,
-                                         cmap=plt.get_cmap('jet'),
-                                         alpha=alpha,
-                                         )
-        if show_colorbar:
-            divider = make_axes_locatable(self.ax)
-            cax = divider.append_axes("right", size="5%", pad=0.1)
-            cbar = plt.colorbar(self.contourf, cax)
-            cbar.ax.tick_params(labelsize=20) 
-        self.ax.set_title(title, fontsize=20)
-
-        if self.show_ellipses:
-            if hasattr(self.distribution, 'camera_viewcone'):
-                poly = self.distribution.camera_viewcone
-            else:
-                poly = None
-            self.ellipse_patches = distribution.plot_ellipses(ax=self.ax,
-                                                              poly=poly)
-        return self.contourf
-
-    def plot_setup(self, fig=None, ax=None, bounds=None, levels=None, 
-                   num_levels=50, resolution=0.1, show_ellipses=False):
-        self.show_ellipses = show_ellipses
-        if fig is None:
-            self.fig = plt.gcf()
-        else:
-            self.fig = fig
-
-        if ax is None:
-            self.ax = plt.gca()
-        else:
-            self.ax = ax
-
-        if bounds is None:
-            bounds = self.bounds
-
-        if not hasattr(self,'pos'):
-            self._discretize(bounds=bounds)
-
-        # Set levels
-        if levels is None:
-            max_prob = np.max(self.pdf(self.pos))
-            self.levels = np.linspace(0, max_prob * 1.2, num_levels)
-        else:
-            self.levels = levels
-        
-        # Set bounds
-        plt.axis('scaled')
-        self.ax.set_xlim([bounds[0], bounds[2]])
-        self.ax.set_ylim([bounds[1], bounds[3]])
-
-    def plot_remove(self):
-        """Removes all plotted elements related to this gaussian mixture.
-        """
-        if hasattr(self,'contourf'):
-            for collection in self.contourf.collections:
-                collection.remove()
-            del self.contourf
-
-        if hasattr(self, 'ellipse_patches'):
-            for patch in self.ellipse_patches:
-                patch.remove()
-            del self.ellipse_patches
-
     def as_grid(self, all_dims=True):
         """Return the probability distribution as a grid over the state space.
         """
@@ -365,36 +292,6 @@ class GaussianMixture(object):
             pdf = self.pdf(self.pos, dims=[0,1])
 
         return pdf
-
-    def entropy(self):
-        """
-        """
-        # <>TODO: figure this out. Look at papers!
-        # http://www-personal.acfr.usyd.edu.au/tbailey/papers/mfi08_huber.pdf
-        if not hasattr(self,'pos'):
-            self._discretize()
-
-        p_i = self.pdf(self.pos, dims=[0, 1]) #TODO: change to 4 dims.
-        # p_i /= p_i.sum()  # normalize input probability
-        # H = np.sum(entr(p_i)) * self.grid_spacing ** self.ndims # sum of elementwise entropy values
-        H = -np.sum(p_i * np.log(p_i)) * self.grid_spacing ** self.ndims # sum of elementwise entropy values
-        return H
-
-    def compute_kld(self, other_gm):
-        """Computes the KLD of self from another GM.
-
-        Use a truth GM as other_gm.
-        """
-        if not hasattr(self,'pos'):
-            self._discretize()
-        if not hasattr(other_gm,'pos'):
-            other_gm._discretize()
-
-        q_i = self.pdf(self.pos)
-        p_i = other_gm.pdf(other_gm.pos)
-
-        kld = np.sum(p_i * np.log(p_i / q_i)) * self.grid_spacing ** self.ndims
-        return kld
 
     def combine_gms(self, other_gms, self_weight=None, raw_weights=None):
         """Merge two gaussian mixtures together, weighing the original by alpha.
@@ -977,8 +874,8 @@ def fleming_prior_test():
     # 2D Gaussian
     gauss_2d = fleming_prior()
     ax = fig.add_subplot(111)
-    levels = np.linspace(0, np.max(gauss_2d.pdf(pos)), 50)
-    cax = ax.contourf(xx, yy, gauss_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('jet'))
+    levels = np.linspace(0, np.max(gauss_2d.pdf(pos, dims=[0,1])), 50)
+    cax = ax.contourf(xx, yy, gauss_2d.pdf(pos, dims=[0,1]), levels=levels, cmap=plt.get_cmap('jet'))
     ax.set_title('2D Gaussian PDF')
     fig.colorbar(cax)
 
@@ -986,6 +883,7 @@ def fleming_prior_test():
     ax.set_xlim(bounds[0:3:2])
     ax.set_ylim(bounds[1:4:2])
     plt.show()
+    return gauss_2d
 
 
 def uniform_prior_test(num_mixands=10, bounds=None):
@@ -1025,7 +923,7 @@ def merge_test(num_mixands=100, max_num_mixands=10, spread=4,):
                                       means.copy(),
                                       covariances.copy(),
                                       max_num_mixands=max_num_mixands)
-    
+
 
 def entropy_test():
 
@@ -1123,6 +1021,7 @@ def entropy_test():
                  '\n with params: {}'
                  .format(H4_2d, gauss4_2d))
 
+
 def merge_gm_test(alpha=0.5):
     gm1 = GaussianMixture([0.3, 0.7],
                                 [[3, -2],
@@ -1152,7 +1051,8 @@ if __name__ == '__main__':
 
     # pdf_test()
     # rv_test()
-    # fleming_prior_test()
+    gm = fleming_prior_test()
+    print gm
     
     # fp = fleming_prior_test()
     # new_fp = fp.copy()
@@ -1162,4 +1062,4 @@ if __name__ == '__main__':
     # merge_test(120)
     # uniform_prior_test()
     # entropy_test()
-    merge_gm_test(0.01)
+    # merge_gm_test(0.01)

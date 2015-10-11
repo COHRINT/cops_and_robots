@@ -60,12 +60,12 @@ class Camera(Sensor):
     """
     def __init__(self, robot_pose=(0, 0, 0), visible=True,
                  default_color=cnames['yellow'], element_dict={},
-                 min_view_dist=0.3, max_view_dist=1.0):
+                 min_view_dist=0.0, max_view_dist=1.2):
         self.element_dict = element_dict
         # Define nominal viewcone
         self.min_view_dist = min_view_dist  # [m]
         self.max_view_dist = max_view_dist  # [m]
-        self.view_angle = math.pi / 2  # [rad]
+        self.view_angle = 0.994836833 #math.pi / 2  # [rad]
         viewcone_pts = [(0, 0),
                         (self.max_view_dist * math.cos(self.view_angle / 2),
                          self.max_view_dist * math.sin(self.view_angle / 2)),

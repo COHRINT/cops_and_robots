@@ -347,7 +347,8 @@ class GoalPlanner(object):
 
         bounds = self.feasible_layer.bounds
         try:
-            MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
+            # MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
+            MAP_point, MAP_prob = posterior.find_MAP()
         except AttributeError, e:
             logging.error(e)
             pt = np.unravel_index(posterior.argmax(), target_filter.X.shape)

@@ -96,7 +96,8 @@ class FusionEngine(object):
             for i, name in enumerate(missing_robber_names):
                 self.filters[name] = GaussSumFilter(name, feasible_layer, 
                                                     rosbag_process=rosbag_process)
-            self.filters['combined'] = GaussSumFilter('combined', feasible_layer)
+            if len(missing_robber_names) > 1:
+                self.filters['combined'] = GaussSumFilter('combined', feasible_layer)
         else:
             raise ValueError("FusionEngine must be of type 'particle' or "
                              "'gauss sum'.")
@@ -126,10 +127,23 @@ class FusionEngine(object):
                                                  sensors['human'],
                                                  save_file=save_file,
                                                  )
-        self._update_combined(sensors, robbers)
+        if len(self.missing_robber_names) > 1:
+            self._update_combined(sensors, robbers)
         sensors['human'].new_update = False  # done checking human, no more update
 
     def _update_combined(self, sensors, robbers):
+        # Fuse grid-based filters
+        for label, filter_ in self.filters.iteritems():
+ 
+            # Fuse it in with the rest
+            try:
+                prob *= filter_.probability.prob
+            except NameError:
+                prob = filter_.probability.copy().prob
+        prob /= prob.sum()
+        self.filters['combined'].probability.prob = prob
+
+    def _update_combined_OLD(self, sensors, robbers):
         """Update the `combined` filter.
 
         Parameters
@@ -158,33 +172,6 @@ class FusionEngine(object):
             sensors['human'].utterance = ''
             sensors['human'].target = ''
         else:
-
-            # Fuse grid-based filters
-            if hasattr(self.filters.itervalues().next(), 'pos'):
-                for label, filter_ in self.filters.iteritems():
-                    filter_prob = filter_.probability
-                    # try:
-                    #     logging.info('{} has max prob {}'.format(label, filter_prob.max()))
-                    # except:
-                    #     pass
-
-                    # Get the filter probability
-                    if type(filter_prob) is GaussianMixture:
-                        try:
-                            pos = filter_.pos
-                        except AttributeError:
-                            filter_._set_up_grid()
-                            pos = filter_.pos
-                        filter_prob = filter_prob.pdf(pos)
-
-                    # Fuse it in with the rest
-                    try:
-                        prob *= filter_prob
-                    except NameError:
-                        prob = filter_prob
-                prob /= prob.sum()
-                self.filters['combined'].probability = prob
-                return
 
             # Pre-allocate parameter arrays
             num_mixands = 0

@@ -167,10 +167,11 @@ def animated_exploration(fig, cops, robbers, distractors, main_cfg,
                                   fargs=[cops, robbers, distractors, main_cfg, sim_start_time, storage],
                                   interval=10,
                                   blit=False,
-                                  frames=max_run_time,
+                                  frames=250,#max_run_time,
                                   repeat=False,
                                   )
     # <>TODO: break from non-blocking plt.show() gracefully
+    ani.save('camera_and_feasible_region.gif', writer='imagemagick', fps=10);
     plt.show()
 
 
@@ -265,7 +266,6 @@ class Storage(object):
         """
         for key, value in data.iteritems():
             key = key.lower().replace(' ', '_')
-            logging.info(frame_i)
             try:
                 new_df = pd.DataFrame(value, columns=[str(frame_i + 1)])
                 self.dfs[key] = self.dfs[key].join(new_df)

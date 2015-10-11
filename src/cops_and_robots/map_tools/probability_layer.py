@@ -79,15 +79,25 @@ class ProbabilityLayer(Layer):
             probability = self.filter.probability
 
         try:
-            probs = probability.pdf(self.pos, dims=[0,1])  # if not yet discretized
+            X = probability.X
         except:
-            probs = probability  # if already discretized
-            probs = probs.reshape(self.X.shape[0],
-                                  self.X.shape[1],
-                                  )
+            X = self.X
+        try:
+            Y = probability.Y
+        except:
+            Y = self.Y
+
+        probs = probability.prob
+        # try:
+        #     probs = probability.pdf(self.pos, dims=[0,1])  # if not yet discretized
+        # except:
+        #     probs = probability  # if already discretized
+        #     probs = probs.reshape(self.X.shape[0],
+        #                           self.X.shape[1],
+        #                           )
 
         levels = np.linspace(0, np.max(probs), self.z_levels)
-        self.contourf = self.ax.contourf(self.X, self.Y, probs,
+        self.contourf = self.ax.contourf(X, Y, probs,
                            cmap=self.cmap, alpha=self.alpha, levels=levels, antialiased=True,
                            **kwargs)
 

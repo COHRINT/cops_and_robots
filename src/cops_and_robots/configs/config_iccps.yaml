@@ -4,7 +4,7 @@ main:
   numpy_print_precision: 2
   use_ROS: False # True if any robot is in the real world
   ROS_node_name: 'Python_Node'
-  max run time: -1 # number of frames (-1 for infinite run time)
+  max run time: 400 # number of frames (-1 for infinite run time)
   log_time: False
   headless_mode: False
   playback_rosbags: 
