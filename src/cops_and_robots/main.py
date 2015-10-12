@@ -228,10 +228,9 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
             else:
                 d['VOI'] = np.nan * np.empty(len(cops['Deckard'].questioner.all_questions))
 
-        # if 'ordered_question_list' == record and record_value:
-        #     logging.info(storage.dfs.keys())
-        #     if not ('ordered_question_list' in storage.dfs.keys()):
-        #         d['ordered_question_list'] = cops['Deckard'].questioner.all_questions
+        if 'ordered_question_list' == record and record_value:
+            if not ('ordered_question_list' in storage.dfs.keys()):
+                d['ordered_question_list'] = cops['Deckard'].questioner.all_questions
 
 
     storage.save_frame(i, d)
@@ -291,12 +290,23 @@ class Storage(object):
         """
         for key, value in data.iteritems():
             key = key.lower().replace(' ', '_')
+
+            # Series for strings or string lists, DataFrame otherwise
             if isinstance(value, basestring):
+                value = [value]
+
+            try:
+                v = value[0]
+                is_list_of_strings = isinstance(v, basestring)
+            except:
+                is_list_of_strings = False
+
+            if is_list_of_strings: 
                 try:
                     new_df = pd.Series(value)
                     self.dfs[key] = self.dfs[key].append(new_df)
                 except:
-                    self.dfs[key] = pd.Series([value])
+                    self.dfs[key] = pd.Series(value)
             else:
                 try:
                     new_df = pd.DataFrame(value, columns=[str(frame_i + 1)])

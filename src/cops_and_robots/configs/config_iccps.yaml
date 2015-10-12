@@ -17,6 +17,7 @@ data_logging:
     questions: True
     answers: True
     VOI: True
+    ordered_question_list: True
 
 cops:
   Deckard:
