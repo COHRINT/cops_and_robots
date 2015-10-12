@@ -210,21 +210,17 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
                 .filters['Roy'].probability.as_grid(all_dims)
             d['grid probability'] = d['grid probability'].flatten()
 
-        if 'questions' == record:
-            if record_value is True:
-                if hasattr(cops['Deckard'].sensors['human'], 'question_str'):
-                    d['question'] = cops['Deckard'].sensors['human'].question_str
-                else:
-                    d['question'] = 'No question'
-                print d['question']
+        if 'questions' == record and record_value:
+            if hasattr(cops['Deckard'].sensors['human'], 'question_str'):
+                d['question'] = cops['Deckard'].sensors['human'].question_str
+            else:
+                d['question'] = 'No question'
 
-        if 'answers' == record:
-            if record_value is True:
-                if cops['Deckard'].sensors['human'].utterance:
-                    d['answer'] = cops['Deckard'].sensors['human'].utterance
-                else:
-                    d['answer'] = 'No answer'
-                print d['answer']
+        if 'answers' == record and record_value:
+            if cops['Deckard'].sensors['human'].utterance:
+                d['answer'] = cops['Deckard'].sensors['human'].utterance
+            else:
+                d['answer'] = 'No answer'
 
     storage.save_frame(i, d)
 
@@ -239,7 +235,7 @@ class Storage(object):
     """docstring for Storage"""
 
     def __init__(self, storage_cfg=None, filename='data', use_prefix=True, use_suffix=True):
-        self.file_path = directory = os.path.dirname(__file__) + '/data/ICCPS 2016/'
+        self.file_path = os.path.dirname(os.path.abspath(__file__)) + '/data/ICCPS 2016/'
         self.set_filename(filename, use_prefix, use_suffix)
 
         self.store = HDFStore(self.filename)
@@ -284,7 +280,11 @@ class Storage(object):
         for key, value in data.iteritems():
             key = key.lower().replace(' ', '_')
             if isinstance(value, basestring):
-                self.dfs[key] = pd.Series([value])
+                try:
+                    new_df = pd.Series(value)
+                    self.dfs[key] = self.dfs[key].append(new_df)
+                except:
+                    self.dfs[key] = pd.Series([value])
             else:
                 try:
                     new_df = pd.DataFrame(value, columns=[str(frame_i + 1)])
