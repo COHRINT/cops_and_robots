@@ -334,6 +334,8 @@ class Questioner(object):
             return
 
         if (i % self.ask_every_n) != (self.ask_every_n - 1):
+            self.human_sensor.question_str = ''
+            self.human_sensor.utterance = ''
             return
 
         if self.is_hovered and self.use_ROS:

@@ -215,12 +215,14 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
                 d['question'] = cops['Deckard'].sensors['human'].question_str
             else:
                 d['question'] = 'No question'
+            print d['question']
 
         if 'answers' == record and record_value:
             if cops['Deckard'].sensors['human'].utterance:
                 d['answer'] = cops['Deckard'].sensors['human'].utterance
             else:
                 d['answer'] = 'No answer'
+            print d['answer']
 
     storage.save_frame(i, d)
 
