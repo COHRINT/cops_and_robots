@@ -165,9 +165,9 @@ def animated_exploration(fig, cops, robbers, distractors, main_cfg,
     ani = animation.FuncAnimation(fig,
                                   update,
                                   fargs=[cops, robbers, distractors, main_cfg, sim_start_time, storage],
-                                  interval=10,
+                                  interval=1,
                                   blit=False,
-                                  frames=250,#max_run_time,
+                                  frames=max_run_time,
                                   repeat=False,
                                   )
     # <>TODO: break from non-blocking plt.show() gracefully

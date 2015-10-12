@@ -10,12 +10,13 @@ class Questioner(object):
 
     def __init__(self, human_sensor=None, target_order=None, target_weights=1,
                  use_ROS=False, repeat_annoyance=0.5, repeat_time_penalty=60,
-                 auto_answer=False):
+                 auto_answer=False, n_lookahead_steps=1, ask_every_n=0):
         self.human_sensor = human_sensor
         self.use_ROS = use_ROS
         self.target_order = target_order
         self.repeat_annoyance = repeat_annoyance
         self.repeat_time_penalty = repeat_time_penalty
+        self.ask_every_n = ask_every_n
         self.auto_answer = auto_answer
 
         # Set up target order and 
@@ -231,50 +232,58 @@ class Questioner(object):
         VOI += -prior_entropy
         return -VOI  # keep value positive
 
-    def ask(self, priors, num_questions_to_ask=5, ask_human=True,
+    def ask(self, priors, i=0, num_questions_to_ask=5, ask_human=True,
             robot_positions=None):
+
+        # Don't ask if it's not time
+        if (self.ask_every_n < 1):
+            return
+
+        if (i % self.ask_every_n) != (self.ask_every_n - 1):
+            return
+
         if self.is_hovered and self.use_ROS:
-            pass
-        else:
-            # Get questions sorted by weight
-            self.weigh_questions(priors)
-            questions_to_ask = self.weighted_questions[:num_questions_to_ask]
+            return
 
-            if self.auto_answer:
-                self.answer_question(self.weighted_questions[0], robot_positions)
-                self.recent_question = self.weighted_questions[0][2]
-                return
+        # Get questions sorted by weight
+        self.weigh_questions(priors)
+        questions_to_ask = self.weighted_questions[:num_questions_to_ask]
 
-            # Assign values to the ROS message
-            if self.use_ROS:
-                self.message.weights = []
-                self.message.qids = []
-                self.message.questions = []
-                
-                # Normalize questions to show some differences in the output
-                normalizer = 0
-                for q in questions_to_ask:
-                    normalizer += q[0]
+        if self.auto_answer:
+            self.answer_question(self.weighted_questions[0], robot_positions)
+            self.recent_question = self.weighted_questions[0][2]
+            return
 
-                # Create the question messages
-                for q in questions_to_ask:
-                    normalized_weight = q[0] / normalizer
-                    self.message.weights.append(normalized_weight)
-                    self.message.qids.append(q[1])
-                    self.message.questions.append(q[2])
+        # Assign values to the ROS message
+        if self.use_ROS:
+            self.message.weights = []
+            self.message.qids = []
+            self.message.questions = []
+            
+            # Normalize questions to show some differences in the output
+            normalizer = 0
+            for q in questions_to_ask:
+                normalizer += q[0]
 
-                # Publish the question messages
-                logging.debug(self.message)
-                self.question_publisher.publish(self.message)
-            elif ask_human:
-                # Get human to answer a single question
-                q = self.weighted_questions[0]
-                logging.info(q[2])
-                answer = raw_input('Answer (y/n): ')
-                statement = self.question_to_statement(q[2], answer)
-                self.human_sensor.utterance = statement
-                self.human_sensor.new_update = True
-                self.all_likelihoods[q[1]]['time_last_answered'] = time.time()
+            # Create the question messages
+            for q in questions_to_ask:
+                normalized_weight = q[0] / normalizer
+                self.message.weights.append(normalized_weight)
+                self.message.qids.append(q[1])
+                self.message.questions.append(q[2])
+
+            # Publish the question messages
+            logging.debug(self.message)
+            self.question_publisher.publish(self.message)
+        elif ask_human:
+            # Get human to answer a single question
+            q = self.weighted_questions[0]
+            logging.info(q[2])
+            answer = raw_input('Answer (y/n): ')
+            statement = self.question_to_statement(q[2], answer)
+            self.human_sensor.utterance = statement
+            self.human_sensor.new_update = True
+            self.all_likelihoods[q[1]]['time_last_answered'] = time.time()
 
     def answer_question(self, question, robot_positions):
         qid = question[1]

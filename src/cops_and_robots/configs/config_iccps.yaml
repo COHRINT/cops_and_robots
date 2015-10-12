@@ -23,7 +23,6 @@ cops:
     robber_model: static  # ['static','clockwise','counterclockwise','random walk']
     pose_source: python  # ['python' or a ros topic string like '/deckard/odom']
     web_interface_topic: python # python or rostopic name
-    ask_every_ten: True  #<>TODO: add this to questioner_cfg
     other_robot_names: 
       robbers: ['Roy']  #['Roy', 'Pris']
       distractors: []  #['Zhora']
@@ -52,6 +51,7 @@ cops:
       target_weights: [1] #[11, 10]
       repeat_annoyance: 0.8  # max penalty to a repeated question
       repeat_time_penalty: 300  # seconds during which a repeat question is penalized
+      ask_every_n: 20 # nonpositive number to turn off
 
 robbers:
   Roy:

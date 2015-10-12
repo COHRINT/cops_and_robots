@@ -83,7 +83,7 @@ class Cop(Robot):
                  pose=[0, 0, 90],
                  pose_source='python',
                  web_interface_topic='python',
-                 ask_every_ten=False,
+                 ask_every_n=0,
                  robber_model='static',
                  other_robot_names={},
                  map_cfg={},
@@ -155,7 +155,7 @@ class Cop(Robot):
         self.make_others()
 
         # Add human sensor after robbers have been made
-        self.ask_every_ten = ask_every_ten
+        self.ask_every_n = ask_every_n
         self.sensors['human'] = Human(self.map, **human_cfg)
         self.map.add_human_sensor(self.sensors['human'])
         self.questioner = Questioner(human_sensor=self.sensors['human'],
@@ -249,25 +249,23 @@ class Cop(Robot):
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
                                   self.missing_robbers, save_file=save_file)
 
-        # Ask a question every 10th step
-        if i % 15 == 9 and self.ask_every_ten:
-            # <>TODO: Key error, make sure target is reassigned.
-            priors = {}
-            for name, filter_ in self.fusion_engine.filters.iteritems():
-                if name == 'combined':
-                    continue
-                priors[name] = filter_.probability
-                try:
-                    priors[name]._discretize(bounds=self.map.bounds,
-                                              grid_spacing=0.1)
-                except:
-                    logging.debug('Prior unable to be discretized (may already be!)')
-            
-            #<>TODO: Generalize
-            pos = self.missing_robbers['Roy'].pose2D.pose[:2]
-            pos = np.array([pos])
-            robot_positions = {'Roy': pos}
-            self.questioner.ask(priors, robot_positions=robot_positions)
+        # Ask a question 
+        # <>TODO: Key error, make sure target is reassigned.
+        priors = {}
+        for name, filter_ in self.fusion_engine.filters.iteritems():
+            if name == 'combined':
+                continue
+            priors[name] = filter_.probability
+            if not hasattr(priors[name], 'pos'):
+                priors[name]._discretize(bounds=self.map.bounds,
+                                          grid_spacing=0.1)
+        
+        #<>TODO: Generalize
+        pos = self.missing_robbers['Roy'].pose2D.pose[:2]
+        pos = np.array([pos])
+        robot_positions = {'Roy': pos}
+
+        self.questioner.ask(priors, i, robot_positions=robot_positions)
 
 
 class CopMissionPlanner(MissionPlanner):
