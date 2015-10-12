@@ -51,7 +51,9 @@ cops:
       target_weights: [1] #[11, 10]
       repeat_annoyance: 0.8  # max penalty to a repeated question
       repeat_time_penalty: 300  # seconds during which a repeat question is penalized
-      ask_every_n: 20 # nonpositive number to turn off
+      ask_every_n: 5 # nonpositive number to turn off
+      n_lookahead_steps: 2  # number of questions for non-myopic VOI
+      minimize_questions: True  # ask over a smaller set of questions
 
 robbers:
   Roy:

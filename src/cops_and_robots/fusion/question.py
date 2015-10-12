@@ -5,19 +5,23 @@ import logging
 import random
 import time
 import numpy as np
+import itertools
 
 class Questioner(object):
 
     def __init__(self, human_sensor=None, target_order=None, target_weights=1,
                  use_ROS=False, repeat_annoyance=0.5, repeat_time_penalty=60,
-                 auto_answer=False, n_lookahead_steps=1, ask_every_n=0):
+                 auto_answer=False, n_lookahead_steps=1, ask_every_n=0,
+                 minimize_questions=False):
         self.human_sensor = human_sensor
         self.use_ROS = use_ROS
         self.target_order = target_order
         self.repeat_annoyance = repeat_annoyance
         self.repeat_time_penalty = repeat_time_penalty
         self.ask_every_n = ask_every_n
+        self.n_lookahead_steps = n_lookahead_steps
         self.auto_answer = auto_answer
+        self.minimize_questions = minimize_questions
 
         # Set up target order and 
         target_weights = np.asarray(target_weights, dtype=np.float32)
@@ -104,8 +108,20 @@ class Questioner(object):
 
         # Create all possible questions and precompute their likelihoods
         n = len(certainties) * len(targets)
-        num_questions = (len(groundings['object']) - 1) * 5 * n
-        num_questions += len(groundings['area']) * 3 * n
+        if self.minimize_questions:
+            num_relations = 1  # Only asking about 'near'
+        else:
+            num_relations = len(groundings['object'].itervalues().next()\
+                    .relations.binary_models.keys())
+            num_relations -= 1  # not counting 'inside' for objects
+        num_questions = (len(groundings['object']) - 1) * num_relations * n
+
+        if self.minimize_questions:
+            num_relations = 1  # Only asking about inside rooms
+        else:
+            num_relations = len(groundings['area'].itervalues().next()\
+                    .relations.binary_models.keys())
+        num_questions += len(groundings['area']) * num_relations * n
         self.all_questions = []
         self.all_likelihoods = np.empty(num_questions,
                                         dtype=[('question', np.object),
@@ -136,11 +152,22 @@ class Questioner(object):
                     elif relation_name == 'right':
                         relation_name = 'right of'
 
-                    # Ignore certain questons
-                    if grounding_type_name == 'object' and relation_name == 'inside':
-                        continue
-                    if grounding_type_name == 'object' and relation_name == 'outside':
-                        continue
+                    # Ignore certain questons (incl. non-minimal)
+                    if grounding_type_name == 'object':
+                        if relation_name in ['inside', 'outside']:
+                            continue
+
+                        if self.minimize_questions:
+                            # Near only
+                            if relation_name != 'near':
+                                continue
+
+                    if grounding_type_name == 'area' \
+                        and self.minimize_questions: 
+                        
+                        # Inside only
+                        if relation_name != 'inside':
+                            continue
 
                     for target in targets:
                         # Write question
@@ -155,6 +182,7 @@ class Questioner(object):
                             grounding.relations.probability(class_=relation)
                         self.all_likelihoods[i]['time_last_answered'] = -1
                         i += 1
+        logging.info('Generated {} questions.'.format(len(self.all_questions)))
 
     def weigh_questions(self, priors):
         """Orders questions by their value of information.
@@ -166,6 +194,8 @@ class Questioner(object):
             flat_prior_pdf = prior.as_grid().flatten()
 
             for i, likelihood_obj in enumerate(self.all_likelihoods):
+                
+                # Check if this question concerns the correct target
                 question = likelihood_obj['question']
                 if prior_name.lower() not in question.lower():
                     continue
@@ -199,6 +229,65 @@ class Questioner(object):
         for q in self.weighted_questions:
             logging.debug(q)
 
+    # def weigh_questions_NEW(self, priors):
+    #     """Orders questions by their value of information.
+    #     """
+    #     # Calculate VOI for each question
+    #     all_path_questions = list(itertools.product(self.all_questions, repeat=self.n_lookahead_steps))
+    #     all_path_likelihoods = list(itertools.product(self.all_likelihoods, repeat=self.n_lookahead_steps))
+    #     q_path_weights = np.empty_like(self.all_questions, dtype=np.float64)
+
+    #     for prior_name, prior in priors.iteritems():
+    #         prior = prior.copy()  # we may need to modify the prior
+
+    #         prior_entropy = prior.entropy()
+    #         # flat_prior_pdf = prior.as_grid().flatten()
+
+    #         for i, likelihood_objs in enumerate(all_path_likelihoods):
+                
+    #             # Check if this question concerns the correct target
+    #             concerns_target = True
+    #             for likelihood_obj in likelihood_objs:
+    #                 question = likelihood_obj['question']
+    #                 if prior_name.lower() not in question.lower():
+    #                     concerns_target = False
+    #             if not concerns_target:
+    #                 continue
+
+    #             # Use positive and negative answers for VOI
+    #             likelihoods = []
+    #             for likelihood_obj in likelihood_objs:
+    #                 likelihoods.append(likelihood_obj['probability'])
+    #             # q_path_weights[i] = self._calculate_VOI(likelihoods, flat_prior_pdf,
+    #             #                                         prior_entropy)
+    #             q_path_weights[i] = self._calculate_VOI(likelihoods, prior,
+    #                                                     prior_entropy)
+
+    #             # Add heuristic question cost based on target weight
+    #             for j, target in enumerate(self.target_order):
+    #                 if target.lower() in question.lower():
+    #                     q_path_weights[i] *= self.target_weights[j]
+
+    #             # Add heuristic question cost based on number of times asked
+    #             for likelihood_obj in likelihood_objs:
+    #                 tla = likelihood_obj['time_last_answered']
+    #                 if tla == -1:
+    #                     continue
+
+    #                 dt = time.time() - tla
+    #                 if dt > self.repeat_time_penalty:
+    #                     self.all_likelihoods[i]['time_last_answered'] = -1
+    #                 elif tla > 0:
+    #                     q_path_weights[i] *= (dt / self.repeat_time_penalty + 1)\
+    #                          * self.repeat_annoyance
+
+    #     # Re-order questions by their weights
+    #     q_ids = range(len(self.all_questions))
+    #     self.weighted_questions = zip(q_path_weights, q_ids, self.all_questions[:])
+    #     self.weighted_questions.sort(reverse=True)
+    #     for q in self.weighted_questions:
+    #         logging.debug(q)
+
     def _calculate_VOI(self, likelihood, flat_prior_pdf, prior_entropy=None):
         """Calculates the value of a specific question's information.
 
@@ -209,17 +298,22 @@ class Questioner(object):
             VOI(i) = \\sum_{j \\in {0,1}} P(D_i = j)
                 \\left(-\\int p(x \\vert D_i=j) \\log{p(x \\vert D_i=j)}dx\\right)
                 +\\int p(x) \\log{p(x)}dx
+
+        Takes VOI of a specific branch.
         """
         if prior_entropy is None:
             prior_entropy = prior.entropy()
 
         VOI = 0
-        grid_spacing = 0.1
+        grid_spacing = 0.1 #prior.res
+
         alpha = self.human_sensor.false_alarm_prob / 2  # only for binary
         pos_likelihood = alpha + (1 - alpha) * likelihood
         neg_likelihood = np.ones_like(pos_likelihood) - pos_likelihood
         neg_likelihood = alpha + (1 - alpha) * neg_likelihood
         likelihoods = [neg_likelihood, pos_likelihood]
+
+        # flat_prior_pdf = prior.as_grid().flatten()
         for likelihood in likelihoods:
             post_unnormalized = likelihood * flat_prior_pdf
             sensor_marginal = np.sum(post_unnormalized) * grid_spacing ** 2

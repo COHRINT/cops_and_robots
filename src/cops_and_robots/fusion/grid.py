@@ -48,7 +48,7 @@ class Grid(Probability):
     """
 
     def __init__(self, bounds=[-10, -10, 10, 10], res=0.1, prior='fleming',
-                 all_dims=False, has_dynamics=True, max_range=1.4, var=2.85,
+                 all_dims=False, has_dynamics=True, max_range=1.0, var=2.85,
                  feasible_region=None):
 
         if prior == 'fleming':
@@ -97,8 +97,10 @@ class Grid(Probability):
         posterior /= posterior.sum()
         self.prob = np.reshape(posterior, self.X.shape)
 
-    def dynamics_update(self):
-        posterior = self.state_transition_matrix .dot (self.prob.flatten())
+    def dynamics_update(self, n_steps=1):
+        posterior = self.prob.flatten()
+        for step in range(n_steps):
+            posterior = self.state_transition_matrix .dot (posterior)
         self.prob = posterior.reshape(self.X.shape)
         # if hasattr(self, 'infeasible_states'):
         #     self.keep_feasible_region()
