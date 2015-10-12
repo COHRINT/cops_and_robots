@@ -210,6 +210,22 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
                 .filters['Roy'].probability.as_grid(all_dims)
             d['grid probability'] = d['grid probability'].flatten()
 
+        if 'questions' == record:
+            if record_value is True:
+                if hasattr(cops['Deckard'].sensors['human'], 'question_str'):
+                    d['question'] = cops['Deckard'].sensors['human'].question_str
+                else:
+                    d['question'] = 'No question'
+                print d['question']
+
+        if 'answers' == record:
+            if record_value is True:
+                if cops['Deckard'].sensors['human'].utterance:
+                    d['answer'] = cops['Deckard'].sensors['human'].utterance
+                else:
+                    d['answer'] = 'No answer'
+                print d['answer']
+
     storage.save_frame(i, d)
 
     max_run_time = main_cfg['max run time']
@@ -267,11 +283,14 @@ class Storage(object):
         """
         for key, value in data.iteritems():
             key = key.lower().replace(' ', '_')
-            try:
-                new_df = pd.DataFrame(value, columns=[str(frame_i + 1)])
-                self.dfs[key] = self.dfs[key].join(new_df)
-            except:
-                self.dfs[key] = pd.DataFrame(value)
+            if isinstance(value, basestring):
+                self.dfs[key] = pd.Series([value])
+            else:
+                try:
+                    new_df = pd.DataFrame(value, columns=[str(frame_i + 1)])
+                    self.dfs[key] = self.dfs[key].join(new_df)
+                except:
+                    self.dfs[key] = pd.DataFrame(value)
 
             self.store.put(key, self.dfs[key])
 

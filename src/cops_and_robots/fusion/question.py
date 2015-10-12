@@ -435,6 +435,7 @@ class Questioner(object):
                 self.recent_answer = 'No'
             logging.info('{} {}'.format(question_str, self.recent_answer))
 
+        self.human_sensor.question_str = question_str
         statement = self.question_to_statement(question_str, answer)
         self.human_sensor.utterance = statement
         self.human_sensor.new_update = True

@@ -216,13 +216,16 @@ class Cop(Robot):
             point = Point(irobber.pose2D.pose[0:2])
             # Try to visually spot a robber
             if self.sensors['camera'].viewcone.shape.contains(point):
-                self.map.found_robber(irobber.map_obj)
-                logging.info('{} captured!'.format(irobber.name))
-                self.mission_planner.found_robber(irobber.name)
-                self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose2D.pose)
-                self.found_robbers.update({irobber.name:
-                                           self.missing_robbers.pop(irobber.name)})
-                self.questioner.remove_target(irobber.name)
+                # Quick and dirty hack to continue experiment.
+                logging.info('{} found!'.format(irobber.name))
+                if False:
+                    self.map.found_robber(irobber.map_obj)
+                    logging.info('{} captured!'.format(irobber.name))
+                    self.mission_planner.found_robber(irobber.name)
+                    self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose2D.pose)
+                    self.found_robbers.update({irobber.name:
+                                               self.missing_robbers.pop(irobber.name)})
+                    self.questioner.remove_target(irobber.name)
 
             # Update robber's shapes
             else:
