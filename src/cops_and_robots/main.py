@@ -215,14 +215,24 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
                 d['question'] = cops['Deckard'].sensors['human'].question_str
             else:
                 d['question'] = 'No question'
-            print d['question']
 
         if 'answers' == record and record_value:
             if cops['Deckard'].sensors['human'].utterance:
                 d['answer'] = cops['Deckard'].sensors['human'].utterance
             else:
                 d['answer'] = 'No answer'
-            print d['answer']
+
+        if 'VOI' == record and record_value:
+            if hasattr(cops['Deckard'].questioner, 'VOIs'):
+                d['VOI'] = cops['Deckard'].questioner.VOIs
+            else:
+                d['VOI'] = np.nan * np.empty(len(cops['Deckard'].questioner.all_questions))
+
+        # if 'ordered_question_list' == record and record_value:
+        #     logging.info(storage.dfs.keys())
+        #     if not ('ordered_question_list' in storage.dfs.keys()):
+        #         d['ordered_question_list'] = cops['Deckard'].questioner.all_questions
+
 
     storage.save_frame(i, d)
 

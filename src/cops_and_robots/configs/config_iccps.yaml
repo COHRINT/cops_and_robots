@@ -16,6 +16,7 @@ data_logging:
     grid probability: 2D #2D or 4D 
     questions: True
     answers: True
+    VOI: True
 
 cops:
   Deckard:

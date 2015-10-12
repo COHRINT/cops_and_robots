@@ -189,6 +189,7 @@ class Questioner(object):
         """
         # Calculate VOI for each question
         q_weights = np.empty_like(self.all_questions, dtype=np.float64)
+        VOIs = np.empty_like(self.all_questions, dtype=np.float64)
         for prior_name, prior in priors.iteritems():
             prior_entropy = prior.entropy()
             flat_prior_pdf = prior.as_grid().flatten()
@@ -202,8 +203,9 @@ class Questioner(object):
 
                 # Use positive and negative answers for VOI
                 likelihood = likelihood_obj['probability']
-                q_weights[i] = self._calculate_VOI(likelihood, flat_prior_pdf,
+                VOIs[i] = self._calculate_VOI(likelihood, flat_prior_pdf,
                                                    prior_entropy)
+                q_weights[i] = VOIs[i]
 
                 # Add heuristic question cost based on target weight
                 for j, target in enumerate(self.target_order):
@@ -226,6 +228,7 @@ class Questioner(object):
         q_ids = range(len(self.all_questions))
         self.weighted_questions = zip(q_weights, q_ids, self.all_questions[:])
         self.weighted_questions.sort(reverse=True)
+        self.VOIs = VOIs
         for q in self.weighted_questions:
             logging.debug(q)
 
