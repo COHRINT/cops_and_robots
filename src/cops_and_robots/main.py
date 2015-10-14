@@ -171,7 +171,7 @@ def animated_exploration(fig, cops, robbers, distractors, main_cfg,
                                   repeat=False,
                                   )
     # <>TODO: break from non-blocking plt.show() gracefully
-    filename = os.path.dirname(__file__) + '/answerer_working_astar.gif'
+    # filename = os.path.dirname(__file__) + '/VOI_2_deep1.gif'
     # ani.save(filename, writer='imagemagick', fps=10);
     plt.show()
 
@@ -211,8 +211,9 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
             d['grid probability'] = d['grid probability'].flatten()
 
         if 'questions' == record and record_value:
-            if hasattr(cops['Deckard'].sensors['human'], 'question_str'):
-                d['question'] = cops['Deckard'].sensors['human'].question_str
+            if hasattr(cops['Deckard'].questioner, 'question_str'):
+                d['question'] = cops['Deckard'].questioner.question_str
+                cops['Deckard'].questioner.question_str = 'No question'
             else:
                 d['question'] = 'No question'
 
@@ -239,6 +240,7 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
     if i >= max_run_time - 1 and max_run_time > 0:
         plt.close('all')
         logging.info('Simulation ended!')
+        storage.store.close()
     #<>TODO: have general 'save animation' setting
     # plt.savefig('animation/frame_{}.png'.format(i))
 

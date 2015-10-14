@@ -48,7 +48,7 @@ class Grid(Probability):
     """
 
     def __init__(self, bounds=[-10, -10, 10, 10], res=0.1, prior='fleming',
-                 all_dims=False, has_dynamics=True, max_range=1.0, var=2.85,
+                 all_dims=False, is_dynamic=True, max_range=1.0, var=2.85,
                  feasible_region=None):
 
         if prior == 'fleming':
@@ -57,8 +57,8 @@ class Grid(Probability):
         self._discretize(all_dims)
         if feasible_region is not None:
             self.identify_feasible_region(feasible_region)
-        if has_dynamics:
-            self.has_dynamics = has_dynamics
+        self.is_dynamic = is_dynamic
+        if is_dynamic:
             self.max_range = max_range
             self.var = var
             self._create_STM()
@@ -98,12 +98,11 @@ class Grid(Probability):
         self.prob = np.reshape(posterior, self.X.shape)
 
     def dynamics_update(self, n_steps=1):
-        posterior = self.prob.flatten()
-        for step in range(n_steps):
-            posterior = self.state_transition_matrix .dot (posterior)
-        self.prob = posterior.reshape(self.X.shape)
-        # if hasattr(self, 'infeasible_states'):
-        #     self.keep_feasible_region()
+        if self.is_dynamic:
+            posterior = self.prob.flatten()
+            for step in range(n_steps):
+                posterior = self.state_transition_matrix .dot (posterior)
+            self.prob = posterior.reshape(self.X.shape)
 
     def find_MAP(self, dims=[0,1]):
         """formerly 'max_point_by_grid'

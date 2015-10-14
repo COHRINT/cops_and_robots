@@ -11,7 +11,7 @@ class Questioner(object):
 
     def __init__(self, human_sensor=None, target_order=None, target_weights=1,
                  use_ROS=False, repeat_annoyance=0.5, repeat_time_penalty=60,
-                 auto_answer=False, n_lookahead_steps=1, ask_every_n=0,
+                 auto_answer=False, sequence_length=1, ask_every_n=0,
                  minimize_questions=False):
         self.human_sensor = human_sensor
         self.use_ROS = use_ROS
@@ -19,7 +19,7 @@ class Questioner(object):
         self.repeat_annoyance = repeat_annoyance
         self.repeat_time_penalty = repeat_time_penalty
         self.ask_every_n = ask_every_n
-        self.n_lookahead_steps = n_lookahead_steps
+        self.sequence_length = sequence_length
         self.auto_answer = auto_answer
         self.minimize_questions = minimize_questions
 
@@ -184,114 +184,215 @@ class Questioner(object):
                         i += 1
         logging.info('Generated {} questions.'.format(len(self.all_questions)))
 
-    def weigh_questions(self, priors):
-        """Orders questions by their value of information.
-        """
-        # Calculate VOI for each question
-        q_weights = np.empty_like(self.all_questions, dtype=np.float64)
-        VOIs = np.empty_like(self.all_questions, dtype=np.float64)
-        for prior_name, prior in priors.iteritems():
-            prior_entropy = prior.entropy()
-            flat_prior_pdf = prior.as_grid().flatten()
-
-            for i, likelihood_obj in enumerate(self.all_likelihoods):
-                
-                # Check if this question concerns the correct target
-                question = likelihood_obj['question']
-                if prior_name.lower() not in question.lower():
-                    continue
-
-                # Use positive and negative answers for VOI
-                likelihood = likelihood_obj['probability']
-                VOIs[i] = self._calculate_VOI(likelihood, flat_prior_pdf,
-                                                   prior_entropy)
-                q_weights[i] = VOIs[i]
-
-                # Add heuristic question cost based on target weight
-                for j, target in enumerate(self.target_order):
-                    if target.lower() in question.lower():
-                        q_weights[i] *= self.target_weights[j]
-
-                # Add heuristic question cost based on number of times asked
-                tla = likelihood_obj['time_last_answered']
-                if tla == -1:
-                    continue
-
-                dt = time.time() - tla
-                if dt > self.repeat_time_penalty:
-                    self.all_likelihoods[i]['time_last_answered'] = -1
-                elif tla > 0:
-                    q_weights[i] *= (dt / self.repeat_time_penalty + 1)\
-                         * self.repeat_annoyance
-
-        # Re-order questions by their weights
-        q_ids = range(len(self.all_questions))
-        self.weighted_questions = zip(q_weights, q_ids, self.all_questions[:])
-        self.weighted_questions.sort(reverse=True)
-        self.VOIs = VOIs
-        for q in self.weighted_questions:
-            logging.debug(q)
-
-    # def weigh_questions_NEW(self, priors):
+    # def weigh_questions(self, priors):
     #     """Orders questions by their value of information.
     #     """
     #     # Calculate VOI for each question
-    #     all_path_questions = list(itertools.product(self.all_questions, repeat=self.n_lookahead_steps))
-    #     all_path_likelihoods = list(itertools.product(self.all_likelihoods, repeat=self.n_lookahead_steps))
-    #     q_path_weights = np.empty_like(self.all_questions, dtype=np.float64)
-
+    #     q_weights = np.empty_like(self.all_questions, dtype=np.float64)
+    #     VOIs = np.empty_like(self.all_questions, dtype=np.float64)
     #     for prior_name, prior in priors.iteritems():
-    #         prior = prior.copy()  # we may need to modify the prior
-
     #         prior_entropy = prior.entropy()
-    #         # flat_prior_pdf = prior.as_grid().flatten()
+    #         flat_prior_pdf = prior.as_grid().flatten()
 
-    #         for i, likelihood_objs in enumerate(all_path_likelihoods):
+    #         for i, likelihood_obj in enumerate(self.all_likelihoods):
                 
     #             # Check if this question concerns the correct target
-    #             concerns_target = True
-    #             for likelihood_obj in likelihood_objs:
-    #                 question = likelihood_obj['question']
-    #                 if prior_name.lower() not in question.lower():
-    #                     concerns_target = False
-    #             if not concerns_target:
+    #             question = likelihood_obj['question']
+    #             if prior_name.lower() not in question.lower():
     #                 continue
 
     #             # Use positive and negative answers for VOI
-    #             likelihoods = []
-    #             for likelihood_obj in likelihood_objs:
-    #                 likelihoods.append(likelihood_obj['probability'])
-    #             # q_path_weights[i] = self._calculate_VOI(likelihoods, flat_prior_pdf,
-    #             #                                         prior_entropy)
-    #             q_path_weights[i] = self._calculate_VOI(likelihoods, prior,
-    #                                                     prior_entropy)
+    #             likelihood = likelihood_obj['probability']
+    #             VOIs[i] = self._calculate_VOI(likelihood, flat_prior_pdf,
+    #                                                prior_entropy)
+    #             q_weights[i] = VOIs[i]
 
     #             # Add heuristic question cost based on target weight
     #             for j, target in enumerate(self.target_order):
     #                 if target.lower() in question.lower():
-    #                     q_path_weights[i] *= self.target_weights[j]
+    #                     q_weights[i] *= self.target_weights[j]
 
     #             # Add heuristic question cost based on number of times asked
-    #             for likelihood_obj in likelihood_objs:
-    #                 tla = likelihood_obj['time_last_answered']
-    #                 if tla == -1:
-    #                     continue
+    #             tla = likelihood_obj['time_last_answered']
+    #             if tla == -1:
+    #                 continue
 
-    #                 dt = time.time() - tla
-    #                 if dt > self.repeat_time_penalty:
-    #                     self.all_likelihoods[i]['time_last_answered'] = -1
-    #                 elif tla > 0:
-    #                     q_path_weights[i] *= (dt / self.repeat_time_penalty + 1)\
-    #                          * self.repeat_annoyance
+    #             dt = time.time() - tla
+    #             if dt > self.repeat_time_penalty:
+    #                 self.all_likelihoods[i]['time_last_answered'] = -1
+    #             elif tla > 0:
+    #                 q_weights[i] *= (dt / self.repeat_time_penalty + 1)\
+    #                      * self.repeat_annoyance
 
     #     # Re-order questions by their weights
     #     q_ids = range(len(self.all_questions))
-    #     self.weighted_questions = zip(q_path_weights, q_ids, self.all_questions[:])
+    #     self.weighted_questions = zip(q_weights, q_ids, self.all_questions[:])
     #     self.weighted_questions.sort(reverse=True)
+    #     self.VOIs = VOIs
     #     for q in self.weighted_questions:
     #         logging.debug(q)
 
-    def _calculate_VOI(self, likelihood, flat_prior_pdf, prior_entropy=None):
+    # def _calculate_VOI(self, likelihood, flat_prior_pdf, prior_entropy=None):
+    #     """Calculates the value of a specific question's information.
+
+    #     VOI is defined as:
+
+    #     .. math::
+
+    #         VOI(i) = \\sum_{j \\in {0,1}} P(D_i = j)
+    #             \\left(-\\int p(x \\vert D_i=j) \\log{p(x \\vert D_i=j)}dx\\right)
+    #             +\\int p(x) \\log{p(x)}dx
+
+    #     Takes VOI of a specific branch.
+    #     """
+    #     if prior_entropy is None:
+    #         prior_entropy = prior.entropy()
+
+    #     VOI = 0
+    #     grid_spacing = 0.1 #prior.res
+
+    #     alpha = self.human_sensor.false_alarm_prob / 2  # only for binary
+    #     pos_likelihood = alpha + (1 - alpha) * likelihood
+    #     neg_likelihood = np.ones_like(pos_likelihood) - pos_likelihood
+    #     neg_likelihood = alpha + (1 - alpha) * neg_likelihood
+    #     likelihoods = [neg_likelihood, pos_likelihood]
+
+    #     # flat_prior_pdf = prior.as_grid().flatten()
+    #     for likelihood in likelihoods:
+    #         post_unnormalized = likelihood * flat_prior_pdf
+    #         sensor_marginal = np.sum(post_unnormalized) * grid_spacing ** 2
+    #         log_post_unnormalized = np.log(post_unnormalized)
+    #         log_sensor_marginal = np.log(sensor_marginal)
+
+    #         VOI += -np.nansum(post_unnormalized * (log_post_unnormalized - 
+    #             log_sensor_marginal)) * grid_spacing ** 2
+
+    #     VOI += -prior_entropy
+    #     return -VOI  # keep value positive
+
+    def weigh_questions(self, priors):
+        """Orders questions by their value of information.
+        """
+        # Calculate VOI for each question
+        question_sequences = list(itertools.product(self.all_questions,
+                                                    repeat=self.sequence_length
+                                                    ))
+        likelihood_sequences = list(itertools.product(self.all_likelihoods,
+                                                      repeat=self.sequence_length
+                                                      ))
+
+        # Figure out the timespan considered
+        K = (self.sequence_length - 1) * self.ask_every_n
+
+        VOIs = np.empty(len(likelihood_sequences),
+                        dtype=np.float64)
+        question_sequence_weights = np.empty(len(likelihood_sequences),
+                                             dtype=np.float64)
+        for prior_name, prior in priors.iteritems():
+            posterior = prior.copy()  # we may need to modify the prior
+            initial_probability = prior.copy()  # we may need to modify the prior
+
+            #Find the entropy and PDF without any questions at K
+            posterior.dynamics_update(n_steps=K)
+            posterior_entropy = posterior.entropy()
+            # flat_posterior_pdf = posterior.as_grid().flatten()
+
+            for s, likelihood_sequence in enumerate(likelihood_sequences):
+
+                # # Check if this question concerns the correct target
+                # concerns_target = True
+                # for likelihood_obj in likelihood_objs:
+                #     question = likelihood_obj['question']
+                #     if prior_name.lower() not in question.lower():
+                #         concerns_target = False
+                # if not concerns_target:
+                #     break
+
+                # Use positive and negative answers for VOI
+                likelihood_seq_values = []
+                for likelihood_seq in likelihood_sequence:
+                    likelihood_seq_values.append(likelihood_seq['probability'])
+
+                VOIs[s] = self._calculate_VOI(likelihood_seq_values, 
+                                              prior=prior,
+                                              probability=initial_probability,
+                                              final_posterior_entropy=posterior_entropy,
+                                              timespan=K
+                                              )
+                question_sequence_weights[s] = VOIs[s]
+
+                # Add heuristic question cost based on target weight
+                for j, target in enumerate(self.target_order):
+                    for question in question_sequences[s]:
+                        if target.lower() in question.lower():
+                            question_sequence_weights[s] *= self.target_weights[j]
+
+                # Add heuristic question cost based on number of times asked
+                tla = likelihood_sequence[0]['time_last_answered']
+                if tla == -1:
+                    continue
+
+                dt = time.time() - tla
+                qid = self.all_questions.index(likelihood_sequence[0]['question'])
+                if dt > self.repeat_time_penalty:
+                    self.all_likelihoods[qid]['time_last_answered'] = -1
+                elif tla > 0:
+                    question_sequence_weights[s] *= (dt / self.repeat_time_penalty + 1)\
+                         * self.repeat_annoyance
+
+        # Re-order questions by their weights
+        q_seq_ids = range(len(likelihood_sequences))
+
+        self.weighted_question_sequences = zip(question_sequence_weights, 
+                                               q_seq_ids,
+                                               question_sequences,
+                                               )
+        self.weighted_question_sequences.sort(reverse=True)
+
+
+        # Filter down to the weighted first questions in each path
+        weighted_questions = []
+        first_questions = []
+        question_weights = []
+        question_strs = []
+        qid = 0
+        for wqs in self.weighted_question_sequences:
+
+            if wqs[2][0] not in first_questions:
+                first_questions.append(wqs[2][0])
+
+                qid = self.all_questions.index(wqs[2][0])
+                weighted_question = [wqs[0], qid, wqs[2][0]]
+                weighted_questions.append(weighted_question)
+
+                question_weights.append(wqs[0])
+                question_strs.append(wqs[2][0])
+        self.weighted_questions = weighted_questions
+
+        DEBUG = False
+        if DEBUG:
+            import matplotlib.pyplot as plt
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            width = 0.8
+            # ax.bar(range(len(question_sequences)), question_sequence_weights, width=width)
+            # ax.set_xticks(np.arange(len(question_sequences)) + width/2)
+            # question_strs = [" + ".join(question_seq) for question_seq in question_sequences]
+            # ax.set_xticklabels(question_strs, rotation=90)
+
+            ax.bar(range(len(question_strs)), question_weights, width=width)
+            ax.set_xticks(np.arange(len(question_strs)) + width/2)
+            ax.set_xticklabels(question_strs, rotation=90, fontsize=10)
+            fig.subplots_adjust(bottom=0.4)
+
+            plt.show()
+
+        for q in self.weighted_questions:
+            logging.debug(q)
+
+    def _calculate_VOI(self, likelihood_seq_values, prior, probability=None,
+                       final_posterior_entropy=None, timespan=0,
+                      ):
         """Calculates the value of a specific question's information.
 
         VOI is defined as:
@@ -304,30 +405,46 @@ class Questioner(object):
 
         Takes VOI of a specific branch.
         """
-        if prior_entropy is None:
-            prior_entropy = prior.entropy()
-
-        VOI = 0
-        grid_spacing = 0.1 #prior.res
+        if probability is None:
+            probability = prior.copy()
 
         alpha = self.human_sensor.false_alarm_prob / 2  # only for binary
-        pos_likelihood = alpha + (1 - alpha) * likelihood
-        neg_likelihood = np.ones_like(pos_likelihood) - pos_likelihood
-        neg_likelihood = alpha + (1 - alpha) * neg_likelihood
-        likelihoods = [neg_likelihood, pos_likelihood]
+        answer_sequences = list(itertools.product([False, True],
+                                                  repeat=self.sequence_length))
+        sequence_entropy = np.empty(len(answer_sequences))
 
-        # flat_prior_pdf = prior.as_grid().flatten()
-        for likelihood in likelihoods:
-            post_unnormalized = likelihood * flat_prior_pdf
-            sensor_marginal = np.sum(post_unnormalized) * grid_spacing ** 2
-            log_post_unnormalized = np.log(post_unnormalized)
-            log_sensor_marginal = np.log(sensor_marginal)
+        # Go through the whole answer tree
+        for s, answer_sequence in enumerate(answer_sequences):
+            probability.prob = prior.prob
+            data_likelihood = 1
 
-            VOI += -np.nansum(post_unnormalized * (log_post_unnormalized - 
-                log_sensor_marginal)) * grid_spacing ** 2
+            # Go through one answer tree branch
+            for d, answer in enumerate(answer_sequence):
+                pos_likelihood = likelihood_seq_values[d]
 
-        VOI += -prior_entropy
-        return -VOI  # keep value positive
+                # Get likelihood based on answer (with human error)
+                likelihood = alpha + (1 - alpha) * pos_likelihood
+                if not answer:
+                    likelihood = np.ones_like(likelihood) - likelihood
+
+                # Perform a Bayes' update
+                posterior = likelihood * probability.prob.flatten()
+                data_likelihood *= posterior.sum()
+                posterior /= posterior.sum()
+                probability.prob = np.reshape(posterior, probability.X.shape)
+
+                # Perform dynamics update
+                if timespan  > 0 and d < (len(answer_sequence) - 1)\
+                    and probability.is_dynamic:
+
+                    probability.dynamics_update()
+
+            sequence_entropy[s] = probability.entropy() * data_likelihood
+
+        average_sequence_entropy = sequence_entropy.sum()
+
+        VOI = final_posterior_entropy - average_sequence_entropy
+        return VOI
 
     def ask(self, priors, i=0, num_questions_to_ask=5, ask_human=True,
             robot_positions=None):
@@ -440,6 +557,7 @@ class Questioner(object):
                 self.recent_answer = 'No'
             logging.info('{} {}'.format(question_str, self.recent_answer))
 
+        self.question_str = " + ".join(self.weighted_question_sequences[0][2])
         self.human_sensor.question_str = question_str
         statement = self.question_to_statement(question_str, answer)
         self.human_sensor.utterance = statement
