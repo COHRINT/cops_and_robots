@@ -230,8 +230,10 @@ def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
                 d['VOI'] = np.nan * np.empty(len(cops['Deckard'].questioner.all_questions))
 
         if 'ordered_question_list' == record and record_value:
-            if not ('ordered_question_list' in storage.dfs.keys()):
-                d['ordered_question_list'] = cops['Deckard'].questioner.all_questions
+            if hasattr(cops['Deckard'].questioner, 'ordered_question_list') and \
+                not ('ordered_question_list' in storage.dfs.keys()):
+
+                d['ordered_question_list'] = cops['Deckard'].questioner.ordered_question_list
 
 
     storage.save_frame(i, d)

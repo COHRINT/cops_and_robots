@@ -349,6 +349,9 @@ class Questioner(object):
                                                )
         self.weighted_question_sequences.sort(reverse=True)
 
+        self.VOIs = VOIs
+        self.ordered_question_list = [" + ".join(q) for q in question_sequences]
+
 
         # Filter down to the weighted first questions in each path
         weighted_questions = []
@@ -368,6 +371,7 @@ class Questioner(object):
                 question_weights.append(wqs[0])
                 question_strs.append(wqs[2][0])
         self.weighted_questions = weighted_questions
+
 
         DEBUG = False
         if DEBUG:
