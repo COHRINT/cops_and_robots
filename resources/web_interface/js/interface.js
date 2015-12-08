@@ -599,6 +599,49 @@ function init() {
 	console.log('Received message on ' + poseListener.name + ': ' + message.translation);
 	});
 */	
+
+	jQuery.get('js/typeahead.json', function(data){
+	    jQuery("#chatInput").typeahead({ 
+	    	source:data,
+			items:'all',
+			matcher: function (item) {
+							        var last = this.query.split(' ');
+							        this.query = jQuery.trim(last[last.length-1]);
+							
+							        if(this.query.length) return ~item.toLowerCase().indexOf(this.query.toLowerCase());
+			},
+			updater: function (item) {
+								  	var input = this.$element.val().split(' ');
+								  	for (var i=0; i < input.length-1; i++){
+									  	word = input[i]
+									  	if (item.toLowerCase().indexOf(word.toLowerCase()) > -1){
+										  	item = item.replace(word + ' ','')
+									  	}
+									  	
+								  	}
+									return this.$element.val().replace(new RegExp(this.query + '$'),'') + item + ' ';
+		    }
+		 });
+	},'json');
+	
+/*
+	jQuery("#chatInput").change(function (){
+		jQuery("#chatInput").typeahead({ 
+	    	source:data,
+			items:'all',
+		 });
+
+	});
+*/
+	
+	// Publish through ros every time 'submit' is pressed
+	jQuery("#human_chat_button").unbind().click(function() { 
+		
+		var str = jQuery.trim(jQuery("#chatInput").val()) + '.'
+	    humanInputSensor(str);
+		consoleOut("You said: " + str);
+	});
+	
 }
 
 /*

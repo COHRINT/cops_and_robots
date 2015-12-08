@@ -244,7 +244,7 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 			</div>
 		</div> <!-- #robots -->
 
-		<!-- Code Box -->
+		<!-- Human Sensory Input -->
 		<br clear="all">
 		<div id="codeBox" class="col-md-6">
 
@@ -255,46 +255,66 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 
 				<div class="panel-body form-inline" id="code2" >
 
-				   <div role="tabpanel">
-
-		                <!-- Nav tabs -->
-                		<ul class="nav nav-tabs" role="tablist">
-                   		 	<li role="presentation" class="active"><a href="#Position_obj" aria-controls="Position_obj" role="tab" data-toggle="tab">Position (Object)</a></li>
-                    		<li role="presentation"><a href="#position_area" aria-controls="position_area" role="tab" data-toggle="tab">Position (Area)</a></li>
-                    		<li role="presentation"><a href="#Movement" aria-controls="Movement" role="tab" data-toggle="tab">Movement</a></li>
-                		</ul>
-
-				  		<!-- Tab panes -->
-		  				<div class="tab-content">
-
-		    				<div id='Position_obj' class='tab-pane active'>
-		    					<?php 
-		    						for($i = 0; $i < count($pos_obj); $i++){
-			    						PositionViaObject($pos_obj[$i], $Id_obj[$i], $id_objs[$i]);
-			    					}
-		    					?>
-	    					</div> <!-- Pos_obj -->
-
-	    					<div id='position_area' class='tab-pane'>
-		    					<?php 
-		    						for($i = 0; $i < count($pos_area); $i++){
-		    							PositionViaArea($pos_area[$i], $Id_area[$i], $id_areas[$i]);
-		    						}
-		    					?>
-	    					</div> <!-- Pos_area -->
-
-	    					<div id='Movement' class='tab-pane'>
-		    					<?php 
-		    						for($i = 0; $i < count($move); $i++){
-		    							Velocity($move[$i], $Id_move[$i], $id_mvs[$i]);
-		    						}
-		    					?>
-	    					</div> <!-- Movement -->
+					<div class="row" style="height:75px;">
+						<div class="col-md-12">
+							<!-- Chat Box -->
+						    <div class="input-group col-md-12">
+						      <input id="chatInput" type="text" data-provide="typeahead" autocomplete="off" class="form-control" placeholder="I think Roy is near the Kitchen.">
+						      <span class="input-group-btn" style="width:10%;">
+						        <button id="human_chat_button" class="btn btn-success" type="button">Submit</button>
+						      </span>
+						    </div><!-- /input-group -->		
+					  </div><!-- /.col-lg-12 -->
+					</div><!-- /.row -->    					
+				
 		  				
-		  				</div> <!-- Tab Content -->
-					</div><!-- Tabbing -->
-					<br />
-					<div align="center"><button type="button" class="btn btn-success btn-lg" id="human_sensor_button" >Submit</button></div>								   
+					<!-- Dropdown List -->		
+					<div class="row">
+						<div class="col-lg-12">  				
+		  				   <div role="tabpanel">
+		
+				                <!-- Nav tabs -->
+		                		<ul class="nav nav-tabs" role="tablist">
+		                   		 	<li role="presentation" class="active"><a href="#Position_obj" aria-controls="Position_obj" role="tab" data-toggle="tab">Position (Object)</a></li>
+		                    		<li role="presentation"><a href="#position_area" aria-controls="position_area" role="tab" data-toggle="tab">Position (Area)</a></li>
+		                    		<li role="presentation"><a href="#Movement" aria-controls="Movement" role="tab" data-toggle="tab">Movement</a></li>
+		                		</ul>
+		
+						  		<!-- Tab panes -->
+				  				<div class="tab-content">
+		
+				    				<div id='Position_obj' class='tab-pane active'>
+				    					<?php 
+				    						for($i = 0; $i < count($pos_obj); $i++){
+					    						PositionViaObject($pos_obj[$i], $Id_obj[$i], $id_objs[$i]);
+					    					}
+				    					?>
+			    					</div> <!-- Pos_obj -->
+		
+			    					<div id='position_area' class='tab-pane'>
+				    					<?php 
+				    						for($i = 0; $i < count($pos_area); $i++){
+				    							PositionViaArea($pos_area[$i], $Id_area[$i], $id_areas[$i]);
+				    						}
+				    					?>
+			    					</div> <!-- Pos_area -->
+		
+			    					<div id='Movement' class='tab-pane'>
+				    					<?php 
+				    						for($i = 0; $i < count($move); $i++){
+				    							Velocity($move[$i], $Id_move[$i], $id_mvs[$i]);
+				    						}
+				    					?>
+			    					</div> <!-- Movement -->
+				  				
+				  				</div> <!-- Tab Content -->
+				  				
+							</div><!-- Tabbing -->
+							<br />
+							<div align="center"><button type="button" class="btn btn-success btn-lg" id="human_sensor_button" >Submit</button></div>								
+					  </div><!-- /.col-lg-12 -->
+					</div><!-- /.row -->    	
+							   
 				</div><!--/.panel-body-->
 			</div><!--/.panel-->
 		</div><!-- /#codeBox -->
@@ -401,6 +421,7 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 <script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src='<?php echo $starting_path.'js/bootstrap.min.js'?>' ></script>
-<script type="text/javascript" src='<?php echo $starting_path.'js/keyboardteleopquadrotor.js'?>' ></script>
 <script type="text/javascript" src='<?php echo $starting_path.'js/interface.js'?>' ></script>
+<script type="text/javascript" src='<?php echo $starting_path.'js/keyboardteleopquadrotor.js'?>' ></script>
+<script type="text/javascript" src='<?php echo $starting_path.'js/bootstrap3-typeahead.min.js'?>' ></script>
 

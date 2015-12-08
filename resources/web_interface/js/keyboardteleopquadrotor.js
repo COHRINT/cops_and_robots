@@ -96,7 +96,7 @@ KEYBOARDTELEOP.Teleop = function(options) {
       default:
         pub = false;    
     }
-	console.log('Keypressed:' + keyCode)
+/* 	console.log('Keypressed:' + keyCode) */
     // publish the command
     if (pub === true) {
       var twist = new ROSLIB.Message({

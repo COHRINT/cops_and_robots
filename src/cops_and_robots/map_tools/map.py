@@ -224,15 +224,16 @@ class Map(object):
         for area in self.areas.values():
             ax.add_patch(area.get_patch())
 
+        ax.axis('scaled')
         ax.set_xlim([self.bounds[0], self.bounds[2]])
         ax.set_ylim([self.bounds[1], self.bounds[3]])
         ax.set_title('Experimental environment with landmarks and areas')
-        ax.annotate('Kitchen', [-5, 2.5])
-        ax.annotate('Billiard Room', [1.5, 2])
-        ax.annotate('Library', [0.75, -2.25])
-        ax.annotate('Study', [-4.5, -2.25])
-        ax.annotate('Dining Room', [-8.75, -1.4])
-        ax.annotate('Hallway', [-3.5, 0])
+        ax.annotate('Kitchen', [-5, 2.5], weight='bold')
+        ax.annotate('Billiard Room', [1.5, 2], weight='bold')
+        ax.annotate('Library', [0.75, -2.25], weight='bold')
+        ax.annotate('Study', [-4.5, -2.25], weight='bold')
+        ax.annotate('Dining Room', [-8.75, -1.4], weight='bold')
+        ax.annotate('Hallway', [-3.5, 0], weight='bold')
         plt.show()
 
     def setup_plot(self, fusion_engine=None, show_human_interface=False):

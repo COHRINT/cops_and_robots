@@ -157,6 +157,7 @@ class SoftmaxClass(object):
             ax.contourf(X, Y, Z, levels=levels, cmap=plt.get_cmap(self.cmap),
                         alpha=0.8)
 
+        ax.axis('scaled')
         ax.set_xlim(bounds[0], bounds[2])
         ax.set_ylim(bounds[1], bounds[3])
         ax.set_xlabel('x')

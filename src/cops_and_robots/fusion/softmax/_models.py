@@ -254,19 +254,24 @@ def demo_models():
     plt.show()
 
 if __name__ == '__main__':
-    a = 2  # half-width
-    b = 1  # horizontal inset
-    c = 1  # vertical inset
-    d = 3  # half-height
-    x = [-a, -a, -b, -b, -a, -a, a, a, b, b, a, a, -a]
-    y = [-d, -c, -c,  c,  c,  d, d, c, c, -c, -c, -d, -d]
+    # a = 2  # half-width
+    # b = 1  # horizontal inset
+    # c = 1  # vertical inset
+    # d = 3  # half-height
+    # x = [-a, -a, -b, -b, -a, -a, a, a, b, b, a, a, -a]
+    # y = [-d, -c, -c,  c,  c,  d, d, c, c, -c, -c, -d, -d]
+    y = [-0.58, -0.58, 0.58, 0.58, -0.58]
+    x = [-0.35, 0.35, 0.35, -0.35, -0.35]
+    pose = [-8.24, -2.15, 270]
+    x = [a + pose[0] for a in x]
+    y = [a + pose[1] for a in y]
+    
     pts = zip(x,y)
     poly = Polygon(pts)
-    rm = range_model(poly)
-    # print rm.weights.shape
+    bounds = [-9.5, -3.33, 4, 3.68]
+    rm = range_model(poly, bounds=bounds)
 
-    title='Softmax Intrinsic Space Model (Irregular)'
-    logging.info('Building {}'.format(title))
-    rm.plot(title=title, plot_poly=True)
+    title=''
+    rm.plot(title=title, plot_poly=False, class_='Near', plot_3D=False, plot_legend=False)
     # s = [[2,3,4,5,5,6], [4,5,4,5,5,5]]
     # print rm.probability(state=s)
