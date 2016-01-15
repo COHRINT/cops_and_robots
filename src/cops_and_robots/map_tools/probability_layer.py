@@ -28,7 +28,7 @@ from cops_and_robots.map_tools.layer import Layer
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 import itertools
 
-
+#<>TODO: implement particle-type probability layer
 class ProbabilityLayer(Layer):
     """A probabilistic distribution representing the target position.
 

@@ -63,7 +63,7 @@ class Map(object):
     # TODO: @Refactor Seperate map and interface
 
     def __init__(self, map_name='fleming', bounds=[-5, -5, 5, 5],
-                 plot_robbers=True, map_display_type='particle',
+                 plot_robbers=True, map_display_type='probability',
                  combined_only=True, publish_to_ROS=False):
 
         # <>TODO: Move to main?
@@ -302,13 +302,10 @@ class Map(object):
             # Set up probability/particle layers
             if self.fusion_engine is not None:
                 filter_ = self.fusion_engine.filters[ax_name]
-                if self.display_type == 'particle':
-                    self.particle_layers[ax_name] = ParticleLayer(filter_,
-                                                                  ax=ax)
-                elif self.display_type == 'probability':
-                    self.probability_layers[ax_name] = \
-                        ProbabilityLayer(filter_, fig=self.fig, ax=ax,
-                                         bounds=self.bounds)
+
+                self.probability_layers[ax_name] = \
+                    ProbabilityLayer(filter_, fig=self.fig, ax=ax, 
+                                     bounds=self.bounds)
 
     def change_published_ax(self, msg):
         self.probability_target = msg.data
@@ -459,13 +456,22 @@ def set_up_fleming(map_):
               'Dining Room']
     colors = ['aquamarine', 'lightcoral', 'goldenrod', 'sage',
               'cornflowerblue', 'orchid']
-    points = np.array([[[-7.0, -3.33], [-7.0, -1], [-2, -1], [-2, -3.33]],
-                       [[-2, -3.33], [-2, -1], [4.0, -1], [4.0, -3.33]],
-                       [[-9.5, 1.4], [-9.5, 3.68], [0, 3.68], [0, 1.4]],
-                       [[0, 1.4], [0, 3.68], [4, 3.68], [4, 1.4]],
-                       [[-9.5, -1], [-9.5, 1.4], [4, 1.4], [4, -1]],
-                       [[-9.5, -3.33], [-9.5, -1], [-7, -1], [-7, -3.33]],
+    # points = np.array([[[-7.0, -3.33], [-7.0, -1], [-2, -1], [-2, -3.33]],
+    #                    [[-2, -3.33], [-2, -1], [4.0, -1], [4.0, -3.33]],
+    #                    [[-9.5, 1.4], [-9.5, 3.68], [0, 3.68], [0, 1.4]],
+    #                    [[0, 1.4], [0, 3.68], [4, 3.68], [4, 1.4]],
+    #                    [[-9.5, -1], [-9.5, 1.4], [4, 1.4], [4, -1]],
+    #                    [[-9.5, -3.33], [-9.5, -1], [-7, -1], [-7, -3.33]],
+    #                    ])
+    s = 0.0  # coarse scale factor 
+    points = np.array([[[-7.0 - s, -3.33], [-7.0 - s, -1 + s], [-2 + s, -1 + s], [-2 + s, -3.33]],
+                       [[-2 - s, -3.33], [-2 - s, -1 + s], [4.0, -1 + s], [4.0, -3.33]],
+                       [[-9.5, 1.4 - s], [-9.5, 3.68], [0 + s, 3.68], [0 + s, 1.4 - s]],
+                       [[0 - s, 1.4 - s], [0 - s, 3.68], [4, 3.68], [4, 1.4 - s]],
+                       [[-9.5, -1 - s], [-9.5, 1.4 + s], [4, 1.4 + s], [4, -1 - s]],
+                       [[-9.5, -3.33], [-9.5, -1 + s], [-7 + s, -1 + s], [-7 + s, -3.33]],
                        ])
+
 
     for i, pts in enumerate(points):
         centroid = [pts[0, 0] + np.abs(pts[2, 0] - pts[0, 0]) / 2,
@@ -476,7 +482,7 @@ def set_up_fleming(map_):
 
         # Relate landmarks and areas
         for landmark in landmarks:
-            if area.shape.contains(Point(landmark.pose)):
+            if area.shape.intersects(Point(landmark.pose)):
                 area.contained_objects[landmark.name] = landmark
                 landmark.container_area = area
                 landmark.define_relations(map_.bounds)
@@ -484,6 +490,21 @@ def set_up_fleming(map_):
 
     # <>TODO: Include area demarcations
     map_.feasible_layer.define_feasible_regions(map_.static_elements)
+
+def find_grid_mask_for_rooms(map_, grid):
+    """Define boolean arrays of which grid cells each area contains.
+    """
+    area_masks = {}
+    pos = grid.pos
+    for area_name, area in map_.areas.iteritems():
+        area_mask = np.ones_like(grid.prob.flatten())
+
+        for i, pt in enumerate(pos):
+            if not area.shape.intersects(Point(pt)):
+                area_mask[i] = 0
+        area_masks[area_name] = area_mask
+
+    return area_masks
 
 
 if __name__ == '__main__':

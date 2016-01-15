@@ -22,148 +22,70 @@ from cops_and_robots.fusion.gaussian_mixture import (GaussianMixture,
                                                      uniform_prior,
                                                      )
 from cops_and_robots.fusion.grid import Grid
+from cops_and_robots.fusion.filter import Filter
 from cops_and_robots.fusion.variational_bayes import VariationalBayes
 from cops_and_robots.fusion.softmax import (geometric_model,
                                             neighbourhood_model,
                                             product_model, 
                                             )
 
-
-class GaussSumFilter(object):
+class GaussSumFilter(Filter):
     """docstring for GaussSumFilter
 
+    Fusion methods describe how to perform data fusion, with recursive updating
+    at each time step, full batch doing a complete batch update of all sensor
+    information from the initial prior, and windowed batch fusing all sensor
+    information provided within a specific window.
+
+    Compression methods describe how a batch (full or windowed) fusion is
+    performed. Product is exact fusion, neighbourhood uses a reduced number
+    of neighbour classes near the joint measurement class, and geometric uses
+    the minimum number of classes next to the joint measurement class.
+
     """
+    fusion_methods = ['recursive', 'full batch', 'windowed batch']
+    compression_methods = ['product', 'neighbourhood', 'geometric']
 
-    fusion_methods = ['recursive', 'full batch', 'windowed batch', 'grid']
-    synthesis_techniques = ['product','geometric', 'neighbourhood']
-
-
-    def __init__(self, target_name, feasible_layer=None, 
-                 motion_model='stationary',
-                 v_params=[0, 0.1], 
-                 state_spec='x y x_dot y_dot',
-                 fusion_method='grid',
-                 synthesis_technique='geometric',
+    def __init__(self, 
+                 fusion_method='recursive',
+                 compression_method='geometric',
                  window=1,
-                 rosbag_process=None,
+                 **kwargs
                  ):
-        self.target_name = target_name
-        self.relevant_targets = ['nothing', 'a robot', self.target_name]
-        self.feasible_layer = feasible_layer  # <>TODO: Do something with this
-        self.motion_model = motion_model
-        self.finished = False
-        self.recieved_human_update = False
+        super(GaussSumFilter, self).__init__(**kwargs)
+
         self.fusion_method = fusion_method
-        self.synthesis_technique = synthesis_technique
+        self.compression_method = compression_method
         self.window = window
-        self.measurements = []
-
-
-        if self.fusion_method == 'grid':
-            feasible_region = self.feasible_layer.pose_region
-            prior = Grid(prior='fleming', feasible_region=feasible_region)
-        else:
-            prior = fleming_prior()
-        self.probability = prior
-        self.original_prior = prior
 
         # Set up the VB fusion parameters
         self.vb = VariationalBayes()
 
-        self.recently_fused_update = False
-        self.rosbag_process = rosbag_process
-        self.human_measurement_count = 0
-        self.frame = 0
-
-    def update(self, camera, human_sensor=None, save_file=None):
-        if self.finished:
+    def _human_update(self, human_sensor):
+        
+        # Validate human sensor statement
+        measurement = self._verify_human_update(human_sensor)
+        if measurement is None:
             return
 
-        try:
+        if self.rosbag_process is not None:
+            logging.info('Stopped rosbag to do fusion...')
+            self.rosbag_process.stdin.write(' ')  # stop 
             self.rosbag_process.stdin.flush()
-            self.rosbag_process.stdout.flush()
-        except AttributeError:
-            logging.debug('Not playing rosbag')
+            time.sleep(0.5)
 
-        self.probability.dynamics_update()
-        # self.update_mixand_motion()
-        self._camera_update(camera)
-        self._human_update(human_sensor)
-        # self.truncate_gaussians()
+        if self.fusion_method == 'recursive':
+            self.recursive_fusion(measurement, human_sensor)
+        elif self.fusion_method == 'full batch' \
+            or self.fusion_method == 'windowed batch':
+            self.batch_fusion(measurement, human_sensor)
+        elif self.fusion_method == 'grid':
+            self.recursive_fusion(measurement, human_sensor)
 
-        if save_file is not None:
-            if self.recently_fused_update:
-                self.save_probability(save_file)
-                self.recently_fused_update = False
-            self.save_MAP(save_file)
-
-    # def _camera_update(self, camera):
-    #     mu, sigma, beta = self.vb.update(measurement='No Detection',
-    #                                      likelihood=camera.detection_model,
-    #                                      prior=self.probability,
-    #                                      use_LWIS=True,
-    #                                      poly=camera.detection_model.poly
-    #                                      )
-    #     bounds = self.feasible_layer.bounds
-        
-    #     try:
-    #         pos = self.probability.pos
-    #     except AttributeError:
-    #         pos = None
-
-    #     try:
-    #         pos_all = self.probability.pos_all
-    #     except AttributeError:
-    #         pos_all = None
-    #     gm = GaussianMixture(beta, mu, sigma, bounds=bounds, pos=pos, pos_all=pos_all)
-    #     gm.camera_viewcone = camera.detection_model.poly  # for plotting
-    #     self.probability = gm
-
-    def _camera_update(self, camera):
-        likelihood = camera.detection_model
-        measurement = 'No Detection'
-
-        self.probability.measurement_update(likelihood, measurement)
-        self.probability.camera_viewcone = camera.detection_model.poly  # for plotting
-        self.recently_fused_update = True
-
-    def _human_update(self, human_sensor):
-        hs = human_sensor
-        self.recieved_human_update = False
-        if human_sensor.new_update:
-
-            self.human_measurement_count += 1
-
-            measurement = hs.get_measurement()
-
-            # Break if the target doesn't apply to this filter
-            if measurement is False:
-                logging.debug('No measurement to parse.')
-                return 
-
-            if measurement['target'] not in self.relevant_targets:
-                logging.debug('Target {} is not in {} Looking for {}.'
-                    .format(measurement['target'], hs.utterance, self.target_name))
-                return
-
-            if self.rosbag_process is not None:
-                logging.info('Stopped rosbag to do fusion...')
-                self.rosbag_process.stdin.write(' ')  # stop 
-                self.rosbag_process.stdin.flush()
-                time.sleep(0.5)
-
-            if self.fusion_method == 'recursive':
-                self.recursive_fusion(measurement, human_sensor)
-            elif self.fusion_method == 'full batch' \
-                or self.fusion_method == 'windowed batch':
-                self.batch_fusion(measurement, human_sensor)
-            elif self.fusion_method == 'grid':
-                self.recursive_fusion(measurement, human_sensor)
-
-            if self.rosbag_process is not None:
-                self.rosbag_process.stdin.write(' ')  # start rosbag
-                self.rosbag_process.stdin.flush()
-                logging.info('Restarted rosbag!')
+        if self.rosbag_process is not None:
+            self.rosbag_process.stdin.write(' ')  # start rosbag
+            self.rosbag_process.stdin.flush()
+            logging.info('Restarted rosbag!')
 
     def recursive_fusion(self, measurement, human_sensor):
         """Performs fusion once per pass."""
@@ -197,11 +119,11 @@ class GaussSumFilter(object):
                 models.append(model)
 
             # Synthesize the likelihood
-            if self.synthesis_technique == 'product':
+            if self.compression_method == 'product':
                 likelihood = product_model(models)
-            elif self.synthesis_technique == 'neighbourhood':
+            elif self.compression_method == 'neighbourhood':
                 likelihood = neighbourhood_model(models, measurement_labels)
-            elif self.synthesis_technique == 'geometric':
+            elif self.compression_method == 'geometric':
                 likelihood = geometric_model(models, measurement_labels)
 
             # Perform fusion
@@ -212,16 +134,6 @@ class GaussSumFilter(object):
                 self.measurements = []
             elif self.fusion_method == 'full batch':
                 self.window += self.window
-
-    def grid_fusion(self, measurement, human_sensor):
-        measurement_label = measurement['relation']
-        relation_class = measurement['relation class']
-        grounding = measurement['grounding']
-        likelihood = grounding.relations.binary_models[relation_class]
-
-        self.probability.measurement_update(likelihood_prob, measurement)
-
-        self.recently_fused_update = True
 
 
     def fusion(self, likelihood, measurement, human_sensor):
@@ -302,25 +214,6 @@ class GaussSumFilter(object):
             self.probability = posterior
             self.recieved_human_update = True
 
-    def save_probability(self, save_file):
-        if self.fusion_method == 'windowed batch':
-            save_file = save_file + 'windowed_batch_' + str(self.window)
-        else:
-            save_file = save_file + self.fusion_method.replace(' ', '_')
-        filename = save_file + '_' + self.target_name  +'_posterior_' + str(self.human_measurement_count)
-        np.save(filename, self.probability)
-
-    def save_MAP(self, save_file):
-        self.frame += 1
-        MAP_point, _ = self.probability.find_MAP()
-
-        if self.fusion_method == 'windowed batch':
-            save_file = save_file + 'windowed_batch_' + str(self.window)
-        else:
-            save_file = save_file + self.fusion_method.replace(' ', '_')
-        filename = save_file + '_' + self.target_name  +'_MAP_' + str(self.frame)
-        np.save(filename, MAP_point)
-
     def robber_detected(self, robber_pose):
         """Update the particle filter for a detected robber.
         """
@@ -375,9 +268,6 @@ class GaussSumFilter(object):
         except AttributeError:
             pos_all = None
         self.probability = GaussianMixture(weights=weights, means=means, covariances=covariances, bounds=bounds, pos=pos, pos_all=pos_all)
-
-
-
 
     def truncate_gaussians(self):
         # To start, just use map bounds

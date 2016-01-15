@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-"""Run a basic cops_and_robots simulation.
+"""Run the Cops and Robots simulation.
 
+Configurations can be specified by files in the 'configs' folder.
 """
 import logging
 import time
@@ -8,338 +9,272 @@ import sys
 import os
 
 import numpy as np
-import pandas as pd
-from pandas import HDFStore
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 from cops_and_robots.helpers.config import load_config
+from cops_and_robots.helpers.storage import Storage
 from cops_and_robots.robo_tools.cop import Cop
 from cops_and_robots.robo_tools.robber import Robber
 from cops_and_robots.robo_tools.robot import Distractor
 # <>TODO: @MATT @NICK Look into adding PyPubSub
 
 
-def main(config_file=None):
-    # Load configuration files
-    cfg = load_config(config_file)
-    main_cfg = cfg['main']
-    cop_cfg = cfg['cops']
-    robber_cfg = cfg['robbers']
-    distractor_cfg = cfg['distractors']
-    storage_cfg = cfg['data_logging']
- 
-   # Set up logging and printing
-    logger_level = logging.getLevelName(main_cfg['logging_level'])
-    logger_format = '[%(levelname)-7s] %(funcName)-30s %(message)s'
+class CopsAndRobbers(object):
+    """Cops and Robbers experimental simulation engine.
 
-    try:
-        logging.getLogger().setLevel(logger_level)
-        logging.getLogger().handlers[0].setFormatter(logging.Formatter(logger_format))
-    except IndexError:
-        logging.basicConfig(format=logger_format,
-                            level=logger_level,
-                           )
-    np.set_printoptions(precision=main_cfg['numpy_print_precision'],
-                        suppress=True)
+    long description of CopsAndRobbers
+    
+    Parameters
+    ----------
+    param : param_type, optional
+        param_description
 
-    # Set up a ROS node (if using ROS) and link it to Python's logger
-    if main_cfg['use_ROS']:
-        import rospy
-        rospy.init_node(main_cfg['ROS_node_name'], log_level=rospy.DEBUG)
-        handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter(logger_format))
-        logging.getLogger().addHandler(handler)
+    Attributes
+    ----------
+    attr : attr_type
+        attr_description
 
-    # Create cops with config params
-    if main_cfg['playback_rosbags'] is None:
-        rosbag_process = None
-    else:
-        rosbag_process = playback_mode(main_cfg['playback_rosbags'])
-
-    cops = {}
-    for cop, kwargs in cop_cfg.iteritems():
-        cops[cop] = Cop(cop, rosbag_process=rosbag_process, **kwargs)
-        logging.info('{} added to simulation'.format(cop))
-
-    # Create robbers with config params
-    robbers = {}
-    for robber, kwargs in robber_cfg.iteritems():
-        robbers[robber] = Robber(robber, **kwargs)
-        logging.info('{} added to simulation'.format(robber))
-
-    # Create distractors with config params
-    distractors = {}
-    try:
-        for distractor, kwargs in distractor_cfg.iteritems():
-            distractors[distractor] = Distractor(distractor, **kwargs)
-    except AttributeError:
-        logging.debug('No distractors available!')
-
-    # <>TODO: Replace with message passing
-    # <>TODO: Or give as required attribute at cop initialization (check with config)
-    # Give cops references to the robber's actual poses
-    for cop in cops.values():
-        for robber_name, robber in robbers.iteritems():
-            cop.missing_robbers[robber_name].pose2D = \
-                robber.pose2D
-        for distrator_name, distractor in distractors.iteritems():
-            cop.distracting_robots[distrator_name].pose2D = \
-                distractor.pose2D
-    # Give robber the cops list of found robots, so they will stop when found
-    for robber in robbers.values():
-        robber.found_robbers = cops['Deckard'].found_robbers
-
-    # Describe simulation
-    cop_names = cops.keys()
-    if len(cop_names) > 1:
-        cop_str = ', '.join(cop_names[:-1]) + ' and ' + str(cop_names[-1])
-    else:
-        cop_str = cop_names
-
-    robber_names = robbers.keys()
-    if len(robber_names) > 1:
-        robber_str = ', '.join(robber_names[:-1]) + ' and ' + \
-            str(robber_names[-1])
-    else:
-        robber_str = robber_names
-
-    logging.info('Simulation started with {} chasing {}.'
-                 .format(cop_str, robber_str))
-
-    # Set up data logging
-    storage = Storage(storage_cfg)
-
-    # Start the simulation
-    fig = cops['Deckard'].map.fig
-    fusion_engine = cops['Deckard'].fusion_engine
-    cops['Deckard'].map.setup_plot(fusion_engine)
-    sim_start_time = time.time()
-
-
-    if cop_cfg['Deckard']['map_cfg']['publish_to_ROS'] or main_cfg['headless_mode']:
-        headless_mode(cops, robbers, distractors, main_cfg, sim_start_time, storage)
-    else:
-        animated_exploration(fig, cops, robbers, distractors, main_cfg, sim_start_time, storage)
-
-
-def headless_mode(cops, robbers, distractors, main_cfg, sim_start_time, 
-                  storage):
-    i = 0
-    while cops['Deckard'].mission_planner.mission_status != 'stopped':
-        update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage)
-
-        i += 1
-        # For ending early
-        if i >= main_cfg['max run time']:
-            break
-
-def playback_mode(rosbags):
-    """Plays 1 or more recorded rosbags while the simulation executes.
-    """
-    # <>TODO: parametrize the inputs
-    from subprocess import Popen, PIPE, STDOUT
-
-    rosbag_folder = 'data/ACC\ 2016/rosbags/'
-    for _, rosbag in rosbags.iteritems():
-        rosbag_file = rosbag_folder + rosbag
-        cmd = 'rosbag play -q ' + rosbag_file
-        proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        logging.info('Created a rosbag process {}!'.format(proc.pid))
-    return proc
-    # bag = rosbag.Bag(rosbag_file)
-    # for topic, msg, t in bag.read_messages(topics=['/human_sensor', '/tf']):
-    #     print msg
-    # bag.close()
-
-def animated_exploration(fig, cops, robbers, distractors, main_cfg, 
-                         sim_start_time, storage):
-    """Animate the exploration of the environment from a cop's perspective.
+    Methods
+    ----------
+    attr : attr_type
+        attr_description
 
     """
-    # <>TODO fix frames (i.e. stop animation once done)
-    max_run_time = main_cfg['max run time']
-    if max_run_time < 0:
-        max_run_time = 10000000  #<>TODO: not like this
 
-    ani = animation.FuncAnimation(fig,
-                                  update,
-                                  fargs=[cops, robbers, distractors, main_cfg, sim_start_time, storage],
-                                  interval=1,
-                                  blit=False,
-                                  frames=max_run_time,
-                                  repeat=False,
-                                  )
-    # <>TODO: break from non-blocking plt.show() gracefully
-    # filename = os.path.dirname(__file__) + '/VOI_2_deep1.gif'
-    # ani.save(filename, writer='imagemagick', fps=10);
-    plt.show()
+    def __init__(self, config_file='config.yaml'):
+        # Load configuration files
+        self.cfg = load_config(config_file)
 
+       # Configure Python's logging
+        logger_level = logging.getLevelName(self.cfg['main']['logging_level'])
+        logger_format = '[%(levelname)-7s] %(funcName)-30s %(message)s'
+        try:
+            logging.getLogger().setLevel(logger_level)
+            logging.getLogger().handlers[0]\
+                .setFormatter(logging.Formatter(logger_format))
+        except IndexError:
+            logging.basicConfig(format=logger_format,
+                                level=logger_level,
+                               )
+        np.set_printoptions(precision=self.cfg['main']['numpy_print_precision'],
+                            suppress=True)
 
-def update(i, cops, robbers, distractors, main_cfg, sim_start_time, storage):
-    logging.debug('Main update frame {}'.format(i))
+        # Set up a ROS node (if using ROS)
+        if self.cfg['main']['use_ROS']:
+            import rospy
+            rospy.init_node(self.cfg['main']['ROS_node_name'], 
+                            log_level=rospy.DEBUG)
 
-    for cop_name, cop in cops.iteritems():
-        cop.update(i)
+            # Link node to Python's logger
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(logger_format))
+            logging.getLogger().addHandler(handler)
 
-    for robber_name, robber in robbers.iteritems():
-        robber.update(i)
+        # Play pre-recorded rosbag (process is None if no rosbag selected)
+        self.play_data(**self.cfg['data_management']['playback'])
 
-    for distractor_name, distractor in distractors.iteritems():
-        distractor.update(i)
-
-    cops['Deckard'].map.update(i)
-    if main_cfg['log_time']:
-        logging.info('Frame {} at time {}.'.format(i, time.time() - sim_start_time))
-
-    # Save data
-    d = {}
-    for record, record_value in storage.records.iteritems():
-        if 'robot positions' == record:
-            if record_value == 'all':
-                d['Deckard position'] = cops['Deckard'].pose2D.pose
-                d['Roy position'] = robbers['Roy'].pose2D.pose
-
-        if 'grid probability' == record:
-            if record_value == '4D':
-                all_dims = True
-            else:
-                all_dims = False
-            #<>TODO: assume more than Roy and Deckard
-            d['grid probability'] = cops['Deckard'].fusion_engine\
-                .filters['Roy'].probability.as_grid(all_dims)
-            d['grid probability'] = d['grid probability'].flatten()
-
-        if 'questions' == record and record_value:
-            if hasattr(cops['Deckard'].questioner, 'question_str'):
-                d['question'] = cops['Deckard'].questioner.question_str
-                cops['Deckard'].questioner.question_str = 'No question'
-            else:
-                d['question'] = 'No question'
-
-        if 'answers' == record and record_value:
-            if cops['Deckard'].sensors['human'].utterance:
-                d['answer'] = cops['Deckard'].sensors['human'].utterance
-            else:
-                d['answer'] = 'No answer'
-
-        if 'VOI' == record and record_value:
-            if hasattr(cops['Deckard'].questioner, 'VOIs'):
-                d['VOI'] = cops['Deckard'].questioner.VOIs
-            else:
-                d['VOI'] = np.nan * np.empty(len(cops['Deckard'].questioner.all_questions))
-
-        if 'ordered_question_list' == record and record_value:
-            if hasattr(cops['Deckard'].questioner, 'ordered_question_list') and \
-                not ('ordered_question_list' in storage.dfs.keys()):
-
-                d['ordered_question_list'] = cops['Deckard'].questioner.ordered_question_list
-
-
-    storage.save_frame(i, d)
-
-    max_run_time = main_cfg['max run time']
-    if i >= max_run_time - 1 and max_run_time > 0:
-        plt.close('all')
-        logging.info('Simulation ended!')
-        storage.store.close()
-    #<>TODO: have general 'save animation' setting
-    # plt.savefig('animation/frame_{}.png'.format(i))
-
-class Storage(object):
-    """docstring for Storage"""
-
-    def __init__(self, storage_cfg=None, filename='data', use_prefix=True, use_suffix=True):
-        self.file_path = os.path.dirname(os.path.abspath(__file__)) + '/data/ICCPS 2016/'
-        self.set_filename(filename, use_prefix, use_suffix)
-
-        self.store = HDFStore(self.filename)
-        if storage_cfg is not None:
-            self.records = storage_cfg['record_data']
-        else:
-            self.records = {'grid probability':'2D', 
-                            'robot positions':'all'
-                            }
-
-        self.dfs = {}
-
-    def set_filename(self, filename, use_prefix, use_suffix):
-        if not os.path.exists(self.file_path):
-            os.makedirs(self.file_path)
-
-        if use_prefix:
-            self.filename_prefix = 'cnr_'
-        else:
-            self.filename_prefix = ''
-
-        if use_suffix:
-            self.filename_suffix = '_trial'
-        else:
-            self.filename_suffix = ''
-        self.filename_extension = '.hd5'
-
-        self.filename = self.file_path + self.filename_prefix + filename \
-            + self.filename_suffix + self.filename_extension
-
-        # Check for duplicate files
+        # Create robbers with config params
+        other_robot_names = {'robbers': [], 'distractors':[]}
+        self.robbers = {}
         i = 0
-        while os.path.isfile(self.filename):
+        for robber, kwargs in self.cfg['robbers'].iteritems():
+            if i >= self.cfg['main']['number_of_agents']['robbers']:
+                break
+            self.robbers[robber] = Robber(robber, **kwargs)
+            logging.info('{} added to simulation.'.format(robber))
             i += 1
-            ind = self.filename.find(self.filename_suffix)
-            l = len(self.filename_suffix)
-            self.filename = self.filename[:ind + l] + '_' + str(i) + self.filename_extension
+            other_robot_names['robbers'].append(robber)
 
-    def save_frame(self, frame_i, data):
-        """Expects data as a dict
+        # Create distractors with config params
+        self.distractors = {}
+        i = 0
+        try:
+            for distractor, kwargs in self.cfg['distractors'].iteritems():
+                if i >= self.cfg['main']['number_of_agents']['distractors']:
+                    break
+                self.distractors[distractor] = Distractor(distractor, **kwargs)
+                i += 1
+                other_robot_names['distractors'].append(distractor)
+        except AttributeError:
+            logging.debug('No distractors available!')
+
+        # Create cop objects with config params
+        self.cops = {}
+        i = 0
+        for cop, kwargs in self.cfg['cops'].iteritems():
+            if i >= self.cfg['main']['number_of_agents']['cops']:
+                break
+            self.cops[cop] = Cop(cop, other_robot_names=other_robot_names,
+                                 rosbag_process=self.rosbag_process, **kwargs)
+            logging.info('{} added to simulation.'.format(cop))
+            i += 1
+
+        # <>TODO: Replace with message passing
+        # <>TODO: Or give as required attribute at cop initialization (check cfg)
+        # Give cops references to the robber's actual poses
+        for cop in self.cops.values():
+            for robber_name, robber in self.robbers.iteritems():
+                cop.missing_robbers[robber_name].pose2D = \
+                    robber.pose2D
+            for distrator_name, distractor in self.distractors.iteritems():
+                cop.distracting_robots[distrator_name].pose2D = \
+                    distractor.pose2D
+
+        # Give robbers the list of found robots, so they will stop when found
+        for robber in self.robbers.values():
+            robber.found_robbers = self.cops['Deckard'].found_robbers
+
+        # Describe simulation
+        cop_names = self.cops.keys()
+        if len(cop_names) > 1:
+            cop_str = ', '.join(cop_names[:-1]) + ' and ' + str(cop_names[-1])
+        else:
+            cop_str = cop_names
+        robber_names = self.robbers.keys()
+        if len(robber_names) > 1:
+            robber_str = ', '.join(robber_names[:-1]) + ' and ' + \
+                str(robber_names[-1])
+        else:
+            robber_str = robber_names
+        logging.info('Simulation started with {} chasing {}.'
+                     .format(cop_str, robber_str))
+
+        # Set up data logging
+        if self.cfg['data_management']['storage']['save_data']:
+            self.storage = Storage(**self.cfg['data_management']['storage'])
+
+        # Prepare the map (even if using headless mode)
+        self.fig = self.cops['Deckard'].map.fig
+        fusion_engine = self.cops['Deckard'].fusion_engine
+        self.cops['Deckard'].map.setup_plot(fusion_engine)
+
+
+        # # STUB TO GENERATE AREA MASKS
+        # from cops_and_robots.map_tools.map import find_grid_mask_for_rooms
+        # map_ = self.cops['Deckard'].map
+        # grid = fusion_engine.filters['Roy'].probability
+        # area_masks = find_grid_mask_for_rooms(map_, grid)
+        # np.save('coarse_area_masks', area_masks)
+        # self.cops['Deckard'].map.plot()
+
+        # return
+
+        # Define timing
+        self.start_time = time.time()
+        self.max_run_time = self.cfg['main']['max_run_time']
+        if self.max_run_time < 0:
+            self.max_run_time = 10000000  #<>TODO: not like this
+
+        # Run the simulation
+        if self.cfg['main']['headless_mode'] or \
+            self.cfg['cops']['Deckard']['map_cfg']['publish_to_ROS']:
+
+            self.headless_mode()
+        else:
+            self.display_mode()
+
+    def headless_mode(self):
+        """Runs the simulation without any animation output.
         """
-        for key, value in data.iteritems():
-            key = key.lower().replace(' ', '_')
+        i = 0
+        while self.cops['Deckard'].mission_planner.mission_status != 'stopped':
+            self.update(i)
+            i += 1
 
-            # Series for strings or string lists, DataFrame otherwise
-            if isinstance(value, basestring):
-                value = [value]
+            # End early
+            if i >= self.cfg['main']['max_run_time']:
+                break
 
-            try:
-                v = value[0]
-                is_list_of_strings = isinstance(v, basestring)
-            except:
-                is_list_of_strings = False
+    def display_mode(self):
+        """Animate the exploration of the environment from a cop's perspective.
+        """
+        ani = animation.FuncAnimation(self.fig,
+                                      self.update,
+                                      interval=1,
+                                      blit=False,
+                                      frames=self.max_run_time,
+                                      repeat=False,
+                                      )
+        # <>TODO fix frames (i.e. stop animation once done)
+        # <>TODO: break from non-blocking plt.show() gracefully
 
-            if is_list_of_strings: 
-                try:
-                    new_df = pd.Series(value)
-                    self.dfs[key] = self.dfs[key].append(new_df)
-                except:
-                    self.dfs[key] = pd.Series(value)
-            else:
-                try:
-                    new_df = pd.DataFrame(value, columns=[str(frame_i + 1)])
-                    self.dfs[key] = self.dfs[key].join(new_df)
-                except:
-                    self.dfs[key] = pd.DataFrame(value)
+        # Save the animation
+        logging.info(self.cfg['data_management']['animation']['save_animation'])
+        if self.cfg['data_management']['animation']['save_animation']:
+            folder = '/' + self.cfg['data_management']['animation']['folder']
+            filename = self.cfg['data_management']['animation']['filename']
+            filename = os.path.dirname(__file__) + folder + filename + '.gif'
+            logging.info(filename)
+            ani.save(filename, writer='imagemagick', bitrate=1, fps=10);
+        plt.show()
 
-            self.store.put(key, self.dfs[key])
+    def update(self, i):
+        """Update all the major aspects of the simulation and record data.
+        """
+        logging.debug('Main update frame {}'.format(i))
 
+        # Update all actors
+        for cop_name, cop in self.cops.iteritems():
+            cop.update(i)
+
+        for robber_name, robber in self.robbers.iteritems():
+            robber.update(i)
+
+        for distractor_name, distractor in self.distractors.iteritems():
+            distractor.update(i)
+
+        self.cops['Deckard'].map.update(i)
+
+        # Log time
+        if self.cfg['main']['log_time']:
+            logging.info('Frame {} at time {}.'
+                .format(i, time.time() - self.start_time))
+
+        # Store data
+        if self.cfg['data_management']['storage']['save_data']:
+            d = self.storage.collect_data(self.cops, self.robbers, 
+                                          self.distractors)
+            last_frame = i + 1 >= self.cfg['main']['max_run_time']
+
+            self.storage.save_frame(i, d, last_frame=last_frame)
+
+        # # Add a new frame to the animation
+        # if self.cfg['data_management']['animation']['save_animation']:
+        #     animation_folder = self.cfg['data_management']['animation']['animation_folder']
+        #     plt.savefig(animation_folder + 'frame_{}.png'.format(i))
+
+        # End the animation if necessary
+        max_run_time = self.cfg['main']['max_run_time']
+        if i >= max_run_time - 1 and max_run_time > 0:
+            plt.close('all')
+            logging.info('Simulation ended!')
+            if self.cfg['data_management']['storage']['save_data']:
+                self.storage.store.close()
+
+
+    def play_data(self, rosbags={}, folder='data/ACC\ 2016/rosbags/',
+                  play_rosbags=True):
+        """Plays 1 or more recorded rosbags while the simulation executes.
+
+        Creates a separate process that runs alongside the main Python simulation.
+        """
+        # End prematurely if not playing data
+        if not (play_rosbags and self.cfg['main']['use_ROS']) \
+            or len(rosbags)==0:
+
+            self.rosbag_process = None
+            return 
+
+        from subprocess import Popen, PIPE, STDOUT
+
+        for _, rosbag in files.iteritems():
+            rosbag_file = rosbag_folder + rosbag
+            cmd = 'rosbag play -q ' + rosbag_file
+            proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            logging.info('Created a rosbag process {}!'.format(proc.pid))
+
+        self.rosbag_process = proc
 
 if __name__ == '__main__':
-    main('config_iccps.yaml')
-
-
-
-# import cv2
-# from cv_bridge import CvBridge, CvBridgeError
-# import rospy
-# from sensor_msgs.msg import Image
-# # <>TODO: Lazy init for ros
-
-# self.bridge = CvBridge()
-#         self.image_pub = rospy.Publisher("test_prob_layer", Image)
-#         rospy.init_node('Probability_Node')
-
-
-#     plt.savefig('foo.png')
-#         img = cv2.imread('foo.png', 1)
-#         try:
-#             self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "passthrough"))
-#         except CvBridgeError, e:
-#             print e
+    cnr = CopsAndRobbers()

@@ -6,13 +6,18 @@ import random
 import time
 import numpy as np
 import itertools
+import pickle
+import os
+from sklearn.gaussian_process import GaussianProcess
+
 
 class Questioner(object):
 
     def __init__(self, human_sensor=None, target_order=None, target_weights=1,
                  use_ROS=False, repeat_annoyance=0.5, repeat_time_penalty=60,
                  auto_answer=False, sequence_length=1, ask_every_n=0,
-                 minimize_questions=False):
+                 minimize_questions=False, mask_file='area_masks.npy',
+                 GP_VOI_file='', use_GP_VOI=False):
         self.human_sensor = human_sensor
         self.use_ROS = use_ROS
         self.target_order = target_order
@@ -34,6 +39,25 @@ class Questioner(object):
             self.target_weights = np.ones(len(target_order)) * 1 / len(target_order)
         self.generate_questions()
         self.is_hovered = False
+
+        self.use_GP_VOI = use_GP_VOI
+        if self.use_GP_VOI:
+            filepath = os.path.dirname(os.path.abspath(__file__)) \
+                + '/VOI-GPs/' + GP_VOI_file
+            fh = open(filepath, 'r')
+            self.GPs = pickle.load(fh)
+
+            # Set up areas
+            mask_file = os.path.dirname(os.path.abspath(__file__)) \
+                + '/VOI-GPs/' + mask_file
+            self.area_masks = np.load(mask_file).reshape(-1)[0]  #Black magic
+            self.area_probs = {'Billiard Room': [],
+                       'Hallway': [],
+                       'Study': [],
+                       'Library': [],
+                       'Dining Room': [],
+                       'Kitchen': []
+                      }
 
         if self.use_ROS:
             import rospy
@@ -313,12 +337,17 @@ class Questioner(object):
                 for likelihood_seq in likelihood_sequence:
                     likelihood_seq_values.append(likelihood_seq['probability'])
 
-                VOIs[s] = self._calculate_VOI(likelihood_seq_values, 
-                                              prior=prior,
-                                              probability=initial_probability,
-                                              final_posterior_entropy=posterior_entropy,
-                                              timespan=K
-                                              )
+                # Approximate or use brute-force VOI
+                if self.use_GP_VOI:
+                    self._get_area_probs(prior)
+                    VOIs[s] = self._predict_VOI(s)
+                else:
+                    VOIs[s] = self._calculate_VOI(likelihood_seq_values, 
+                                                  prior=prior,
+                                                  probability=initial_probability,
+                                                  final_posterior_entropy=posterior_entropy,
+                                                  timespan=K
+                                                  )
                 question_sequence_weights[s] = VOIs[s]
 
                 # Add heuristic question cost based on target weight
@@ -449,6 +478,29 @@ class Questioner(object):
 
         VOI = final_posterior_entropy - average_sequence_entropy
         return VOI
+
+    def _predict_VOI(self, s):
+        question = self.all_likelihoods[s][0]
+        VOI, MSE = self.GPs[question].predict(self.eval_points, eval_MSE=True)
+        sigma = np.sqrt(MSE)
+
+        return VOI
+
+
+    def _get_area_probs(self, prior):
+
+        # Get each area's CDF for each timestep
+        p = prior.prob.flatten()
+        for area_name, area_mask in self.area_masks.iteritems():
+            area_prob = (p*area_mask).sum()
+            self.area_probs[area_name].append(area_prob)
+
+        ndim_input = 6
+        self.eval_points = np.zeros(ndim_input)
+        i = 0
+        for _, area_prob in self.area_probs.iteritems():
+            self.eval_points[i] = area_prob[0]
+            i += 1
 
     def ask(self, priors, i=0, num_questions_to_ask=5, ask_human=True,
             robot_positions=None):

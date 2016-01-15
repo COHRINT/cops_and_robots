@@ -29,9 +29,10 @@ from scipy.stats import multivariate_normal, norm, entropy
 from descartes.patch import PolygonPatch
 from shapely.geometry import Polygon
 
+from cops_and_robots.fusion.probability import Probability
 
 # <>TODO: test for greater than 2D mixtures
-class GaussianMixture(object):
+class GaussianMixture(Probability):
     """A collection of weighted multivariate normal distributions.
 
     A Gaussian mixture is a collection of mixands: individual multivariate 
@@ -172,11 +173,195 @@ class GaussianMixture(object):
 
         return rvs
 
-    def dynamics_update(self):
-        pass
-
     def measurment_update(self, likelihood):
         pass
+
+    def dynamics_update(self):
+        dt = 0.1
+        F = np.array([[1, 0, dt, 0],
+                      [0, 1, 0, dt],
+                      [0, 0, 1, 0],
+                      [0, 0, 0, 1]])
+
+        Gamma = np.array([[0.5*dt**2, 0],
+                          [0, 0.5*dt**2],
+                          [dt, 0],
+                          [0, dt]])
+        Q = np.array([[.05, 0],
+                      [0, .05]])
+
+        weights = self.probability.weights
+        means = self.probability.means
+        # means = F*means
+        covariances = self.probability.covariances
+        for i, covariance in enumerate(covariances):
+            covariances[i] = np.dot(np.dot(F, covariance), np.transpose(F)) + \
+                np.dot(np.dot(Gamma, Q), np.transpose(Gamma))
+
+        bounds = self.probability.bounds
+        try:
+            pos = self.probability.pos
+        except AttributeError:
+            pos = None
+
+        try:
+            pos_all = self.probability.pos_all
+        except AttributeError:
+            pos_all = None
+        self.probability = GaussianMixture(weights=weights, means=means,
+                                           covariances=covariances,
+                                           bounds=bounds, pos=pos,
+                                           pos_all=pos_all)
+
+        self.truncate_gaussians()
+
+    def truncate_gaussians(self):
+        # To start, just use map bounds
+        bounds = self.feasible_layer.bounds
+        logging.debug('Constraints: {}'.format(bounds))
+
+        weights = self.probability.weights
+        means = self.probability.means
+        covariances = self.probability.covariances
+
+        # V = np.array([[bounds[0],bounds[2]],[bounds[1],bounds[3]]])
+        # Bcon, upper_bound = vert2con(V.T)
+
+        Bcon = np.array([[1/bounds[0], 0, 0, 0],
+                         [1/bounds[2], 0, 0, 0],
+                         [0, 1/bounds[1], 0, 0],
+                         [0, 1/bounds[3], 0, 0],
+                         # [0, 0, 1, 1],
+                         # [0, 0, -1, -1,],
+                         ])
+        upper_bound = np.array([[1],
+                                [1],
+                                [1],
+                                [1],
+                                # [1],
+                                # [1],
+                                ])
+        lower_bound = -np.inf*np.ones((4, 1))
+
+        new_means = []
+        new_covariances = []
+        for i, mean in enumerate(means):
+            covariance = covariances[i]
+            new_mean, new_covariance, wt = self.iterative_gaussian_trunc_update(mean,
+                                              covariance, Bcon, lower_bound, upper_bound)
+            new_means.append(new_mean)
+            new_covariances.append(new_covariance)
+
+        self.probability = GaussianMixture(weights=weights, means=new_means,
+                                           covariances=new_covariances)
+
+    def iterative_gaussian_trunc_update(self, mean, covariance, Bcon,
+                                        lower_bound, upper_bound,
+                                        dosort=False, dosplit=False):
+        #<>TODO: Ask Matt to clean this up
+        if dosplit:
+            pass
+
+        if dosort:
+            pass
+            # probreductionmeasure = np.zeros(upperbound.shape)
+            # for ii in range(Bcon):
+            #     probreductionmeasure[ii] = (upperbound[ii]-Bcon[ii]*mean) / \
+            #     np.sqrt(Bcon[ii] .dot covariance .dot Bcon[ii].T)
+        else:
+            Bmat = Bcon
+            ubound = upper_bound
+            lbound = lower_bound
+
+        # Initialize mean and covariance matrix to be updated
+        muTilde = mean
+        SigmaTilde = covariance
+        # print SigmaTilde
+
+        # do iterative constraint updates
+        for ii in range(Bmat.shape[0]):
+            phi_ii = Bmat[ii].T
+
+            # Eigenvalue decomp
+            Tii, Wii = np.linalg.eig(SigmaTilde)
+            # Take real parts
+            Tii = np.real(Tii)
+            Wii = np.real(Wii)
+            # Make a diagonal matrix
+            Tii = np.diag(Tii)
+            
+            # print 'eigenvector', Wii
+            # print np.sqrt(Wii)
+            # print 'Eigenvalues', Tii.T
+            # print phi_ii
+
+            # Find orthonogonal Sii via Gram-Schmidt
+            P = np.sqrt(Wii) .dot (Tii.T) .dot (phi_ii)
+            P = np.expand_dims(P, axis=0)
+
+            # print 'P', P
+
+            tau_ii = np.sqrt(phi_ii.T .dot (SigmaTilde) .dot (phi_ii))
+            Qtilde, Rtilde = np.linalg.qr(P)
+
+            # print 'R', Rtilde
+            # print tau_ii
+            # print Qtilde
+            # Sii = (Rtilde[0][0] / tau_ii) * (Qtilde.T)
+
+            # Compute transformed lower and upper 1D constraint bounds
+            # print 'mu', muTilde
+            # print 'phi', phi_ii
+            # print phi_ii.T .dot (muTilde)
+            # print lbound[ii]
+            cii = (lbound[ii] - phi_ii.T .dot (muTilde)) / tau_ii
+            dii = (ubound[ii] - phi_ii.T .dot (muTilde)) / tau_ii
+
+            print 'cii', cii
+            print 'dii', dii
+
+            # compute renormalization stats
+            alphaiiden = np.maximum(sp.special.erf(dii/np.sqrt(2)) - sp.special.erf(cii/np.sqrt(2)), np.finfo(float).eps)
+            alphaii = np.sqrt(2/np.pi) / alphaiiden
+            muii = alphaii * np.exp(-0.5 * cii ** 2) - np.exp(-0.5 * dii ** 2)
+
+            # check for -/+ inf bounds to avoid nans
+            if np.isinf(cii).all() and not np.isinf(dii).all():
+                sig2ii = alphaii * ( -np.exp(-0.5*dii ** 2) * (dii-2*muii) ) + muii ** 2 + 1
+            elif np.isinf(dii).all() and not np.isinf(cii).all():
+                sig2ii = alphaii * ( np.exp(-0.5*cii ** 2) * (cii-2*muii) ) + muii ** 2 + 1
+            elif np.isinf(dii).all() and np.isinf(cii).all():
+                sig2ii = muii ** 2 + 1
+            else:
+                sig2ii = alphaii * ( np.exp(-0.5*cii ** 2)*(cii-2*muii) - \
+                    np.exp(-0.5*dii ** 2)*(dii-2*muii) ) + muii ** 2 + 1
+
+            if sig2ii <= 0:
+                logging.error('Something''s wrong: sig2ii <=0!') 
+
+            # get mean and covariance of transformed state estimate:
+            ztilde_ii = np.concatenate((np.expand_dims(muii, axis=0), np.zeros((muTilde.shape[0]-1, 1))), axis=0)
+            Ctilde_ii = np.diag(np.concatenate((np.expand_dims(sig2ii, axis=0), np.ones((muTilde.shape[0]-1,1)))));
+
+            # recover updated estimate in original state space for next/final pass
+            muTilde = Tii * np.sqrt(Wii) * Sii.T * ztilde_ii + muTilde
+            SigmaTilde = Tii * np.sqrt(Wii)*Sii.T * Ctilde_ii * Sii * np.sqrt(Wii) * Tii.T
+            print Tii
+            print Wii
+            print 'Sii', Sii.T
+            print Ctilde_ii
+
+            # ensure symmetry:
+            SigmaTilde = 0.5 * (SigmaTilde + SigmaTilde.T)
+            print SigmaTilde
+
+        muOut = muTilde
+        SigmaOut = SigmaTilde
+        # compute updated likelihood
+        # pass
+        wtOut = 1
+
+        return muOut, SigmaOut, wtOut #lkOut
 
     def max_point_by_grid(self, bounds=None, grid_spacing=0.1):
         #<>TODO: set for n-dimensional
@@ -790,7 +975,7 @@ def ellipses_test(num_std=2):
     plt.show()
 
 
-def fleming_prior():
+def fleming_prior(feasible_region=None):
     bounds = [-9.5, -3.33, 4, 3.68]
     gm = GaussianMixture(weights=[32,
                                 14,
@@ -837,6 +1022,8 @@ def fleming_prior():
                                       ]
                                      ],
                         bounds=bounds)
+
+    #<>TODO: incorperate feasible region
     return gm
 
 

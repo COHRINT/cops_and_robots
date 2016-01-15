@@ -28,6 +28,7 @@ import logging
 
 import numpy as np
 
+from cops_and_robots.fusion.filter import GridFilter
 from cops_and_robots.fusion.particle_filter import ParticleFilter
 from cops_and_robots.fusion.gauss_sum_filter import \
     GaussSumFilter
@@ -35,7 +36,7 @@ from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 
 
 class FusionEngine(object):
-    """A collection of filters to estimate and fuse data about a target's pose.
+    """A collection of filters to estimate and fuse data about the targets.
 
     The fusion engine tracks each robber, as well as a `combined`
     representation of the average target estimate.
@@ -44,7 +45,7 @@ class FusionEngine(object):
 
     Parameters
     ----------
-    filter_type : {'particle','gauss sum'}
+    probability_type : {'grid','particle','gauss sum'}
         The type of filter to be used.
     missing_robber_names : list of str
         The list of all robbers, to create one filter per robber.
@@ -62,7 +63,7 @@ class FusionEngine(object):
     """
 
     def __init__(self,
-                 filter_type,
+                 probability_type,
                  missing_robber_names,
                  feasible_layer,
                  motion_model='stationary',
@@ -70,14 +71,20 @@ class FusionEngine(object):
                  rosbag_process=None,
                  ):
 
-        self.filter_type = filter_type
+        self.probability_type = probability_type
         self.filters = {}
         self.missing_robber_names = missing_robber_names
 
-
         n = len(missing_robber_names)
 
-        if self.filter_type == 'particle':
+        if self.probability_type == 'grid':
+            for i, name in enumerate(missing_robber_names):
+                self.filters[name] = GridFilter(name, feasible_layer, rosbag_process=rosbag_process)
+            if len(missing_robber_names) > 1:
+                self.filters['combined'] = GridFilter('combined', 
+                                                      feasible_layer)
+
+        elif self.probability_type == 'particle':
             if n > 1:
                 particles_per_filter = int(total_particles / (n + 1))
             else:
@@ -92,15 +99,15 @@ class FusionEngine(object):
                                                       feasible_layer,
                                                       motion_model,
                                                       particles_per_filter)
-        elif self.filter_type == 'gauss sum':
+        elif self.probability_type == 'gauss sum':
             for i, name in enumerate(missing_robber_names):
                 self.filters[name] = GaussSumFilter(name, feasible_layer, 
                                                     rosbag_process=rosbag_process)
             if len(missing_robber_names) > 1:
                 self.filters['combined'] = GaussSumFilter('combined', feasible_layer)
         else:
-            raise ValueError("FusionEngine must be of type 'particle' or "
-                             "'gauss sum'.")
+            raise ValueError("FusionEngine must be of type 'grid', 'particle'"
+                             "or 'gauss sum'.")
 
     def update(self, robot_pose, sensors, robbers, save_file=None):
         """Update fusion_engine agnostic to fusion type.
@@ -125,7 +132,6 @@ class FusionEngine(object):
             if not self.filters[robber.name].finished:
                 self.filters[robber.name].update(sensors['camera'],
                                                  sensors['human'],
-                                                 save_file=save_file,
                                                  )
         if len(self.missing_robber_names) > 1:
             self._update_combined(sensors, robbers)
@@ -151,7 +157,7 @@ class FusionEngine(object):
         sensors : dict
             A collection of all sensors to be updated.
         """
-        if self.filter_type == 'particle':
+        if self.probability_type == 'particle':
 
             # Remove all particles from combined filter
             # <>TODO: correct number of particles based on state

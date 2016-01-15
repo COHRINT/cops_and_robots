@@ -114,7 +114,7 @@ class GoalPlanner(object):
         the goal.
 
     """
-    types = ['stationary', 'simple', 'trajectory', 'particle', 'MAP']
+    types = ['stationary', 'simple', 'trajectory', 'greedy']
     goal_statuses = ['stuck',
                      'at goal',
                      'moving to goal',
@@ -171,9 +171,7 @@ class GoalPlanner(object):
             target_pose = self.find_goal_simply()
         elif self.type == 'trajectory':
             target_pose = self.find_goal_from_trajectory()
-        elif self.type == 'particle':
-            target_pose = self.find_goal_from_particles()
-        elif self.type == 'MAP':
+        elif self.type == 'greedy':
             target_pose = self.find_goal_from_probability()
 
         if target_pose is None:
@@ -212,15 +210,22 @@ class GoalPlanner(object):
         """
         # <>TODO: Extend this to deterministically view the target's face(s)
 
-        # Define a circle as view_distance from the target_pose
-        
-        view_circle = Point(target_pose[0:2])\
-            .buffer(self.view_distance).exterior
+        # Find a 
+        feasible_arc_available = False
+        scale = 1
+        while not feasible_arc_available and scale < 20:
+            # Define a circle as view_distance from the target_pose
+            view_circle = Point(target_pose[0:2])\
+                .buffer(self.view_distance * scale).exterior
 
-        # Find any feasible point on the view_circle
-        feasible_arc = self.feasible_layer\
-            .pose_region.intersection(view_circle)
+            # Find any feasible point on the view_circle
+            feasible_arc = self.feasible_layer\
+                .pose_region.intersection(view_circle)
+            scale += 1
+
+            feasible_arc_available = not feasible_arc.is_empty
         pt = feasible_arc.representative_point()
+
         theta = math.atan2(target_pose[1] - pt.y,
                            target_pose[0] - pt.x)  # [rad]
         theta = math.degrees(theta) % 360
@@ -272,6 +277,8 @@ class GoalPlanner(object):
             A pose as [x,y,theta] in [m,m,degrees].
 
         """
+        #<>TODO: replace with polymorphism from find_goal_from_probability
+
         target = self.robot.mission_planner.target
         fusion_engine = self.robot.fusion_engine
         # <>TODO: @Nick Test this!
@@ -323,31 +330,24 @@ class GoalPlanner(object):
         target = self.robot.mission_planner.target
         fusion_engine = self.robot.fusion_engine
 
-        # <>TODO: @Nick Test this!
-        if fusion_engine.filter_type != 'gauss sum':
-                raise ValueError('The fusion_engine must have a '
-                                 'gauss sum filter.')
-
-        theta = random.uniform(0, 360)
-
-        # If no target is specified, do default behavior
+        # Identify posterior from either target or combined filter
         if target is None:
-            if len(fusion_engine.filters) > 1:
+            try:
                 target_filter = fusion_engine.filters['combined']
-            else:
+            except KeyError:
+                logging.debug('No combined distribution available.')
                 target_filter = next(fusion_engine.filters.iteritems())
         else:
             try:
                 target_filter = fusion_engine.filters[target]
                 logging.info('Looking for {}'.format(target))
             except:
-                logging.warn('No gauss sum filter found for specified target')
+                logging.warn('No filter found for target, thus no goal.')
                 return None
         posterior = target_filter.probability
 
-        bounds = self.feasible_layer.bounds
+        # Find the point of maximum a posteriori probability
         try:
-            # MAP_point, MAP_prob = posterior.max_point_by_grid(bounds)
             MAP_point, MAP_prob = posterior.find_MAP()
         except AttributeError, e:
             logging.error(e)
@@ -355,22 +355,23 @@ class GoalPlanner(object):
             MAP_point = (target_filter.X[pt[0],0],
                          target_filter.Y[0,pt[1]]
                          )
-
         logging.info("MAP: {}".format(MAP_point))
 
-        # Select randomly from max_particles
+        # Select random theta as goal theta
+        theta = random.uniform(0, 360)
         goal_pose = np.append(MAP_point, theta)
 
-        # Check if its a feasible goal
+        # Check if the goal is feasible
         pt = Point(goal_pose[0:2])
         if self.feasible_layer.pose_region.contains(pt):
-            # If feasible return goal
             return goal_pose
         else:
-            # Check if it inside an object, update probability
+            # Check if goal pose is inside an object
             map_ = self.robot.map
             for name, obj in map_.objects.iteritems():
                 if obj.shape.contains(pt):
+
+                    # Remove probability mass from the blocking object
                     self.clear_probability_from_objects(target, obj)
                     goal_pose = None
                     return goal_pose
@@ -379,8 +380,8 @@ class GoalPlanner(object):
                 # using a view goal, generate a point in the same way
                 # as a view goal
                 logging.info('Not feasible, not in object')
-                if self.use_target_as_goal:
-                    goal_pose = self.view_goal(goal_pose)
+                # if self.use_target_as_goal:
+                goal_pose = self.view_goal(goal_pose)
 
         return goal_pose
 

@@ -48,7 +48,7 @@ class Grid(Probability):
     """
 
     def __init__(self, bounds=[-10, -10, 10, 10], res=0.1, prior='fleming',
-                 all_dims=False, is_dynamic=True, max_range=1.0, var=2.85,
+                 all_dims=False, is_dynamic=True, max_range=1.0, var=1.0,
                  feasible_region=None):
 
         if prior == 'fleming':
@@ -67,8 +67,8 @@ class Grid(Probability):
             self.prob = fleming_prior().pdf(self.pos, dims=[0,1])
             self.prob = np.reshape(self.prob, self.X.shape)
         else:
-            self.prob = np.zeros_like(self.X)
-            self.prob[2, 1] = 1
+            self.prob = np.ones_like(self.X)
+            self.prob /= self.prob.sum()
 
             # self.keep_feasible_region()
 
@@ -89,10 +89,12 @@ class Grid(Probability):
         model with an associated measurement class.
 
         """
+        # Discretize likelihood if given as a softmax object
         if type(likelihood) != np.ndarray:
             likelihood = likelihood.probability(class_=measurement, 
                                                 state=self.pos)
 
+        # Perform Bayes' update
         posterior = likelihood * self.prob.flatten()
         posterior /= posterior.sum()
         self.prob = np.reshape(posterior, self.X.shape)
@@ -200,7 +202,8 @@ class Grid(Probability):
             feas_str = '_feasible'
         else:
             feas_str = ''
-        filename = '{}/STM_n{}_r{}{}.npy'.format(directory, n, self.res, feas_str)
+        filename = '{}/STM_n{}_r{}_v{}{}.npy'.format(directory, n, self.res,
+                                                     self.var, feas_str)
         try:
             self.state_transition_matrix = np.load(filename).item()
             logging.info('Loaded STM {}.'.format(filename))
@@ -318,6 +321,12 @@ def test_measurement_update():
                                   blit=False
                                   )
     plt.show()
+
+def uniform_prior(feasible_region=None):
+    bounds = [-9.5, -3.33, 4, 3.68]
+    probability = Grid(prior='uniform', bounds=bounds,
+                       feasible_region=feasible_region)
+    return probability
 
 
 if __name__ == '__main__':

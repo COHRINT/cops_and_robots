@@ -77,6 +77,7 @@ class Cop(Robot):
                              'use_target_as_goal': False}
     path_planner_defaults = {'type_': 'direct'}
     questioner_defaults = {}
+    fusion_engine_defaults = {}
 
     def __init__(self,
                  name,
@@ -86,15 +87,17 @@ class Cop(Robot):
                  ask_every_n=0,
                  robber_model='static',
                  other_robot_names={},
-                 map_cfg={},
                  mission_planner_cfg={},
                  goal_planner_cfg={},
                  path_planner_cfg={},
+                 map_cfg={},
+                 fusion_engine_cfg={},
                  camera_cfg={},
-                 questioner_cfg={},
                  human_cfg={},
+                 questioner_cfg={},
                  rosbag_process=None,
                  **kwargs):
+
         # Use class defaults for kwargs not included
         mp_cfg = Cop.mission_planner_defaults.copy()
         mp_cfg.update(mission_planner_cfg)
@@ -104,16 +107,8 @@ class Cop(Robot):
         pp_cfg.update(path_planner_cfg)
         q_cfg = Cop.questioner_defaults.copy()
         q_cfg.update(questioner_cfg)
-
-        # Configure fusion and map based on goal planner
-        if gp_cfg['type_'] == 'particle':
-            fusion_engine_type = 'particle'
-            map_display_type = 'particle'
-        elif gp_cfg['type_'] == 'MAP':
-            fusion_engine_type = 'gauss sum'
-            map_display_type = 'probability'
-        # TODO: Refrence in yaml instead?
-        map_cfg.update({'map_display_type': map_display_type})
+        fe_cfg = Cop.fusion_engine_defaults.copy()
+        fe_cfg.update(fusion_engine_cfg)
 
         # Superclass and compositional attributes
         super(Cop, self).__init__(name,
@@ -136,7 +131,7 @@ class Cop(Robot):
 
         # Fusion and sensor attributes
         # <>TODO: Fusion Engine owned and refrenced from imaginary robber?
-        self.fusion_engine = FusionEngine(fusion_engine_type,
+        self.fusion_engine = FusionEngine(fe_cfg['probability_type'],
                                           self.missing_robber_names,
                                           self.map.feasible_layer,
                                           robber_model,
@@ -158,8 +153,15 @@ class Cop(Robot):
         self.ask_every_n = ask_every_n
         self.sensors['human'] = Human(self.map, **human_cfg)
         self.map.add_human_sensor(self.sensors['human'])
+
+        # Configure questioner
+        target_order = q_cfg['target_order']
+        for target in target_order:
+            if target not in self.other_robot_names['robbers']:
+                target_order.remove(target)
+        del q_cfg['target_order']
         self.questioner = Questioner(human_sensor=self.sensors['human'],
-                                     **q_cfg)
+                                     target_order=target_order, **q_cfg)
         self.map.questioner = self.questioner
 
     def make_others(self):
@@ -250,7 +252,7 @@ class Cop(Robot):
         # save_file = 'data/ACC 2016/output/'
         save_file = None
         self.fusion_engine.update(self.pose2D.pose, self.sensors,
-                                  self.missing_robbers, save_file=save_file)
+                                  self.missing_robbers)
 
         # Ask a question 
         # <>TODO: Key error, make sure target is reassigned.
