@@ -123,9 +123,15 @@ def plot(self, class_=None, show_plot=True, plot_3D=True, plot_probs=True,
 
     # Plot polygon
     if self.poly is not None and plot_poly and plot_dominant_classes:
-        patch = PolygonPatch(self.poly, facecolor='none', zorder=2,
-                             linewidth=3, edgecolor='black',)
-        ax1.add_patch(patch)
+        try:
+            for poly in self.polys:
+                patch = PolygonPatch(poly, facecolor='none', zorder=2,
+                                     linewidth=3, edgecolor='black',)
+                ax1.add_patch(patch)
+        except:
+            patch = PolygonPatch(self.poly, facecolor='none', zorder=2,
+                                 linewidth=3, edgecolor='black',)
+            ax1.add_patch(patch)
 
     # Plot normals
     # <>TODO fix crashing issue with vertical normals

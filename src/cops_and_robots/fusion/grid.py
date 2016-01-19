@@ -53,6 +53,7 @@ class Grid(Probability):
 
         if prior == 'fleming':
             bounds = [-9.5, -3.33, 4, 3.68]
+
         super(Grid, self).__init__(bounds=bounds, res=res)
         self._discretize(all_dims)
         if feasible_region is not None:
@@ -103,8 +104,11 @@ class Grid(Probability):
         if self.is_dynamic:
             posterior = self.prob.flatten()
             for step in range(n_steps):
+                # self.state_transition_matrix += 0.1 * np.eye(self.state_transition_matrix.shape[1])
                 posterior = self.state_transition_matrix .dot (posterior)
+                posterior /= posterior.sum()
             self.prob = posterior.reshape(self.X.shape)
+            # print 
 
     def find_MAP(self, dims=[0,1]):
         """formerly 'max_point_by_grid'
@@ -209,8 +213,12 @@ class Grid(Probability):
             logging.info('Loaded STM {}.'.format(filename))
             return
         except:
-            logging.info('No state transition matrix to load, creating... ' +
-                         '\n (takes a while for large state spaces)')
+            logging.info('No state transition matrix to load for {}, creating... '
+                         .format({'resolution': self.res,
+                                  'var': self.var,
+                                  'feasible': hasattr(self,'infeasible_states')
+                                  }))
+            logging.info('\n (takes a while for large state spaces)')
 
         # Create a STM
         state_transition_matrix = np.empty((n,n))
@@ -251,23 +259,22 @@ class Grid(Probability):
 def test_dynamics_update():
     import matplotlib.animation as animation
 
-    probability = Grid()
+    probability = Grid(res=0.2)
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     def dm_update(i):
         probability.dynamics_update()
         title = probability.__str__() + '@ time {}'.format(i)
-        probability.update_plot(i,title=title)
-
+        probability.update_plot(i, title=title)
 
     ani = animation.FuncAnimation(fig, dm_update,
                                   frames=xrange(100),
-                                  interval=20,
+                                  interval=100,
                                   repeat=True,
                                   blit=False
                                   )
-    ani.save('demoanimation.gif', writer='imagemagick', fps=10);
+    # ani.save('demoanimation.gif', writer='imagemagick', fps=10);
     plt.show()
 
 def test_measurement_update():
@@ -330,7 +337,9 @@ def uniform_prior(feasible_region=None):
 
 
 if __name__ == '__main__':
-    grid = Grid()
+    logging.getLogger().setLevel(logging.INFO)
+
+    # grid = Grid()
     # grid.plot()
     # plt.show()
     # test_measurement_update()

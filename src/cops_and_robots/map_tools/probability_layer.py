@@ -78,6 +78,7 @@ class ProbabilityLayer(Layer):
         if probability is None:
             probability = self.filter.probability
 
+        # <>not proper try/except format!
         try:
             X = probability.X
         except:
@@ -87,7 +88,11 @@ class ProbabilityLayer(Layer):
         except:
             Y = self.Y
 
-        probs = probability.prob
+        try:
+            probs = probability.prob
+        except:
+            probs = probability.pdf(self.pos)
+
         # try:
         #     probs = probability.pdf(self.pos, dims=[0,1])  # if not yet discretized
         # except:
@@ -96,10 +101,17 @@ class ProbabilityLayer(Layer):
         #                           self.X.shape[1],
         #                           )
 
+        # self.alpha=0.6
+
         levels = np.linspace(0, np.max(probs), self.z_levels)
         self.contourf = self.ax.contourf(X, Y, probs,
-                           cmap=self.cmap, alpha=self.alpha, levels=levels, antialiased=True,
+                           cmap=self.cmap, alpha=self.alpha, levels=levels, 
+                           antialiased=True, lw=0,
                            **kwargs)
+
+        # for c in self.contourf.collections:
+        #     ec = c.get_edgecolor()
+        #     c.set_edgecolor(ec)
 
         if self.show_ellipses:
             if hasattr(self.filter.probability, 'camera_viewcone'):
@@ -158,7 +170,7 @@ if __name__ == '__main__':
 
     ani = animation.FuncAnimation(pl.fig, pl.update,
         frames=xrange(100),
-        interval=50,
+        interval=1000,
         repeat=True,
         blit=False)
 

@@ -83,6 +83,44 @@ def binary_speed_model():
     bsm = BinarySoftmax(sm)
     return bsm
 
+def speed_model_2d(bounds=[-2, -2, 2, 2], spread=1.3):
+    """Generate a one-dimensional Softmax model for speeds.
+    """
+    labels = ['Stopped', 'Slow', 'Medium', 'Fast']
+    rs = [0, 0.2, 0.4, 0.8]
+    sms = []
+
+    for i, label in enumerate(labels[1:], start=1):
+        try:
+            poly = scale(poly, 1 + rs[i], 1 + rs[i])
+        except:
+            poly = _make_regular_2D_poly(12, max_r=rs[i])
+            
+        num_classes = len(poly.exterior.coords)
+        class_labels = [labels[0]] + [label] * (num_classes - 1)
+        steepnesses = [10 + i * 20] * num_classes
+        sm = Softmax(poly=poly, labels=class_labels, resolution=0.1,
+                     steepness=steepnesses, bounds=bounds)
+
+        if i == 1:
+            full_sm = sm
+        else:
+            new_weights = sm.weights[1:]
+            new_biases = sm.biases[1:] - spread ** i
+            new_labels = [label] * (num_classes - 1)
+            new_steepnesses = steepnesses[1:]
+
+            full_sm.add_classes(new_weights, new_biases, new_labels, 
+                                new_steepnesses, poly=poly)
+
+    return full_sm
+
+
+def binary_speed_model_2d():
+    sm = speed_model_2d()
+    bsm = BinarySoftmax(sm)
+    return bsm
+
 
 def pentagon_model():
     poly = _make_regular_2D_poly(5, max_r=2, theta=np.pi/3.1)
@@ -260,18 +298,19 @@ if __name__ == '__main__':
     # d = 3  # half-height
     # x = [-a, -a, -b, -b, -a, -a, a, a, b, b, a, a, -a]
     # y = [-d, -c, -c,  c,  c,  d, d, c, c, -c, -c, -d, -d]
-    y = [-0.58, -0.58, 0.58, 0.58, -0.58]
-    x = [-0.35, 0.35, 0.35, -0.35, -0.35]
-    pose = [-8.24, -2.15, 270]
-    x = [a + pose[0] for a in x]
-    y = [a + pose[1] for a in y]
+    # y = [-0.58, -0.58, 0.58, 0.58, -0.58]
+    # x = [-0.35, 0.35, 0.35, -0.35, -0.35]
+    # pose = [-8.24, -2.15, 270]
+    # x = [a + pose[0] for a in x]
+    # y = [a + pose[1] for a in y]
     
-    pts = zip(x,y)
-    poly = Polygon(pts)
-    bounds = [-9.5, -3.33, 4, 3.68]
-    rm = range_model(poly, bounds=bounds)
+    # pts = zip(x,y)
+    # poly = Polygon(pts)
+    # bounds = [-9.5, -3.33, 4, 3.68]
+    # rm = range_model(poly, bounds=bounds)
+    sm = speed_model_2d()
+    bsm = binary_speed_model_2d()
 
     title=''
-    rm.plot(title=title, plot_poly=False, class_='Near', plot_3D=False, plot_legend=False)
-    # s = [[2,3,4,5,5,6], [4,5,4,5,5,5]]
-    # print rm.probability(state=s)
+    sm.plot(title=title, plot_poly=True)
+    bsm.binary_models['Medium'].plot(title=title)

@@ -368,13 +368,18 @@ class Softmax(object):
         """
         pass
 
-    def add_classes(self, weights, biases, labels=None, steepness=1):
+    def add_classes(self, weights, biases, labels=None, steepness=1, poly=None):
         """Add m>=1 classes to the current Softmax model.
         """
         self.weights = np.vstack((self.weights, weights))
         self.biases = np.hstack((self.biases, biases))
         self.steepness = np.hstack((self.steepness, steepness))
         self.num_classes += biases.size
+        if poly is not None:
+            try:
+                self.polys.append(poly)
+            except:
+                self.polys = [self.poly]
 
         if labels is None:
             labels = []
@@ -490,7 +495,6 @@ class Softmax(object):
             mo = MapObject('', self.poly.exterior.coords[:], pose=new_pose,
                            has_relations=False)
             self.poly = mo.shape
-
 
     def _move_relative(self, translation=None, rotation=None,
                        rotation_point=None, rotation_unit='degrees',

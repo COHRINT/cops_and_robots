@@ -1064,18 +1064,23 @@ def uniform_prior(num_mixands=10, bounds=None):
 
     return GaussianMixture(weights, means, covariances)
 
-def velocity_prior():
-    return GaussianMixture(weights=[0.5, 0.5],
-                            means=[[-1, -1],  # GM1 mean
-                                   [1, 1],  # GM2 mean
-                                   ],
-                            covariances=[[[0.1, 0.0],  # GM1 mean
-                                          [0.0, 0.1]
-                                          ],
-                                         [[0.1, 0.0],  # GM2 mean
-                                          [0.0, 0.1]
-                                          ],
-                                         ])
+
+def velocity_prior(speed=1, var=0.05):
+    """Isotropic velocity based on a given speed.
+    """
+    num_mixands = np.min((np.max((1,1/var)),20))
+    if np.mod(num_mixands,2) != 0:
+        num_mixands += 1
+
+    c = np.eye(2) * var
+    c = np.tile(c, (num_mixands, 1, 1))
+    means = [[np.cos(2 * np.pi / num_mixands * x) * speed,
+              np.sin(2 * np.pi / num_mixands * x) * speed,]
+              for x in np.arange(0, num_mixands)]
+    return GaussianMixture(weights=[1] * num_mixands,
+                            means=means,
+                            covariances=c
+                            )
 
 
 def fleming_prior_test():
@@ -1266,6 +1271,7 @@ def merge_gm_test(alpha=0.5):
     gm3 = gm1.combine_gms(gm2, alpha)
     print gm3
 
+
 def marginal_test():
     xx, yy = np.mgrid[-2:2:1 / 100,
                       -2:2:1 / 100]
@@ -1274,29 +1280,24 @@ def marginal_test():
     pos[:, :, 1] = yy
 
     # 2D Gaussian Mixutre
-    gm_2d = GaussianMixture(weights=[0.5, 0.5],
-                            means=[[-1, -1],  # GM1 mean
-                                   [1, 1],  # GM2 mean
-                                   ],
-                            covariances=[[[0.1, 0.0],  # GM1 mean
-                                          [0.0, 0.1]
-                                          ],
-                                         [[0.1, 0.0],  # GM2 mean
-                                          [0.0, 0.1]
-                                          ],
-                                         ])
+    gm_2d = velocity_prior()
     
     fig = plt.figure()
-    ax = fig.add_subplot(2,1,1)
+    ax = fig.add_subplot(2,2,3)
     levels = np.linspace(0, np.max(gm_2d.pdf(pos)), 50)
     ax.contourf(xx, yy, gm_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('viridis'))
     ax.set_title('2D Gaussian Mixture PDF')
 
     x = np.linspace(-5, 5, 100)
-    ax = fig.add_subplot(2,1,2)
-    marginal = gm_2d.marginal_pdf(axis=1, x=x)
+    ax = fig.add_subplot(2,2,1)
+    marginal = gm_2d.marginal_pdf(axis=0, x=x)
     ax.plot(x, marginal)
     ax.set_xlim([-2,2])
+
+    ax = fig.add_subplot(2,2,4)
+    marginal = gm_2d.marginal_pdf(axis=1, x=x)
+    ax.plot(marginal, x)
+    ax.set_ylim([-2,2])
 
 
     plt.show()
