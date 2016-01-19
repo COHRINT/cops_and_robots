@@ -1,12 +1,11 @@
 sphinxcontrib-napoleon
 shapely
-shapely
 descartes
 py-getch
+pyserial
+pandas
+pytest
 docutils>=0.3
 #catkin-sphinx
 #catkin_pkg
 #catkin_tools
-pyserial
-pandas
-pytest
