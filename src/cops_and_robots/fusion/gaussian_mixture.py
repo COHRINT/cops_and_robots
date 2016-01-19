@@ -143,6 +143,31 @@ class GaussianMixture(Probability):
 
         return pdf
 
+    def marginal_pdf(self, axis, x=None, dims=None):
+
+        #<>TODO: fix for n-dimensional PDFs
+
+        x_min = np.min(x)
+        x_max = np.max(x)
+        if self.bounds is None:
+            bounds = [x_min, x_min, x_max, x_max]
+        else:
+            if axis == 0:
+                bounds = [self.bounds[0], x_min, self.bounds[2], x_max]
+            elif axis == 1:
+                bounds = [x_min, self.bounds[1], x_max, self.bounds[3]]
+            else:
+                raise NotImplementedError("Not yet implemented for n>2!")
+
+        res = (x_max - x_min) / (x.size - 1)
+        self._discretize(bounds, grid_spacing=res)
+        full_pdf = self.pdf(self.pos_all, dims)
+
+        # <>TODO: fix this axis hack
+        axis = 1 - axis
+
+        return full_pdf.sum(axis=axis)
+
     def rvs(self, size=1):
         """
         """
@@ -317,8 +342,6 @@ class GaussianMixture(Probability):
             cii = (lbound[ii] - phi_ii.T .dot (muTilde)) / tau_ii
             dii = (ubound[ii] - phi_ii.T .dot (muTilde)) / tau_ii
 
-            print 'cii', cii
-            print 'dii', dii
 
             # compute renormalization stats
             alphaiiden = np.maximum(sp.special.erf(dii/np.sqrt(2)) - sp.special.erf(cii/np.sqrt(2)), np.finfo(float).eps)
@@ -346,10 +369,6 @@ class GaussianMixture(Probability):
             # recover updated estimate in original state space for next/final pass
             muTilde = Tii * np.sqrt(Wii) * Sii.T * ztilde_ii + muTilde
             SigmaTilde = Tii * np.sqrt(Wii)*Sii.T * Ctilde_ii * Sii * np.sqrt(Wii) * Tii.T
-            print Tii
-            print Wii
-            print 'Sii', Sii.T
-            print Ctilde_ii
 
             # ensure symmetry:
             SigmaTilde = 0.5 * (SigmaTilde + SigmaTilde.T)
@@ -610,6 +629,7 @@ class GaussianMixture(Probability):
             pos[:, :, 0] = xx; pos[:, :, 1] = yy
             self.xx = xx; self.yy = yy
             self.pos = pos
+            self.pos_all = pos
 
         elif self.ndims > 2:
 
@@ -1044,6 +1064,19 @@ def uniform_prior(num_mixands=10, bounds=None):
 
     return GaussianMixture(weights, means, covariances)
 
+def velocity_prior():
+    return GaussianMixture(weights=[0.5, 0.5],
+                            means=[[-1, -1],  # GM1 mean
+                                   [1, 1],  # GM2 mean
+                                   ],
+                            covariances=[[[0.1, 0.0],  # GM1 mean
+                                          [0.0, 0.1]
+                                          ],
+                                         [[0.1, 0.0],  # GM2 mean
+                                          [0.0, 0.1]
+                                          ],
+                                         ])
+
 
 def fleming_prior_test():
     fig = plt.figure()
@@ -1233,13 +1266,48 @@ def merge_gm_test(alpha=0.5):
     gm3 = gm1.combine_gms(gm2, alpha)
     print gm3
 
+def marginal_test():
+    xx, yy = np.mgrid[-2:2:1 / 100,
+                      -2:2:1 / 100]
+    pos = np.empty(xx.shape + (2,))
+    pos[:, :, 0] = xx
+    pos[:, :, 1] = yy
+
+    # 2D Gaussian Mixutre
+    gm_2d = GaussianMixture(weights=[0.5, 0.5],
+                            means=[[-1, -1],  # GM1 mean
+                                   [1, 1],  # GM2 mean
+                                   ],
+                            covariances=[[[0.1, 0.0],  # GM1 mean
+                                          [0.0, 0.1]
+                                          ],
+                                         [[0.1, 0.0],  # GM2 mean
+                                          [0.0, 0.1]
+                                          ],
+                                         ])
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(2,1,1)
+    levels = np.linspace(0, np.max(gm_2d.pdf(pos)), 50)
+    ax.contourf(xx, yy, gm_2d.pdf(pos), levels=levels, cmap=plt.get_cmap('viridis'))
+    ax.set_title('2D Gaussian Mixture PDF')
+
+    x = np.linspace(-5, 5, 100)
+    ax = fig.add_subplot(2,1,2)
+    marginal = gm_2d.marginal_pdf(axis=1, x=x)
+    ax.plot(x, marginal)
+    ax.set_xlim([-2,2])
+
+
+    plt.show()
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     # pdf_test()
     # rv_test()
-    gm = fleming_prior_test()
-    print gm
+    # gm = fleming_prior_test()
+    marginal_test()
     
     # fp = fleming_prior_test()
     # new_fp = fp.copy()

@@ -17,6 +17,7 @@ from cops_and_robots.helpers.storage import Storage
 from cops_and_robots.robo_tools.cop import Cop
 from cops_and_robots.robo_tools.robber import Robber
 from cops_and_robots.robo_tools.robot import Distractor
+from cops_and_robots.map_tools.display import Display
 # <>TODO: @MATT @NICK Look into adding PyPubSub
 
 
@@ -144,11 +145,13 @@ class CopsAndRobbers(object):
         if self.cfg['data_management']['storage']['save_data']:
             self.storage = Storage(**self.cfg['data_management']['storage'])
 
-        # Prepare the map (even if using headless mode)
+        # Prepare the display (even if using headless mode)
         self.fig = self.cops['Deckard'].map.fig
         fusion_engine = self.cops['Deckard'].fusion_engine
-        self.cops['Deckard'].map.setup_plot(fusion_engine)
-
+        map_ = self.cops['Deckard'].map
+        map_.setup_plot(fusion_engine)
+        vel_states = fusion_engine.vel_states
+        self.display = Display(self.fig, map_, vel_states=vel_states)
 
         # # STUB TO GENERATE AREA MASKS
         # from cops_and_robots.map_tools.map import find_grid_mask_for_rooms
@@ -157,7 +160,6 @@ class CopsAndRobbers(object):
         # area_masks = find_grid_mask_for_rooms(map_, grid)
         # np.save('coarse_area_masks', area_masks)
         # self.cops['Deckard'].map.plot()
-
         # return
 
         # Define timing
@@ -224,7 +226,7 @@ class CopsAndRobbers(object):
         for distractor_name, distractor in self.distractors.iteritems():
             distractor.update(i)
 
-        self.cops['Deckard'].map.update(i)
+        self.display.update(i)
 
         # Log time
         if self.cfg['main']['log_time']:

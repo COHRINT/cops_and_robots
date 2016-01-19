@@ -69,6 +69,7 @@ class FusionEngine(object):
                  motion_model='stationary',
                  total_particles=2000,
                  rosbag_process=None,
+                 use_velocity=True,
                  ):
 
         self.probability_type = probability_type
@@ -100,7 +101,7 @@ class FusionEngine(object):
                                                       motion_model,
                                                       particles_per_filter)
         elif self.probability_type == 'gauss sum':
-            for i, name in enumerate(missing_robber_names):
+            for name in missing_robber_names:
                 self.filters[name] = GaussSumFilter(name, feasible_layer, 
                                                     rosbag_process=rosbag_process)
             if len(missing_robber_names) > 1:
@@ -108,6 +109,20 @@ class FusionEngine(object):
         else:
             raise ValueError("FusionEngine must be of type 'grid', 'particle'"
                              "or 'gauss sum'.")
+
+        # Velocity
+        if use_velocity:
+            self.vel_states = {}
+            for name in missing_robber_names:
+                self.vel_states[name] = GaussSumFilter(target_name=name,
+                                                       velocity_states=True,
+                                                       )
+            if len(missing_robber_names) > 1:
+                self.filters['combined'] = GaussSumFilter(target_name='combined',
+                                                          velocity_states=True,
+                                                          )
+        else:
+            self.vel_states = None
 
     def update(self, robot_pose, sensors, robbers, save_file=None):
         """Update fusion_engine agnostic to fusion type.

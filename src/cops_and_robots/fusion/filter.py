@@ -19,6 +19,7 @@ import time
 
 from cops_and_robots.fusion.gaussian_mixture import (GaussianMixture,
                                                      fleming_prior,
+                                                     velocity_prior,
                                                      )
 from cops_and_robots.fusion.grid import Grid, uniform_prior
 from cops_and_robots.fusion.particles import Particles, uniform_particle_prior
@@ -33,7 +34,8 @@ class Filter(object):
                  motion_model='stationary',
                  state_spec='x y x_dot y_dot',
                  rosbag_process=None,
-                 probability_type='grid'
+                 probability_type='grid',
+                 velocity_states=False,
                  ):
         self.target_name = target_name
         self.relevant_targets = ['nothing', 'a robot', self.target_name]
@@ -44,8 +46,14 @@ class Filter(object):
         self.measurements = []
 
         # Define the initial prior probability distribution
-        feasible_region = self.feasible_layer.pose_region
-        if probability_type == 'grid':
+        if feasible_layer is not None:
+            feasible_region = self.feasible_layer.pose_region
+        else:
+            feasible_region = None
+
+        if velocity_states == True:
+            prior = velocity_prior()
+        elif probability_type == 'grid':
             prior = uniform_prior(feasible_region=feasible_region)
         elif probability_type == 'particle':
             prior = uniform_particle_prior(feasible_region=feasible_region)
@@ -170,7 +178,6 @@ class Filter(object):
         self.probability = GaussianMixture(1, robber_pose[0:2], 0.01 * np.eye(2))
         self.finished = True
         self.recieved_human_update = False
-
 
 
 class GridFilter(Filter):

@@ -50,9 +50,11 @@ class GaussSumFilter(Filter):
                  fusion_method='recursive',
                  compression_method='geometric',
                  window=1,
+                 *args,
                  **kwargs
                  ):
-        super(GaussSumFilter, self).__init__(**kwargs)
+        super(GaussSumFilter, self).__init__(probability_type='gaussian_mixture',
+                                             *args, **kwargs)
 
         self.fusion_method = fusion_method
         self.compression_method = compression_method

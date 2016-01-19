@@ -43,7 +43,7 @@ class ProbabilityLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, filter_, grid_size=0.5, z_levels=100, alpha=0.6,
+    def __init__(self, filter_, grid_size=0.5, z_levels=100, alpha=0.65,
                  colorbar_visible=False, show_ellipses=False,
                 **kwargs):
         super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)

@@ -285,9 +285,13 @@ class Map(object):
             ax.set_ylim([self.bounds[1], self.bounds[3]])
             ax.set_ylabel('y position (m)')
             if ax_name == 'combined':
-                ax.set_title('Combined perception of all robots')
+                t = ax.set_title('Combined perception of all robots')
             else:
-                ax.set_title("Map of {}'s perceived location".format(ax_name))
+                t = ax.set_title("Map of {}'s perceived location"
+                                 .format(ax_name))
+
+            if self.fusion_engine.vel_states is not None:
+                t.set_y(1.2)
         # plt.tight_layout()
 
     def _setup_layers(self):
