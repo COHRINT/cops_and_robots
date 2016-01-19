@@ -197,6 +197,10 @@ class Softmax(object):
         # Define softmax classes
         self._define_classes(labels)
 
+    def __str__(self):
+        return ('Softmax model, bounded by {}, with {} classes and a res of {}'
+                .format(self.bounds, self.num_classes, self.res))
+
     def probability(self, state=None, class_=None, find_class_probs=True,
                     find_subclass_probs=False):
         """Map the state space to probabilities.

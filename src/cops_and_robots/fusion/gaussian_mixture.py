@@ -31,6 +31,7 @@ from shapely.geometry import Polygon
 
 from cops_and_robots.fusion.probability import Probability
 
+
 # <>TODO: test for greater than 2D mixtures
 class GaussianMixture(Probability):
     """A collection of weighted multivariate normal distributions.
@@ -80,6 +81,10 @@ class GaussianMixture(Probability):
             self.pos_all = pos_all
         self._input_check()
 
+        # Set up the VB fusion parameters
+        from cops_and_robots.fusion.variational_bayes import VariationalBayes
+        self.vb = VariationalBayes()
+
     def __str__(self):
         return 'Gaussian Mixture ({} mixands)'.format(self.weights.size)
         # d = {}
@@ -124,8 +129,6 @@ class GaussianMixture(Probability):
         # print shape
         pdf = np.zeros(shape)
         for i, weight in enumerate(self.weights):
-            logging.debug('Means: \n {}'.format(self.means[i]))
-            logging.debug('Covariance: \n {}'.format(self.covariances[i]))
             if dims is None:
                 mean = self.means[i]
                 covariance = self.covariances[i]
@@ -134,9 +137,6 @@ class GaussianMixture(Probability):
                 covariance = [self.covariances[i][j, k] for j in dims for k in dims]
                 covariance = np.reshape(covariance, [len(dims), len(dims)])
 
-            logging.debug('State: \n {}'.format(x))
-            logging.debug('Means: \n {}'.format(mean))
-            logging.debug('Covariance: \n {}'.format(covariance))
             gaussian_pdf = multivariate_normal.pdf(x, mean, covariance,
                                                    allow_singular=True)
             pdf += weight * gaussian_pdf
@@ -198,8 +198,15 @@ class GaussianMixture(Probability):
 
         return rvs
 
-    def measurment_update(self, likelihood):
-        pass
+    def measurement_update(self, likelihood, measurement_label, **kwargs):
+        # Perform Bayes' update
+        mu, sigma, beta = self.vb.update(measurement=measurement_label,
+                                         likelihood=likelihood,
+                                         prior=self,
+                                         **kwargs
+                                        )
+        posterior = GaussianMixture(beta, mu, sigma)
+        return posterior
 
     def dynamics_update(self):
         dt = 0.1
@@ -1065,7 +1072,7 @@ def uniform_prior(num_mixands=10, bounds=None):
     return GaussianMixture(weights, means, covariances)
 
 
-def velocity_prior(speed=1, var=0.05):
+def velocity_prior(speed=0.5, var=0.05):
     """Isotropic velocity based on a given speed.
     """
     num_mixands = np.min((np.max((1,1/var)),20))

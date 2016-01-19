@@ -111,16 +111,18 @@ class FusionEngine(object):
                              "or 'gauss sum'.")
 
         # Velocity
+        self.vel_states = {}
         if use_velocity:
-            self.vel_states = {}
             for name in missing_robber_names:
                 self.vel_states[name] = GaussSumFilter(target_name=name,
                                                        velocity_states=True,
+                                                       dynamic_model=False,
                                                        )
             if len(missing_robber_names) > 1:
-                self.filters['combined'] = GaussSumFilter(target_name='combined',
-                                                          velocity_states=True,
-                                                          )
+                self.vel_states['combined'] = GaussSumFilter(target_name='combined',
+                                                             velocity_states=True,
+                                                             dynamic_model=False,
+                                                             )
         else:
             self.vel_states = None
 
@@ -145,9 +147,15 @@ class FusionEngine(object):
         # Update the filter probabilities
         for robber in robbers.values():
             if not self.filters[robber.name].finished:
+
+                # Update position filters
                 self.filters[robber.name].update(sensors['camera'],
                                                  sensors['human'],
                                                  )
+
+                # Update velocity filters
+                self.vel_states[robber.name].update(human_sensor=sensors['human'])
+
         if len(self.missing_robber_names) > 1:
             self._update_combined(sensors, robbers)
         sensors['human'].new_update = False  # done checking human, no more update

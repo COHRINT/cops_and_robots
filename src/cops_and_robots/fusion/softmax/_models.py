@@ -83,23 +83,24 @@ def binary_speed_model():
     bsm = BinarySoftmax(sm)
     return bsm
 
-def speed_model_2d(bounds=[-2, -2, 2, 2], spread=1.3):
+def speed_model_2d(num_classes=7, bounds=[-2, -2, 2, 2], spread=1.3):
     """Generate a one-dimensional Softmax model for speeds.
     """
-    labels = ['Stopped', 'Slow', 'Medium', 'Fast']
-    rs = [0, 0.2, 0.4, 0.8]
+    # labels = ['Stopped', 'Slow', 'Medium', 'Fast']
+    # rs = [0, 0.2, 0.4, 0.8]
+    labels = ['Stopped', 'Slow', 'Fast']
+    rs = [0, 0.3, 0.6]
     sms = []
 
     for i, label in enumerate(labels[1:], start=1):
         try:
             poly = scale(poly, 1 + rs[i], 1 + rs[i])
         except:
-            poly = _make_regular_2D_poly(12, max_r=rs[i])
-            
-        num_classes = len(poly.exterior.coords)
+            poly = _make_regular_2D_poly(num_classes - 1, max_r=rs[i])
+
         class_labels = [labels[0]] + [label] * (num_classes - 1)
         steepnesses = [10 + i * 20] * num_classes
-        sm = Softmax(poly=poly, labels=class_labels, resolution=0.1,
+        sm = Softmax(poly=poly, labels=class_labels,
                      steepness=steepnesses, bounds=bounds)
 
         if i == 1:

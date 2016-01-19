@@ -202,7 +202,6 @@ class CopsAndRobbers(object):
         # <>TODO: break from non-blocking plt.show() gracefully
 
         # Save the animation
-        logging.info(self.cfg['data_management']['animation']['save_animation'])
         if self.cfg['data_management']['animation']['save_animation']:
             folder = '/' + self.cfg['data_management']['animation']['folder']
             filename = self.cfg['data_management']['animation']['filename']

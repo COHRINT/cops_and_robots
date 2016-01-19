@@ -162,9 +162,9 @@ class Display(object):
             vx = self.vel_states[name].probability.marginal_pdf(x=v, axis=0)
             vy = self.vel_states[name].probability.marginal_pdf(x=v, axis=1)
 
-            # TEST STUB
-            vx = GaussianMixture(np.random.random(2), (0.5 - np.random.random(2)), np.random.random(2)).pdf(v)
-            vy = GaussianMixture(np.random.random(2), (0.5 - np.random.random(2)), np.random.random(2)).pdf(v)
+            # # TEST STUB
+            # vx = GaussianMixture(np.random.random(2), (0.5 - np.random.random(2)), np.random.random(2)).pdf(v)
+            # vy = GaussianMixture(np.random.random(2), (0.5 - np.random.random(2)), np.random.random(2)).pdf(v)
 
 
             levels = np.linspace(0, np.max((vx, vy)), 80)

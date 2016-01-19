@@ -21,6 +21,7 @@ from cops_and_robots.fusion.gaussian_mixture import (GaussianMixture,
                                                      fleming_prior,
                                                      velocity_prior,
                                                      )
+from cops_and_robots.fusion.softmax._models import speed_model_2d
 from cops_and_robots.fusion.grid import Grid, uniform_prior
 from cops_and_robots.fusion.particles import Particles, uniform_particle_prior
 
@@ -36,6 +37,7 @@ class Filter(object):
                  rosbag_process=None,
                  probability_type='grid',
                  velocity_states=False,
+                 dynamic_model=True,
                  ):
         self.target_name = target_name
         self.relevant_targets = ['nothing', 'a robot', self.target_name]
@@ -43,6 +45,7 @@ class Filter(object):
         self.motion_model = motion_model
         self.finished = False
         self.recieved_human_update = False
+        self.dynamic_model = dynamic_model
         self.measurements = []
 
         # Define the initial prior probability distribution
@@ -65,7 +68,7 @@ class Filter(object):
         self.recently_fused_update = False
         self.rosbag_process = rosbag_process
 
-    def update(self, camera, human_sensor=None, ):
+    def update(self, camera=None, human_sensor=None, ):
         if self.finished:
             logging.debug('No need to update - this filter is finished.')
             return
@@ -77,11 +80,36 @@ class Filter(object):
         except AttributeError:
             logging.debug('Not playing rosbag')
 
-        self.probability.dynamics_update()
+        if self.dynamic_model:
+            self.probability.dynamics_update()
+        else:
+            #<> TEST STUB
+            r = np.random.random()
+            if r < 0.025:
+                measurement_label = 'Stopped'
+            elif r < 0.05:
+                measurement_label = 'Slow'
+            # elif r < 0.075:
+            #     measurement_label = 'Medium'
+            elif r < 0.1:
+                measurement_label = 'Fast'
+            else:
+                measurement_label = None
+            
+            if measurement_label is not None:
+                logging.info("FAKE MEASUREMENT: Roy's movement is {}"
+                             .format(measurement_label))
+                likelihood = speed_model_2d()
+                self.probability = self.probability.measurement_update(likelihood, 
+                                                                       measurement_label,
+                                                                       use_LWIS=True)
+
         self._camera_update(camera)
         self._human_update(human_sensor)
 
     def _camera_update(self, camera):
+        if camera is None:
+            return
         likelihood = camera.detection_model
         measurement = 'No Detection'
 
@@ -95,7 +123,6 @@ class Filter(object):
         This update will fail if the human does not specifiy the current filter
         as the target or if the measurement is malformed.
         """
-
         # Validate human sensor statement
         measurement = self._verify_human_update(human_sensor)
         if measurement is None:
@@ -115,10 +142,10 @@ class Filter(object):
         grounding = measurement['grounding']
         likelihood = grounding.relations.binary_models[relation_class]
 
-        self.fusion( likelihood, measurement_label, human_sensor)
+        self.fusion(likelihood, measurement_label, human_sensor)
 
         # Resume rosbag
-        # <>TODO: have rosbag halt itself
+        # <>TODO: have rosbag resume itself
         if self.rosbag_process is not None:
             self.rosbag_process.stdin.write(' ')  # start rosbag
             self.rosbag_process.stdin.flush()
