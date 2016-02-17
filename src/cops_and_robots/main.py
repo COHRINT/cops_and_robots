@@ -58,8 +58,7 @@ class CopsAndRobbers(object):
             logging.basicConfig(format=logger_format,
                                 level=logger_level,
                                )
-        np.set_printoptions(precision=self.cfg['main']['numpy_print_precision'],
-                            suppress=True)
+        np.set_printoptions(precision=self.cfg['main']['numpy_print_precision'],suppress=True)
 
         # Set up a ROS node (if using ROS)
         if self.cfg['main']['use_ROS']:

@@ -314,4 +314,5 @@ if __name__ == '__main__':
 
     title=''
     sm.plot(title=title, plot_poly=True)
-    bsm.binary_models['Medium'].plot(title=title)
+    bsm.binary_models['Slow'].plot(title=title)
+    print sm

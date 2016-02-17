@@ -49,7 +49,7 @@ class Grid(Probability):
 
     def __init__(self, bounds=[-10, -10, 10, 10], res=0.1, prior='fleming',
                  all_dims=False, is_dynamic=True, max_range=1.0, var=1.0,
-                 feasible_region=None):
+                 feasible_region=None, use_STM=True):
 
         if prior == 'fleming':
             bounds = [-9.5, -3.33, 4, 3.68]
@@ -62,7 +62,12 @@ class Grid(Probability):
         if is_dynamic:
             self.max_range = max_range
             self.var = var
-            self._create_STM()
+            self.use_STM = use_STM
+            if use_STM:
+                self._create_STM()
+            else:
+                self._create_distance_matrix()
+                self.update_transition_probs = True
 
         if prior == 'fleming':
             self.prob = fleming_prior().pdf(self.pos, dims=[0,1])
@@ -100,12 +105,22 @@ class Grid(Probability):
         posterior /= posterior.sum()
         self.prob = np.reshape(posterior, self.X.shape)
 
-    def dynamics_update(self, n_steps=1):
+    def dynamics_update(self, n_steps=1, velocity_state=None):
+        if self.use_STM is False and self.update_transition_probs:
+            logging.info('Updating transition probabilities...')
+            self.transition_probs = velocity_state.pdf(self.distance_matrix)
+            self.update_transition_probs = False
+
         if self.is_dynamic:
             posterior = self.prob.flatten()
             for step in range(n_steps):
                 # self.state_transition_matrix += 0.1 * np.eye(self.state_transition_matrix.shape[1])
-                posterior = self.state_transition_matrix .dot (posterior)
+                
+                if self.use_STM:
+                    posterior = self.state_transition_matrix .dot (posterior)
+                else:
+                    posterior = self.transition_probs .dot (posterior)
+
                 posterior /= posterior.sum()
             self.prob = posterior.reshape(self.X.shape)
             # print 
@@ -195,6 +210,54 @@ class Grid(Probability):
             logging.error('This should be impossible, a gauss mixture with no variables')
             raise ValueError
 
+    def _create_distance_matrix(self):
+        n = self.pos.shape[0]
+        directory = os.path.dirname(__file__) + '/STMs'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # Try to load a precomputed distance matrix
+        if hasattr(self, 'infeasible_states'):
+            feas_str = '_feasible'
+        else:
+            feas_str = ''
+        filename = '{}/DM_n{}_r{}_{}.npy'.format(directory, n, self.res,
+                                                 feas_str)
+
+        try:
+            self.distance_matrix = np.load(filename)
+            logging.info('Loaded distance matrix {}.'.format(filename))
+            return
+        except:
+            logging.info('No distance matrix to load for {}, creating... '
+                         .format({'resolution': self.res,
+                                  'feasible': hasattr(self,'infeasible_states')
+                                  }))
+            logging.info('\n (takes a while for large state spaces)')
+
+        # Create a Distance matrix
+        self.distance_matrix = np.empty((n,n,2))
+        for state_i, p in enumerate(self.pos):
+            # Identify distance components
+            dist = p - self.pos
+
+            # Knock out infeasible cells
+            if hasattr(self, 'infeasible_states'):
+                # dist[self.infeasible_states] = np.inf
+                dist[self.infeasible_states] = 1000
+
+            # Save state transition probabilities from state_i
+            self.distance_matrix[:, state_i] = dist
+
+            progress = state_i/n * 100
+            if state_i % 100 == 0:
+                logging.info('Progress: {:.0f}% complete of {} by {} state transition matrix'
+                             .format(progress, n, n))
+
+        # Save
+        logging.info('Saved distance matrix as {}.'.format(filename))
+        np.save(filename, self.distance_matrix)
+
     def _create_STM(self):
         n = self.pos.shape[0]
         directory = os.path.dirname(__file__) + '/STMs'
@@ -256,15 +319,18 @@ class Grid(Probability):
         np.save(filename, self.state_transition_matrix)
 
 
-def test_dynamics_update():
+def test_dynamics_update(use_STM=True, res=0.2, speed=0.5, vel_var=0.01):
     import matplotlib.animation as animation
+    from cops_and_robots.fusion.gaussian_mixture import velocity_prior
 
-    probability = Grid(res=0.2)
+    probability = Grid(use_STM=use_STM, res=res)
+    vp = velocity_prior(speed=speed, var=vel_var)
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     def dm_update(i):
-        probability.dynamics_update()
+        probability.dynamics_update(velocity_state=vp)
         title = probability.__str__() + '@ time {}'.format(i)
         probability.update_plot(i, title=title)
 
@@ -329,9 +395,9 @@ def test_measurement_update():
                                   )
     plt.show()
 
-def uniform_prior(feasible_region=None):
+def uniform_prior(feasible_region=None, use_STM=True):
     bounds = [-9.5, -3.33, 4, 3.68]
-    probability = Grid(prior='uniform', bounds=bounds,
+    probability = Grid(prior='uniform', bounds=bounds, use_STM=use_STM,
                        feasible_region=feasible_region)
     return probability
 
@@ -343,4 +409,4 @@ if __name__ == '__main__':
     # grid.plot()
     # plt.show()
     # test_measurement_update()
-    test_dynamics_update()
+    test_dynamics_update(use_STM=False, res=0.4, speed=0.2, vel_var=0.01)

@@ -127,6 +127,7 @@ class ProbabilityLayer(Layer):
         """Remove previous contour and replot new contour.
         """
         logging.debug('Probability Layer update {}'.format(i))
+
         # Test stub for the call from __main__
         if hasattr(self, 'test_probability'):
             self.filter.probability = next(self.test_probability)
@@ -170,8 +171,9 @@ if __name__ == '__main__':
 
     ani = animation.FuncAnimation(pl.fig, pl.update,
         frames=xrange(100),
-        interval=1000,
+        interval=100,
         repeat=True,
-        blit=False)
+        blit=False,
+        )
 
     plt.show()

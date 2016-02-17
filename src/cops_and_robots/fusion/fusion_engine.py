@@ -70,6 +70,7 @@ class FusionEngine(object):
                  total_particles=2000,
                  rosbag_process=None,
                  use_velocity=True,
+                 use_STM=True,
                  ):
 
         self.probability_type = probability_type
@@ -80,10 +81,15 @@ class FusionEngine(object):
 
         if self.probability_type == 'grid':
             for i, name in enumerate(missing_robber_names):
-                self.filters[name] = GridFilter(name, feasible_layer, rosbag_process=rosbag_process)
+                self.filters[name] = GridFilter(name, feasible_layer, 
+                                                rosbag_process=rosbag_process,
+                                                use_STM=use_STM,
+                                                )
             if len(missing_robber_names) > 1:
                 self.filters['combined'] = GridFilter('combined', 
-                                                      feasible_layer)
+                                                      feasible_layer,
+                                                      use_STM=use_STM,
+                                                      )
 
         elif self.probability_type == 'particle':
             if n > 1:
@@ -151,6 +157,7 @@ class FusionEngine(object):
                 # Update position filters
                 self.filters[robber.name].update(sensors['camera'],
                                                  sensors['human'],
+                                                 self.vel_states[robber.name].probability,
                                                  )
 
                 # Update velocity filters

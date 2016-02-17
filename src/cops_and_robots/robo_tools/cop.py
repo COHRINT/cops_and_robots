@@ -135,7 +135,8 @@ class Cop(Robot):
                                           self.missing_robber_names,
                                           self.map.feasible_layer,
                                           robber_model,
-                                          rosbag_process=rosbag_process
+                                          rosbag_process=rosbag_process,
+                                          use_STM=fe_cfg['use_STM'],
                                           )
         self.sensors = {}
         self.sensors['camera'] = Camera((0, 0, 0),

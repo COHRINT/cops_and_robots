@@ -50,6 +50,7 @@ cops:
       type_: 'a_star'  # ['direct', 'a_star'] 
     fusion_engine_cfg:
       probability_type: grid  # ['grid', 'particle', 'gaussian mixture']
+      use_STM: True
     map_cfg:
       plot_robbers: True # True for all, False for none, or list of robbers to plot
       map_name: fleming

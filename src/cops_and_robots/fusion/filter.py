@@ -38,6 +38,7 @@ class Filter(object):
                  probability_type='grid',
                  velocity_states=False,
                  dynamic_model=True,
+                 use_STM=True,
                  ):
         self.target_name = target_name
         self.relevant_targets = ['nothing', 'a robot', self.target_name]
@@ -57,7 +58,8 @@ class Filter(object):
         if velocity_states == True:
             prior = velocity_prior()
         elif probability_type == 'grid':
-            prior = uniform_prior(feasible_region=feasible_region)
+            prior = uniform_prior(feasible_region=feasible_region,
+                                  use_STM=use_STM)
         elif probability_type == 'particle':
             prior = uniform_particle_prior(feasible_region=feasible_region)
         else:
@@ -68,7 +70,7 @@ class Filter(object):
         self.recently_fused_update = False
         self.rosbag_process = rosbag_process
 
-    def update(self, camera=None, human_sensor=None, ):
+    def update(self, camera=None, human_sensor=None, velocity_state=None):
         if self.finished:
             logging.debug('No need to update - this filter is finished.')
             return
@@ -81,7 +83,10 @@ class Filter(object):
             logging.debug('Not playing rosbag')
 
         if self.dynamic_model:
-            self.probability.dynamics_update()
+            if velocity_state is None:
+                self.probability.dynamics_update()
+            else:
+                self.probability.dynamics_update(velocity_state=velocity_state)
         else:
             #<> TEST STUB
             r = np.random.random()

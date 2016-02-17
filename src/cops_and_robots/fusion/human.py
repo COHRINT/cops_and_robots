@@ -32,6 +32,7 @@ __status__ = "Development"
 
 import logging
 import numpy as np
+from collections import namedtuple
 
 from shapely.geometry import Point
 
@@ -39,7 +40,7 @@ from cops_and_robots.fusion.sensor import Sensor
 from cops_and_robots.fusion.softmax import Softmax, speed_model, binary_speed_model
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 from cops_and_robots.fusion.variational_bayes import VariationalBayes
-
+from cops_and_robots.map_tools.map import Map
 
 class Human(Sensor):
     """The human sensor, able to provide updates to a fusion engine.
@@ -71,34 +72,38 @@ class Human(Sensor):
         super(Human, self).__init__(self.update_rate,
                                     self.has_physical_dimensions)
 
-        # self.certainties = ['think', 'know']
-        self.certainties = ['know']
-        self.positivities = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
-        self.relations = {'object': ['behind',
-                                     'in front of',
-                                     'left of',
-                                     'right of',
-                                     'near',
-                                     ],
-                          'area': ['inside',
-                                   'near',
-                                   'outside'
-                                   ]}
-        self.movement_types = ['moving', 'stopped']
-        self.movement_qualities = ['slowly', 'moderately', 'quickly']
+        # # self.certainties = ['think', 'know']
+        # self.certainties = ['know']
+        # self.positivities = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
+        # self.relations = {'object': ['behind',
+        #                              'in front of',
+        #                              'left of',
+        #                              'right of',
+        #                              'near',
+        #                              ],
+        #                   'area': ['inside',
+        #                            'near',
+        #                            'outside'
+        #                            ]}
+        # self.movement_types = ['moving', 'stopped']
+        # self.movement_qualities = ['slowly', 'moderately', 'quickly']
 
-        self.groundings = {}
-        self.groundings['area'] = map_.areas
+        # self.groundings = {}
+        # self.groundings['area'] = map_.areas
 
-        self.groundings['object'] = {}
-        for cop_name, cop in map_.cops.iteritems():
-            # if cop.has_relations:
-            self.groundings['object'][cop_name] = cop
-        for object_name, obj in map_.objects.iteritems():
-            if obj.has_relations:
-                self.groundings['object'][object_name] = obj
+        # self.groundings['object'] = {}
+        # for cop_name, cop in map_.cops.iteritems():
+        #     # if cop.has_relations:
+        #     self.groundings['object'][cop_name] = cop
+        # for object_name, obj in map_.objects.iteritems():
+        #     if obj.has_relations:
+        #         self.groundings['object'][object_name] = obj
 
-        self.target_names = ['nothing', 'a robot'] + map_.robbers.keys()
+        # self.target_names = ['nothing', 'a robot'] + map_.robbers.keys()
+
+        # Add all templates to this class
+        self.__dict__.update(generate_human_language_template().__dict__)
+
         self.utterance = ''
         self.new_update = False
 
@@ -285,3 +290,69 @@ class Human(Sensor):
             translated_movement = 'moving quickly'
         self.movement = translated_movement
 
+
+def generate_human_language_template(use_fleming=True, default_targets=True):
+    """Generates speech templates
+
+    Note: this function can be used to add attributes to a class instance with
+    the following command (where 'self' is the class instance):
+
+    self.__dict__.update(generate_human_language_template().__dict__)
+
+    """
+    if use_fleming:
+        map_ = Map(map_name='fleming')
+
+    # self.certainties = ['think', 'know']
+    certainties = ['know']
+    positivities = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
+    relations = {'object': ['behind',
+                                 'in front of',
+                                 'left of',
+                                 'right of',
+                                 'near',
+                                 ],
+                      'area': ['inside',
+                               'near',
+                               'outside'
+                               ]}
+    actions = ['moving', 'stopped']
+    modifiers = ['slowly', 'moderately', 'quickly', 'around', 'toward']
+
+    movement_types = ['moving', 'stopped']
+    movement_qualities = ['slowly', 'moderately', 'quickly']
+
+    groundings = {}
+    groundings['area'] = map_.areas
+    groundings['null'] = {}
+
+    groundings['object'] = {}
+    for cop_name, cop in map_.cops.iteritems():
+        # if cop.has_relations:
+        groundings['object'][cop_name] = cop
+    for object_name, obj in map_.objects.iteritems():
+        if obj.has_relations:
+            groundings['object'][object_name] = obj
+
+    if default_targets:
+        target_names = ['nothing', 'a robot', 'Roy','Pris','Zhora']
+    else:
+        target_names = ['nothing', 'a robot'] + map_.robbers.keys()
+
+    Template = namedtuple('Template', 'certainties positivities relations' 
+        + ' actions modifiers groundings target_names')
+    Template.__new__.__defaults__ = (None,) * len(Template._fields)
+
+    template = Template(certainties,
+                        positivities,
+                        relations,
+                        actions,
+                        modifiers,
+                        groundings,
+                        target_names
+                        )
+
+    return template
+
+if __name__ == '__main__':
+    pass
