@@ -386,6 +386,8 @@ function checkSettings(){
 */
 function init() {
 
+	$('#experimentModal').modal()
+
 	selectControl('Deckard');
 	selectView('Deckard');	
 	selectMap('Roy')
@@ -421,15 +423,13 @@ function init() {
 	var specifications = [objects, areas, movementQualities];
 	
 	
+	// Takes out confusing options
 	targetsObj.onchange = function(){
 		if(targetsObj.value == "nothing"){
 			positivitiesObj.options[1].style.display="none";
 		}else{
 			positivitiesObj.options[1].style.display="inline";
 		}
-
-		$("area_targets option:selected") = $("obj_targets option:selected");
-		$("mv_targets option:selected") = $("obj_targets option:selected");
 	}
 
 	targetsArea.onchange = function(){
@@ -457,16 +457,36 @@ function init() {
 		}
 	}
 
-	// Combine first 3 colums to always have the same seleced options
-		// certaintyCases, targetCases, positivityCases
-		// take in id for each tabs options array, identify a change, append html to remove other tabs
-		//original selected and add it to the same value as in the other changed tab
+	// Connects first three code boxes on the different human sensory tabs
 
-	// for(i = 0; i < targetCases; i++){
-	// 	targetCases[i].onchange = function(){
+	// may need to change how the first option is selected add to js
+	// add in taget id matricies
 
-	// 	}
-	// }
+	var targets = ('target_id_obj', 'target_id_area', 'target_id_mv');
+	var m;
+	for(i = 0; i < targetCases.length; i++){
+		targetCases[i].onchange = function(){
+			// issues start here
+			for(j = 0; j < $('#targets[i]').length; j++){
+				console.log($('#targets[i]').length);
+				if (typeof($('#targets[i][j] option:selected')) !== 'undefined'){
+					m = j;
+					break;
+					console.log(m);
+				}
+			}
+			// if(i==0){
+			// 	targets[1][m].attr("option ", "selected");
+			// 	targets[2][m].attr("option ", "selected");
+			// }else if(i==1){
+			// 	targets[0][m].attr("option ", "selected");
+			// 	targets[2][m].attr("option ", "selected");
+			// }else{
+			// 	targets[0][m].attr("option ", "selected");
+			// 	targets[1][m].attr("option ", "selected");
+			// }
+		}
+	}
 	
 	
 	// Publish through ros every time 'submit' is pressed
@@ -581,6 +601,61 @@ function init() {
 	console.log('Received message on ' + poseListener.name + ': ' + message.translation);
 	});
 */	
+
+	jQuery.get('js/typeahead.json', function(data){
+	    jQuery("#chatInput").typeahead({ 
+	    	source:data,
+			items:'all',
+			matcher: function (item) {
+							        var last = this.query.split(' ');
+							        this.query = jQuery.trim(last[last.length-1]);
+							
+							        if(this.query.length) return ~item.toLowerCase().indexOf(this.query.toLowerCase());
+			},
+			updater: function (item) {
+								  	var input = this.$element.val().split(' ');
+								  	for (var i=0; i < input.length-1; i++){
+									  	word = input[i]
+									  	if (item.toLowerCase().indexOf(word.toLowerCase()) > -1){
+										  	item = item.replace(word + ' ','')
+									  	}
+									  	
+								  	}
+									return this.$element.val().replace(new RegExp(this.query + '$'),'') + item + ' ';
+		    }
+		 });
+	},'json');
+	
+/*
+	jQuery("#chatInput").change(function (){
+		jQuery("#chatInput").typeahead({ 
+	    	source:data,
+			items:'all',
+		 });
+
+	});
+*/
+	$("#chatInput").keypress(function(event) {
+	    if (event.which == 13) {
+	        event.preventDefault();
+    		var str = jQuery.trim(jQuery("#chatInput").val()) + '.'
+		    humanInputSensor(str);
+			consoleOut("You said: " + str);
+			
+			jQuery("#chatInput").val("")
+	    }
+	});
+	
+	// Publish through ros every time 'submit' is pressed
+	jQuery("#human_chat_button").unbind().click(function() { 
+		
+		var str = jQuery.trim(jQuery("#chatInput").val()) + '.'
+	    humanInputSensor(str);
+		consoleOut("You said: " + str);
+		
+		jQuery("#chatInput").val("")
+	});
+	
 }
 
 /*
