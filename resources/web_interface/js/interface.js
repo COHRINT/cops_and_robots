@@ -386,6 +386,8 @@ function checkSettings(){
 */
 function init() {
 
+	$('#experimentModal').modal()
+
 	selectControl('Deckard');
 	selectView('Deckard');	
 	selectMap('Roy')

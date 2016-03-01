@@ -59,15 +59,26 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 
 <div class="container">
 	<div class="row">
-		<!-- Control Alert -->
-		<div id="alert" class="alert alert-info alert-dismissable col-md-12">
-		  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-		  <h3>Controls</h3>
-		  	<p><pre>
-. -> speed up   w -> move forward   a -> rotate counterclockwise  q -> turn left   space -> stop            Hit buttons once
-, -> slow down  s -> move backward  d -> rotate clockwise         e -> turn right                     instead of holding them down
-			</pre></p>
-		</div><!-- /#alert -->
+	
+	<div id="experimentModal" class="modal fade" tabindex="-1" role="dialog">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <h4 class="modal-title">What's this experiment about?</h4>
+	      </div>
+	      <div class="modal-body">
+			<p>Hello! Welcome to our human-robot interaction experiment, where you play a game of Cops and Robbers with a team of robots. You (the deputy) and Deckard (the cop) are trying to hunt down Pris, Zhora and Roy (the red, green and blue Robbers, respectively). Deckard needs your help to find and capture these terrible replicants.</p>
+			<p>In phase 1 of this experiment, we’ll show you a video and ask you to describe the the robbers to Deckard – tell him where they are, where they aren’t, what they’re doing, etc. You want to give him information that describes the world, not tell him what to do (i.e. “I see Pris behind the desk!” not, “Go behind the desk!”). During phase 1, Deckard will be forging his own path without considering the information you’re giving him. But, the more you you tell him in phase 1, the more responsive he’ll be in phase 2.</p>
+			<p>In phase 2, which will happen as soon as we teach Deckard how to understand parts of human language (i.e. in a few months), Deckard will now take the information you give him under consideration. You’ll see how he changes his estimate of where the robbers are, based on what you’ve told him. 
+Good luck, and have fun!</p>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-primary" data-dismiss="modal">Get Started</button>
+	      </div>
+	    </div><!-- /.modal-content -->
+	  </div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
 
 
 		<!-- Camera Visual -->
