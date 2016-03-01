@@ -633,6 +633,16 @@ function init() {
 
 	});
 */
+	$("#chatInput").keypress(function(event) {
+	    if (event.which == 13) {
+	        event.preventDefault();
+    		var str = jQuery.trim(jQuery("#chatInput").val()) + '.'
+		    humanInputSensor(str);
+			consoleOut("You said: " + str);
+			
+			jQuery("#chatInput").val("")
+	    }
+	});
 	
 	// Publish through ros every time 'submit' is pressed
 	jQuery("#human_chat_button").unbind().click(function() { 
@@ -640,6 +650,8 @@ function init() {
 		var str = jQuery.trim(jQuery("#chatInput").val()) + '.'
 	    humanInputSensor(str);
 		consoleOut("You said: " + str);
+		
+		jQuery("#chatInput").val("")
 	});
 	
 }
