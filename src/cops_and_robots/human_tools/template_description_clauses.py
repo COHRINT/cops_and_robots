@@ -14,7 +14,7 @@ __status__ = "Development"
 import logging
 import daft
 
-from cops_and_robots.fusion.human import generate_human_language_template
+from cops_and_robots.human_tools.human import generate_human_language_template
 
 
 class TDC(object):
@@ -231,7 +231,7 @@ class TDC(object):
         return parsed_spans
 
     def to_tagged_phrase(self):
-        return [[t, w] for t,w in self.parsing]
+        return [[word, tag] for tag, word in self.parsing.iteritems()]
 
 
 class TDC_Collection(object):
@@ -270,6 +270,10 @@ class TDC_Collection(object):
             else:
                 phrases.append(phrase)
                 phrase = []
+
+        if len(phrase) > 0:
+            phrases.append(phrase)
+
         return phrases
         
     def get_TDCs_from_phrases(self, phrases):
@@ -341,7 +345,6 @@ class TDC_Collection(object):
             if len(empty_spans) > 0:
                 del self.TDCs[i]
 
-
     def print_TDCs(self, print_phrases=True):
         for tdc in self.TDCs:
             if print_phrases:
@@ -397,169 +400,6 @@ class TDC_Collection(object):
         pgm.figure.savefig(filename + ".png", dpi=150)
         pgm.figure.clf()
 
-def generate_test_data():
-    data = [['Roy','TARGET' ],
-        ['is','POSITIVITY'],
-        ['moving','ACTION'],
-        ['North','MODIFIER'],
-        ['.','NULL'],
-        ['That robot','TARGET'],
-        ['is','POSITIVITY'],
-        ['stopped','ACTION'],
-        ['.','NULL'],
-        ['Nothing','TARGET'],
-        ['is','POSITIVITY'],
-        ['next to','SPATIALRELATION'],
-        ['the dresser','GROUNDING'],
-        ['.','NULL'],
-        ['I','NULL'],
-        ['don\'t','POSITIVITY'],
-        ['see','NULL'],
-        ['anything','TARGET'],
-        ['near','SPATIALRELATION'],
-        ['the desk','GROUNDING'],
-        ['.','NULL'],
-        ['I think','NULL'],
-        ['a robot','TARGET'],
-        ['is','POSITIVITY'],
-        ['in','SPATIALRELATION'],
-        ['the kitchen','GROUNDING'],
-        ['.','NULL'],
-        ['Pris','TARGET'],
-        ['is','POSITIVITY'],
-        ['moving','ACTION'],
-        ['really quickly','MODIFIER'],
-        ['.','NULL'],
-        ['The green one','TARGET'],
-        ['is','POSITIVITY'],
-        ['heading','ACTION'],
-        ['over there','GROUNDING'],
-        ['.','NULL'],
-        ['The red guy','TARGET'],
-        ['is','POSITIVITY'],
-        ['spinning around','ACTION'],
-        ['the table','GROUNDING'],
-        ['.','NULL'],
-        ['A robot\'s','TARGET'],
-        ['moving','ACTION'],
-        ['away from','MODIFIER'],
-        ['you','GROUNDING'],
-        ['.','NULL'],
-        ['There\'s','NULL'],
-        ['another robot','TARGET'],
-        ['heading','ACTION'],
-        ['towards','MODIFIER'],
-        ['you','GROUNDING'],
-        ['.','NULL'],
-        ['He\'s','TARGET'],
-        ['running','ACTION'],
-        ['away from','MODIFIER'],
-        ['you','GROUNDING'],
-        ['!','NULL'],
-        ['He\'s','TARGET'],
-        ['behind','SPATIALRELATION'],
-        ['the desk','GROUNDING'],
-        [',','NULL'],
-        ['about to','NULL'],
-        ['leave','ACTION'],
-        ['the kitchen','GROUNDING'],
-        ['.','NULL'],
-        ['Two robots','TARGET'],
-        ['are','POSITIVITY'],
-        ['moving','ACTION'],
-        ['away from','MODIFIER'],
-        ['each-other','GROUNDING'],
-        ['.','NULL'],
-        ['I','NULL'],
-        ['think','NULL'],
-        ['Pris','TARGET'],
-        ['is','POSITIVITY'],
-        ['trying to','NULL'],
-        ['stay','ACTION'],
-        ['in','SPATIALRELATION'],
-        ['the kitchen','GROUNDING'],
-        ['.','NULL'],
-        ]
-    return data
-
-def generate_fleming_test_data():
-    (certainties,
-    positivities,
-    relations,
-    actions,
-    modifiers,
-    groundings,
-    target_names) = generate_human_language_template()
-
-    data = []
-    for target in target_names:
-        for positivity in positivities:
-
-            # Spatial relation statements
-            for grounding_type_name, grounding_type in groundings.iteritems():
-                for grounding_name, grounding in grounding_type.iteritems():
-                    grounding_name = grounding_name.lower()
-                    if grounding_name == 'deckard':
-                        continue
-                    if grounding_name.find('the') == -1:
-                        grounding_name = 'the ' + grounding_name
-                    relation_names = grounding.relations.binary_models.keys()
-                    for relation_name in relation_names:
-                        relation = relation_name
-
-                        # Make relation names grammatically correct
-                        relation_name = relation_name.lower()
-                        if relation_name == 'front':
-                            relation_name = 'in front of'
-                        elif relation_name == 'back':
-                            relation_name = 'behind'
-                        elif relation_name == 'left':
-                            relation_name = 'left of'
-                        elif relation_name == 'right':
-                            relation_name = 'right of'
-
-                        # Ignore certain questons
-                        if grounding_type_name == 'object':
-                            if relation_name in ['inside', 'outside']:
-                                continue
-
-                        # Write spatial relation tagged data
-                        data.append(['I know', 'NULL'])
-                        data.append([target, 'TARGET'])
-                        data.append([positivity, 'POSITIVITY'])
-                        data.append([relation_name, 'SPATIALRELATION'])
-                        data.append([grounding_name, 'GROUNDING'])
-                        data.append(['.', 'NULL'])
-
-                    # Action statements
-                    for action in actions:
-                        if action == 'stopped':
-                            data.append(['I know', 'NULL'])
-                            data.append([target, 'TARGET'])
-                            data.append([positivity, 'POSITIVITY'])
-                            data.append([action, 'ACTION'])
-                            data.append(['.', 'NULL'])
-                            continue
-
-                        for modifier in modifiers:
-
-                            data.append(['I know', 'NULL'])
-                            data.append([target, 'TARGET'])
-                            data.append([positivity, 'POSITIVITY'])
-                            data.append([action, 'ACTION'])
-                            data.append([modifier, 'MODIFIER'])
-                            if modifier in ['toward', 'around']:
-                                data.append([grounding_name, 'GROUNDING'])
-
-                                str_ = ("I know " + target + ' ' + positivity + ' '
-                                        + action + ' ' + modifier + ' ' +
-                                        grounding_name + '.')
-                            else:
-                                str_ = ("I know " + target + ' ' + positivity + ' '
-                                        + action + ' ' + modifier + '.')
-                            data.append(['.', 'NULL'])
-
-    return data
 
 
 if __name__ == '__main__':

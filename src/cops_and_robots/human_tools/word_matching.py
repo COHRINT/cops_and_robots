@@ -18,7 +18,7 @@ from collections import OrderedDict
 import numpy as np
 import spacy.en
 
-from cops_and_robots.fusion.human import generate_human_language_template
+from cops_and_robots.human_tools.human import generate_human_language_template
 
 class SimilarityChecker(object):
     """short description of SimilarityChecker
@@ -65,7 +65,7 @@ class SimilarityChecker(object):
             if key == 'certainties':
                 key = 'certainty'
             if key == 'relations':
-                key = 'spatialrelations'
+                key = 'spatialrelation'
             if key == 'actions':
                 key = 'action'
             if key == 'modifiers':
@@ -125,6 +125,7 @@ class SimilarityChecker(object):
         """Find the closest template word to an individual word-span, given a tag.
         """
         similarities = []
+
         for template_word in self.templates[tag]:
             tw = self.nlp(unicode(template_word))
             ws = self.nlp(unicode(word_span.replace('_',' ')))
@@ -142,7 +143,7 @@ class SimilarityChecker(object):
 def template_to_string(template):
     str_ = " ".join(filter(None, template.values()[:-1]))
     str_ += template.values()[-1]
-    return 
+    return str_
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
