@@ -89,7 +89,9 @@ class Pose(object):
         x = trans[0]
         y = trans[1]
         (_, _, theta) = tf.transformations.euler_from_quaternion(rot)
-        self._pose = [x, y, np.rad2deg(theta)]
+        # self._pose = [x, y, np.rad2deg(theta)]
+        self._pose = [x, y, np.rad2deg(theta) - 90] #<>TODO: Remove calibration hack!
+
         # print self._pose
 
     @property

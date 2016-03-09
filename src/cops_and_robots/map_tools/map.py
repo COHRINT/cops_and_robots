@@ -60,10 +60,11 @@ class Map(object):
     """
     def __init__(self, map_name='fleming', bounds=[-5, -5, 5, 5],
                  plot_robbers=True, map_display_type='particle',
-                 combined_only=True, publish_to_ROS=False):
+                 combined_only=True, publish_to_ROS=False, collection_display=True):
 
         # <>TODO: Move to main?
         self.human_cfg = load_config()['human_interface']
+        self.collection_display = collection_display
 
         # Define map properties
         self.map_name = map_name
@@ -320,6 +321,13 @@ class Map(object):
             ax.set_ylabel('y position (m)')
             if ax_name == 'combined':
                 ax.set_title('Combined perception of all robots')
+            elif self.collection_display:
+                ax.set_title('Fleming Area Map')
+                for element in self.static_elements:
+                    if isinstance(element, MapArea):
+                        x = element.pose[0] - len(element.name) / 20
+                        y = element.pose[1]
+                        ax.text(x, y, element.name)
             else:
                 ax.set_title("Map of {}'s perceived location".format(ax_name))
         # plt.tight_layout()
@@ -355,7 +363,7 @@ class Map(object):
             try:
                 self.shape_layers[ax_name].update(i=i)
                 # Update probability/particle layers
-                if self.fusion_engine is not None:
+                if self.fusion_engine is not None and not self.collection_display:
                     if self.display_type == 'particle':
                         self.particle_layers[ax_name].update(i=i)
                     elif self.display_type == 'probability':
@@ -369,7 +377,7 @@ class Map(object):
                 from cv_bridge import CvBridgeError
 
                 extent = ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
-                self.fig.savefig(ax_name + '.png', bbox_inches=extent.expanded(1.1, 1.2))
+                self.fig.savefig(ax_name + '.png', bbox_inches=extent.expanded(1.05, 1.2))
                 img = cv2.imread(ax_name + '.png', 1)
                 try:
                     self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))

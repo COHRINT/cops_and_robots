@@ -1,0 +1,31 @@
+<launch>
+    <!-- Add a identity transform between map and odom -->
+    <!-- TODO: add into vicon_bridge -->
+    <node pkg="tf" type="static_transform_publisher" 
+        name="deckard_identity" args="0 0 0 0 0 0 /map /deckard/odom 30"/> 
+    <node pkg="tf" type="static_transform_publisher" 
+        name="roy_identity" args="0 0 0 0 0 0 /map /roy/odom 30"/> 
+    <node pkg="tf" type="static_transform_publisher" 
+        name="pris_identity" args="0 0 0 0 0 0 /map /pris/odom 30"/> 
+    <node pkg="tf" type="static_transform_publisher" 
+        name="zhora_identity" args="0 0 0 0 0 0 /map /zhora/odom 30"/> 
+
+    <!-- Run web video server -->
+    <node pkg="web_video_server" type="web_video_server" name="set_parameters" output="screen">
+        <param name="port" value="1234" type="int" />
+        <param name="quality" value="240" type="int" />
+        <param name="width" value="320" type="int" />
+        <param name="height" value="240" type="int" />
+        <param name="bitrate" value="10000" type="int" />
+        </node>
+
+  <!-- Run rosbridge server -->
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+
+    <!-- Theora republishers -->
+    <node name="cam1" pkg="image_transport" type="republish" ns="theora" args="theora in:=/cam1/theora raw out:=/cam1/image" />
+    <node name="cam2" pkg="image_transport" type="republish" ns="theora" args="theora in:=/cam2/theora raw out:=/cam2/image" />
+    <node name="cam3" pkg="image_transport" type="republish" ns="theora" args="theora in:=/cam3/theora raw out:=/cam3/image" />
+    <node name="deckard" pkg="image_transport" type="republish" ns="theora" args="theora in:=/deckard/theora raw out:=/deckard/image" />
+
+</launch>

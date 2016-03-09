@@ -212,13 +212,13 @@ class Cop(Robot):
             point = Point(irobber.pose2D.pose[0:2])
             # Try to visually spot a robber
             if self.sensors['camera'].viewcone.shape.contains(point):
-                self.map.found_robber(irobber.map_obj)
+            #     self.map.found_robber(irobber.map_obj)
                 logging.info('{} captured!'.format(irobber.name))
-                self.mission_planner.found_robber(irobber.name)
-                self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose2D.pose)
-                self.found_robbers.update({irobber.name:
-                                           self.missing_robbers.pop(irobber.name)})
-                self.questioner.remove_target(irobber.name)
+            #     self.mission_planner.found_robber(irobber.name)
+            #     self.fusion_engine.filters[irobber.name].robber_detected(irobber.pose2D.pose)
+            #     self.found_robbers.update({irobber.name:
+            #                                self.missing_robbers.pop(irobber.name)})
+            #     self.questioner.remove_target(irobber.name)
 
             # Update robber's shapes
             else:
@@ -231,9 +231,9 @@ class Cop(Robot):
             if self.sensors['camera'].viewcone.shape.contains(point):
                 logging.info('{} found, but it is not a robber!'
                              .format(idistractor.name))
-                if not idistractor.map_obj.visible:
-                    idistractor.map_obj.visible = True
-                    idistractor.map_obj.color = 'cornflowerblue'
+                # if not idistractor.map_obj.visible:
+                #     idistractor.map_obj.visible = True
+                #     idistractor.map_obj.color = 'cornflowerblue'
 
             # Update robber's shapes
             self.distracting_robots[idistractor.name].map_obj.move_absolute(
