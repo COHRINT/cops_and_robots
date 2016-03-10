@@ -13,16 +13,15 @@ $("#deckard-visual").load(function() {
 //   url : rosurl + ':9000'
 // });
 
-var rosurl =  'ws://192.168.20.110'; //commonly at 128.138.157.84
-var rosMaster = new ROSLIB.Ros({
-  url : rosurl + ':9990'
-});
-
-// var rosurl =  'ws://127.0.0.1'; //commonly at 128.138.157.84
+// var rosurl =  'ws://192.168.20.110'; //commonly at 128.138.157.84
 // var rosMaster = new ROSLIB.Ros({
-//   url : rosurl + ':9090'
+//   url : rosurl + ':9990'
 // });
 
+var rosurl =  'ws://127.0.0.1'; //commonly at 128.138.157.84
+var rosMaster = new ROSLIB.Ros({
+  url : rosurl + ':9090'
+});
 
 
 //Set up robot objects
@@ -348,7 +347,8 @@ function checkSettings(){
 	      for(j=0; j<ports[i].length; j++){
 	      	// $(ids[j]).attr("src", "http://flemming.recov.org"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
 	      	//Regular topic stream
-	      	$(ids[j]).attr("src", "http://192.168.20.110"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
+	      	// $(ids[j]).attr("src", "http://192.168.20.110"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
+	      	$(ids[j]).attr("src", "http://127.0.0.1"+ports[i][j]+"/stream_viewer?topic="+topics[i][j]);
 
 	  	  }
 	  	  break;	 
@@ -422,7 +422,7 @@ function init() {
 	var discribers = [objectRelations, areaRelations, movementTypes];
 	var specifications = [objects, areas, movementQualities];
 	
-	
+	/*
 	// Takes out confusing options
 	targetsObj.onchange = function(){
 		if(targetsObj.value == "nothing"){
@@ -455,13 +455,14 @@ function init() {
 		}else{
 			movementQualities.style.display="inline";
 		}
-	}
+	}*/
 
 	// Connects first three code boxes on the different human sensory tabs
 
 	// may need to change how the first option is selected add to js
 	// add in taget id matricies
 
+	/*
 	var targets = ('target_id_obj', 'target_id_area', 'target_id_mv');
 	var m;
 	for(i = 0; i < targetCases.length; i++){
@@ -486,7 +487,7 @@ function init() {
 			// 	targets[1][m].attr("option ", "selected");
 			// }
 		}
-	}
+	}*/
 	
 	
 	// Publish through ros every time 'submit' is pressed
@@ -635,7 +636,7 @@ function init() {
 
 	});
 */
-	$("#chatInput").keypress(function(event) {
+	jQuery("#chatInput").keypress(function(event) {
 	    if (event.which == 13) {
 	        event.preventDefault();
     		var str = jQuery.trim(jQuery("#chatInput").val()) + '.'
@@ -742,32 +743,46 @@ jQuery('#robotQuestions').hover(function(){
 	questionHovering(bool);
 });
 
-jQuery('#start-stop').unbind().click(function(){
 
-	var vicon = jQuery("#setting-source-vicon");
-	var gazebo= jQuery("#setting-source-gazebo");
-	var diffSettings = [vicon, gazebo];
-	var activeSet = ['vicon', 'gazebo'];
-	var setting = '';
+/* Camera cycling */
+// camera_ids = ["deckard_camera", "camera_1", "camera_2", "camera_3",]
+var camera_ids = ["deckard_camera", "camera_2", "camera_3",]
+var camera_tab_ids = ["deckardVisual", "cameraVisual", "cameraVisual",]
+var camera_cycling_on = true
+var cam_i = 0
+
+function cycleCameras(){
+
+	if (camera_cycling_on) {
+		for (i = 0; i < camera_ids.length; i++){
+			jQuery('#' + camera_ids[i]).removeClass('active');
+			jQuery('#' + camera_tab_ids[i]).removeClass('active');
+		}
+		cam_i = (cam_i+1) % camera_ids.length;
+		jQuery('#' + camera_ids[cam_i ]).toggleClass('active');
+		jQuery('#' + camera_tab_ids[cam_i ]).toggleClass('active');
+		console.log('Cycling camera to ' + camera_ids[cam_i])
+    }
+    
+}
+
+jQuery(document).ready(function(){setInterval(cycleCameras, 7500)});
+
+jQuery(document).ready(function(){
+	jQuery('#start-stop').toggleClass("btn-success");
+    jQuery('#start-stop').toggleClass("btn-danger");			        
+    jQuery('#start-stop').children("span").toggleClass("glyphicon-play");
+    jQuery('#start-stop').children("span").toggleClass("glyphicon-stop");	
+});
+
+
+jQuery('#start-stop').unbind().click(function(){
 
     jQuery(this).toggleClass("btn-success");
     jQuery(this).toggleClass("btn-danger");			        
     jQuery(this).children("span").toggleClass("glyphicon-play");
     jQuery(this).children("span").toggleClass("glyphicon-stop");	
 
-    for(i = 0; i<diffSettings.length; i++){
-    	if(diffSettings[i].parent().hasClass('active') == true){
-    		setting = activeSet[i];
-    		break;
-    	}
-    }
-
-	// Calls script function
-    if(jQuery(this).children("span").hasClass("glyphicon-stop") == true){
-    	callStartScript(setting);
-    } else if (jQuery(this).children("span").hasClass("glyphicon-play") == true){
-    	callStopScript(setting);
-    }
-
+    camera_cycling_on = !camera_cycling_on;
 
 });

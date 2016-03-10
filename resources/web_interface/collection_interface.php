@@ -61,7 +61,7 @@ $id_mvs = array($cer_id_mv, $target_id_mv, $posi_id_mv, $mv_id_types, $mv_id_qua
 	<div class="row">
 	<div id="visual" class="col-md-12" style="height:50px"></div>
 
-<div class="modal fade" tabindex="-1" role="dialog">
+<div id="experimentModal" class="modal fade" tabindex="-1" role="dialog">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -97,7 +97,7 @@ Good luck, and have fun!</p>
 		                    			<li class="camera_views" id="zhoraVisual"><a data-toggle="tab" href="#zhora_camera" aria-controls="zhora_camera" >Zhora's Camera</a></li>
 		                    		</ul>
 		                    </li> -->
-                   		 	<li class="dropdown">
+                   		 	<li class="dropdown" id="cameraVisual">
                    		 		<a href="#Security Cameras" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Security Cameras<span class="caret"></span></a>
                    		 			 <ul class="dropdown-menu">
 		                    			<li class="camera_views" id="cam1"><a data-toggle="tab" href="#camera_1" aria-controls="camera_1" >Camera 1</a></li>
@@ -152,22 +152,14 @@ Good luck, and have fun!</p>
                 </ul>
 
 				<div class="tab-content embed-responsive embed-responsive-4by3">
-					<div class="tab-pane active" id="gzweb_map"> 
-						<!-- <iframe id='gazeboMap' class="embed-responsive-item" src="http://localhost:8080" height="416" width="555" allowfullscreen="" frameborder="0"></iframe> -->
-						<iframe id='gazeboMap' class="embed-responsive-item" src="http://192.168.20.110:8080" height="416" width="555" allowfullscreen="" frameborder="0"></iframe>
-					</div>
-					<div class="tab-pane" id="prob_map"> 
-						<iframe id='probMap' class="embed-responsive-item" src="http://192.168.20.110:1234/stream_viewer?topic=/python_probability_map" height="416" width="555" allowfullscreen="" frameborder="0"></iframe>
+					<div class="tab-pane active" id="prob_map"> 
+						<iframe id='probMap' class="embed-responsive-item" src="http://127.0.0.1:1234/stream_viewer?topic=/python_probability_map" 
+						height="316" width="555" allowfullscreen="" frameborder="0" style="overflow:hidden; width=100%; margin-top:-55px;"></iframe>
+						<!-- <iframe id='probMap' class="embed-responsive-item" src="http://192.168.20.110:1234/stream_viewer?topic=/python_probability_map" height="416" width="555" allowfullscreen="" frameborder="0"></iframe> -->
 					</div>
 				</div>
 			</div>
-			<div id="gzwebModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-		  		<div id="gzwebModal" class="modal-dialog modal-lg">
-		    		<div class="modal-content">
-							<iframe src="http://localhost:8080" height="800px" width="100%" frameborder="0"></iframe>
-		    		</div>
-		  		</div>
-			</div>
+			
 
 			<!-- Settings -->
 			<div class="modal fade" id="settings" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -226,6 +218,7 @@ Good luck, and have fun!</p>
 		<!-- Major Lanch Button -->
 		<!-- onclick= "<?php //shell_exec("/bash/start_stop.sh");?>" -->
 
+		<div class="col-xs-12" style="height:15px;"></div>
 
 		<div id="controls" class="col-md-6">
 			<div>
