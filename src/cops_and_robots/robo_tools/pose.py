@@ -85,7 +85,12 @@ class Pose(object):
         import tf
         ref = "/" + self.robot.name.lower() + "/odom"
         child = "/" + self.robot.name.lower() + "/base_footprint"
-        (trans, rot) = self.listener.lookupTransform(ref, child, rospy.Time(0))
+        try:
+        	(trans, rot) = self.listener.lookupTransform(ref, child, rospy.Time(0))
+        except:
+        	logging.error("Can't look up transform")
+        	return
+        
         x = trans[0]
         y = trans[1]
         (_, _, theta) = tf.transformations.euler_from_quaternion(rot)
