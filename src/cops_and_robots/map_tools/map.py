@@ -35,7 +35,6 @@ from cops_and_robots.map_tools.shape_layer import ShapeLayer
 from cops_and_robots.map_tools.feasible_layer import FeasibleLayer
 from cops_and_robots.map_tools.probability_layer import ProbabilityLayer
 from cops_and_robots.map_tools.particle_layer import ParticleLayer
-from cops_and_robots.map_tools.human_interface import HumanInterface
 
 
 class Map(object):
@@ -66,12 +65,9 @@ class Map(object):
                  plot_robbers=True, map_display_type='probability',
                  combined_only=True, publish_to_ROS=False):
 
-        # <>TODO: Move to main?
-        self.human_cfg = load_config()['human_interface']
-
         # Define map properties
-        self.map_name = map_name
         # <>TODO: Clean this up- add seperate map creation function?
+        self.map_name = map_name
         if self.map_name == 'fleming':
             self.bounds = [-9.5, -3.33, 4, 3.68]
         else:
@@ -80,11 +76,12 @@ class Map(object):
         self.plot_robbers = plot_robbers
         self.outer_bounds = [i * 1.1 for i in self.bounds]
         self.origin = [0, 0]  # in [m]
-        self.fig = plt.figure(1, figsize=(14, 10))
+
         # <>TODO: Make display type relative to each robber
         self.display_type = map_display_type
         self.combined_only = combined_only
 
+        # Set up ROS elements if using ROS
         self.publish_to_ROS = publish_to_ROS
         if publish_to_ROS:
             from cv_bridge import CvBridge
@@ -114,7 +111,6 @@ class Map(object):
         # Define layers
         self.shape_layer = ShapeLayer(self.element_dict, bounds=self.bounds)
         self.feasible_layer = FeasibleLayer(bounds=self.bounds)
-
         self.particle_layers = {}  # One per robber, plus one combined
         self.probability_layers = {}  # One per robber, plus one combined
 
@@ -123,9 +119,6 @@ class Map(object):
             set_up_fleming(self)  # <>TODO: make a generic 'setup map' function
         else:
             pass
-
-    def add_human_sensor(self, human_sensor):
-        self.human_sensor = human_sensor
 
     def add_obj(self, map_obj):
         self.objects[map_obj.name] = map_obj
@@ -236,23 +229,33 @@ class Map(object):
         ax.annotate('Hallway', [-3.5, 0], weight='bold')
         plt.show()
 
-    def setup_plot(self, fusion_engine=None, show_human_interface=False):
+    def setup_plot(self, fig=None, fusion_engine=None):
         """Create the initial plot for the animation.
         """
         logging.info('Setting up plot')
+
+        if fig is None:
+            if plt.get_fignums():
+                self.fig = plt.gcf()
+            else:
+                self.fig = plt.figure(figsize=(14, 10))
+        else:
+            self.fig = fig
+
         self.fusion_engine = fusion_engine
         self._setup_axes()
         self._setup_layers()
-
-        # Set up the human interface
-        if self.human_sensor and show_human_interface:
-            HumanInterface(self.fig, self.human_sensor, **self.human_cfg)
 
     def _setup_axes(self):
         self.axes = {}
         if len(self.robbers) == 1:
             name = self.robbers.iterkeys().next()
             self.axes[name] = self.fig.add_subplot(111)
+            pos = self.axes[name].get_position()
+            print pos
+            pos = [pos.x0, pos.y0 * 1.2, pos.width, pos.height]
+            print pos
+            self.axes[name].set_position(pos)
         elif self.combined_only:
             self.axes['combined'] = self.fig.add_subplot(111)
         else:
@@ -290,8 +293,11 @@ class Map(object):
                 t = ax.set_title("Map of {}'s perceived location"
                                  .format(ax_name))
 
-            if self.fusion_engine.vel_states is not None:
-                t.set_y(1.2)
+            try:
+                if self.fusion_engine.vel_states is not None:
+                    t.set_y(1.2)
+            except AttributeError:
+                logging.debug('No vel states available.')
         # plt.tight_layout()
 
     def _setup_layers(self):
@@ -344,22 +350,6 @@ class Map(object):
                 except CvBridgeError, e:
                     print e
 
-            # Print questions and answers
-            if hasattr(self, 'questioner'):
-                if hasattr(self.questioner, 'recent_answer'):
-                    str_ = self.questioner.recent_question + ' ' \
-                        + self.questioner.recent_answer
-
-                    if hasattr(self, 'q_text'):
-                        self.q_text.remove()
-
-                    bbox = {'facecolor': 'white',
-                            'alpha': 0.8,
-                            'boxstyle':'round',
-                            }
-                    self.q_text = ax.annotate(str_, xy=(-5, -4.5), 
-                                              xycoords='data', annotation_clip=False,
-                                              fontsize=16, bbox=bbox)
 
 
 def set_up_fleming(map_):
@@ -509,6 +499,15 @@ def find_grid_mask_for_rooms(map_, grid):
         area_masks[area_name] = area_mask
 
     return area_masks
+
+    # # STUB TO GENERATE AREA MASKS - ADD TO main.py
+    # from cops_and_robots.map_tools.map import find_grid_mask_for_rooms
+    # map_ = self.cops['Deckard'].map
+    # grid = fusion_engine.filters['Roy'].probability
+    # area_masks = find_grid_mask_for_rooms(map_, grid)
+    # np.save('coarse_area_masks', area_masks)
+    # self.cops['Deckard'].map.plot()
+    # return
 
 
 if __name__ == '__main__':

@@ -32,7 +32,7 @@ from cops_and_robots.fusion.softmax import (geometric_model,
 class GaussSumFilter(Filter):
     """docstring for GaussSumFilter
 
-    Fusion methods describe how to perform data fusion, with recursive updating
+    Fusion methods describe how to perform data fusion, with sequential updating
     at each time step, full batch doing a complete batch update of all sensor
     information from the initial prior, and windowed batch fusing all sensor
     information provided within a specific window.
@@ -43,11 +43,11 @@ class GaussSumFilter(Filter):
     the minimum number of classes next to the joint measurement class.
 
     """
-    fusion_methods = ['recursive', 'full batch', 'windowed batch']
+    fusion_methods = ['sequential', 'full batch', 'windowed batch']
     compression_methods = ['product', 'neighbourhood', 'geometric']
 
     def __init__(self, 
-                 fusion_method='recursive',
+                 fusion_method='sequential',
                  compression_method='geometric',
                  window=1,
                  *args,
@@ -64,7 +64,7 @@ class GaussSumFilter(Filter):
         self.vb = VariationalBayes()
 
     def _human_update(self, human_sensor):
-        
+
         # Validate human sensor statement
         measurement = self._verify_human_update(human_sensor)
         if measurement is None:
@@ -76,20 +76,20 @@ class GaussSumFilter(Filter):
             self.rosbag_process.stdin.flush()
             time.sleep(0.5)
 
-        if self.fusion_method == 'recursive':
-            self.recursive_fusion(measurement, human_sensor)
+        if self.fusion_method == 'sequential':
+            self.sequential_fusion(measurement, human_sensor)
         elif self.fusion_method == 'full batch' \
             or self.fusion_method == 'windowed batch':
             self.batch_fusion(measurement, human_sensor)
         elif self.fusion_method == 'grid':
-            self.recursive_fusion(measurement, human_sensor)
+            self.sequential_fusion(measurement, human_sensor)
 
         if self.rosbag_process is not None:
             self.rosbag_process.stdin.write(' ')  # start rosbag
             self.rosbag_process.stdin.flush()
             logging.info('Restarted rosbag!')
 
-    def recursive_fusion(self, measurement, human_sensor):
+    def sequential_fusion(self, measurement, human_sensor):
         """Performs fusion once per pass."""
         
         measurement_label = measurement['relation']
@@ -112,7 +112,7 @@ class GaussSumFilter(Filter):
                 measurement_labels.append(measurement['relation'])
             measurement_label = " + ".join(measurement_labels)
 
-            # Create combined softmax model
+            # Concatenate softmax models
             models = []
             for measurement in self.measurements:
                 grounding = measurement['grounding']
@@ -120,7 +120,7 @@ class GaussSumFilter(Filter):
                 model = grounding.relations.binary_models[relation_class]
                 models.append(model)
 
-            # Synthesize the likelihood
+            # Compress the likelihood
             if self.compression_method == 'product':
                 likelihood = product_model(models)
             elif self.compression_method == 'neighbourhood':
@@ -139,82 +139,58 @@ class GaussSumFilter(Filter):
 
 
     def fusion(self, likelihood, measurement, human_sensor):
-        # prior = self.probability.copy()
-        self.probability.measurement_update(likelihood, measurement)
+
+        if type(likelihood) is list:
+            self.multi_likelihood_fusion(likelihood, measurement, human_sensor)
+        else:
+            self.probability.measurement_update(likelihood, measurement)
 
         #<>TODO: include human false alarm rate
         self.recently_fused_update = True
         self.recieved_human_update = True
 
 
-    def fusion_OLD(self, likelihood, measurement_label, human_sensor):
+    def multi_likelihood_fusion(self, likelihoods, measurement_label, human_sensor):
         
         if self.fusion_method == 'full batch':
             prior = self.original_prior
         else:
             prior = self.probability
 
-        if type(likelihood) is list:
-            # <>TODO: clean up this section!
-            mixtures = []
-            raw_weights = []
-            for u, mixand_weight in enumerate(prior.weights):
+        # <>TODO: clean up this section!
+        mixtures = []
+        raw_weights = []
+        for u, mixand_weight in enumerate(prior.weights):
 
-                prior_mixand = GaussianMixture(1, prior.means[u], prior.covariances[u])
-                
-                for i, geometric_sm in enumerate(likelihood):
+            prior_mixand = GaussianMixture(1, prior.means[u], prior.covariances[u])
 
-                    mu, sigma, beta = self.vb.update(measurement=measurement_label,
-                                                likelihood=geometric_sm,
-                                                prior=prior_mixand,
-                                                get_raw_beta=True,
-                                                )
-                    new_mixture = GaussianMixture(beta, mu, sigma)
+            for i, likelihood in enumerate(likelihoods):
 
-                    # Weight the posterior by the human's false alarm rate
-                    alpha = human_sensor.false_alarm_prob / 2
-                    new_mixture = prior_mixand.combine_gms([new_mixture], alpha)
+                mu, sigma, beta = self.vb.update(measurement=measurement_label,
+                                                 likelihood=likelihood,
+                                                 prior=prior_mixand,
+                                                 get_raw_beta=True,
+                                                 )
+                new_mixture = GaussianMixture(beta, mu, sigma)
 
-                    mixtures.append(new_mixture)
-                    raw_weights.append(beta * mixand_weight)
+                # Weight the posterior by the human's false alarm rate
+                alpha = human_sensor.false_alarm_prob / 2
+                prior_mixand.combine_gms([new_mixture], alpha)
 
-            # Renormalize raw weights
-            raw_weights = np.array(raw_weights).reshape(-1)
-            raw_weights /= raw_weights.sum()
+                mixtures.append(prior_mixand)
+                raw_weights.append(beta * mixand_weight)
 
-            try:
-                posterior = mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
-            except IndexError:
-                logging.error('ERROR! Cannot combine GMs.')
-                posterior = prior
+        # Renormalize raw weights
+        raw_weights = np.array(raw_weights).reshape(-1)
+        raw_weights /= raw_weights.sum()
 
-        else:
-            mu, sigma, beta = self.vb.update(measurement=measurement_label,
-                                             likelihood=likelihood,
-                                             prior=prior,
-                                             use_LWIS=False,
-                                             )
-
-            # Weight the posterior by the human's false alarm rate
-            bounds  = self.feasible_layer.bounds
-            try:
-                pos = prior.pos
-            except AttributeError:
-                pos = None
-            try:
-                pos_all = prior.pos_all
-            except AttributeError:
-                pos_all = None
-            gm = GaussianMixture(beta, mu, sigma, bounds=bounds, pos=pos, pos_all=pos_all)
-            logging.info(gm)
-            alpha = human_sensor.false_alarm_prob / 2
-            posterior = prior.combine_gms(gm, alpha)
-
-        self.recently_fused_update = True
-
-        if posterior is not None:
-            self.probability = posterior
-            self.recieved_human_update = True
+        try:
+            mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
+            posterior = mixtures[0]
+        except IndexError:
+            logging.error('ERROR! Cannot combine GMs.')
+            posterior = prior
+        self.probability = posterior
 
     def robber_detected(self, robber_pose):
         """Update the particle filter for a detected robber.
@@ -423,4 +399,50 @@ class GaussSumFilter(Filter):
         wtOut = 1
 
         return muOut, SigmaOut, wtOut #lkOut
+
+
+def test_fusion(fusion_method='sequential', speed_test=True):
+    from cops_and_robots.map_tools.map import Map
+    from cops_and_robots.map_tools.probability_layer import ProbabilityLayer
+    from cops_and_robots.human_tools.human import Human
+    import matplotlib.pyplot as plt
+
+    map_ = Map()
+    human_sensor = Human(map_=map_)
+
+    kwargs = {'target_name': 'Roy',
+              'fusion_method': fusion_method,
+              'dynamic_model': False,
+              }
+    product_filter = GaussSumFilter(compression_method='product', **kwargs)
+    neighbourhood_filter = GaussSumFilter(compression_method='neighbourhood', **kwargs)
+    geometric_filter = GaussSumFilter(compression_method='geometric', **kwargs)
+
+    # Plot initial state
+    fig = plt.Figure()
+    probability_layer = ProbabilityLayer(geometric_filter, bounds=map_.bounds,
+                                         grid_size=0.1, fig=fig)
+    # probability_layer.plot()
+    # plt.show()
+
+    # Plot sensor updates
+    human_utterances = ['I know Roy is inside the hallway.',
+                        'I know Roy is near the fern.',
+                        'I know Roy is not inside the kitchen.',
+                        ]
+    for utterance in human_utterances:
+        human_sensor.utterance = utterance
+        human_sensor.new_update = True
+        geometric_filter.update(human_sensor=human_sensor)
+
+        fig = plt.Figure()
+        probability_layer = ProbabilityLayer(geometric_filter, bounds=map_.bounds,
+                                             grid_size=0.1, fig=fig)
+        # probability_layer.plot()
+        # plt.show()
+
+
+if __name__ == '__main__':
+    test_fusion()
+
 

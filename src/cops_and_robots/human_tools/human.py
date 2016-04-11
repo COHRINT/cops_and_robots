@@ -41,6 +41,7 @@ from cops_and_robots.fusion.softmax import Softmax, speed_model, binary_speed_mo
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 from cops_and_robots.fusion.variational_bayes import VariationalBayes
 from cops_and_robots.map_tools.map import Map
+from cops_and_robots.human_tools.nlp.chatter import Chatter
 
 class Human(Sensor):
     """The human sensor, able to provide updates to a fusion engine.
@@ -112,10 +113,11 @@ class Human(Sensor):
 
         if web_interface_topic != 'python':
             # Subscribe to web interface
-            print web_interface_topic
             import rospy
             from std_msgs.msg import String
             rospy.Subscriber(web_interface_topic, String, self.callback)
+
+        self.chatter = Chatter()
 
     def callback(self, msg):
         logging.info('I heard {}'.format(msg.data))
@@ -127,7 +129,12 @@ class Human(Sensor):
 
         """
 
-        if not self.parse_utterance():
+        try:
+            well_formed = self.parse_utterance()
+        except:
+            logging.error("Can't parse \"{}\"".format(utterance))
+
+        if not well_formed:
             logging.debug('No utterance to parse!')
             return
 
@@ -230,25 +237,25 @@ class Human(Sensor):
         logging.debug('Utterance: {}'.format(self.utterance))
         logging.debug('Grounding: {}'.format(self.grounding))
 
-        for str_ in self.movement_types:
-            if str_ in self.utterance:
-                self.movement_type = str_
+        # for str_ in self.movement_types:
+        #     if str_ in self.utterance:
+        #         self.movement_type = str_
 
-                logging.info(str_)
+        #         logging.info(str_)
 
-                break
-        else:
-            self.movement_type = ''
+        #         break
+        # else:
+        #     self.movement_type = ''
 
-        for str_ in self.movement_qualities:
-            if str_ in self.utterance:
-                self.movement_quality = str_
+        # for str_ in self.movement_qualities:
+        #     if str_ in self.utterance:
+        #         self.movement_quality = str_
 
-                logging.info(str_)
+        #         logging.info(str_)
 
-                break
-        else:
-            self.movement_quality = ''
+        #         break
+        # else:
+        #     self.movement_quality = ''
 
         if self.utterance == '':
             utterance_is_well_formed = False
@@ -312,10 +319,10 @@ def generate_human_language_template(use_fleming=True, default_targets=True):
                                  'right of',
                                  'near',
                                  ],
-                      'area': ['inside',
-                               'near',
-                               'outside'
-                               ]}
+                  'area': ['inside',
+                           'near',
+                           'outside'
+                           ]}
     actions = ['moving', 'stopped']
     modifiers = ['slowly', 'moderately', 'quickly', 'around', 'toward']
 

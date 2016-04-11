@@ -694,47 +694,47 @@ class Softmax(object):
             self.state = self.X.T
             self.ndim = 1
         elif state_spec == 'x y':
-            self.X, self.Y = np.mgrid[bounds[0]:bounds[2] + res:res,
-                                      bounds[1]:bounds[3] + res:res]
+            self.X, self.Y = np.mgrid[bounds[0]:bounds[2]:res,
+                                      bounds[1]:bounds[3]:res]
             self.state = np.dstack((self.X, self.Y))
             self.state = np.reshape(self.state, (self.X.size, 2))
             self.ndim = 2
         elif state_spec == 'x x_dot':
-            self.X, self.X_dot = np.mgrid[bounds[0]:bounds[2] + res:res,
-                                          bounds[1]:bounds[3] + res:res]
+            self.X, self.X_dot = np.mgrid[bounds[0]:bounds[2]:res,
+                                          bounds[1]:bounds[3]:res]
             self.state = np.dstack((self.X, self.X_dot))
             self.state = np.reshape(self.state, (self.X.size, 2))
             self.ndim = 2
         elif state_spec == 'x y_dot':
-            self.X, self.Y_dot = np.mgrid[bounds[0]:bounds[2] + res:res,
-                                          bounds[1]:bounds[3] + res:res]
+            self.X, self.Y_dot = np.mgrid[bounds[0]:bounds[2]:res,
+                                          bounds[1]:bounds[3]:res]
             self.state = np.dstack((self.X, self.Y_dot))
             self.state = np.reshape(self.state, (self.X.size, 2))
             self.ndim = 2
         elif state_spec == 'x y x_dot':
             self.X, self.Y, self.X_dot = \
-                np.mgrid[bounds[0]:bounds[3] + res:res,
-                         bounds[1]:bounds[4] + res:res,
-                         bounds[2]:bounds[5] + res:res,
+                np.mgrid[bounds[0]:bounds[3]:res,
+                         bounds[1]:bounds[4]:res,
+                         bounds[2]:bounds[5]:res,
                          ]
             self.state = np.dstack((self.X, self.Y, self.X_dot))
             self.state = np.reshape(self.state, (self.X.size, 3))
             self.ndim = 3
         elif state_spec == 'x y y_dot':
             self.X, self.Y, self.Y_dot = \
-                np.mgrid[bounds[0]:bounds[3] + res:res,
-                         bounds[1]:bounds[4] + res:res,
-                         bounds[2]:bounds[5] + res:res,
+                np.mgrid[bounds[0]:bounds[3]:res,
+                         bounds[1]:bounds[4]:res,
+                         bounds[2]:bounds[5]:res,
                          ]
             self.state = np.dstack((self.X, self.Y, self.Y_dot))
             self.state = np.reshape(self.state, (self.X.size, 3))
             self.ndim = 3
         elif state_spec == 'x y x_dot y_dot':
             self.X, self.Y, self.X_dot, self.Y_dot = \
-                np.mgrid[bounds[0]:bounds[4] + res:res,
-                         bounds[1]:bounds[5] + res:res,
-                         bounds[2]:bounds[6] + res:res,
-                         bounds[3]:bounds[7] + res:res,
+                np.mgrid[bounds[0]:bounds[4]:res,
+                         bounds[1]:bounds[5]:res,
+                         bounds[2]:bounds[6]:res,
+                         bounds[3]:bounds[7]:res,
                          ]
             self.state = np.dstack((self.X, self.Y, self.X_dot, self.Y_dot))
             self.state = np.reshape(self.state, (self.X.size, 4))

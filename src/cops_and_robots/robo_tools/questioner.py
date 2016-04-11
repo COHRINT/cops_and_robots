@@ -135,16 +135,16 @@ class Questioner(object):
         if self.minimize_questions:
             num_relations = 1  # Only asking about 'near'
         else:
-            num_relations = len(groundings['object'].itervalues().next()\
-                    .relations.binary_models.keys())
+            num_relations = len(groundings['object'].itervalues().next()
+                .relations.binary_models.keys())
             num_relations -= 1  # not counting 'inside' for objects
-        num_questions = (len(groundings['object']) - 1) * num_relations * n
+        num_questions = (len(groundings['object'])) * num_relations * n
 
         if self.minimize_questions:
             num_relations = 1  # Only asking about inside rooms
         else:
-            num_relations = len(groundings['area'].itervalues().next()\
-                    .relations.binary_models.keys())
+            num_relations = len(groundings['area'].itervalues().next()
+                .relations.binary_models.keys())
         num_questions += len(groundings['area']) * num_relations * n
         self.all_questions = []
         self.all_likelihoods = np.empty(num_questions,
@@ -200,8 +200,7 @@ class Questioner(object):
                         self.all_questions.append(question_str)
 
                         # Calculate likelihood
-                        self.all_likelihoods[i]['question'] = \
-                            question_str
+                        self.all_likelihoods[i]['question'] = question_str
                         self.all_likelihoods[i]['probability'] = \
                             grounding.relations.probability(class_=relation)
                         self.all_likelihoods[i]['time_last_answered'] = -1
@@ -460,11 +459,11 @@ class Questioner(object):
                 if not answer:
                     likelihood = np.ones_like(likelihood) - likelihood
 
-                # Perform a Bayes' update
+                # Perform a Bayes' update on the discretized probability
                 posterior = likelihood * probability.prob.flatten()
                 data_likelihood *= posterior.sum()
                 posterior /= posterior.sum()
-                probability.prob = np.reshape(posterior, probability.X.shape)
+                probability.prob = np.reshape(posterior, prior.prob.shape)
 
                 # Perform dynamics update
                 if timespan  > 0 and d < (len(answer_sequence) - 1)\
@@ -666,8 +665,9 @@ def test_publishing():
 def test_voi():
     from cops_and_robots.robo_tools.robber import Robber
     from cops_and_robots.map_tools.map import Map
-    from cops_and_robots.fusion.human import Human
     from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+    from cops_and_robots.human_tools.human import Human
+
     import matplotlib.pyplot as plt
     from matplotlib.colors import cnames
 
@@ -695,7 +695,7 @@ def test_voi():
                               [[0.5, -0.3],
                                [-0.3, 0.5]]
                              ])
-    prior._discretize(bounds=m.bounds, grid_spacing=0.1)
+    prior._discretize(bounds=m.bounds, res=0.1)
     q = Questioner(human_sensor=h, target_order=['Pris','Roy'],
                    target_weights=[11., 10.])
 

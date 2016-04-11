@@ -17,33 +17,18 @@ import subprocess
 import os
 import re
 
-from cops_and_robots.human_tools.human import generate_human_language_template
+class Tagger(object):
+    """short description of Tagger
 
-class ConditionalRandomField(object):
-    """short description of ConditionalRandomField
-
-    long description of ConditionalRandomField
-    
-    Parameters
-    ----------
-    param : param_type, optional
-        param_description
-
-    Attributes
-    ----------
-    attr : attr_type
-        attr_description
-
-    Methods
-    ----------
-    attr : attr_type
-        attr_description
+    Uses Conditional Random Fields to tag a tokenized document with semantic
+    labels.
 
     """
-
     def __init__(self, template_file='crf_template.txt',
-                 training_file='crf_training.txt', test_file='crf_test.txt',
-                 model_file='crf_model.txt', input_file='crf_input.txt',
+                 training_file='crf_training.txt',
+                 test_file='crf_test.txt',
+                 model_file='crf_model.txt',
+                 input_file='crf_input.txt',
                  output_file='crf_output.txt',
                  generate_template=False, generate_training_data=False):
         self.data_dir = os.path.dirname(__file__) + '/data/'
@@ -123,16 +108,18 @@ class ConditionalRandomField(object):
         proc = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
         proc.wait()
 
-    def tag_document(self, document):
-        # Listify the input document
-        #<>TODO: try multiple word span combinations, espc. "the _"
-        input_data = re.findall(r"[\w']+|[.,!?;]", document)
-        input_data = [[s,''] for s in input_data]
+    def tag_document(self, tokenized_document):
+        """Generate semantic tags for each token in a given document
+        """
+        # Tokenize document if given a string by accident
+        if isinstance(tokenized_document, str):
+            tokenized_document = re.findall(r"[\w']+|[.,!?;]",
+                                            tokenized_document)
 
         # Generate the input file to CRF++
-        self._generate_crfpp_input(input_data)
+        self._generate_crfpp_input(tokenized_document)
 
-        # Run CRF++
+        # Run CRF++ (and wait for results)
         cmd = ("crf_test -m {} -v1 {}"
                .format(self.model_file, self.input_file, self.output_file))
         proc = subprocess.Popen(cmd.split(), stdout=open(self.output_file, 'w'))
@@ -142,18 +129,19 @@ class ConditionalRandomField(object):
         results = self._read_crfpp_output()
 
         # Remove marginal probability of the tag for each tag
-        key_results = []
+        tagged_document = []
         for result in results:
             if len(result) > 0:
-                key_results.append(result[:-1])
-        key_results = [r for r in key_results if r[0] not in (',','.','!','?')]
+                tagged_document.append(result[:-1])
+        # tagged_document = [r for r in tagged_document if r[0] not in (',','.','!','?')]
 
-        return key_results
+        return tagged_document
 
-    def _generate_crfpp_input(self, input_data):
+    def _generate_crfpp_input(self, tokenized_document):
         """
 
         """
+        input_data = [[s,''] for s in tokenized_document]
         with open(self.input_file, 'w') as file_:
             for d in input_data:
                 str_ = '\t'.join(d) + '\n'
@@ -182,8 +170,6 @@ class ConditionalRandomField(object):
                         result += [False]
                 results.append(result)
         return results
-
-
 
 
 def generate_test_data():
@@ -272,6 +258,7 @@ def generate_test_data():
     return data
 
 def generate_fleming_test_data():
+    from cops_and_robots.human_tools.human import generate_human_language_template
     (certainties,
     positivities,
     relations,
@@ -352,5 +339,5 @@ def generate_fleming_test_data():
 
 
 if __name__ == '__main__':
-    crf = ConditionalRandomField()
-    crf.tag_document('I know Roy is behind the table')
+    tagger = Tagger()
+    print tagger.tag_document('I know Roy is behind the table')

@@ -108,7 +108,8 @@ class FusionEngine(object):
                                                       particles_per_filter)
         elif self.probability_type == 'gauss sum':
             for name in missing_robber_names:
-                self.filters[name] = GaussSumFilter(name, feasible_layer, 
+                self.filters[name] = GaussSumFilter(target_name=name,
+                                                    feasible_layer=feasible_layer, 
                                                     rosbag_process=rosbag_process)
             if len(missing_robber_names) > 1:
                 self.filters['combined'] = GaussSumFilter('combined', feasible_layer)
@@ -117,8 +118,8 @@ class FusionEngine(object):
                              "or 'gauss sum'.")
 
         # Velocity
-        self.vel_states = {}
         if use_velocity:
+            self.vel_states = {}
             for name in missing_robber_names:
                 self.vel_states[name] = GaussSumFilter(target_name=name,
                                                        velocity_states=True,
@@ -155,13 +156,19 @@ class FusionEngine(object):
             if not self.filters[robber.name].finished:
 
                 # Update position filters
+                if self.vel_states is not None:
+                    vel_state = self.vel_states[robber.name].probability
+                else:
+                    vel_state = None
+
                 self.filters[robber.name].update(sensors['camera'],
                                                  sensors['human'],
-                                                 self.vel_states[robber.name].probability,
+                                                 vel_state,
                                                  )
 
                 # Update velocity filters
-                self.vel_states[robber.name].update(human_sensor=sensors['human'])
+                if vel_state is not None:
+                    self.vel_states[robber.name].update(human_sensor=sensors['human'])
 
         if len(self.missing_robber_names) > 1:
             self._update_combined(sensors, robbers)

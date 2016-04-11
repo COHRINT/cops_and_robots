@@ -2,37 +2,54 @@
 """Manages all display elements (figures, axes, etc.)
 """
 
+import os
 import logging
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
+from cops_and_robots.display_tools.human_interface import CodebookInterface, ChatInterface
 
 class Display(object):
-    """short description of Display
+    """Controls the windows displayed. 
 
-    long description of Display
-    
-    Parameters
-    ----------
-    param : param_type, optional
-        param_description
-
-    Attributes
-    ----------
-    attr : attr_type
-        attr_description
-
-    Methods
-    ----------
-    attr : attr_type
-        attr_description
-
+    Each window holds one figure. Each figure holds multiple axes. The Display
+    class only creates the window-figure pairs, and assumes that other classes
+    handle their figures' axes.
     """
+    window_sets = [{'Main': {'size': (14,10),
+                             'position': (50,0),
+                             },
+                   },
+                   {'Main': {'size':(13,7),
+                             'position': (50,0),
+                             },
+                    'Chat': {'size':(6,2),
+                             'position': (200,700),
+                             'is_QtWidget': True,
+                             },
+                   },
+                   {'Main': {'size':(13,7),
+                             'position': (50,0),
+                             },
+                    'Codebook': {'size':(6,2),
+                             'position': (100,700),
+                             },
+                   }
+                   ]
 
-    def __init__(self, main_fig, map_, vel_states=None, vel_space=None):
-        self.main_fig = main_fig
+    def __init__(self, window_set_id=0, show_vel_interface=False,
+                 codebook_interface_cfg={}, chat_interface_cfg={}):
+
+        self._setup_windows(window_set_id)
+        self.show_vel_interface = show_vel_interface
+        self.codebook_interface_cfg = codebook_interface_cfg
+        self.chat_interface_cfg = chat_interface_cfg
+
+    def add_map(self, map_):
         self.map = map_
 
+    def add_vel_states(self, vel_states, vel_space=None):
         self.vel_states = vel_states
         if vel_space == None:
             self.vel_space = np.linspace(-1, 1, 100)
@@ -41,6 +58,51 @@ class Display(object):
         if vel_states is not None:
             self._setup_velocity_axes()
 
+    def add_human_interface(self, human_sensor, questioner=None):
+        if "Chat" in self.windows:
+            self._setup_chat(human_sensor)
+        elif "Codebook" in self.windows:
+            self._setup_codebook(human_sensor)
+        else:
+            logging.debug("No human interface windows available.")
+            return
+
+        # Print questions and answers
+        if questioner is not None:
+            self.questioner = questioner
+
+    def _setup_chat(self, human_sensor):
+        # fig = self.windows['Chat']['fig']
+        self.chat = ChatInterface(human_sensor, 
+                                  **self.chat_interface_cfg)
+
+    def _setup_codebook(self, human_sensor):
+        fig = self.windows['Codebook']['fig']
+        self.codebook = CodebookInterface(fig, human_sensor,
+                                          **self.codebook_interface_cfg)
+
+    def _setup_windows(self, window_set_id):
+        window_set = Display.window_sets[window_set_id]
+        self.windows = {}
+
+        for name, window in window_set.iteritems():
+            try:
+                if window['is_QtWidget']:
+                    self.windows[name] = window
+                    continue
+            except:
+                logging.debug('Not a QT widget.')
+
+            window['fig'] = plt.figure(figsize=window['size'])
+            window['fig'].canvas.set_window_title(name)
+            self.windows[name] = window
+
+            # Position windows assuming Qt4 backend
+            mngr = plt.get_current_fig_manager()
+            geom = mngr.window.geometry()
+            x,y,w,h = geom.getRect()
+            new_x, new_y = window['position']
+            mngr.window.setGeometry(new_x, new_y, w, h)
 
     def _setup_velocity_axes(self):
         self.vel_axes = {}
@@ -59,8 +121,8 @@ class Display(object):
             y_box[1] = b.x0 * 1.743
             y_box[2] = w
             y_box[3] = b.height * 0.705
-            vx_ax = self.main_fig.add_axes(x_box)
-            vy_ax = self.main_fig.add_axes(y_box)
+            vx_ax = self.windows['Main'].add_axes(x_box)
+            vy_ax = self.windows['Main'].add_axes(y_box)
 
             # Place ticks and labels
             vx_ax.xaxis.tick_top()
@@ -86,8 +148,8 @@ class Display(object):
             # y_box[1] = b.x0 * 1.743
             # y_box[2] = w
             # y_box[3] = b.height * 0.705
-            # vx_ax = self.main_fig.add_axes(x_box)
-            # vy_ax = self.main_fig.add_axes(y_box)
+            # vx_ax = self.windows['Main'].add_axes(x_box)
+            # vy_ax = self.windows['Main'].add_axes(y_box)
 
             # # Place important axes
             # vx_ax.xaxis.tick_top()
@@ -193,8 +255,42 @@ class Display(object):
             # vy_ax.plot(vy, v, lw=2, color='g')
             # vy_ax.fill_betweenx(v, 0, vy, color='g', alpha=0.2)
 
+    def update_question_answer(self):
+        if hasattr(self.questioner, 'recent_answer'):
+            str_ = self.questioner.recent_question + ' ' \
+                + self.questioner.recent_answer
+
+            if hasattr(self, 'q_text'):
+                self.q_text.remove()
+
+            bbox = {'facecolor': 'white',
+                    'alpha': 0.8,
+                    'boxstyle':'round',
+                    }
+            ax = self.windows['Main']['fig'].get_axes()[0]
+            self.q_text = ax.annotate(str_, xy=(-5, -4.5), 
+                                      xycoords='data', annotation_clip=False,
+                                      fontsize=16, bbox=bbox)
 
     def update(self, i):
-        self.map.update(i)
-        if self.vel_states is not None:
+        try:
+            self.map.update(i)
+        except AttributeError, e:
+            logging.exception("Map not yet defined!")
+            raise e
+
+        if hasattr(self, 'vel_states'):
             self.update_velocity(i)
+
+        if hasattr(self, 'questioner'):
+            self.update_question_answer()
+
+
+
+if __name__ == '__main__':
+    from cops_and_robots.map_tools.map import Map
+    display = Display(window_set_id=0)
+    map_ = Map()
+    map_.setup_plot(fig=display.windows['Main']['fig'])
+    display.add_map(map_)
+    plt.show()

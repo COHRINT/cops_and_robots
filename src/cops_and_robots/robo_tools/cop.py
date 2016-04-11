@@ -29,8 +29,8 @@ from cops_and_robots.robo_tools.iRobot_create import iRobotCreate
 from cops_and_robots.robo_tools.planner import MissionPlanner
 from cops_and_robots.fusion.fusion_engine import FusionEngine
 from cops_and_robots.fusion.camera import Camera
-from cops_and_robots.fusion.human import Human
-from cops_and_robots.fusion.question import Questioner
+from cops_and_robots.robo_tools.questioner import Questioner
+from cops_and_robots.human_tools.human import Human
 from cops_and_robots.map_tools.map_elements import MapObject
 
 
@@ -93,7 +93,6 @@ class Cop(Robot):
                  map_cfg={},
                  fusion_engine_cfg={},
                  camera_cfg={},
-                 human_cfg={},
                  questioner_cfg={},
                  rosbag_process=None,
                  **kwargs):
@@ -105,8 +104,8 @@ class Cop(Robot):
         gp_cfg.update(goal_planner_cfg)
         pp_cfg = Cop.path_planner_defaults.copy()
         pp_cfg.update(path_planner_cfg)
-        q_cfg = Cop.questioner_defaults.copy()
-        q_cfg.update(questioner_cfg)
+        self.q_cfg = Cop.questioner_defaults.copy()
+        self.q_cfg.update(questioner_cfg)
         fe_cfg = Cop.fusion_engine_defaults.copy()
         fe_cfg.update(fusion_engine_cfg)
 
@@ -137,8 +136,10 @@ class Cop(Robot):
                                           robber_model,
                                           rosbag_process=rosbag_process,
                                           use_STM=fe_cfg['use_STM'],
+                                          use_velocity=fe_cfg['use_velocity'],
                                           )
         self.sensors = {}
+        self.ask_every_n = ask_every_n
         self.sensors['camera'] = Camera((0, 0, 0),
                                         element_dict=self.map.element_dict,
                                         **camera_cfg)
@@ -150,10 +151,14 @@ class Cop(Robot):
         # Make others
         self.make_others()
 
+
+    def add_human_sensor(self, human_sensor):
+        # Grab questioner config then unbloat Cop's attribute space
+        q_cfg = self.q_cfg
+        del self.q_cfg
+
         # Add human sensor after robbers have been made
-        self.ask_every_n = ask_every_n
-        self.sensors['human'] = Human(self.map, **human_cfg)
-        self.map.add_human_sensor(self.sensors['human'])
+        self.sensors['human'] = human_sensor
 
         # Configure questioner
         target_order = q_cfg['target_order']
@@ -162,8 +167,8 @@ class Cop(Robot):
                 target_order.remove(target)
         del q_cfg['target_order']
         self.questioner = Questioner(human_sensor=self.sensors['human'],
-                                     target_order=target_order, **q_cfg)
-        self.map.questioner = self.questioner
+                                     target_order=target_order,
+                                     **q_cfg)
 
     def make_others(self):
         # <>TODO: Make generic, so each robot has an idea of all others
@@ -263,8 +268,7 @@ class Cop(Robot):
                 continue
             priors[name] = filter_.probability
             if not hasattr(priors[name], 'pos'):
-                priors[name]._discretize(bounds=self.map.bounds,
-                                          grid_spacing=0.1)
+                priors[name]._discretize(bounds=self.map.bounds, res=0.1)
         
         #<>TODO: Generalize
         pos = self.missing_robbers['Roy'].pose2D.pose[:2]

@@ -43,7 +43,7 @@ class ProbabilityLayer(Layer):
         Keyword arguments given to the ``Layer`` superclass.
 
     """
-    def __init__(self, filter_, grid_size=0.5, z_levels=100, alpha=0.65,
+    def __init__(self, filter_, grid_size=0.1, z_levels=100, alpha=0.65,
                  colorbar_visible=False, show_ellipses=False,
                 **kwargs):
         super(ProbabilityLayer, self).__init__(alpha=alpha, **kwargs)
@@ -92,6 +92,7 @@ class ProbabilityLayer(Layer):
             probs = probability.prob
         except:
             probs = probability.pdf(self.pos)
+
 
         # try:
         #     probs = probability.pdf(self.pos, dims=[0,1])  # if not yet discretized

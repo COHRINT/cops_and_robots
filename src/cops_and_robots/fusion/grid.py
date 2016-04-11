@@ -88,7 +88,7 @@ class Grid(Probability):
             num_states = '?'
         return 'Gridded probability ({} states)'.format(int(num_states))
 
-    def measurement_update(self, likelihood, measurement=None):
+    def measurement_update(self, likelihood, measurement=None, **kwargs):
         """Bayesian update of a prior probability with a sensor likelihood.
 
         Provide likelihood as either a discretized numpy array or as a softmax

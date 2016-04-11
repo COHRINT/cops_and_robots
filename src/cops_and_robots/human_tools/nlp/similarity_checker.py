@@ -18,8 +18,6 @@ from collections import OrderedDict
 import numpy as np
 import spacy.en
 
-from cops_and_robots.human_tools.human import generate_human_language_template
-
 class SimilarityChecker(object):
     """short description of SimilarityChecker
 
@@ -47,6 +45,7 @@ class SimilarityChecker(object):
         self.nlp = spacy.en.English(parser=False, tagger=False)
         logging.info("Done!")
 
+        from cops_and_robots.human_tools.human import generate_human_language_template
         self.templates = generate_human_language_template()._asdict()
         self._flatten_templates()
         self._create_phrase_templates()
@@ -82,10 +81,11 @@ class SimilarityChecker(object):
                          ('CERTAINTY', 'know'),
                          ('TARGET', ''),
                          ('POSITIVITY', ''),
-                         ('GROUNDING', ''),
                          ('SPATIALRELATION', ''),
+                         ('GROUNDING', ''),
                          ('.', '.'),
                          ])
+        print d
         self.phrase_templates['spatial relation'] = d
         d = OrderedDict([('I', 'I'),
                          ('CERTAINTY', 'know'),
@@ -97,6 +97,18 @@ class SimilarityChecker(object):
                          ('.', '.'),
                          ])
         self.phrase_templates['action'] = d
+
+    def find_closest_phrases(self, TDC_collection):
+        closest = []
+        for i, TDC in enumerate(TDC_collection.TDCs):
+            tagged_phrase = TDC.to_tagged_phrase()
+            p, t = self.find_closest_phrase(tagged_phrase, TDC.type)
+            closest.append((p,t))
+
+            # if 1 < i < len(self.TDC_collection.TDCs):
+            #     print("\n and \n")
+        return closest
+
 
     def find_closest_phrase(self, tagged_phrase, template_type):
         """Find closest matching template phrases to input phrase.
@@ -114,12 +126,14 @@ class SimilarityChecker(object):
             closest_word = self.find_closest_word(tag, word_span)
             template[tag] = closest_word
 
-        # Delet empty values
+        # Delete empty values
         for key, value in template.iteritems():
             if value == '':
                 del template[key]
 
-        return template
+        phrase = template_to_string(template)
+
+        return phrase, template
 
     def find_closest_word(self, tag, word_span):
         """Find the closest template word to an individual word-span, given a tag.
@@ -141,6 +155,7 @@ class SimilarityChecker(object):
         return ranked_template_words[0]
 
 def template_to_string(template):
+    print template
     str_ = " ".join(filter(None, template.values()[:-1]))
     str_ += template.values()[-1]
     return str_
@@ -154,6 +169,13 @@ if __name__ == '__main__':
                      ['moving','ACTION'],
                      ['North','MODIFIER'],
                      ['.','NULL']]
+
+    tagged_phrase = [['Roy','TARGET'],
+                     ['is','POSITIVITY'],
+                     ['near','SPATIALRELATION'],
+                     ['the desk','GROUNDING'],
+                     ['.','NULL']]
     template_type = 'action'
 
-    template = sc.find_closest_phrase(tagged_phrase, template_type)
+    phrase,_ = sc.find_closest_phrase(tagged_phrase, template_type)
+    print phrase

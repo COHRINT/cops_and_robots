@@ -55,6 +55,7 @@ class Filter(object):
         else:
             feasible_region = None
 
+        # Define the probability representation
         if velocity_states == True:
             prior = velocity_prior()
         elif probability_type == 'grid':
@@ -87,27 +88,6 @@ class Filter(object):
                 self.probability.dynamics_update()
             else:
                 self.probability.dynamics_update(velocity_state=velocity_state)
-        else:
-            #<> TEST STUB
-            r = np.random.random()
-            if r < 0.025:
-                measurement_label = 'Stopped'
-            elif r < 0.05:
-                measurement_label = 'Slow'
-            # elif r < 0.075:
-            #     measurement_label = 'Medium'
-            elif r < 0.1:
-                measurement_label = 'Fast'
-            else:
-                measurement_label = None
-            
-            if measurement_label is not None:
-                logging.info("FAKE MEASUREMENT: Roy's movement is {}"
-                             .format(measurement_label))
-                likelihood = speed_model_2d()
-                self.probability = self.probability.measurement_update(likelihood, 
-                                                                       measurement_label,
-                                                                       use_LWIS=True)
 
         self._camera_update(camera)
         self._human_update(human_sensor)
@@ -118,7 +98,7 @@ class Filter(object):
         likelihood = camera.detection_model
         measurement = 'No Detection'
 
-        self.probability.measurement_update(likelihood, measurement)
+        self.probability.measurement_update(likelihood, measurement, use_LWIS=True)
         self.probability.camera_viewcone = camera.detection_model.poly  # for plotting
         self.recently_fused_update = True
 

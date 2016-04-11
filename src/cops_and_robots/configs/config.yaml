@@ -14,6 +14,17 @@ main:
     robbers: 1
     distractors: 0
 
+display:
+  window_set_id: 1  # [map-only, map + chat, map + codebook]
+  show_vel_interface: False
+  codebook_interface_cfg:
+    measurement_types:
+      velocity: False
+      area: Truefig
+      object: True
+  chat_interface_cfg:
+    show_corrections: False
+
 data_management:
   animation:  # Saves an output animation in animated gif form
     save_animation: False
@@ -49,8 +60,9 @@ cops:
     path_planner_cfg:
       type_: 'a_star'  # ['direct', 'a_star'] 
     fusion_engine_cfg:
-      probability_type: grid  # ['grid', 'particle', 'gaussian mixture']
+      probability_type: 'gauss sum'  # ['grid', 'particle', 'gauss sum']
       use_STM: True
+      use_velocity: False
     map_cfg:
       plot_robbers: True # True for all, False for none, or list of robbers to plot
       map_name: fleming
@@ -59,17 +71,14 @@ cops:
     camera_cfg:
       max_view_dist: 1.0
       min_view_dist: 0.0
-    human_cfg:
-      false_alarm_prob: 0.2
-      web_interface_topic: python  # ['python' or a rostopic name ('human_sensor')]
     questioner_cfg:
+      ask_every_n: 0 # nonpositive number to turn off
       use_ROS: False
       auto_answer: True
       target_order: ['Pris', 'Roy']
       target_weights: [11, 10]
       repeat_annoyance: 0.8   # max penalty to a repeated question
       repeat_time_penalty: 300  # seconds during which a repeat question is penalized
-      ask_every_n: 10 # nonpositive number to turn off
       sequence_length: 1  # number of questions for non-myopic VOI
       minimize_questions: False  # ask over a smaller set of questions
       use_GP_VOI: False
@@ -97,8 +106,6 @@ distractors:
     path_planner_cfg:
       type_: 'a_star'  # ['direct', 'a_star'] 
 
-human_interface:
-  measurement_types:
-    velocity: False
-    area: True
-    object: True
+human:
+  false_alarm_prob: 0.2
+  web_interface_topic: python  # ['python' or a rostopic name ('human_sensor')]

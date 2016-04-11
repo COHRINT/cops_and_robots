@@ -68,12 +68,13 @@ class GaussianMixture(Probability):
 
     def __init__(self, weights=1, means=0, covariances=1, ellipse_color='red',
                  max_num_mixands=20, bounds=None, pos=None, pos_all=None):
+        self._prob_requires_update = True
         self.weights = np.asarray(weights, dtype=np.float)
         self.means = np.asarray(means, dtype=np.float)
         self.covariances = np.asarray(covariances, dtype=np.float)
+        self.num_mixands = self.weights.size
         self.ellipse_color = ellipse_color
         self.max_num_mixands = max_num_mixands
-        self.num_mixands = self.weights.size
         self.bounds = bounds
         if pos is not None:
             self.pos = pos
@@ -87,15 +88,80 @@ class GaussianMixture(Probability):
 
     def __str__(self):
         return 'Gaussian Mixture ({} mixands)'.format(self.weights.size)
-        # d = {}
-        # for i, weight in enumerate(self.weights):
-        #     d['Mixand {}'.format(i)] = np.hstack((weight,
-        #                                           self.means[i],
-        #                                           self.covariances[i].flatten()
-        #                                           ))
-        # ind = ['Weight'] + ['Mean'] * self.ndims + ['Variance'] * self.ndims ** 2
-        # df = pd.DataFrame(d, index=ind)
-        # return '\n' + df.to_string()
+
+    @property
+    def prob(self):
+        # Lazily update pdf
+        if self._prob_requires_update:
+            self._prob = self.pdf()
+        self._prob_requires_update = False
+        return self._prob
+
+    @prob.setter
+    def prob(self, prob):
+        logging.debug("Setting prob directly can be dangerous!")
+        self._prob = prob
+
+    @property
+    def weights(self):
+        return self._weights
+
+    @weights.setter
+    def weights(self, weights):
+        if not self._prob_requires_update:
+            weights = np.array(weights)
+            if (self.weights.size != weights.size
+                or not (self.weights == weights).all()):
+
+                self._prob_requires_update = True
+        self._weights = weights
+
+    @property
+    def means(self):
+        return self._means
+
+    @means.setter
+    def means(self, means):
+        if not self._prob_requires_update:
+            means = np.array(means)
+            if (self.means.size != means.size
+                or not (self.means == means).all()):
+
+                self._prob_requires_update = True
+        self._means = means
+
+    @property
+    def covariances(self):
+        return self._covariances
+
+    @covariances.setter
+    def covariances(self, covariances):
+        if not self._prob_requires_update:
+            covariances = np.array(covariances)
+            if (self.covariances.size != covariances.size
+                or not (self.covariances == covariances).all()):
+
+                self._prob_requires_update = True
+        self._covariances = covariances
+
+    def update(self, weights=None, means=None, covariances=None,
+               gaussian_mixture=None):
+        if weights is not None:
+            self.weights = weights
+
+        if means is not None:
+            self.means = means
+
+        if covariances is not None:
+            self.covariances = covariances
+
+        if gaussian_mixture is not None:
+            self.weights = gaussian_mixture.weights
+            self.means = gaussian_mixture.means
+            self.covariances = gaussian_mixture.covariances
+
+        self.num_mixands = self.weights.size
+        self._input_check()
 
     def pdf(self, x=None, dims=None):
         """Probability density function at state x.
@@ -146,7 +212,6 @@ class GaussianMixture(Probability):
     def marginal_pdf(self, axis, x=None, dims=None):
 
         #<>TODO: fix for n-dimensional PDFs
-
         x_min = np.min(x)
         x_max = np.max(x)
         if self.bounds is None:
@@ -160,7 +225,7 @@ class GaussianMixture(Probability):
                 raise NotImplementedError("Not yet implemented for n>2!")
 
         res = (x_max - x_min) / (x.size - 1)
-        self._discretize(bounds, grid_spacing=res)
+        self._discretize(bounds, res=res)
         full_pdf = self.pdf(self.pos_all, dims)
 
         # <>TODO: fix this axis hack
@@ -205,10 +270,40 @@ class GaussianMixture(Probability):
                                          prior=self,
                                          **kwargs
                                         )
-        posterior = GaussianMixture(beta, mu, sigma)
-        return posterior
+        self.update(weights=beta, means=mu, covariances=sigma)
 
-    def dynamics_update(self):
+    def multi_measurement_update(self, likelihood, measurement_label, **kwargs):
+        """Performed for multiple softmax likelihoods
+
+        <>TODO: Find out how to combine geometric Softmax compression models.
+        """
+
+        mixtures = []
+        raw_weights = []
+        for u, mixand_weight in enumerate(self.weights):
+            mixand = GaussianMixture(1, self.means[u], self.covariances[u])
+            for i, geometric_sm in enumerate(geometric_sm_models):
+
+                mu, sigma, beta = vb.update(measurement=joint_measurement,
+                                            likelihood=geometric_sm,
+                                            prior=mixand,
+                                            get_raw_beta=True,
+                                            )
+                new_mixture = GaussianMixture(beta, mu, sigma)
+                mixtures.append(new_mixture)
+                raw_weights.append(beta * mixand_weight)
+
+        # Renormalize raw weights
+        raw_weights = np.array(raw_weights)
+        raw_weights /= raw_weights.sum()
+
+        mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
+        geometric_post = mixtures[0]
+
+
+    def dynamics_update(self, impose_constraints=False, n_steps=1):
+        #<>TODO: deal with n_steps
+
         dt = 0.1
         F = np.array([[1, 0, dt, 0],
                       [0, 1, 0, dt],
@@ -222,30 +317,37 @@ class GaussianMixture(Probability):
         Q = np.array([[.05, 0],
                       [0, .05]])
 
-        weights = self.probability.weights
-        means = self.probability.means
-        # means = F*means
-        covariances = self.probability.covariances
-        for i, covariance in enumerate(covariances):
-            covariances[i] = np.dot(np.dot(F, covariance), np.transpose(F)) + \
-                np.dot(np.dot(Gamma, Q), np.transpose(Gamma))
+        # Time update
+        #<>TODO: include velocity states
+        means = np.empty_like(self.means)
+        for i, mean in enumerate(self.means):
 
-        bounds = self.probability.bounds
-        try:
-            pos = self.probability.pos
-        except AttributeError:
-            pos = None
+            # Pad means
+            if mean.size < F.shape[0]:
+                n = F.shape[0] - mean.size
+                mean = np.pad(mean, (0, n), 'constant')
 
-        try:
-            pos_all = self.probability.pos_all
-        except AttributeError:
-            pos_all = None
-        self.probability = GaussianMixture(weights=weights, means=means,
-                                           covariances=covariances,
-                                           bounds=bounds, pos=pos,
-                                           pos_all=pos_all)
+            means[i] = (F .dot (mean))[:self.means.shape[1]]
 
-        self.truncate_gaussians()
+        covariances = np.empty_like(self.covariances)
+        for i, covariance in enumerate(self.covariances):
+
+            # Pad covariances
+            if covariance.shape[0] < F.shape[0]:
+                n = F.shape[0] - covariance.shape[0]
+                covariance = np.pad(covariance, (0, n), 'constant')
+
+
+            covariance = F .dot (covariance) .dot (F.T) + \
+                Gamma .dot(Q) .dot (Gamma.T)
+
+            m = self.covariances.shape[1]
+            covariances[i] = covariance[:m,:m]
+
+        self.update(means=means, covariances=covariances)
+
+        if impose_constraints:
+            self.truncate_gaussians()
 
     def truncate_gaussians(self):
         # To start, just use map bounds
@@ -389,19 +491,19 @@ class GaussianMixture(Probability):
 
         return muOut, SigmaOut, wtOut #lkOut
 
-    def max_point_by_grid(self, bounds=None, grid_spacing=0.1):
+    def find_MAP(self, bounds=None, res=0.1):
         #<>TODO: set for n-dimensional
         if not hasattr(self, 'pos'):
-            self._discretize(bounds, grid_spacing)
+            self._discretize(bounds, res)
         try:
-            self.xx = self.pos[:, :, 0]
-            self.yy = self.pos[:, :, 1]
+            self.X = self.pos[:, :, 0]
+            self.Y = self.pos[:, :, 1]
         except AttributeError, e:
             logging.error(e)
 
         prob = self.pdf(self.pos, dims=[0, 1])
         MAP_i = np.unravel_index(prob.argmax(), prob.shape)
-        MAP_point = np.array([self.xx[MAP_i[0]][0], self.yy[0][MAP_i[1]]])
+        MAP_point = np.array([self.X[MAP_i[0]][0], self.Y[0][MAP_i[1]]])
         MAP_prob = prob[MAP_i]
         return MAP_point, MAP_prob
 
@@ -506,6 +608,8 @@ class GaussianMixture(Probability):
 
     def combine_gms(self, other_gms, self_weight=None, raw_weights=None):
         """Merge two gaussian mixtures together, weighing the original by alpha.
+
+        This is an in-place operation, replacing the original GM.
         """
         if type(other_gms) is not list:
             other_gms = [other_gms]
@@ -538,12 +642,12 @@ class GaussianMixture(Probability):
             pos_all = None
         bounds = self.bounds
 
-        gm = GaussianMixture(beta_hat, mu_hat, var_hat, bounds=bounds, pos=pos, pos_all=pos_all)
-
-        return gm
+        self.update(beta_hat, mu_hat, var_hat)
+        # gm = GaussianMixture(beta_hat, mu_hat, var_hat, bounds=bounds, pos=pos, pos_all=pos_all)
+        # return gm
 
     def _input_check(self):
-        # Check if weights sum are normalized
+        # Check if weights are normalized
         try:
             new_weights = self.weights / np.sum(self.weights)
             assert np.array_equal(self.weights, new_weights)
@@ -597,7 +701,6 @@ class GaussianMixture(Probability):
                                   ' \n{}'.format(mean, var))
                 raise e
 
-
         # Check if covariances are symmetric
         for var in self.covariances:
             try:
@@ -612,9 +715,9 @@ class GaussianMixture(Probability):
         # Merge if necessary
         self._merge()
 
-    def _discretize(self, bounds=None, grid_spacing=0.1, all_dims=False):
+    def _discretize(self, bounds=None, res=0.1, all_dims=False):
         
-        self.grid_spacing = grid_spacing
+        self.res = res
         if bounds is None and self.bounds is None:
             b = [-10, 10]  # bounds in any dimension
             bounds = [[d] * self.ndims for d in b]  # apply bounds to each dim
@@ -624,33 +727,28 @@ class GaussianMixture(Probability):
 
         # Create grid
         if self.ndims == 1:
-            x = np.arange(self.bounds[0], self.bounds[1], grid_spacing)
+            x = np.arange(self.bounds[0], self.bounds[1], res)
             self.x = x
             self.pos = x
+            self.pos_all = x
         elif self.ndims == 2:
-            xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]
-                              + grid_spacing:grid_spacing,
-                              self.bounds[1]:self.bounds[3]
-                              + grid_spacing:grid_spacing]
+            xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]:res,
+                              self.bounds[1]:self.bounds[3]:res]
             pos = np.empty(xx.shape + (2,))
             pos[:, :, 0] = xx; pos[:, :, 1] = yy
-            self.xx = xx; self.yy = yy
+            self.X = xx; self.Y = yy
             self.pos = pos
             self.pos_all = pos
 
         elif self.ndims > 2:
 
             logging.debug('Using first two variables as x and y')
-            xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]
-                              + grid_spacing:grid_spacing,
-                              self.bounds[1]:self.bounds[3]
-                              + grid_spacing:grid_spacing]
+            xx, yy = np.mgrid[self.bounds[0]:self.bounds[2]:res,
+                              self.bounds[1]:self.bounds[3]:res]
             pos = np.empty(xx.shape + (2,))
             pos[:, :, 0] = xx; pos[:, :, 1] = yy
-            self.xx = xx; self.yy = yy
+            self.X = xx; self.Y = yy
             self.pos = pos
-            logging.info(self.pos.shape)
-            logging.info(self.bounds)
 
 
             if all_dims:
@@ -658,8 +756,8 @@ class GaussianMixture(Probability):
                 full_bounds = self.bounds[0:2] + [-0.5, -0.5] \
                     + self.bounds[2:] + [0.5, 0.5]
                 v_spacing = 0.1
-                grid = np.mgrid[full_bounds[0]:full_bounds[4]:grid_spacing,
-                                full_bounds[1]:full_bounds[5]:grid_spacing,
+                grid = np.mgrid[full_bounds[0]:full_bounds[4]:res,
+                                full_bounds[1]:full_bounds[5]:res,
                                 full_bounds[2]:full_bounds[6]:v_spacing,
                                 full_bounds[3]:full_bounds[7]:v_spacing,
                                 ]
@@ -745,9 +843,9 @@ class GaussianMixture(Probability):
             self.num_mixands -= 1
 
         # Delete removed mixands from parameter arrays
-        self.weights = np.delete(self.weights, deleted_mixands, axis=0)
-        self.means = np.delete(self.means, deleted_mixands, axis=0)
-        self.covariances = np.delete(self.covariances, deleted_mixands, axis=0)
+        self._weights = np.delete(self.weights, deleted_mixands, axis=0)
+        self._means = np.delete(self.means, deleted_mixands, axis=0)
+        self._covariances = np.delete(self.covariances, deleted_mixands, axis=0)
 
 
 def entr(p_i):
@@ -1002,53 +1100,57 @@ def ellipses_test(num_std=2):
     plt.show()
 
 
-def fleming_prior(feasible_region=None):
+def fleming_prior(feasible_region=None, include_dynamics=False):
     bounds = [-9.5, -3.33, 4, 3.68]
-    gm = GaussianMixture(weights=[32,
-                                14,
-                                15,
-                                14,
-                                14,
-                                14],
-                        means=[[-5.5, 2, 0, 0],  # Kitchen
-                               [2, 2, 0, 0],  # Billiard Room
-                               [-4, -0.5, 0, 0],  # Hallway
-                               [-9, -2.5, 0, 0],  # Dining Room
-                               [-4, -2.5, 0, 0],  # Study
-                               [1.5, -2.5, 0, 0],  # Library
-                               ],
-                        covariances=[[[5.0, 0.0, 0, 0],  # Kitchen
-                                      [0.0, 2.0, 0, 0],
-                                      [0, 0, 0.1, 0],
-                                      [0, 0, 0, 0.1],
-                                      ],
-                                     [[1.0, 0.0, 0, 0],  # Billiard Rooom
-                                      [0.0, 2.0, 0, 0],
-                                      [0, 0, 0.1, 0],
-                                      [0, 0, 0, 0.1],
-                                      ],
-                                     [[7.5, 0.0, 0, 0],  # Hallway
-                                      [0.0, 0.5, 0, 0],
-                                      [0, 0, 0.1, 0],
-                                      [0, 0, 0, 0.1],
-                                      ],
-                                     [[2.0, 0.0, 0, 0],  # Dining Room
-                                      [0.0, 1.0, 0, 0],
-                                      [0, 0, 0.1, 0],
-                                      [0, 0, 0, 0.1],
-                                      ],
-                                     [[2.0, 0.0, 0, 0],  # Study
-                                      [0.0, 1.0, 0, 0],
-                                      [0, 0, 0.1, 0],
-                                      [0, 0, 0, 0.1],
-                                      ],
-                                     [[2.0, 0.0, 0, 0],  # Library
-                                      [0.0, 1.0, 0, 0],
-                                      [0, 0, 0.1, 0],
-                                      [0, 0, 0, 0.1],
-                                      ]
-                                     ],
-                        bounds=bounds)
+    weights=[32,
+             14,
+             15,
+             14,
+             14,
+             14]
+    means=[[-5.5, 2, 0, 0],  # Kitchen
+           [2, 2, 0, 0],  # Billiard Room
+           [-4, -0.5, 0, 0],  # Hallway
+           [-9, -2.5, 0, 0],  # Dining Room
+           [-4, -2.5, 0, 0],  # Study
+           [1.5, -2.5, 0, 0],  # Library
+           ]
+    covariances=[[[5.0, 0.0, 0, 0],  # Kitchen
+                  [0.0, 2.0, 0, 0],
+                  [0, 0, 0.1, 0],
+                  [0, 0, 0, 0.1],
+                  ],
+                 [[1.0, 0.0, 0, 0],  # Billiard Rooom
+                  [0.0, 2.0, 0, 0],
+                  [0, 0, 0.1, 0],
+                  [0, 0, 0, 0.1],
+                  ],
+                 [[7.5, 0.0, 0, 0],  # Hallway
+                  [0.0, 0.5, 0, 0],
+                  [0, 0, 0.1, 0],
+                  [0, 0, 0, 0.1],
+                  ],
+                 [[2.0, 0.0, 0, 0],  # Dining Room
+                  [0.0, 1.0, 0, 0],
+                  [0, 0, 0.1, 0],
+                  [0, 0, 0, 0.1],
+                  ],
+                 [[2.0, 0.0, 0, 0],  # Study
+                  [0.0, 1.0, 0, 0],
+                  [0, 0, 0.1, 0],
+                  [0, 0, 0, 0.1],
+                  ],
+                 [[2.0, 0.0, 0, 0],  # Library
+                  [0.0, 1.0, 0, 0],
+                  [0, 0, 0.1, 0],
+                  [0, 0, 0, 0.1],
+                  ]
+                 ]
+    if not include_dynamics:
+        means = np.array(means)[:,:2]
+        covariances = np.array(covariances)[:,:2,:2]
+
+    gm = GaussianMixture(weights, means, covariances,bounds=bounds)
 
     #<>TODO: incorperate feasible region
     return gm
@@ -1199,7 +1301,6 @@ def entropy_test():
     logging.info('Entropy of a 1d gaussian: {} (discrete)'
                  '\n with params: {}'
                  .format(H4_1d, gauss4_1d))
-    #<>TODO: VALIDATE AGAINST NISAR'S CODE
 
     # 2D entropy - no mixtures ################################################
     gauss1_2d = GaussianMixture(1, [3, -2], [[1.5, 1.0],[1.0, 1.5]])
@@ -1275,8 +1376,8 @@ def merge_gm_test(alpha=0.5):
                                    [-0.3, 1.5]]
                                  ])
 
-    gm3 = gm1.combine_gms(gm2, alpha)
-    print gm3
+    gm1.combine_gms(gm2, alpha)
+    print gm1
 
 
 def marginal_test():
@@ -1306,16 +1407,51 @@ def marginal_test():
     ax.plot(marginal, x)
     ax.set_ylim([-2,2])
 
-
     plt.show()
 
+
+def update_speed_test():
+    import timeit
+
+    def create_GM():
+        gm = GaussianMixture([0.3, 0.7],
+                                [[3, -2],
+                                 [-4, -6]
+                                 ], 
+                                 [[[0.5, 0.0],
+                                   [0.0, 0.5]],
+                                  [[1.5, -0.3],
+                                   [-0.3, 1.5]]
+                                 ])
+        return gm
+
+    def update_GM(gm):
+        gm.weights = [0.3, 0.7]
+        gm.means = [[-3, 2],[5, 6]]
+        gm.covariances = [[[0.5, 0.0],
+                           [0.0, 0.5]],
+                          [[1.5, -0.3],
+                           [-0.3, 1.5]]]
+
+    def wrapper(func, *args, **kwargs):
+        def wrapped():
+            return func(*args, **kwargs)
+        return wrapped
+
+    wrapped = wrapper(update_GM, create_GM())
+
+    create_time = timeit.timeit(create_GM, number=1000) / 1000
+    update_time = timeit.timeit(wrapped, number=1000) / 1000
+    print("Create time: {}s\nUpdate time: {}s\nRatio: {}"
+          .format(create_time, update_time, create_time / update_time))
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
 
     # pdf_test()
     # rv_test()
     # gm = fleming_prior_test()
-    marginal_test()
+    # marginal_test()
     
     # fp = fleming_prior_test()
     # new_fp = fp.copy()
@@ -1325,4 +1461,5 @@ if __name__ == '__main__':
     # merge_test(120)
     # uniform_prior_test()
     # entropy_test()
+    update_speed_test()
     # merge_gm_test(0.01)

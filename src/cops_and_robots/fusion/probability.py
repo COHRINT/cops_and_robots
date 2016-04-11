@@ -25,18 +25,10 @@ class Probability(object):
     
     Parameters
     ----------
-    param : param_type, optional
-        param_description
-
-    Attributes
-    ----------
-    attr : attr_type
-        attr_description
-
-    Methods
-    ----------
-    attr : attr_type
-        attr_description
+    bounds : Array-like
+        Bounding coordinates for the probability map.
+    res : float
+        Resolution used for discretization of the probability map.
 
     """
 
@@ -50,8 +42,11 @@ class Probability(object):
         """
         # <>TODO: figure this out. Look at papers!
         # http://www-personal.acfr.usyd.edu.au/tbailey/papers/mfi08_huber.pdf
-        if not hasattr(self,'pos'):
+        if not hasattr(self, 'pos'):
             self._discretize()
+
+        if not hasattr(self, 'prob'):
+            self.pdf()
 
         p_i = self.prob #TODO: change to 4 dims.
         H = -np.nansum(p_i * np.log(p_i)) * self.res ** self.ndims # sum of elementwise entropy values

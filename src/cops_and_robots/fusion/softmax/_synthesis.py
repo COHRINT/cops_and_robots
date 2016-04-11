@@ -403,7 +403,7 @@ def prob_difference(models, joint_measurement):
 
     return prob_diff
 
-def compare_probs(sm1, sm2, measurements, visualize=True, verbose=True):
+def compare_probs(sm1, sm2, measurements, visualize=True, verbose=False):
 
     bounds = [-5, -5, 5, 5]
     res = 0.1
@@ -572,27 +572,27 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=True, u
             ax.set_title("{}".format(measurements[i]))
         plt.show()
 
-    # Synthesize the softmax models
-    logging.info('Synthesizing product model...')
-    s = time.time()
-    product_sm = product_model(models)
-    e = time.time()
-    product_time = e - s
-    logging.info('Took {} seconds\n'.format((product_time)))
+    # # Synthesize the softmax models
+    # logging.info('Synthesizing product model...')
+    # s = time.time()
+    # product_sm = product_model(models)
+    # e = time.time()
+    # product_time = e - s
+    # logging.info('Took {} seconds\n'.format((product_time)))
 
-    logging.info('Synthesizing neighbourhood model (iter 1)...')
-    s = time.time()
-    neighbour_sm = neighbourhood_model(models, measurements)
-    e = time.time()
-    neighbour_time = e - s
-    logging.info('Took {} seconds\n'.format((neighbour_time)))
+    # logging.info('Synthesizing neighbourhood model (iter 1)...')
+    # s = time.time()
+    # neighbour_sm = neighbourhood_model(models, measurements)
+    # e = time.time()
+    # neighbour_time = e - s
+    # logging.info('Took {} seconds\n'.format((neighbour_time)))
 
-    logging.info('Synthesizing neighbourhood model (iter 2)...')
-    s = time.time()
-    neighbour_sm2 = neighbourhood_model([neighbour_sm], [joint_measurement], iteration=2)
-    e = time.time()
-    neighbour2_time = e - s
-    logging.info('Took {} seconds\n'.format((neighbour2_time)))
+    # logging.info('Synthesizing neighbourhood model (iter 2)...')
+    # s = time.time()
+    # neighbour_sm2 = neighbourhood_model([neighbour_sm], [joint_measurement], iteration=2)
+    # e = time.time()
+    # neighbour2_time = e - s
+    # logging.info('Took {} seconds\n'.format((neighbour2_time)))
 
     logging.info('Synthesizing geometric model...')
     s = time.time()
@@ -602,67 +602,68 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=True, u
     logging.info('Took {} seconds\n'.format((geometric_time)))
 
     # Find their differences
-    neighbour_diff = prob_difference([product_sm, neighbour_sm], joint_measurement)
-    neighbour_diff2 = prob_difference([product_sm, neighbour_sm2], joint_measurement)
-    if not type(geometric_sm_models) == list:
-        geometric_sm_models = [geometric_sm_models]
-    geometric_diff = prob_difference([product_sm] + geometric_sm_models, joint_measurement)
+    # neighbour_diff = prob_difference([product_sm, neighbour_sm], joint_measurement)
+    # neighbour_diff2 = prob_difference([product_sm, neighbour_sm2], joint_measurement)
+    # if not type(geometric_sm_models) == list:
+    #     geometric_sm_models = [geometric_sm_models]
+    # geometric_diff = prob_difference([product_sm] + geometric_sm_models, joint_measurement)
 
     # Fuse all of them with a normal
     # prior = GaussianMixture([0.8,0.2], [-np.ones(2), 4*np.ones(2)], [3*np.eye(2), 2*np.eye(2)])
-    # prior = GaussianMixture([0.25, 0.25, 0.25, 0.25], 
-    #                         [-2*np.ones(2), 2*np.ones(2), np.array([-2,2]), np.array([2,-2])], 
-    #                         [2*np.eye(2), 2*np.eye(2), 2*np.eye(2), 2*np.eye(2),]
-    #                         )
-    prior = GaussianMixture(np.ones(80), 
-                            np.random.random((80,2))*20 - 10,
-                            np.tile(2*np.eye(2),(80,1,1)),
-                            max_num_mixands=80,
+    prior = GaussianMixture([0.25, 0.25, 0.25, 0.25], 
+                            [-2*np.ones(2), 2*np.ones(2), np.array([-2,2]), np.array([2,-2])], 
+                            [2*np.eye(2), 2*np.eye(2), 2*np.eye(2), 2*np.eye(2),]
                             )
+    # n = 20
+    # prior = GaussianMixture(np.ones(n), 
+    #                         np.random.random((n,2))*20 - 10,
+    #                         np.tile(2*np.eye(2),(n,1,1)),
+    #                         max_num_mixands=n,
+    #                         )
     from cops_and_robots.fusion.variational_bayes import VariationalBayes
     vb = VariationalBayes()
 
-    logging.info('Fusing Product model...')
-    s = time.time()
-    mu, sigma, beta = vb.update(measurement=joint_measurement,
-                                likelihood=product_sm,
-                                prior=prior,
-                                )
-    if beta.size == 1:
-        logging.info('Got a posterior with mean {} and covariance: \n {}'
-                     .format(mu, sigma))
-    product_post = GaussianMixture(beta, mu, sigma)
-    e = time.time()
-    product_fusion_time = e - s
-    logging.info('Took {} seconds\n'.format((product_fusion_time)))
+    # logging.info('Fusing Product model...')
+    # s = time.time()
+    # mu, sigma, beta = vb.update(measurement=joint_measurement,
+    #                             likelihood=product_sm,
+    #                             prior=prior,
+    #                             )
+    # if beta.size == 1:
+    #     logging.info('Got a posterior with mean {} and covariance: \n {}'
+    #                  .format(mu, sigma))
+    # product_post = GaussianMixture(beta, mu, sigma)
+    # e = time.time()
+    # product_fusion_time = e - s
+    # logging.info('Took {} seconds\n'.format((product_fusion_time)))
 
-    logging.info('Fusing Neighbourhood model 1...')
-    s = time.time()
-    mu, sigma, beta = vb.update(measurement=joint_measurement,
-                                likelihood=neighbour_sm,
-                                prior=prior,
-                                )
-    if beta.size == 1:
-        logging.info('Got a posterior with mean {} and covariance: \n {}'
-                     .format(mu, sigma))
-    neighbour_post = GaussianMixture(beta, mu, sigma)
-    e = time.time()
-    neighbour_fusion_time = e - s
-    logging.info('Took {} seconds\n'.format((neighbour_fusion_time)))
+    # logging.info('Fusing Neighbourhood model 1...')
+    # s = time.time()
+    # mu, sigma, beta = vb.update(measurement=joint_measurement,
+    #                             likelihood=neighbour_sm,
+    #                             prior=prior,
+    #                             )
+    # if beta.size == 1:
+    #     logging.info('Got a posterior with mean {} and covariance: \n {}'
+    #                  .format(mu, sigma))
+    # neighbour_post = GaussianMixture(beta, mu, sigma)
+    # e = time.time()
+    # neighbour_fusion_time = e - s
+    # logging.info('Took {} seconds\n'.format((neighbour_fusion_time)))
 
-    logging.info('Fusing Neighbourhood model 2...')
-    s = time.time()
-    mu, sigma, beta = vb.update(measurement=joint_measurement,
-                                likelihood=neighbour_sm2,
-                                prior=prior,
-                                )
-    if beta.size == 1:
-        logging.info('Got a posterior with mean {} and covariance: \n {}'
-                     .format(mu, sigma))
-    neighbour2_post = GaussianMixture(beta, mu, sigma)
-    e = time.time()
-    neighbour2_fusion_time = e - s
-    logging.info('Took {} seconds\n'.format((neighbour2_fusion_time)))
+    # logging.info('Fusing Neighbourhood model 2...')
+    # s = time.time()
+    # mu, sigma, beta = vb.update(measurement=joint_measurement,
+    #                             likelihood=neighbour_sm2,
+    #                             prior=prior,
+    #                             )
+    # if beta.size == 1:
+    #     logging.info('Got a posterior with mean {} and covariance: \n {}'
+    #                  .format(mu, sigma))
+    # neighbour2_post = GaussianMixture(beta, mu, sigma)
+    # e = time.time()
+    # neighbour2_fusion_time = e - s
+    # logging.info('Took {} seconds\n'.format((neighbour2_fusion_time)))
 
     logging.info('Fusing Geometric model...')
     mixtures = []
@@ -689,18 +690,21 @@ def test_synthesis_techniques(test_set=1, visualize=True, visualize_base=True, u
     raw_weights = np.array(raw_weights)
     raw_weights /= raw_weights.sum()
 
-    geometric_post = mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
+    mixtures[0].combine_gms(mixtures[1:], raw_weights=raw_weights)
+    geometric_post = mixtures[0]
     e = time.time()
     geometric_fusion_time = e - s
     logging.info('Took {} seconds\n'.format((geometric_fusion_time)))
-
-    logging.info(geometric_post.weights.size)
-
 
     # Compute KLDs
     neighbour_kld = neighbour_post.compute_kld(product_post)
     neighbour2_kld = neighbour2_post.compute_kld(product_post)
     geometric_kld = geometric_post.compute_kld(product_post)
+
+    compression_time = [product_time, neighbour_time, neighbour2_time, geometric_time]
+    fusion_time = [product_fusion_time, neighbour_fusion_time, neighbour2_fusion_time, geometric_fusion_time]
+    KLDs = [0, neighbour_kld, neighbour2_kld, geometric_kld]
+    return compression_time, fusion_time, KLDs
 
     if visualize:
         # fig = plt.figure(figsize=(18,10))
@@ -995,7 +999,6 @@ def test_1D():
 
 def test_find_redundant_constraints(verbose=False, show_timing=True, n_runs=1000):
     """Tested against results of LP method in section 3.2 of [1].
-
     [1] S. Paulraj and P. Sumathi, "A comparative study of redundant 
     constraints identification methods in linear programming problems,"
     Math. Probl. Eng., vol. 2010.
@@ -1071,7 +1074,6 @@ def test_find_redundant_constraints(verbose=False, show_timing=True, n_runs=1000
 
 def test_box_constraints(verbose=False):
     """Remove a known redundant constraint for a box polytope.
-
     Constraints:
         -x1 \leq 2
         x1 \leq 2
@@ -1098,15 +1100,20 @@ def test_box_constraints(verbose=False):
     return A, b
 
 if __name__ == '__main__':
-    np.set_printoptions(precision=2, suppress=True)
+    np.set_printoptions(precision=5, suppress=False)
     logging.getLogger().setLevel(logging.INFO)
 
 
     # test_1D()
-    test_synthesis_techniques(test_set=3, use_MMS=True, visualize=True,
-                              visualize_base=False, show_comp_models=False)
+    N = 30
+    outs = []
+    for i in range(N):
+        out = test_synthesis_techniques(test_set=1, use_MMS=True, visualize=False,
+                                        visualize_base=False, show_comp_models=False)
+        outs.append(out)
 
-    # product_vs_lp()
-    # product_test(visualize=True, create_combinations=True)
-    # measurements = ['Inside', 'Right']
-    # geometric_model_test(measurements, verbose=False, visualize=True)
+    outs = np.array(outs)
+    print outs.mean(axis=0)
+    print outs.std(axis=0)
+    # np.save("softmax_results.nps", np.array(outs))
+

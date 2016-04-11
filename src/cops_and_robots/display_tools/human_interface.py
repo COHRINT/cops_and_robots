@@ -16,16 +16,67 @@ __status__ = "Development"
 import logging
 
 from matplotlib.widgets import RadioButtons, Button
+from PyQt4 import QtGui, QtCore
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 
-# <>TODO: @Refactor Create generic (experiment independent) interface?
+class ChatInterface(QtGui.QWidget):
+    """docstring for ChatInterface"""
+    def __init__(self, human_sensor=None, show_corrections=False):
+        super(ChatInterface, self).__init__()
+        self.human_sensor = human_sensor
+        self.show_corrections = show_corrections
+        self.response_text = ''
 
+        self.init_UI()
 
-class HumanInterface(object):
+    def init_UI(self):
+        # Description label
+        self.lbl = QtGui.QLabel(self)
+        self.lbl.move(20, 22)
+
+        # LineEdit text entry box
+        self.le = QtGui.QLineEdit(self)
+        self.le.move(20, 42)
+        self.le.resize(370,22)
+        self.le.textChanged[str].connect(self.onChanged)
+        
+        # Submit button
+        self.btn = QtGui.QPushButton('Submit', self)
+        self.btn.move(400, 40)
+        self.btn.clicked.connect(self.submit)
+
+        # Window properties
+        self.setGeometry(200,700, 500, 80)
+        self.setWindowTitle('Chatbox')
+        self.show()
+
+    def onChanged(self, text):
+        self.nl_input = str(text)
+
+    def submit(self):
+        phrase, template = self.human_sensor.chatter.translate_from_natural_input(self.nl_input)
+        self.response_text = phrase
+
+        self.human_sensor.utterance = phrase
+        self.human_sensor.new_update = True  # <>TODO: interrupt
+
+        self.lbl.setText(self.generate_response())
+        self.lbl.adjustSize()
+        self.le.clear()
+
+    def generate_response(self):
+        response = "I understood: {}".format(self.response_text)
+        return response
+
+    def keyPressEvent(self, qKeyEvent):
+        if qKeyEvent.key() == QtCore.Qt.Key_Return: 
+            self.submit()
+
+class CodebookInterface(object):
     """Generate a human interface on a given figure.
 
     .. image:: img/classes_Human_interface.png
@@ -50,7 +101,7 @@ class HumanInterface(object):
     def __init__(self, fig, human_sensor=None, input_type='radio_buttons',
                  measurement_types=None):
         if measurement_types is None:
-            measurement_types = HumanInterface.measurement_types
+            measurement_types = CodebookInterface.measurement_types
 
         # General interface parameters
         self.fig = fig
@@ -417,13 +468,19 @@ class HumanInterface(object):
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s: %(message)s',
-                        level=logging.DEBUG,)
-    t = np.arange(0.0, 2.0, 0.01)
-    s0 = np.sin(2 * np.pi * t)
+                        level=logging.INFO,)
+    # t = np.arange(0.0, 2.0, 0.01)
+    # s0 = np.sin(2 * np.pi * t)
 
-    fig, ax = plt.subplots()
-    l, = ax.plot(t, s0, lw=2, color='red')
+    # fig, ax = plt.subplots()
+    # l, = ax.plot(t, s0, lw=2, color='red')
 
-    hi = HumanInterface(fig)
+    # hi = CodebookInterface(fig)
+    import sys
+    from cops_and_robots.human_tools.human import Human
+    human_sensor = Human()
+    app = QtGui.QApplication(sys.argv)
+    chat = ChatInterface(human_sensor=human_sensor)
+    sys.exit(app.exec_())
 
     plt.show()

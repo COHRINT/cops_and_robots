@@ -14,9 +14,6 @@ __status__ = "Development"
 import logging
 import daft
 
-from cops_and_robots.human_tools.human import generate_human_language_template
-
-
 class TDC(object):
     """Target description clause.
 
@@ -253,6 +250,13 @@ class TDC_Collection(object):
                           }
         
     def parse_tagged_document(self, tagged_document):
+        """Generate a complete parsing of a tagged document.
+
+        Parameters
+        ----------
+        tagged_document : array_like
+            A 2-by-n array of tokens and tags.
+        """
         phrases = self.split_phrases(tagged_document)
         self.get_TDCs_from_phrases(phrases)
         self.update_children_from_parents()
@@ -404,12 +408,13 @@ class TDC_Collection(object):
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
+    from cops_and_robots.human_tools.nlp.tagger import generate_test_data
 
-    tagged_document = generate_fleming_test_data()
+    tagged_document = generate_test_data()
     TDC_collection = TDC_Collection(tagged_document)
     TDC_collection.print_TDCs()
 
-    tagged_document = generate_fleming_test_data()
+    # tagged_document = generate_fleming_test_data()
 
     # Plot TDCs
     # TDC_collection.plot_TDCs()
