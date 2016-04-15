@@ -28,24 +28,87 @@ from cops_and_robots.human_tools.nlp.similarity_checker import (SimilarityChecke
                                                             template_to_string)
 
 class Chatter(object):
-    """A chat interface that maps natural language to template sensor statements.
+    """A chat interface that maps natural language to pre-defined statements.
+
+    Parameters
+    ----------
+    uncontract : bool, optional
+        Whether to remove contractions in the raw input. Default is ``False``.
+    punctuate : bool, optional
+        Whether to manage punctuation in the raw input. Default is ``False``.
+    autocorrect : bool, optional
+        Whether to autocorrect words in the raw input. Default is ``False``.
+    case_correct : bool, optional
+        Whether to (de-)capitalize words in the raw input. Default is ``False``.
 
     """
 
-    def __init__(self, skip_similarity=False):
+    def __init__(self, skip_similarity=False, uncontract=False, 
+                 punctuate=False, autocorrect=False, case_correct=False):
+
+        self.uncontract = uncontract
+        self.punctuate = punctuate
+        self.autocorrect = autocorrect
+        self.case_correct = case_correct
+
+        #<>TODO: Remove skip_similarity
         self.tokenizer = Tokenizer()
         self.tagger = Tagger()
         if not skip_similarity:
             self.similarity_checker = SimilarityChecker()
 
-    def translate_from_natural_input(self, nl_input=''):
-        if nl_input == '':
-            self.translate_from_console_input()
-        else:
-            phrase, template = self.find_closest_template_phrase(nl_input)
-            return phrase, template
+    def translate_from_natural_input(self, nl_input, n_considerations=1):
+        """Transform natural language input into human sensor statement(s).
+
+        Parameters
+        ----------
+        nl_input : string
+            A string of natural language input. This is the raw, pre-processed
+            string.
+        n_considerations : int, optional
+            Number of `Statement`s to propose as mappings to the *nl_input*.
+
+        Returns
+        ----------
+        Statement
+            A list of `Statement` objects.
+        """
+        phrase, template = self._find_closest_template_phrase(nl_input)
+        return phrase, template
+
+    def _clean_input_document(self, nl_input, uncontract=False, punctuate=False,
+                             autocorrect=False, case_correct=False):
+        """Performs NLP pre-processing tasks on raw natural language input.
+
+        Parameters
+        ----------
+        nl_input : string
+            A string of natural language input. This is the raw, pre-processed
+            string.
+
+        Returns
+        ----------
+        Statement
+            A `Statement` object.
+        """
+
+        cleaned_document = nl_input
+
+        #<>TODO: this!
+        if self.uncontract:
+            pass
+        if self.punctuate:
+            pass
+        if self.autocorrect:
+            pass
+        if self.case_correct:
+            pass
+
+        return cleaned_document
 
     def translate_from_console_input(self):
+        """Prints responses to raw console input fed through the NLP pipeline.
+        """
         while True:
             # Get natural language input
             nl_input = raw_input('Describe a target (or enter a blank line to exit): ')
@@ -55,18 +118,18 @@ class Chatter(object):
                 print('Thanks for chatting!')
                 break
 
-            templates = self.find_closest_template_phrase(cleaned_document)
+            templates = self._find_closest_template_phrase(cleaned_document)
 
             print("I understood: ")
             for template in templates:
                 print("\t \"{}\", with probability {}."
                       .format(template[0],template[1]))
 
-    def find_closest_template_phrase(self, nl_input):
+    def _find_closest_template_phrase(self, nl_input):
         """Finds the closest human sensor statement template to the input doc.
         """
         # Clean up input text
-        cleaned_document = self.clean_document(nl_input)
+        cleaned_document = self._clean_input_document(nl_input)
 
         # Identify possible word span combinations
         tokenized_documents = self.tokenizer.tokenize(cleaned_document, max_distance=1)
@@ -88,155 +151,6 @@ class Chatter(object):
 
         return phrase, template
 
-    def clean_document(self, nl_input):
-        #<>TODO: this!
-        cleaned_document = nl_input
-        return cleaned_document
-
-
-class DataHandler(object):
-    """docstring for DataHandler"""
-
-    def __init__(self, data_url=''):
-        # Get data from google sheet associated with a specific URL
-        if len(data_url) < 1:
-            self.url = 'https://docs.google.com/spreadsheet/ccc?key=1S-nYlSuQGCbfUTTw2DKebJ6xZJRmya3RklXC9MpjbBk&gid=2089135022&output=csv'
-        else:
-            self.url = data_url
-
-        data = requests.get(self.url).content
-
-        # Find the input sentences
-        self.df = pd.read_csv(StringIO(data))
-        self.input_sentences = [a for a in self.df['Input Sentence']
-                                if isinstance(a, str)]
-
-        # Find the proper single word tokenization
-        single_word_tokens = [re.findall(r"[\w']+|[.,!?;]", a)
-                              for a in self.input_sentences]
-        single_word_tokens = [b for a in single_word_tokens for b in a]
-
-        # Tokenize punctuation as well
-        punct = [".",",","!","?",";"]
-        n = len(single_word_tokens); i = 0
-        while i < n - 1:
-            token = single_word_tokens[i]
-            next_token = single_word_tokens[i + 1]
-            
-            if token in punct and next_token in punct:
-                del single_word_tokens[i + 1]
-                n -= 1
-            else:
-                i += 1
-
-        # Merge SWT with the main dataframe
-        try:
-            del self.df['Approx. Single Word Tokens']
-        except KeyError:
-            logging.debug("No column to delete")
-        self.df["Single Word Tokens"] = pd.Series(single_word_tokens,
-                                                  index=self.df.index)
-        cols = self.df.columns.tolist()
-        cols = [cols[0]] + [cols[-1]] + cols[1:-1]
-        self.df = self.df[cols]
-
-
-def test_NLP_pipeline():
-
-    # Grab data, remember indices of training/test data #######################
-    dh = DataHandler()
-
-    # Find ids associated with each sentence group
-    j = 0
-    sentence_ids = []
-    for i, row in dh.df.iterrows():
-        if isinstance(row['Input Sentence'], str):
-            j += 1
-        sentence_ids.append(j)
-
-    # Split corpus into training and test sets
-    corpus = dh.input_sentences
-    corpus = [[i,s] for i,s in enumerate(dh.input_sentences)]
-    random.shuffle(corpus)
-    n = len(corpus) // 2
-    training_corpus = corpus[:n]
-    test_corpus = corpus[n:]
-    training_ids = [d[0] for d in training_corpus]
-
-    # Tokenize test corpus (unigram model)
-    input_document = "\n".join([d[1] for d in test_corpus])
-    tokenizer = Tokenizer(max_distance=1)
-    tokenized_test_corpus = tokenizer.tokenize((input_document))[0]
-
-    # Get Sierra's and Jeremy's trained taggers ###############################
-
-    # Grab the full training data
-    sierra_full_data = zip(dh.df["Sierra's Tokens"].tolist(),
-                           dh.df["Sierra's Labels"].tolist())
-    jeremy_full_data = zip(dh.df["Jeremy's Tokens"].tolist(),
-                           dh.df["Jeremy's Labels"].tolist())
-
-    # Limit J&S's training data to the randomized corpus
-    sierra_td = [d for i, d in enumerate(sierra_full_data)
-                 if sentence_ids[i] in training_ids]
-    jeremy_td = [d for i, d in enumerate(jeremy_full_data)
-                 if sentence_ids[i] in training_ids]
-
-    # Ignore NaN lines
-    sierra_td = [d for d in sierra_td if not (isinstance(d[0], float)
-                or isinstance(d[1], float))]
-    jeremy_td = [d for d in jeremy_td if not (isinstance(d[0], float)
-                or isinstance(d[1], float))]
-
-    # Prepare training files and paths
-    data_dir = os.path.dirname(__file__) + '/data/'
-    sierra_training_file = "sierra_training.txt"
-    jeremy_training_file = "jeremy_training.txt"
-    sierra_training_path = data_dir + sierra_training_file
-    jeremy_training_path = data_dir + jeremy_training_file
-
-    # Write training files
-    for tf, td in zip([sierra_training_path, jeremy_training_path],
-                      [sierra_td, jeremy_td]):
-        with open(tf,'w') as file_:
-            for d in td:
-                str_ = '\t'.join(d) + '\n'
-                str_ = str_.replace (" ", "_")
-                file_.write(str_)
-
-    # Train tagging engine using both Sierra's and Jeremy's tags
-    s_tagger = Tagger(training_file='sierra_training.txt',
-                      test_file='sierra_test.txt',
-                      input_file='sierra_input.txt',
-                      model_file='sierra_model.txt',
-                      output_file='sierra_output.txt',
-                      )
-    j_tagger = Tagger(training_file='jeremy_training.txt',
-                      test_file='jeremy_test.txt',
-                      input_file='jeremy_input.txt',
-                      model_file='jeremy_model.txt',
-                      output_file='jeremy_output.txt',
-                      )
-
-    # Evaluate tagging agreement ##############################################
-    s_tagged_document = s_tagger.tag_document(tokenized_test_corpus)
-    j_tagged_document = j_tagger.tag_document(tokenized_test_corpus)
-
-    agreements = []
-    for i, _ in enumerate(s_tagged_document):
-        agreement = s_tagged_document[i][1] == j_tagged_document[i][1]
-        if agreement:
-            agreements.append(1)
-        else:
-            agreements.append(0)
-    agreements = np.array(agreements)
-
-    print agreements.mean()
-
-    # Generate TDCs ###########################################################
-    # s_TDCs = TDC_Collection(s_tagged_document)
-    # j_TDCs = TDC_Collection(j_tagged_document)
-    # j_TDCs.plot_TDCs()
 
 
 if __name__ == '__main__':

@@ -73,35 +73,6 @@ class Human(Sensor):
         super(Human, self).__init__(self.update_rate,
                                     self.has_physical_dimensions)
 
-        # # self.certainties = ['think', 'know']
-        # self.certainties = ['know']
-        # self.positivities = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
-        # self.relations = {'object': ['behind',
-        #                              'in front of',
-        #                              'left of',
-        #                              'right of',
-        #                              'near',
-        #                              ],
-        #                   'area': ['inside',
-        #                            'near',
-        #                            'outside'
-        #                            ]}
-        # self.movement_types = ['moving', 'stopped']
-        # self.movement_qualities = ['slowly', 'moderately', 'quickly']
-
-        # self.groundings = {}
-        # self.groundings['area'] = map_.areas
-
-        # self.groundings['object'] = {}
-        # for cop_name, cop in map_.cops.iteritems():
-        #     # if cop.has_relations:
-        #     self.groundings['object'][cop_name] = cop
-        # for object_name, obj in map_.objects.iteritems():
-        #     if obj.has_relations:
-        #         self.groundings['object'][object_name] = obj
-
-        # self.target_names = ['nothing', 'a robot'] + map_.robbers.keys()
-
         # Add all templates to this class
         self.__dict__.update(generate_human_language_template().__dict__)
 

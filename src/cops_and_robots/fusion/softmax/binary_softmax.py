@@ -60,6 +60,11 @@ class BinarySoftmax(Softmax):
 
         self.categorical_to_binary()
 
+    def __str__(self):
+        str_ = ('Binary softmax model with submodels: {}'
+            .format( self.binary_models.keys()))
+        return str_
+
     def categorical_to_binary(self):
         """Transforms a m>2 class softmax model to multiple binary models.
         """
