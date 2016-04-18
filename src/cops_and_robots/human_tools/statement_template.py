@@ -39,113 +39,108 @@ class StatementTemplate(object):
         Add additional sensor statements for 'I think'. Default is `False`.
     """
 
-    tree_templates = {'spatial relation': ['certainty',
-                                           'target',
-                                           'positivity',
-                                           ['spatial_relation:object', 'grounding:object'],
-                                           ['spatial_relation:area', 'grounding:area'],
+    # templates = {'spatial relation': ['certainty',
+    #                                        'target',
+    #                                        'positivity',
+    #                                        ['spatial_relation:object', 'grounding:object'],
+    #                                        ['spatial_relation:area', 'grounding:area'],
+    #                                        ],
+    #                   'action': ['certainty',
+    #                              'target',
+    #                              'positivity',
+    #                              'action',
+    #                              [''],
+    #                              ['modifier'],
+    #                              ['spatial_relation:movement', 'grounding:area'],
+    #                              ['spatial_relation:movement', 'grounding:object'],
+    #                              ],
+    #                  }
+    template_trees = {'spatial relation': [['certainty', 'target', 'positivity',
+                                            'spatial_relation:object', 'grounding:object'],
+                                           ['certainty', 'target', 'positivity',
+                                            'spatial_relation:area', 'grounding:area'],
                                            ],
-                      'action': ['certainty',
-                                 'target',
-                                 'positivity',
-                                 'action',
-                                 ['modifier'],
-                                 ['spatial_relation:movement', 'grounding:area'],
-                                 ['spatial_relation:movement', 'grounding:object'],
+                      'action': [['certainty', 'target', 'positivity', 'action', ''],
+                                 ['certainty', 'target', 'positivity', 'action', 'modifier'],
+                                 ['certainty', 'target', 'positivity', 'action',
+                                  'spatial_relation:movement', 'grounding:area'],
+                                 ['certainty', 'target', 'positivity', 'action',
+                                  'spatial_relation:movement', 'grounding:object'],
                                  ],
-                     }
-    plural_mapping = {'target': 'targets',
-                      'certainty': 'certainties',
-                      'positivity': 'positivities',
-                      'spatial_relation': 'spatial_relations',
-                      'grounding': 'groundings',
-                      'object': 'objects',
-                      'movement': 'movements',
-                      'area': 'areas',
-                      'action': 'actions',
-                      'modifier': 'modifiers',
                       }
     template_object_mapping = {'spatial relation': SpatialRelationStatement,
                                'action': ActionStatement,
                                }
 
-    def __init__(self, map_=None, add_more_relations=False,
+    def __init__(self, map_=None, add_more_relations=False, add_more_targets=False,
                  add_actions=False, add_certainties=False):
         self.components = {}
         self.templates = {'spatial relation': SpatialRelationStatement}
 
         # Define base template components
-        self.components['certainties'] = ['know']
-        self.components['positivities'] = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
-        self.components['spatial_relations'] = {'objects': ['near'],
-                                                'areas': ['inside'],
+        self.components['certainty'] = ['know']
+        self.components['positivity'] = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
+        self.components['spatial_relation'] = {'object': ['near'],
+                                                'area': ['inside'],
                                                }
-        self.components['targets'] = ['nothing', 'a robot']
+        self.components['target'] = ['nothing', 'a robot']
 
         # Define map-dependent components
         if map_ is None:
             map_ = Map(map_name='fleming')
         self.map = map_
         self.generate_groundings_from_map()
-        self.generate_targets_from_map()
+        if add_more_targets:
+            self.generate_targets_from_map()
 
         # Define more spatial relation components
         if add_more_relations:
-            self.components['spatial_relations']['objects'] += ['behind',
+            self.components['spatial_relation']['object'] += ['behind',
                                                                'in front of',
                                                                'left of',
                                                                'right of',
                                                                ]
-            self.components['spatial_relations']['areas'] += ['near','outside']
+            self.components['spatial_relation']['area'] += ['near','outside']
 
         # Define action components
         if add_actions:
-            self.components['actions'] = ['stopped','moving']
-            self.components['modifiers'] = ['slowly', 'moderately', 'quickly']
-            self.components['spatial_relations']['movements'] = ['around', 'toward']
+            self.components['action'] = ['stopped','moving']
+            self.components['modifier'] = ['slowly', 'moderately', 'quickly']
+            self.components['spatial_relation']['movement'] = ['around', 'toward']
             self.templates['action'] = ActionStatement
         else:
-            self.tree_templates = copy.deepcopy(StatementTemplate.tree_templates)
-            del self.tree_templates['action']
+            self.template_trees = copy.deepcopy(StatementTemplate.template_trees)
+            del self.template_trees['action']
 
         # Define certainty components
         if add_certainties:
-            self.components['certainties'] += ['think']
+            self.components['certainty'] += ['think']
 
-        self.create_tree_structure()
+        self._create_tree_structure()
 
     def generate_groundings_from_map(self):
         groundings = {}
-        groundings['areas'] = []
+        groundings['area'] = []
         for area_name in self.map.areas.keys():
-            groundings['areas'].append(add_article(area_name.lower()))
+            groundings['area'].append(add_article(area_name.lower()))
         # groundings['null'] = {}
 
-        groundings['objects'] = []
+        groundings['object'] = []
 
         # Add deckard (and other cops)
         if len(self.map.cops) == 0:
-            groundings['objects'].append("Deckard")
+            groundings['object'].append("Deckard")
         else:
             for cop_name, cop in self.map.cops.iteritems():
                 # if cop.has_relations:
-                groundings['objects'].append(cop.name)
-
+                groundings['object'].append(cop.name)
 
         for object_name, obj in self.map.objects.iteritems():
             if obj.has_relations:
                 grounding_name = add_article(obj.name.lower())
-                groundings['objects'].append(grounding_name)
+                groundings['object'].append(grounding_name)
 
-        # groundings['objects'] = {}
-        # for cop_name, cop in map_.cops.iteritems():
-        #     # if cop.has_relations:
-        #     groundings['objects'][cop_name] = cop
-        # for object_name, obj in map_.objects.iteritems():
-        #     if obj.has_relations:
-        #         groundings['objects'][object_name] = obj
-
-        self.components['groundings'] = groundings
+        self.components['grounding'] = groundings
 
     def generate_targets_from_map(self):
         if len(self.map.robbers) == 0:
@@ -153,59 +148,23 @@ class StatementTemplate(object):
         else:
             additional_targets = self.map.robbers.keys()
 
-        self.components['targets'] += additional_targets
+        self.components['target'] += additional_targets
 
-    def enumerate_combinations(self, verbose=False):
-        n_per_template = {key: 1 for key, _ in self.templates.iteritems()}
-
-        # Look through templates (i.e. 'spatial relation', 'action', ...)
-        for template_name, tree in self.trees.iteritems():
-
-            n = self.trees[template_name].enumerate_subtree_components()
-            n_per_template[template_name] = n
-
-        if verbose:
-            for template_name, n in n_per_template.iteritems():
-
-                print '\n' + template_name.upper() + '\n' + '-' * len(template_name)
-                print '{} possible combinations'.format(n)
-
-        return n_per_template
-
-    def generate_sentences(self, verbose=False):
-        """Generates all possible strings for each template.
-        """
-        sentences_per_template = {}
-
-        # Look through templates (i.e. 'spatial relation', 'action', ...)
-        for template_name, tree in self.trees.iteritems():
-
-            strings = []
-            self.trees[template_name].add_to_string("I", strings)
-
-            sentences_per_template[template_name] = strings
-
-        if verbose:
-            for template_name, sentences in sentences_per_template.iteritems():
-                print '\n' + template_name.upper() + '\n' + '-' * len(template_name)
-                for s in sentences:
-                    print s
-
-        return sentences_per_template
-
-    def generate_statements(self, autogenerate_softmax=False, verbose=False):
-        """Generates all possible statement objects for each template.
+    def generate_statements(self, autogenerate_softmax=False):
+        """Generates a flat list of statement objects for each template.
 
         At last timing, 17.6 microseconds per statement, 2200 statements.
         """
-        statements_per_template = {}
+        self.template_statements = {}
 
         # Look through templates (i.e. 'spatial relation', 'action', ...)
-        for template_name, tree in self.trees.iteritems():
+        for template_name, _ in self.templates.iteritems():
 
+            # Get statement arguments from each node in the tree
             statement_args = []
-            self.trees[template_name].get_statement_args(None, statement_args)
+            self.trees[template_name].get_statement_args(statement_args)
 
+            # Generate statement objects for each statement argument set
             statements = []
             for args in statement_args:
                 statement_class = self.template_object_mapping[template_name]
@@ -213,74 +172,89 @@ class StatementTemplate(object):
                                             map_=self.map,
                                             **args)
                 statements.append(statement)
-            statements_per_template[template_name] = statements
+            self.template_statements[template_name] = statements
 
-            if verbose:
-                for template_name, statements in statements_per_template.iteritems():
-                    print '\n' + template_name.upper() + '\n' + '-' * len(template_name)
-                    for s in statements:
-                        try:
-                            print s
-                            print s.softmax
-                        except AttributeError:
-                            pass
+        self._prune_statements()
 
-        return statements_per_template
+    def print_statements(self):
+        for template_name, statements in self.template_statements.iteritems():
+            str_ = '\n' + template_name.upper() + 's (' + str(len(statements)) + ')'
+            print str_ + '\n' + '-' * len(str_)
 
-    def prune_edge_statements():
+            for s in statements:
+                try:
+                    print s
+                    print s.softmax
+                except AttributeError:
+                    pass
 
-    def create_tree_structure(self):
+    def _prune_statements(self):
+        for template_name, statements in self.template_statements.iteritems():
+
+            # Remove double negatives
+            statements = [s for s in statements if not (s.target == 'nothing' and
+                                                        s.positivity == 'is not')]
+
+            # Remove 'stopped' with modifiers and groundings
+            new_statements = []
+            for s in statements:
+                if not (hasattr(s, 'action') and s.action =='stopped'
+                        and any((hasattr(s, 'modifier'),
+                                 hasattr(s, 'grounding'),
+                                 hasattr(s, 'spatial_relation')))):
+                    new_statements.append(s)
+
+            statements = new_statements
+
+            self.template_statements[template_name] = statements
+
+    def _get_node(self, tree, node_name):
+        if tree is None:
+            return None
+        else:
+            return tree.get_node(node_name, None)
+
+
+    def _create_tree_structure(self):
+        """Generates a tree form of all possible human sensor statements.
+
+        Requires unique node names
+        """
         self.trees = {}
-        for template_name, tree_template in self.tree_templates.iteritems():
-            self.trees[template_name] = None
+        for template_name, templates in self.template_trees.iteritems():
 
-            subtree_parent = None
-            for depth, component_name in enumerate(tree_template):
+            tree = None
+            for template in templates:
+                for depth, component_name in enumerate(template):
 
-                # Deal with any component name list as a subtree branch
-                if isinstance(component_name, list):
-                    # Define subtree parent if not defined
-                    if subtree_parent is None:
-                        subtree_parent = parent_node
+                    # Create new node if none exists in the tree
+                    if self._get_node(tree, component_name) is None:
+                        component_list = self._get_components(component_name)
+                        node = Node(component_name, component_list)
 
-                    # Go through subtrees defined by component name lists
-                    for subtree_depth, c in enumerate(component_name):
-                        name, component_list = self._get_components(c)
-                        node = Node(name, component_list)
-                        # nodes.append(node)
+                        # Add node to parent's children
+                        if depth > 0:
+                            parent_node = self._get_node(tree, template[depth - 1])
+                            node.parent = parent_node
+                            parent_node.children += [node]
+                        else:
+                            tree = node
 
-                        # Set first node as subtree root element
-                        if subtree_depth == 0:
-                            parent_node = subtree_parent
-
-                        # Add children and update parent
-                        parent_node.children += [node]
-                        parent_node = node
-                else:
-                    # Create node
-                    name, component_list = self._get_components(component_name)
-                    node = Node(name, component_list)
-
-                    # Set first node as root element, assign other nodes to parents
-                    if depth == 0:
-                        self.trees[template_name] = node
-                    else:
-                        parent_node.children += [node]
-                    parent_node = node
-
-
-    def print_trees(self):
-        for template_name, _ in self.trees.iteritems():
-            print template_name.upper() + '\n' + '-' * len(template_name)
-            print self.trees[template_name]
+            self.trees[template_name] = tree
+            # print tree
 
     def _get_components(self, component_name):
+        """Look up template components associated with a component name.
+
+        e.g. 'actions' maps to ['stopped', 'moving']
+        """
+        if component_name == '':
+            return list()
         component_names = component_name.split(':')
 
         split_names = []
         for name in component_names:
-            nicename = StatementTemplate.plural_mapping[name]
-            split_names.append(nicename)
+            split_names.append(name)
 
         component_list = self.components
         try:
@@ -291,23 +265,7 @@ class StatementTemplate(object):
         except (TypeError):
             pass
 
-        return component_name, component_list
-
-        # {'spatial relation': ['certainty',
-        #                                    'target',
-        #                                    'positivity',
-        #                                    ['spatial_relation:object', 'grounding:object'],
-        #                                    ['spatial_relation:area', 'grounding:area'],
-        #                                    ],
-        #               'action': ['certainty',
-        #                          'target',
-        #                          'positivity',
-        #                          'action',
-        #                          ['modifier'],
-        #                          ['spatial_relation:movement', 'grounding:area'],
-        #                          ['spatial_relation:movement', 'grounding:object'],
-        #                          ],
-        #              }
+        return component_list
 
 def generate_sensor_statements(autogenerate_softmax=True, strings_only=False):
     """Creates all ``Statement`` objects, possibly precomputing softmax models.
@@ -407,92 +365,64 @@ def generate_human_language_template(use_fleming=True, default_targets=True):
 
 class Node(object):
     """Element of Tree data structure."""
-    def __init__(self, name, value, children=None):
+    def __init__(self, name, values, children=None, is_subtree_leaf=False):
         self.name = name
-        self.value = value
+        self.values = values
+        self.is_subtree_leaf = is_subtree_leaf
         if children is None:
             self.children = []
 
     def __repr__(self, level=0):
-        str_ = "\t" * level + self.name + ": " + repr(self.value) + "\n"
+        str_ = "\t" * level + self.name + ": " + repr(self.values) + "\n"
         for child in self.children:
             str_ += child.__repr__(level + 1)
         return str_
 
-    def enumerate_subtree_components(self):
-        n = len(self.value)
+    def get_node(self, node_name, node=None):
 
-        # Return n at leaf nodes
-        if len(self.children) == 0:
-            return n
-
-        # Find n for all children
-        branch_n = 0
-        for child in self.children:
-            branch_n += child.enumerate_subtree_components()
-
-        return n * branch_n
-
-    def add_to_string(self, path_str, master_list):
-        for str_ in self.value:
-            str_ = path_str + ' ' + str_
-
-            # Append strings of children
-            root_str = str_
+        if self.name == node_name:
+            node = self
+        else:
             for child in self.children:
-                str_ = child.add_to_string(root_str, master_list)
+                node = child.get_node(node_name, node)
+        return node
 
-            # Append a period and append to master list at leaf nodes
-            if len(self.children) == 0:
-                str_ += '.'
-                master_list.append(str_)
-        return str_
-
-    def get_statement_args(self, path_args, master_list):
+    def get_statement_args(self, master_list, path_args=None):
+        """Appends 
+        """
         if path_args is None:
             path_args = {}
+        path_args = path_args.copy()
 
+        # Use the node's name as the parameter
         param = self.name
         if param.find(':') > -1:
             param = param.split(':')[0]
 
-        for arg in self.value:
+        # Append arguments of empty nodes
+        if self.name == '':
+            master_list.append(path_args.copy())
+
+        # Use the node's values as arguments, branch for each child
+        for arg in self.values:
             path_args[param] = arg
 
-            # Append strings of children
+            # Append arguments of children
             for child in self.children:
-                path_args = child.get_statement_args(path_args, master_list)
+                child.get_statement_args(master_list, path_args)
 
             # Append arguments of each path to master list at leaf nodes
             if len(self.children) == 0:
-                # print path_args
                 master_list.append(path_args.copy())
-                # # del path_args
-                # print id(master_list), master_list
 
-        return path_args
-
-[{'certainty': 'know', 
-  'target': 'a robot',
-  'positivity': 'is',
-  'action': 'moving',
-  'modifier': 'quickly',
- },
- {'certainty': 'know', 
-  'target': 'a robot',
-  'positivity': 'is',
-  'action': 'moving',
-  'modifier': 'slowly',
-  }]
 
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     
-    st = StatementTemplate()
-    # st = StatementTemplate(add_more_relations=True, add_actions=True, add_certainties=True)
-    # st.print_trees()
-    st.enumerate_combinations(verbose=False)
-    st.generate_sentences(verbose=False)
-    st.generate_statements(autogenerate_softmax=True, verbose=True)
+    # st = StatementTemplate(add_actions=True)
+    st = StatementTemplate(add_more_relations=True, add_more_targets=True,
+                           add_actions=True, add_certainties=True)
+    st.generate_statements(autogenerate_softmax=False)
+    st.print_statements()
     # print st.enumerate_combinations()

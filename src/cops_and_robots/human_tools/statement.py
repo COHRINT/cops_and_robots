@@ -57,7 +57,7 @@ class Statement(object):
 def add_article(str_):
     """Appends the article 'the' to a string if necessary.
     """
-    if str_.istitle():
+    if str_.istitle() or str_.find('the ') > -1:
         str_ = str_
     else:
         str_ = 'the ' + str_
@@ -81,9 +81,8 @@ class SpatialRelationStatement(Statement):
         self.spatial_relation = spatial_relation
         self.grounding = grounding
 
-        # print self.autogenerate_softmax
-        # if self.autogenerate_softmax:
-        self.generate_softmax()
+        if self.autogenerate_softmax:
+            self.generate_softmax()
 
     def __str__(self):
         s = ("I {certainty} {target} {positivity} {spatial_relation} {grounding}."
@@ -161,7 +160,7 @@ class ActionStatement(Statement):
     optional_tags = Statement.optional_tags + [{'spatial_relation': 'movement'},
                                                'grounding']
 
-    def __init__(self, action, modifier, spatial_relation='', grounding='',
+    def __init__(self, action, modifier='', spatial_relation='', grounding='',
                  *args, **kwargs):
         super(ActionStatement, self).__init__(*args, **kwargs)
         self.action = action
@@ -171,26 +170,24 @@ class ActionStatement(Statement):
 
 
     def __str__(self):
-        if len(self.spatial_relation) > 0:
-            s = ("I {certainty} {target} {positivity} {action} {modifier} {spatial_relation} {grounding}."
+        s = ("I {certainty} {target} {positivity} {action}"
                  .format(certainty=self.certainty,
                          target=self.target,
                          positivity=self.positivity,
                          action=self.action,
-                         modifier=self.modifier,
-                         spatial_relation=self.spatial_relation,
+                         )
+                 )
+        if len(self.spatial_relation) > 0:
+            s += (" {spatial_relation} {grounding}"
+                 .format(spatial_relation=self.spatial_relation,
                          grounding=add_article(self.grounding),
                          )
                  )
-        else:
-            s = ("I {certainty} {target} {positivity} {action} {modifier}."
-                 .format(certainty=self.certainty,
-                         target=self.target,
-                         positivity=self.positivity,
-                         action=self.action,
-                         modifier=self.modifier,
-                         )
+        if len(self.modifier) > 0:
+            s += (" {modifier}"
+                 .format(modifier=self.modifier)
                  )
+        s += '.'
         return s
 
     def to_question_string(self):
