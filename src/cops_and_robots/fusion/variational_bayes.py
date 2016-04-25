@@ -36,6 +36,8 @@ from cops_and_robots.fusion.gaussian_mixture import (GaussianMixture,
                                                      )
 from cops_and_robots.map_tools.map_elements import MapObject
 
+from numba import jit
+
 
 class VariationalBayes(object):
     """short description of VariationalBayes
@@ -79,6 +81,7 @@ class VariationalBayes(object):
         self.mix_sm_corr_thresh = mix_sm_corr_thresh
         self.max_num_mixands = max_num_mixands
 
+    @jit(cache=True)
     def vb_update(self, measurement, likelihood, prior,
                   init_mean=0, init_var=1, init_alpha=0.5, init_xi=1):
         """Variational bayes update for Gaussian and Softmax.

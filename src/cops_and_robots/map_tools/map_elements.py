@@ -94,6 +94,7 @@ class MapElement(object):
             self.color = cnames[color_str]
         self.pose = pose
         self.alpha = alpha
+        self.container_area = None
 
         # If shape has only length and width, convert to point-based poly
         if len(shape_pts) == 2:

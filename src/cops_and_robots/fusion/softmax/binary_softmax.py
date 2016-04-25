@@ -114,6 +114,14 @@ class BinarySoftmax(Softmax):
             p = self.binary_models[label].probability(state, label)
         return p
 
+    def get_single_model(self, binary_model_label):
+        """Select one softmax model from the set of binary models.
+        """
+        if 'Not ' in binary_model_label:
+            binary_model_label = binary_model_label.replace('Not ', '')
+        return self.binary_models[binary_model_label]
+
+
     def trim_categories(self):
         pass
     # <>TODO: Subclass dict to BinaryDict, allowing us to call any class from

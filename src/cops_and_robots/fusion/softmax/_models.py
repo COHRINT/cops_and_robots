@@ -162,7 +162,9 @@ def range_model(poly=None, spread=1, bounds=None):
     return sm
 
 
-def binary_range_model(poly=None, bounds=None):
+def binary_range_model(poly=None, bounds=None, container_poly=None):
+    #<>TODO: implement constraints using container_poly
+
     dsm = range_model(poly, bounds=bounds)
     bdsm = BinarySoftmax(dsm, bounds=bounds)
     return bdsm

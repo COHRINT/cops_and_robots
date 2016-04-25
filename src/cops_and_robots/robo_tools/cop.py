@@ -222,8 +222,10 @@ class Cop(Robot):
         # irobber - Imaginary robber
         for irobber in self.missing_robbers.values():
             point = Point(irobber.pose2D.pose[0:2])
+
             # Try to visually spot a robber
             if self.sensors['camera'].viewcone.shape.contains(point):
+
                 # Quick and dirty hack to continue experiment.
                 logging.info('{} found!'.format(irobber.name))
                 if False:
@@ -242,6 +244,7 @@ class Cop(Robot):
 
         for idistractor in self.distracting_robots.values():
             point = Point(idistractor.pose2D.pose[0:2])
+
             # Try to visually spot a robot
             if self.sensors['camera'].viewcone.shape.contains(point):
                 logging.info('{} found, but it is not a robber!'
@@ -303,20 +306,13 @@ class CopMissionPlanner(MissionPlanner):
 
         """
         # <>TODO: @Matt Hacky, reimplement. Human sensor method needs clean up in general
-        if self.target is None:
-            for name, filter_ in self.robot.fusion_engine.filters.iteritems():
-                if filter_.recieved_human_update:
-                    self.robot.goal_planner.goal_status = 'without a goal'
-                    break
-        else:
-            for name, filter_ in self.robot.fusion_engine.filters.iteritems():
-                if filter_.recieved_human_update and name == self.target:
-                    self.robot.goal_planner.goal_status = 'without a goal'
-                    logging.info('{} recieved an update, replanning goal'
-                                 .format(name))
-                elif filter_.recieved_human_update:
-                    logging.info('{} recieved an update, but is not the target'
-                                 .format(name))
+        try:
+            sensor_target = self.robot.sensors['human'].statement.target
+        except AttributeError:
+            sensor_target = ''
+        if (self.target is None or sensor_target == self.target):
+                self.robot.goal_planner.goal_status = 'without a goal'
+                logging.info('Recieved an update, replanning goal')
                     
 
         if self.mission_status is 'searching':

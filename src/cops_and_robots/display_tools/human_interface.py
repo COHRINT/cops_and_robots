@@ -61,8 +61,7 @@ class ChatInterface(QtGui.QWidget):
         phrase, template = self.human_sensor.chatter.translate_from_natural_input(self.nl_input)
         self.response_text = phrase
 
-        self.human_sensor.utterance = phrase
-        self.human_sensor.new_update = True  # <>TODO: interrupt
+        self.human_sensor.add_new_measurement(phrase)
 
         self.lbl.setText(self.generate_response())
         self.lbl.adjustSize()

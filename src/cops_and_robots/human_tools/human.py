@@ -41,6 +41,7 @@ from cops_and_robots.fusion.softmax import Softmax, speed_model, binary_speed_mo
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 from cops_and_robots.fusion.variational_bayes import VariationalBayes
 from cops_and_robots.map_tools.map import Map
+from cops_and_robots.human_tools.statement_template import get_all_statements
 from cops_and_robots.human_tools.nlp.chatter import Chatter
 
 class Human(Sensor):
@@ -64,7 +65,7 @@ class Human(Sensor):
 
     """
     def __init__(self, map_=None, web_interface_topic='python',
-                 false_alarm_prob=0.2):
+                 false_alarm_prob=0.2, use_nlp_chatter=False):
         self.update_rate = None
         self.has_physical_dimensions = False
         self.speed_model = speed_model()
@@ -73,10 +74,11 @@ class Human(Sensor):
         super(Human, self).__init__(self.update_rate,
                                     self.has_physical_dimensions)
 
-        # Add all templates to this class
-        self.__dict__.update(generate_human_language_template().__dict__)
+        # Generate all statements
+        self.statements = get_all_statements(flatten=True)
 
         self.utterance = ''
+        self.statement = None
         self.new_update = False
 
         # Set up the VB fusion parameters
@@ -88,249 +90,224 @@ class Human(Sensor):
             from std_msgs.msg import String
             rospy.Subscriber(web_interface_topic, String, self.callback)
 
-        self.chatter = Chatter()
+        if use_nlp_chatter:
+            self.chatter = Chatter()
 
     def callback(self, msg):
         logging.info('I heard {}'.format(msg.data))
         self.utterance = msg.data
         self.new_update = True
 
-    def get_measurement(self):
-        """Update a fusion engine's probability from human sensor updates.
-
+    def get_statement_likelihood(self, discretized=False):
         """
 
-        try:
-            well_formed = self.parse_utterance()
-        except:
-            logging.error("Can't parse \"{}\"".format(utterance))
-
-        if not well_formed:
-            logging.debug('No utterance to parse!')
-            return
-
-        if self.relation != '':
-            self.translate_relation()
-            self.detection_type = 'position'
-        elif self.movement_type != '':
-            self.translate_movement()
-            self.detection_type = 'movement'
-        else:
-            logging.error("No relations or movements found in utterance.")
-
-        # Swap left-and-right for Deckard, as those are ego-centric
-        if self.grounding.name.lower() == 'deckard':
-            if self.relation == 'Right':
-                self.relation = 'Left'
-            elif self.relation == 'Left':
-                self.relation = 'Right'
-
-        # Define relations lazily, or for dynamic targets
-        if not hasattr(self.grounding, 'relations') \
-            or self.grounding.name.lower() == 'deckard':
-            logging.info("Defining relations because {} didn't have any."
-                         .format(self.grounding.name))
-            self.grounding.define_relations()
-
-        # Position update
-        relation_label = self.relation
-        if self.target_name == 'nothing' and self.positivity == 'is not':
-            relation_label = relation_label.replace('Not ', '')
-        elif self.target_name == 'nothing' or self.positivity == 'is not':
-            relation_label = 'Not ' + relation_label
-
-        parsed_measurement = {'grounding': self.grounding,
-                              'relation': relation_label,
-                              'relation class': self.relation,
-                              'target': self.target_name
-                              }
-        return parsed_measurement
-
-    def parse_utterance(self):
-        """ Parse the input string into workable values.
+        Discritized provides the computed likelihood function on a grid.
         """
-        logging.debug('Parsing: {}'.format(self.utterance))
-        logging.debug('Groundings: {}'.format(self.groundings))
 
-        for str_ in self.certainties:
-            if str_ in self.utterance:
-                self.certainty = str_
-                break
+        if self.statement is not None:
+            likelihood = self.statement.get_likelihood(discretized=discretized)
         else:
-            self.certainty = ''
+            logging.info('No statement available!')
+            likelihood = None
 
-        for str_ in self.target_names:
-            if str_ in self.utterance:
-
-                # #<>TODO: REMOVE THIS HORRIBLE HACK!
-                # if str_ == 'Roy':
-                #     str_ = 'Pris'
-                # elif str_ == 'Pris':
-                #     str_ = 'Roy'
+        return likelihood
 
 
-                self.target_name = str_
-                break
-        else:
-            self.target_name = ''
-
-        for str_ in self.positivities:
-            if str_ in self.utterance:
-                self.positivity = str_
-                break
-        else:
-            self.positivity = ''
-
-        for str_type in self.relations:
-            for str_ in self.relations[str_type]:
-                if str_ in self.utterance:
-                    self.relation = str_
-                    break
-            else:
-                continue
-            break
-        else:
-            self.relation = ''
-
-        for str_type in self.groundings:
-            for str_ in self.groundings[str_type].keys():
-                str_ = str_.lower()
-                if str_ in self.utterance.lower():
-                    str_ = str_.title()
-                    self.grounding = self.groundings[str_type][str_]
-                    break
-            else:
-                continue
-            break
-        else:
-            self.grounding = None
-
-        logging.debug('Utterance: {}'.format(self.utterance))
-        logging.debug('Grounding: {}'.format(self.grounding))
-
-        # for str_ in self.movement_types:
-        #     if str_ in self.utterance:
-        #         self.movement_type = str_
-
-        #         logging.info(str_)
-
-        #         break
-        # else:
-        #     self.movement_type = ''
-
-        # for str_ in self.movement_qualities:
-        #     if str_ in self.utterance:
-        #         self.movement_quality = str_
-
-        #         logging.info(str_)
-
-        #         break
-        # else:
-        #     self.movement_quality = ''
-
-        if self.utterance == '':
-            utterance_is_well_formed = False
-        else:
-            utterance_is_well_formed = True
-        return utterance_is_well_formed
-
-    def translate_relation(self, relation_type='intrinsic'):
-        """Translate the uttered relation to a likelihood label.
+    def utterance_to_statement(self, utterance):
+        """Find a statement that matches the *exact* utterance.
         """
-        if relation_type == 'intrinsic':
-            # Translate relation to zone label
-            if self.relation == 'behind':
-                translated_relation = 'Back'
-            elif self.relation == 'in front of':
-                translated_relation = 'Front'
-            elif self.relation == 'left of':
-                translated_relation = 'Left'
-            elif self.relation == 'right of':
-                translated_relation = 'Right'
-            elif self.relation in ['inside', 'near', 'outside']:
-                translated_relation = self.relation.title()
-            self.relation = translated_relation
-        elif relation_type == 'relative':
-            pass  # <>TODO: Implement relative relations
+        return next((s for s in self.statements if s.__str__() == utterance), None)
 
-    def translate_movement(self):
-        """Translate the uttered movement to a likelihood label.
 
+    def add_new_measurement(self, statement):
+        """Adds a new statement object to the human sensor.
         """
-        # Translate movement to motion model
-        if self.movement_type == 'stopped':
-            translated_movement = 'stopped'
-        elif self.movement_quality == 'slowly':
-            translated_movement = 'moving slowly'
-        elif self.movement_quality == 'moderately':
-            translated_movement = 'moving moderately'
-        elif self.movement_quality == 'quickly':
-            translated_movement = 'moving quickly'
-        self.movement = translated_movement
+        # Attempt translation if the statement is just a string
+        if isinstance(statement, str):
+            statement = self.utterance_to_statement(statement)
+
+        self.statement = statement
+        self.new_update = True
+
+    def clear_measurement(self):
+        """Once measurement has been considered by all filters, clear it.
+        """
+        self.new_update = False
+        self.statement = None
+
+    # def get_measurement(self):
+    #     """Update a fusion engine's probability from human sensor updates.
+
+    #     """
+
+    #     try:
+    #         well_formed = self.parse_utterance()
+    #     except:
+    #         logging.error("Can't parse \"{}\"".format(utterance))
+
+    #     if not well_formed:
+    #         logging.debug('No utterance to parse!')
+    #         return
+
+    #     if self.relation != '':
+    #         self.translate_relation()
+    #         self.detection_type = 'position'
+    #     elif self.movement_type != '':
+    #         self.translate_movement()
+    #         self.detection_type = 'movement'
+    #     else:
+    #         logging.error("No relations or movements found in utterance.")
+
+    #     # Swap left-and-right for Deckard, as those are ego-centric
+    #     if self.grounding.name.lower() == 'deckard':
+    #         if self.relation == 'Right':
+    #             self.relation = 'Left'
+    #         elif self.relation == 'Left':
+    #             self.relation = 'Right'
+
+    #     # Define relations lazily, or for dynamic targets
+    #     if not hasattr(self.grounding, 'relations') \
+    #         or self.grounding.name.lower() == 'deckard':
+    #         logging.info("Defining relations because {} didn't have any."
+    #                      .format(self.grounding.name))
+    #         self.grounding.define_relations()
+
+    #     # Position update
+    #     relation_label = self.relation
+    #     if self.target_name == 'nothing' and self.positivity == 'is not':
+    #         relation_label = relation_label.replace('Not ', '')
+    #     elif self.target_name == 'nothing' or self.positivity == 'is not':
+    #         relation_label = 'Not ' + relation_label
+
+    #     parsed_measurement = {'grounding': self.grounding,
+    #                           'relation': relation_label,
+    #                           'relation class': self.relation,
+    #                           'target': self.target_name
+    #                           }
+    #     return parsed_measurement
+
+    # def parse_utterance(self):
+    #     """Parse an input string into a human sensor statement.
+    #     """
+    #     logging.debug('Parsing: {}'.format(self.utterance))
+    #     logging.debug('Groundings: {}'.format(self.groundings))
+
+    #     for str_ in self.certainties:
+    #         if str_ in self.utterance:
+    #             self.certainty = str_
+    #             break
+    #     else:
+    #         self.certainty = ''
+
+    #     for str_ in self.target_names:
+    #         if str_ in self.utterance:
+
+    #             # #<>TODO: REMOVE THIS HORRIBLE HACK!
+    #             # if str_ == 'Roy':
+    #             #     str_ = 'Pris'
+    #             # elif str_ == 'Pris':
+    #             #     str_ = 'Roy'
 
 
-def generate_human_language_template(use_fleming=True, default_targets=True):
-    """Generates speech templates
+    #             self.target_name = str_
+    #             break
+    #     else:
+    #         self.target_name = ''
 
-    Note: this function can be used to add attributes to a class instance with
-    the following command (where 'self' is the class instance):
+    #     for str_ in self.positivities:
+    #         if str_ in self.utterance:
+    #             self.positivity = str_
+    #             break
+    #     else:
+    #         self.positivity = ''
 
-    self.__dict__.update(generate_human_language_template().__dict__)
+    #     for str_type in self.relations:
+    #         for str_ in self.relations[str_type]:
+    #             if str_ in self.utterance:
+    #                 self.relation = str_
+    #                 break
+    #         else:
+    #             continue
+    #         break
+    #     else:
+    #         self.relation = ''
 
-    """
-    if use_fleming:
-        map_ = Map(map_name='fleming')
+    #     for str_type in self.groundings:
+    #         for str_ in self.groundings[str_type].keys():
+    #             str_ = str_.lower()
+    #             if str_ in self.utterance.lower():
+    #                 str_ = str_.title()
+    #                 self.grounding = self.groundings[str_type][str_]
+    #                 break
+    #         else:
+    #             continue
+    #         break
+    #     else:
+    #         self.grounding = None
 
-    # self.certainties = ['think', 'know']
-    certainties = ['know']
-    positivities = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
-    relations = {'object': ['behind',
-                                 'in front of',
-                                 'left of',
-                                 'right of',
-                                 'near',
-                                 ],
-                  'area': ['inside',
-                           'near',
-                           'outside'
-                           ]}
-    actions = ['moving', 'stopped']
-    modifiers = ['slowly', 'moderately', 'quickly', 'around', 'toward']
+    #     logging.debug('Utterance: {}'.format(self.utterance))
+    #     logging.debug('Grounding: {}'.format(self.grounding))
 
-    movement_types = ['moving', 'stopped']
-    movement_qualities = ['slowly', 'moderately', 'quickly']
+    #     # for str_ in self.movement_types:
+    #     #     if str_ in self.utterance:
+    #     #         self.movement_type = str_
 
-    groundings = {}
-    groundings['area'] = map_.areas
-    groundings['null'] = {}
+    #     #         logging.info(str_)
 
-    groundings['object'] = {}
-    for cop_name, cop in map_.cops.iteritems():
-        # if cop.has_relations:
-        groundings['object'][cop_name] = cop
-    for object_name, obj in map_.objects.iteritems():
-        if obj.has_relations:
-            groundings['object'][object_name] = obj
+    #     #         break
+    #     # else:
+    #     #     self.movement_type = ''
 
-    if default_targets:
-        target_names = ['nothing', 'a robot', 'Roy','Pris','Zhora']
-    else:
-        target_names = ['nothing', 'a robot'] + map_.robbers.keys()
+    #     # for str_ in self.movement_qualities:
+    #     #     if str_ in self.utterance:
+    #     #         self.movement_quality = str_
 
-    Template = namedtuple('Template', 'certainties positivities relations' 
-        + ' actions modifiers groundings target_names')
-    Template.__new__.__defaults__ = (None,) * len(Template._fields)
+    #     #         logging.info(str_)
 
-    template = Template(certainties,
-                        positivities,
-                        relations,
-                        actions,
-                        modifiers,
-                        groundings,
-                        target_names
-                        )
+    #     #         break
+    #     # else:
+    #     #     self.movement_quality = ''
 
-    return template
+    #     if self.utterance == '':
+    #         utterance_is_well_formed = False
+    #     else:
+    #         utterance_is_well_formed = True
+    #     return utterance_is_well_formed
+
+    # def translate_relation(self, relation_type='intrinsic'):
+    #     """Translate the uttered relation to a likelihood label.
+    #     """
+    #     if relation_type == 'intrinsic':
+    #         # Translate relation to zone label
+    #         if self.relation == 'behind':
+    #             translated_relation = 'Back'
+    #         elif self.relation == 'in front of':
+    #             translated_relation = 'Front'
+    #         elif self.relation == 'left of':
+    #             translated_relation = 'Left'
+    #         elif self.relation == 'right of':
+    #             translated_relation = 'Right'
+    #         elif self.relation in ['inside', 'near', 'outside']:
+    #             translated_relation = self.relation.title()
+    #         self.relation = translated_relation
+    #     elif relation_type == 'relative':
+    #         pass  # <>TODO: Implement relative relations
+
+    # def translate_movement(self):
+    #     """Translate the uttered movement to a likelihood label.
+
+    #     """
+    #     # Translate movement to motion model
+    #     if self.movement_type == 'stopped':
+    #         translated_movement = 'stopped'
+    #     elif self.movement_quality == 'slowly':
+    #         translated_movement = 'moving slowly'
+    #     elif self.movement_quality == 'moderately':
+    #         translated_movement = 'moving moderately'
+    #     elif self.movement_quality == 'quickly':
+    #         translated_movement = 'moving quickly'
+    #     self.movement = translated_movement
+
 
 if __name__ == '__main__':
     pass

@@ -286,7 +286,6 @@ class Display(object):
             self.update_question_answer()
 
 
-
 if __name__ == '__main__':
     from cops_and_robots.map_tools.map import Map
     display = Display(window_set_id=0)

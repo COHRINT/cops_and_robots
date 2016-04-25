@@ -10,6 +10,8 @@ import pickle
 import os
 from sklearn.gaussian_process import GaussianProcess
 
+from cops_and_robots.human_tools.statement_template import get_all_statements
+
 
 class Questioner(object):
 
@@ -82,7 +84,7 @@ class Questioner(object):
             self.rate = rospy.Rate(.2)  # frequency of question updates [Hz]
 
     def __str__(self):
-        return '\n'.join(self.all_questions)
+        return '\n'.join(self.questions)
 
     def remove_target(self, target):
         if self.target_order == []:
@@ -91,216 +93,55 @@ class Questioner(object):
         self.target_order.remove(target)
 
         delete_indices = []
-        for i, _ in enumerate(self.all_likelihoods):
-            if target in self.all_likelihoods[i]['question']:
+        for i, _ in enumerate(self.likelihoods):
+            if target in self.likelihoods[i]['question']:
                 delete_indices.append(i)
-        self.all_likelihoods = np.delete(self.all_likelihoods, delete_indices, axis=0)
-        self.all_questions = [q for i, q in enumerate(self.all_questions)\
+        self.likelihoods = np.delete(self.likelihoods, delete_indices, axis=0)
+        self.questions = [q for i, q in enumerate(self.questions)\
                               if i not in delete_indices]
 
     def generate_questions(self):
-        if self.human_sensor is None:
-            certainties =['know if']
-            targets =['a robot', 'nothing',] + target_order
-            positivities = ['is']
-            groundings = {'object':{
-                                   'Deckard': ['in front of', 'behind', 'left of', 'right of', 'near'],
-                                   'the chair': ['in front of', 'behind', 'left of', 'right of'],
-                                   'the table':['beside', 'near', 'at the head of'],
-                                   'the desk': ['in front of', 'behind', 'left of', 'right of'],
-                                   'the filer': ['in front of', 'left of', 'right of'],
-                                   'the bookcase': ['in front of', 'left of', 'right of'],
-                                   'the billiard poster': ['in front of', 'left of', 'right of'],
-                                   'the kitchen poster': ['in front of', 'left of', 'right of'],
-                                   'the fridge': ['in front of', 'left of', 'right of'],
-                                   'the checkers': ['in front of', 'left of', 'right of', 'behind'],
-                         },
-                         'area':{
-                                  'the hallway': ['inside','outside','near'],
-                                  'the kitchen': ['inside','outside','near'],
-                                  'the billiard room': ['inside','outside','near'],
-                                  'the study': ['inside','outside','near'],
-                                  'the library': ['inside','outside','near'],
-                                  'the dining room': ['inside','outside','near'],
-                         }
-                        }
-        else:
-            certainties = self.human_sensor.certainties
-            targets = self.target_order
-            positivities = self.human_sensor.positivities
-            groundings = self.human_sensor.groundings
+        """Generates all questions, pre-computing likelihood functions.
+        """
 
-        # Create all possible questions and precompute their likelihoods
-        n = len(certainties) * len(targets)
-        if self.minimize_questions:
-            num_relations = 1  # Only asking about 'near'
-        else:
-            num_relations = len(groundings['object'].itervalues().next()
-                .relations.binary_models.keys())
-            num_relations -= 1  # not counting 'inside' for objects
-        num_questions = (len(groundings['object'])) * num_relations * n
+        # Define questions from all positive statements
+        self.statements = get_all_statements(autogenerate_softmax=True,
+                                             flatten=True)
+        self.questions = [s.get_question_string() for s in self.statements
+                          if s.positivity == 'is' and not s.target == 'nothing']
 
-        if self.minimize_questions:
-            num_relations = 1  # Only asking about inside rooms
-        else:
-            num_relations = len(groundings['area'].itervalues().next()
-                .relations.binary_models.keys())
-        num_questions += len(groundings['area']) * num_relations * n
-        self.all_questions = []
-        self.all_likelihoods = np.empty(num_questions,
+        # Map questioner's statements to only positive statements
+        self.statements = [s for s in self.statements
+                           if s.positivity == 'is' and not s.target == 'nothing']
+
+        # Pre-Generate likelihoods for all questions/statements
+        self.likelihoods = np.empty(len(self.questions),
                                         dtype=[('question', np.object),
                                                ('probability', np.object),
-                                               ('time_last_answered', np.float)
+                                               ('time_last_answered', np.float),
                                                ])
-        i = 0
-        #<>TODO: include certainties
-        for grounding_type_name, grounding_type in groundings.iteritems():
-            for grounding_name, grounding in grounding_type.iteritems():
-                grounding_name = grounding_name.lower()
-                if grounding_name == 'deckard':
-                    continue
-                if grounding_name.find('the') == -1:
-                    grounding_name = 'the ' + grounding_name
-                relation_names = grounding.relations.binary_models.keys()
-                for relation_name in relation_names:
-                    relation = relation_name
+        for i, question in enumerate(self.questions):
+            self.likelihoods[i]['question'] = question
+            lh = self.statements[i].get_likelihood(discretized=True)
+            self.likelihoods[i]['probability'] = lh
+            self.likelihoods[i]['time_last_answered'] = -1
+        logging.info('Generated {} questions.'.format(len(self.questions)))
 
-                    # Make relation names grammatically correct
-                    relation_name = relation_name.lower()
-                    if relation_name == 'front':
-                        relation_name = 'in front of'
-                    elif relation_name == 'back':
-                        relation_name = 'behind'
-                    elif relation_name == 'left':
-                        relation_name = 'left of'
-                    elif relation_name == 'right':
-                        relation_name = 'right of'
-
-                    # Ignore certain questons (incl. non-minimal)
-                    if grounding_type_name == 'object':
-                        if relation_name in ['inside', 'outside']:
-                            continue
-
-                        if self.minimize_questions:
-                            # Near only
-                            if relation_name != 'near':
-                                continue
-
-                    if grounding_type_name == 'area' \
-                        and self.minimize_questions: 
-                        
-                        # Inside only
-                        if relation_name != 'inside':
-                            continue
-
-                    for target in targets:
-                        # Write question
-                        question_str = "Is " + target + " " + relation_name \
-                            + " " + grounding_name +"?"
-                        self.all_questions.append(question_str)
-
-                        # Calculate likelihood
-                        self.all_likelihoods[i]['question'] = question_str
-                        self.all_likelihoods[i]['probability'] = \
-                            grounding.relations.probability(class_=relation)
-                        self.all_likelihoods[i]['time_last_answered'] = -1
-                        i += 1
-        logging.info('Generated {} questions.'.format(len(self.all_questions)))
-
-    # def weigh_questions(self, priors):
-    #     """Orders questions by their value of information.
-    #     """
-    #     # Calculate VOI for each question
-    #     q_weights = np.empty_like(self.all_questions, dtype=np.float64)
-    #     VOIs = np.empty_like(self.all_questions, dtype=np.float64)
-    #     for prior_name, prior in priors.iteritems():
-    #         prior_entropy = prior.entropy()
-    #         flat_prior_pdf = prior.as_grid().flatten()
-
-    #         for i, likelihood_obj in enumerate(self.all_likelihoods):
-                
-    #             # Check if this question concerns the correct target
-    #             question = likelihood_obj['question']
-    #             if prior_name.lower() not in question.lower():
-    #                 continue
-
-    #             # Use positive and negative answers for VOI
-    #             likelihood = likelihood_obj['probability']
-    #             VOIs[i] = self._calculate_VOI(likelihood, flat_prior_pdf,
-    #                                                prior_entropy)
-    #             q_weights[i] = VOIs[i]
-
-    #             # Add heuristic question cost based on target weight
-    #             for j, target in enumerate(self.target_order):
-    #                 if target.lower() in question.lower():
-    #                     q_weights[i] *= self.target_weights[j]
-
-    #             # Add heuristic question cost based on number of times asked
-    #             tla = likelihood_obj['time_last_answered']
-    #             if tla == -1:
-    #                 continue
-
-    #             dt = time.time() - tla
-    #             if dt > self.repeat_time_penalty:
-    #                 self.all_likelihoods[i]['time_last_answered'] = -1
-    #             elif tla > 0:
-    #                 q_weights[i] *= (dt / self.repeat_time_penalty + 1)\
-    #                      * self.repeat_annoyance
-
-    #     # Re-order questions by their weights
-    #     q_ids = range(len(self.all_questions))
-    #     self.weighted_questions = zip(q_weights, q_ids, self.all_questions[:])
-    #     self.weighted_questions.sort(reverse=True)
-    #     self.VOIs = VOIs
-    #     for q in self.weighted_questions:
-    #         logging.debug(q)
-
-    # def _calculate_VOI(self, likelihood, flat_prior_pdf, prior_entropy=None):
-    #     """Calculates the value of a specific question's information.
-
-    #     VOI is defined as:
-
-    #     .. math::
-
-    #         VOI(i) = \\sum_{j \\in {0,1}} P(D_i = j)
-    #             \\left(-\\int p(x \\vert D_i=j) \\log{p(x \\vert D_i=j)}dx\\right)
-    #             +\\int p(x) \\log{p(x)}dx
-
-    #     Takes VOI of a specific branch.
-    #     """
-    #     if prior_entropy is None:
-    #         prior_entropy = prior.entropy()
-
-    #     VOI = 0
-    #     grid_spacing = 0.1 #prior.res
-
-    #     alpha = self.human_sensor.false_alarm_prob / 2  # only for binary
-    #     pos_likelihood = alpha + (1 - alpha) * likelihood
-    #     neg_likelihood = np.ones_like(pos_likelihood) - pos_likelihood
-    #     neg_likelihood = alpha + (1 - alpha) * neg_likelihood
-    #     likelihoods = [neg_likelihood, pos_likelihood]
-
-    #     # flat_prior_pdf = prior.as_grid().flatten()
-    #     for likelihood in likelihoods:
-    #         post_unnormalized = likelihood * flat_prior_pdf
-    #         sensor_marginal = np.sum(post_unnormalized) * grid_spacing ** 2
-    #         log_post_unnormalized = np.log(post_unnormalized)
-    #         log_sensor_marginal = np.log(sensor_marginal)
-
-    #         VOI += -np.nansum(post_unnormalized * (log_post_unnormalized - 
-    #             log_sensor_marginal)) * grid_spacing ** 2
-
-    #     VOI += -prior_entropy
-    #     return -VOI  # keep value positive
 
     def weigh_questions(self, priors):
         """Orders questions by their value of information.
+
+        We use question *sequences* for non-myopic questioning. Myopic
+        questioning is simply the case in which the sequence length is 1. VOI
+        is calculated for each possible sequence as a whole, using the 
+        expected entropy of all possible combinations of answers down a branch
+        of questions.
         """
-        # Calculate VOI for each question
-        question_sequences = list(itertools.product(self.all_questions,
+        # List out the possible combinations of all questions
+        question_sequences = list(itertools.product(self.questions,
                                                     repeat=self.sequence_length
                                                     ))
-        likelihood_sequences = list(itertools.product(self.all_likelihoods,
+        likelihood_sequences = list(itertools.product(self.likelihoods,
                                                       repeat=self.sequence_length
                                                       ))
 
@@ -311,30 +152,37 @@ class Questioner(object):
                         dtype=np.float64)
         question_sequence_weights = np.empty(len(likelihood_sequences),
                                              dtype=np.float64)
-        for prior_name, prior in priors.iteritems():
+
+        # Assuming one prior belief per target, calculate VOI for that target
+        for target_name, prior in priors.iteritems():
             posterior = prior.copy()  # we may need to modify the prior
-            initial_probability = prior.copy()  # we may need to modify the prior
+            initial_probability = prior.copy()
 
             #Find the entropy and PDF without any questions at K
             posterior.dynamics_update(n_steps=K)
             posterior_entropy = posterior.entropy()
             # flat_posterior_pdf = posterior.as_grid().flatten()
 
+            # Go through possible question paths
             for s, likelihood_sequence in enumerate(likelihood_sequences):
 
                 # # Check if this question concerns the correct target
                 # concerns_target = True
                 # for likelihood_obj in likelihood_objs:
                 #     question = likelihood_obj['question']
-                #     if prior_name.lower() not in question.lower():
+                #     if target_name.lower() not in question.lower():
                 #         concerns_target = False
                 # if not concerns_target:
                 #     break
 
                 # Use positive and negative answers for VOI
-                likelihood_seq_values = []
-                for likelihood_seq in likelihood_sequence:
-                    likelihood_seq_values.append(likelihood_seq['probability'])
+                likelihood_seq_values = [ls['probability'] for ls in likelihood_sequence]
+
+                # Ignore questions that have no associated sensor likelihoods
+                if any([ls is None for ls in likelihood_seq_values]):
+                    VOIs[s] = np.nan
+                    question_sequence_weights[s] = -np.inf
+                    continue
 
                 # Approximate or use brute-force VOI
                 if self.use_GP_VOI:
@@ -347,7 +195,9 @@ class Questioner(object):
                                                   final_posterior_entropy=posterior_entropy,
                                                   timespan=K
                                                   )
-                question_sequence_weights[s] = VOIs[s]
+
+                # Ensure positive weights
+                question_sequence_weights[s] = VOIs[s] - np.nanmin(VOIs[~np.isneginf(VOIs)])
 
                 # Add heuristic question cost based on target weight
                 for j, target in enumerate(self.target_order):
@@ -355,22 +205,23 @@ class Questioner(object):
                         if target.lower() in question.lower():
                             question_sequence_weights[s] *= self.target_weights[j]
 
-                # Add heuristic question cost based on number of times asked
+                # Add heuristic question cost based on time last answered
                 tla = likelihood_sequence[0]['time_last_answered']
-                if tla == -1:
+                if np.isnan(tla):
                     continue
 
                 dt = time.time() - tla
-                qid = self.all_questions.index(likelihood_sequence[0]['question'])
+                qid = self.questions.index(likelihood_sequence[0]['question'])
                 if dt > self.repeat_time_penalty:
-                    self.all_likelihoods[qid]['time_last_answered'] = -1
+                    self.likelihoods[qid]['time_last_answered'] = np.nan
                 elif tla > 0:
-                    question_sequence_weights[s] *= (dt / self.repeat_time_penalty + 1)\
-                         * self.repeat_annoyance
+                    mp = 1 - self.repeat_annoyance
+                    question_sequence_weights[s] *= mp + (1-mp) * dt / self.repeat_time_penalty
 
         # Re-order questions by their weights
         q_seq_ids = range(len(likelihood_sequences))
 
+        # <>TODO: change to NamedTuple
         self.weighted_question_sequences = zip(question_sequence_weights, 
                                                q_seq_ids,
                                                question_sequences,
@@ -392,35 +243,13 @@ class Questioner(object):
             if wqs[2][0] not in first_questions:
                 first_questions.append(wqs[2][0])
 
-                qid = self.all_questions.index(wqs[2][0])
+                qid = self.questions.index(wqs[2][0])
                 weighted_question = [wqs[0], qid, wqs[2][0]]
                 weighted_questions.append(weighted_question)
 
                 question_weights.append(wqs[0])
                 question_strs.append(wqs[2][0])
         self.weighted_questions = weighted_questions
-
-
-        DEBUG = False
-        if DEBUG:
-            import matplotlib.pyplot as plt
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            width = 0.8
-            # ax.bar(range(len(question_sequences)), question_sequence_weights, width=width)
-            # ax.set_xticks(np.arange(len(question_sequences)) + width/2)
-            # question_strs = [" + ".join(question_seq) for question_seq in question_sequences]
-            # ax.set_xticklabels(question_strs, rotation=90)
-
-            ax.bar(range(len(question_strs)), question_weights, width=width)
-            ax.set_xticks(np.arange(len(question_strs)) + width/2)
-            ax.set_xticklabels(question_strs, rotation=90, fontsize=10)
-            fig.subplots_adjust(bottom=0.4)
-
-            plt.show()
-
-        for q in self.weighted_questions:
-            logging.debug(q)
 
     def _calculate_VOI(self, likelihood_seq_values, prior, probability=None,
                        final_posterior_entropy=None, timespan=0,
@@ -479,12 +308,11 @@ class Questioner(object):
         return VOI
 
     def _predict_VOI(self, s):
-        question = self.all_likelihoods[s][0]
+        question = self.likelihoods[s][0]
         VOI, MSE = self.GPs[question].predict(self.eval_points, eval_MSE=True)
         sigma = np.sqrt(MSE)
 
         return VOI
-
 
     def _get_area_probs(self, prior):
 
@@ -505,15 +333,9 @@ class Questioner(object):
             robot_positions=None):
 
         # Don't ask if it's not time
-        if (self.ask_every_n < 1):
-            return
-
-        if (i % self.ask_every_n) != (self.ask_every_n - 1):
-            self.human_sensor.question_str = ''
-            self.human_sensor.utterance = ''
-            return
-
-        if self.is_hovered and self.use_ROS:
+        if ((self.ask_every_n < 1) or  # Too early
+            (i % self.ask_every_n) != (self.ask_every_n - 1) or  # Wrong timestep
+            (self.is_hovered and self.use_ROS)):  # user hovering
             return
 
         # Get questions sorted by weight
@@ -522,7 +344,6 @@ class Questioner(object):
 
         if self.auto_answer:
             self.answer_question(self.weighted_questions[0], robot_positions)
-            self.recent_question = self.weighted_questions[0][2]
             return
 
         # Assign values to the ROS message
@@ -554,71 +375,49 @@ class Questioner(object):
             statement = self.question_to_statement(q[2], answer)
             self.human_sensor.utterance = statement
             self.human_sensor.new_update = True
-            self.all_likelihoods[q[1]]['time_last_answered'] = time.time()
+            self.likelihoods[q[1]]['time_last_answered'] = time.time()
 
     def answer_question(self, question, robot_positions):
+
+        # Find the exact statement tied to the question
         qid = question[1]
         question_str = question[2]
+        statement = self.statements[qid]
 
-        # assume target is Roy
-        true_position = robot_positions['Roy']
-
-        groundings = self.human_sensor.groundings
-        positivities = self.human_sensor.positivities
-        map_bounds = None
-        answer = None
-        for _, grounding_type in groundings.iteritems():
-
-            for grounding_name, grounding in grounding_type.iteritems():
-                if grounding_name.find('the') == -1:
-                    grounding_name = 'the ' + grounding_name
-
-                if hasattr(grounding, 'relations') and map_bounds is None:
-                    map_bounds =  grounding.relations.binary_models\
-                        .itervalues().next().bounds
-
-                if not hasattr(grounding, 'relations'):
-                    grounding.define_relations()
-
-                relation_names = grounding.relations.binary_models.keys()
-
-                for relation in relation_names:
-
-                    if grounding_name.lower() in question_str \
-                        and relation.lower() in question_str:
-
-                        p_D_x = grounding.relations.probability(class_=relation,
-                                                                state=true_position
-                                                                )
-                        sample = np.random.random()
-                        if sample < p_D_x:
-                            answer = True
-                        else:
-                            answer = False
-                        break
-                else:
-                    continue
-                break
-            else:
-                continue
-            break
-        if answer is None:
-            logging.error('No answer available to the question "{}"!'
-                          .format(question_str))
+        # Find the position of the robot
+        if statement.target in ['a robot', 'nothing']:
+            positions = [p for _, p in robot_positions.iteritems()]
+            true_position = np.array(positions).mean(axis=0)
         else:
-            if answer:
-                self.recent_answer = 'Yes'
-            else:
-                self.recent_answer = 'No'
-            logging.info('{} {}'.format(question_str, self.recent_answer))
+            true_position = robot_positions[statement.target]
 
+        # Randomly sample one answer from the likelihood at target location
+        #<>TODO: consider the case of dynamic groundings
+        likelihood = statement.get_likelihood(state=true_position)
+        answer = np.random.random() < likelihood
+        answer_statement = self.question_to_statement(question, answer)
+
+        # Update relevant values
         self.question_str = " + ".join(self.weighted_question_sequences[0][2])
-        self.human_sensor.question_str = question_str
-        statement = self.question_to_statement(question_str, answer)
-        self.human_sensor.utterance = statement
-        self.human_sensor.new_update = True
-        self.all_likelihoods[qid]['time_last_answered'] = time.time()
+        self.human_sensor.add_new_measurement(answer_statement)
+        self.likelihoods[qid]['time_last_answered'] = time.time()
+        self.recent_answer = 'Yes' if answer else 'No'
+        self.recent_question = self.weighted_questions[0][2]
+        logging.info('{} {}'.format(question_str, self.recent_answer))
 
+    def question_to_statement(self, question, answer):
+        """Maps a question and an answer to a template statement.
+
+        Returns the statement if the answer was affirmative, or finds the
+        negative statement and returns that one if the answer was negative.
+        """
+        qid = question[1]
+        pos_statement = self.statements[qid]
+        if answer:
+            return pos_statement
+        else:
+            utterance = pos_statement.__str__().replace('is', 'is not')
+            return self.human_sensor.utterance_to_statement(utterance)
 
     def hover_callback(self, data):
         import rospy
@@ -631,27 +430,12 @@ class Questioner(object):
         answer = data.answer
         logging.info("I Heard{}".format(data.qid))
 
-        question = self.all_questions[index]
+        question = self.questions[index]
         self.statement = self.question_to_statement(question, answer)
         logging.info(self.statement)
 
         self.answer_publisher.publish(self.statement)
-        self.all_likelihoods[index]['time_last_answered']
-
-    def question_to_statement(self, question, answer):
-        statement = question.replace("Is", "I know")
-        statement = statement.replace("?", ".")
-        for target in self.target_order:
-            start = statement.find(target)
-            if start > -1:
-                l = len(target)
-                i = start + l
-                statement = statement[:i] + ' is' + statement[i:]
-
-        if answer == 0 or answer == 'n' or answer == False:
-            statement = statement.replace("is", "is not")
-
-        return statement
+        self.likelihoods[index]['time_last_answered']
 
 
 def test_publishing():
@@ -681,7 +465,7 @@ def test_voi():
     roy = Robber('Roy')
     m.add_robber(roy.map_obj)
     h = Human(map_=m)
-    m.add_human_sensor(h)
+    # m.add_human_sensor(h)
 
     prior = GaussianMixture([0.1, 0.7, 0.2],
                             [[3, -2],
@@ -699,7 +483,7 @@ def test_voi():
     q = Questioner(human_sensor=h, target_order=['Pris','Roy'],
                    target_weights=[11., 10.])
 
-    m.setup_plot(show_human_interface=False)
+    m.setup_plot()
     m.update()
     ax = m.axes['combined']
 

@@ -117,22 +117,6 @@ class FusionEngine(object):
             raise ValueError("FusionEngine must be of type 'grid', 'particle'"
                              "or 'gauss sum'.")
 
-        # Velocity
-        if use_velocity:
-            self.vel_states = {}
-            for name in missing_robber_names:
-                self.vel_states[name] = GaussSumFilter(target_name=name,
-                                                       velocity_states=True,
-                                                       dynamic_model=False,
-                                                       )
-            if len(missing_robber_names) > 1:
-                self.vel_states['combined'] = GaussSumFilter(target_name='combined',
-                                                             velocity_states=True,
-                                                             dynamic_model=False,
-                                                             )
-        else:
-            self.vel_states = None
-
     def update(self, robot_pose, sensors, robbers, save_file=None):
         """Update fusion_engine agnostic to fusion type.
 
@@ -156,23 +140,13 @@ class FusionEngine(object):
             if not self.filters[robber.name].finished:
 
                 # Update position filters
-                if self.vel_states is not None:
-                    vel_state = self.vel_states[robber.name].probability
-                else:
-                    vel_state = None
-
                 self.filters[robber.name].update(sensors['camera'],
                                                  sensors['human'],
-                                                 vel_state,
                                                  )
-
-                # Update velocity filters
-                if vel_state is not None:
-                    self.vel_states[robber.name].update(human_sensor=sensors['human'])
 
         if len(self.missing_robber_names) > 1:
             self._update_combined(sensors, robbers)
-        sensors['human'].new_update = False  # done checking human, no more update
+        sensors['human'].clear_measurement()
 
     def _update_combined(self, sensors, robbers):
         # Fuse grid-based filters

@@ -7,6 +7,7 @@ import os
 def load_config(filename='config.yaml', path=None):
     if path is None:
         path = os.path.dirname(__file__) + '/../configs/' + filename
+
     try:
         with open(path, 'r') as stream:
             cfg = yaml.load(stream)

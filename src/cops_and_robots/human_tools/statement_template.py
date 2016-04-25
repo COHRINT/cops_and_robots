@@ -39,22 +39,6 @@ class StatementTemplate(object):
         Add additional sensor statements for 'I think'. Default is `False`.
     """
 
-    # templates = {'spatial relation': ['certainty',
-    #                                        'target',
-    #                                        'positivity',
-    #                                        ['spatial_relation:object', 'grounding:object'],
-    #                                        ['spatial_relation:area', 'grounding:area'],
-    #                                        ],
-    #                   'action': ['certainty',
-    #                              'target',
-    #                              'positivity',
-    #                              'action',
-    #                              [''],
-    #                              ['modifier'],
-    #                              ['spatial_relation:movement', 'grounding:area'],
-    #                              ['spatial_relation:movement', 'grounding:object'],
-    #                              ],
-    #                  }
     template_trees = {'spatial relation': [['certainty', 'target', 'positivity',
                                             'spatial_relation:object', 'grounding:object'],
                                            ['certainty', 'target', 'positivity',
@@ -79,7 +63,7 @@ class StatementTemplate(object):
 
         # Define base template components
         self.components['certainty'] = ['know']
-        self.components['positivity'] = ['is not', 'is']  # <>TODO: oh god wtf why does order matter
+        self.components['positivity'] = ['is not', 'is']  # <>TODO: Check if order matters
         self.components['spatial_relation'] = {'object': ['near'],
                                                 'area': ['inside'],
                                                }
@@ -89,9 +73,9 @@ class StatementTemplate(object):
         if map_ is None:
             map_ = Map(map_name='fleming')
         self.map = map_
-        self.generate_groundings_from_map()
+        self._generate_groundings_from_map()
         if add_more_targets:
-            self.generate_targets_from_map()
+            self._generate_targets_from_map()
 
         # Define more spatial relation components
         if add_more_relations:
@@ -117,38 +101,6 @@ class StatementTemplate(object):
             self.components['certainty'] += ['think']
 
         self._create_tree_structure()
-
-    def generate_groundings_from_map(self):
-        groundings = {}
-        groundings['area'] = []
-        for area_name in self.map.areas.keys():
-            groundings['area'].append(add_article(area_name.lower()))
-        # groundings['null'] = {}
-
-        groundings['object'] = []
-
-        # Add deckard (and other cops)
-        if len(self.map.cops) == 0:
-            groundings['object'].append("Deckard")
-        else:
-            for cop_name, cop in self.map.cops.iteritems():
-                # if cop.has_relations:
-                groundings['object'].append(cop.name)
-
-        for object_name, obj in self.map.objects.iteritems():
-            if obj.has_relations:
-                grounding_name = add_article(obj.name.lower())
-                groundings['object'].append(grounding_name)
-
-        self.components['grounding'] = groundings
-
-    def generate_targets_from_map(self):
-        if len(self.map.robbers) == 0:
-            additional_targets = ['Roy', 'Pris', 'Zhora']
-        else:
-            additional_targets = self.map.robbers.keys()
-
-        self.components['target'] += additional_targets
 
     def generate_statements(self, autogenerate_softmax=False):
         """Generates a flat list of statement objects for each template.
@@ -178,15 +130,44 @@ class StatementTemplate(object):
 
     def print_statements(self):
         for template_name, statements in self.template_statements.iteritems():
+
             str_ = '\n' + template_name.upper() + 's (' + str(len(statements)) + ')'
             print str_ + '\n' + '-' * len(str_)
 
             for s in statements:
-                try:
-                    print s
-                    print s.softmax
-                except AttributeError:
-                    pass
+                print s
+
+    def _generate_groundings_from_map(self):
+        groundings = {}
+        groundings['area'] = []
+        for area_name in self.map.areas.keys():
+            groundings['area'].append(add_article(area_name.lower()))
+        # groundings['null'] = {}
+
+        groundings['object'] = []
+
+        # Add deckard (and other cops)
+        if len(self.map.cops) == 0:
+            groundings['object'].append("Deckard")
+        else:
+            for cop_name, cop in self.map.cops.iteritems():
+                # if cop.has_relations:
+                groundings['object'].append(cop.name)
+
+        for object_name, obj in self.map.objects.iteritems():
+            if obj.has_relations:
+                grounding_name = add_article(obj.name.lower())
+                groundings['object'].append(grounding_name)
+
+        self.components['grounding'] = groundings
+
+    def _generate_targets_from_map(self):
+        if len(self.map.robbers) == 0:
+            additional_targets = ['Roy', 'Pris', 'Zhora']
+        else:
+            additional_targets = self.map.robbers.keys()
+
+        self.components['target'] += additional_targets
 
     def _prune_statements(self):
         for template_name, statements in self.template_statements.iteritems():
@@ -208,17 +189,11 @@ class StatementTemplate(object):
 
             self.template_statements[template_name] = statements
 
-    def _get_node(self, tree, node_name):
-        if tree is None:
-            return None
-        else:
-            return tree.get_node(node_name, None)
-
 
     def _create_tree_structure(self):
         """Generates a tree form of all possible human sensor statements.
 
-        Requires unique node names
+        Requires unique node names.
         """
         self.trees = {}
         for template_name, templates in self.template_trees.iteritems():
@@ -228,14 +203,15 @@ class StatementTemplate(object):
                 for depth, component_name in enumerate(template):
 
                     # Create new node if none exists in the tree
-                    if self._get_node(tree, component_name) is None:
+                    if tree is None or tree.get_node(component_name) is None:
+
+                        # Create node
                         component_list = self._get_components(component_name)
                         node = Node(component_name, component_list)
 
                         # Add node to parent's children
                         if depth > 0:
-                            parent_node = self._get_node(tree, template[depth - 1])
-                            node.parent = parent_node
+                            parent_node = tree.get_node(template[depth - 1])
                             parent_node.children += [node]
                         else:
                             tree = node
@@ -267,76 +243,6 @@ class StatementTemplate(object):
 
         return component_list
 
-def generate_sensor_statements(autogenerate_softmax=True, strings_only=False):
-    """Creates all ``Statement`` objects, possibly precomputing softmax models.
-    """
-
-
-    certainties = self.human_sensor.certainties
-    targets = self.target_order
-    positivities = self.human_sensor.positivities
-    groundings = self.human_sensor.groundings
-
-    # Create all possible questions and precompute their likelihoods
-    n_statements = statement_template.enumerate_combinations()
-    statements = []
-
-    i = 0
-    #<>TODO: include certainties
-    for grounding_type_name, grounding_type in groundings.iteritems():
-        for grounding_name, grounding in grounding_type.iteritems():
-            grounding_name = grounding_name.lower()
-            if grounding_name == 'deckard':
-                continue
-            if grounding_name.find('the') == -1:
-                grounding_name = 'the ' + grounding_name
-            relation_names = grounding.relations.binary_models.keys()
-            for relation_name in relation_names:
-                relation = relation_name
-
-                # Make relation names grammatically correct
-                relation_name = relation_name.lower()
-                if relation_name == 'front':
-                    relation_name = 'in front of'
-                elif relation_name == 'back':
-                    relation_name = 'behind'
-                elif relation_name == 'left':
-                    relation_name = 'left of'
-                elif relation_name == 'right':
-                    relation_name = 'right of'
-
-                # Ignore certain questons (incl. non-minimal)
-                if grounding_type_name == 'object':
-                    if relation_name in ['inside', 'outside']:
-                        continue
-
-                    if self.minimize_questions:
-                        # Near only
-                        if relation_name != 'near':
-                            continue
-
-                if grounding_type_name == 'area' \
-                    and self.minimize_questions: 
-                    
-                    # Inside only
-                    if relation_name != 'inside':
-                        continue
-
-                for target in targets:
-                    # Write question
-                    question_str = "Is " + target + " " + relation_name \
-                        + " " + grounding_name +"?"
-                    self.all_questions.append(question_str)
-
-                    # Calculate likelihood
-                    self.all_likelihoods[i]['question'] = question_str
-                    self.all_likelihoods[i]['probability'] = \
-                        grounding.relations.probability(class_=relation)
-                    self.all_likelihoods[i]['time_last_answered'] = -1
-                    i += 1
-    logging.info('Generated {} questions.'.format(len(self.all_questions)))
-
-
 def generate_human_language_template(use_fleming=True, default_targets=True):
     """Generates speech templates
 
@@ -365,10 +271,9 @@ def generate_human_language_template(use_fleming=True, default_targets=True):
 
 class Node(object):
     """Element of Tree data structure."""
-    def __init__(self, name, values, children=None, is_subtree_leaf=False):
+    def __init__(self, name, values, children=None):
         self.name = name
         self.values = values
-        self.is_subtree_leaf = is_subtree_leaf
         if children is None:
             self.children = []
 
@@ -379,7 +284,8 @@ class Node(object):
         return str_
 
     def get_node(self, node_name, node=None):
-
+        """Searches the tree for a specific node by name.
+        """
         if self.name == node_name:
             node = self
         else:
@@ -388,7 +294,7 @@ class Node(object):
         return node
 
     def get_statement_args(self, master_list, path_args=None):
-        """Appends 
+        """Appends path of arg values through tree to `master_list`.
         """
         if path_args is None:
             path_args = {}
@@ -415,14 +321,24 @@ class Node(object):
             if len(self.children) == 0:
                 master_list.append(path_args.copy())
 
+def get_all_statements(autogenerate_softmax=False, flatten=False,
+                       *args, **kwargs):
+    st = StatementTemplate(*args, **kwargs)
+    st.generate_statements(autogenerate_softmax=autogenerate_softmax)
+    statements = st.template_statements
+
+    if flatten:
+        statements = []
+        for _, ts in st.template_statements.iteritems():
+            statements += statements + ts
+    return statements
 
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     
-    # st = StatementTemplate(add_actions=True)
-    st = StatementTemplate(add_more_relations=True, add_more_targets=True,
-                           add_actions=True, add_certainties=True)
-    st.generate_statements(autogenerate_softmax=False)
+    # st = StatementTemplate(add_more_relations=True, add_more_targets=True, add_actions=True, add_certainties=True)
+    st = StatementTemplate()
+    st.generate_statements(autogenerate_softmax=True)
     st.print_statements()
     # print st.enumerate_combinations()
