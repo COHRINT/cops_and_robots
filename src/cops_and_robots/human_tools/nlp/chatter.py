@@ -14,10 +14,6 @@ __status__ = "Development"
 import logging
 import random
 import numpy as np
-import pandas as pd
-import re
-from StringIO import StringIO  # got moved to io in python3.
-import requests
 import os
 
 
