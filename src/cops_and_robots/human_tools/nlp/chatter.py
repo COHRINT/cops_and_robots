@@ -16,12 +16,12 @@ import random
 import numpy as np
 import os
 
+import spacy.en
 
 from cops_and_robots.human_tools.nlp.tagger import Tagger
 from cops_and_robots.human_tools.nlp.tokenizer import Tokenizer
 from cops_and_robots.human_tools.nlp.templater import TDC_Collection, TDC
-from cops_and_robots.human_tools.nlp.similarity_checker import (SimilarityChecker,
-                                                            template_to_string)
+from cops_and_robots.human_tools.nlp.matcher import (Matcher, template_to_string)
 
 class Chatter(object):
     """A chat interface that maps natural language to pre-defined statements.
@@ -39,7 +39,7 @@ class Chatter(object):
 
     """
 
-    def __init__(self, skip_similarity=False, uncontract=False, 
+    def __init__(self, uncontract=False, 
                  punctuate=False, autocorrect=False, case_correct=False):
 
         self.uncontract = uncontract
@@ -47,11 +47,13 @@ class Chatter(object):
         self.autocorrect = autocorrect
         self.case_correct = case_correct
 
-        #<>TODO: Remove skip_similarity
-        self.tokenizer = Tokenizer()
+        logging.info("Loading SpaCy...")
+        self.nlp = spacy.en.English(parser=False)
+        logging.info("Parsing corpus...")
+
+        self.tokenizer = Tokenizer(nlp=self.nlp)
         self.tagger = Tagger()
-        if not skip_similarity:
-            self.similarity_checker = SimilarityChecker()
+        self.matcher = Matcher(nlp=self.nlp)
 
     def translate_from_natural_input(self, nl_input, n_considerations=1):
         """Transform natural language input into human sensor statement(s).
@@ -69,8 +71,27 @@ class Chatter(object):
         Statement
             A list of `Statement` objects.
         """
-        phrase, template = self._find_closest_template_phrase(nl_input)
-        return phrase, template
+        statements = self._find_nearest_statement(nl_input)
+        return statements
+
+    def translate_from_console_input(self):
+        """Prints responses to raw console input fed through the NLP pipeline.
+        """
+        while True:
+            # Get natural language input
+            nl_input = raw_input('Describe a target (or enter a blank line to exit): ')
+            print('Your said: {}'.format(nl_input))
+
+            if nl_input == '':
+                print('Thanks for chatting!')
+                break
+
+            cleaned_document = self._clean_input_document(nl_input)
+            templates = self._find_nearest_statement(cleaned_document)
+
+            print("I understood: ")
+            for template in templates:
+                print("\t \"{}\".".format(template))
 
     def _clean_input_document(self, nl_input, uncontract=False, punctuate=False,
                              autocorrect=False, case_correct=False):
@@ -102,50 +123,26 @@ class Chatter(object):
 
         return cleaned_document
 
-    def translate_from_console_input(self):
-        """Prints responses to raw console input fed through the NLP pipeline.
-        """
-        while True:
-            # Get natural language input
-            nl_input = raw_input('Describe a target (or enter a blank line to exit): ')
-            print('Your said: {}'.format(nl_input))
-
-            if nl_input == '':
-                print('Thanks for chatting!')
-                break
-
-            templates = self._find_closest_template_phrase(cleaned_document)
-
-            print("I understood: ")
-            for template in templates:
-                print("\t \"{}\", with probability {}."
-                      .format(template[0],template[1]))
-
-    def _find_closest_template_phrase(self, nl_input):
+    def _find_nearest_statement(self, nl_input):
         """Finds the closest human sensor statement template to the input doc.
         """
         # Clean up input text
         cleaned_document = self._clean_input_document(nl_input)
 
         # Identify possible word span combinations
-        tokenized_documents = self.tokenizer.tokenize(cleaned_document, max_distance=1)
-        
-        #<>STUB: include only first tokenization of the document
-        tokenized_document = tokenized_documents[0]
+        tokenized_document = self.tokenizer.tokenize(cleaned_document)
 
         # Apply CRF for semantic tagging
         tagged_document = self.tagger.tag_document(tokenized_document)
 
         # Separate into TDCs
         TDC_collection = TDC_Collection(tagged_document)
+        filled_templates = TDC_collection.get_expected_templates()
 
-        # Apply word2vec for word matching
-        closest = self.similarity_checker.find_closest_phrases(TDC_collection)
+        # Apply phrase2vec for word matching
+        statements = self.matcher.find_nearest_statements(filled_templates)
 
-        # <>STUB handling only the one closest phrase
-        phrase, template = closest[0]
-
-        return phrase, template
+        return statements
 
 
 
@@ -156,4 +153,4 @@ if __name__ == '__main__':
 
 
     chatter = Chatter()
-    chatter.translate_from_natural_input()
+    chatter.translate_from_console_input()

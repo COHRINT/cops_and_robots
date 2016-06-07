@@ -55,6 +55,13 @@ class StatementTemplate(object):
     template_object_mapping = {'spatial relation': SpatialRelationStatement,
                                'action': ActionStatement,
                                }
+    default_components = {'certainty': 'know',
+                          'positivity': 'is',
+                          'target': 'a robot',
+                          }
+    statement_classes = {'spatial relation': SpatialRelationStatement,
+                         'action': ActionStatement,
+                         }
 
     def __init__(self, map_=None, add_more_relations=False, add_more_targets=False,
                  add_actions=False, add_certainties=False):
@@ -127,6 +134,7 @@ class StatementTemplate(object):
             self.template_statements[template_name] = statements
 
         self._prune_statements()
+        return self.template_statements
 
     def print_statements(self):
         for template_name, statements in self.template_statements.iteritems():
@@ -339,6 +347,6 @@ if __name__ == '__main__':
     
     # st = StatementTemplate(add_more_relations=True, add_more_targets=True, add_actions=True, add_certainties=True)
     st = StatementTemplate()
-    st.generate_statements(autogenerate_softmax=True)
+    st.generate_statements(autogenerate_softmax=False)
     st.print_statements()
     # print st.enumerate_combinations()

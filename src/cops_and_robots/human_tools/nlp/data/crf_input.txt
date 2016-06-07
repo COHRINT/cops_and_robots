@@ -1,8 +1,4 @@
-I	
-know	
-Roy	
-is	
-near	
+two	
+robots_are_near	
 the	
-desk	
-.	
+counter	

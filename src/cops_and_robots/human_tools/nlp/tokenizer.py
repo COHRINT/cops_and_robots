@@ -47,16 +47,10 @@ class Tokenizer(object):
 
     """
 
-    def __init__(self, max_distance=2, ngram_score_discount=0):
+    def __init__(self, max_distance=2, ngram_score_discount=0, nlp=None):
         self.delimiters = [',', ';', '.', '!', '?']
         self.max_distance = max_distance
-        self.ngram_score_discount = ngram_score_discount
-
-        # corpus = "Roy is around the corner, inside the kitchen, near the fridge."
-        # from cops_and_robots.human_tools.chatbox import DataHandler
-        # corpus = "\n".join(DataHandler().input_sentences)
-        # self.generate_ngram_scores(corpus)
-
+        self.scorer = Scorer(load_data=True, nlp=nlp)
 
     def tokenize(self, document, max_distance=None):
         """Takes an input document string and splits it into a list of tokens.
@@ -90,29 +84,24 @@ class Tokenizer(object):
         if max_distance is not None:
             self.max_distance = max_distance
 
-        self.scorer = Scorer(load_data=True)
+        #<>TODO: make customizable string of regex format
+        singly_tokenized_document = re.findall(r"[\w']+|[.,!?;]", document)
+        n_tokens = len(singly_tokenized_document)
 
-        base_tokenized_document = re.findall(r"[\w']+|[.,!?;]", document)
-        n_tokens = len(base_tokenized_document)
+        tokenized_document = []
+        str_ = singly_tokenized_document[0]
+        for i, u in enumerate(singly_tokenized_document[:-1]):
+            v = singly_tokenized_document[i + 1]
 
-        # Find n-gram replacement tokens for all unigram tokens
-        tokenized_documents = []
-        tokenized_documents.append(base_tokenized_document)
-        tokenized_documents += self.unigram_to_ngram(base_tokenized_document)
-        
-        # Ensure uniqueness
-        tokenized_documents = [list(x) for x in set(tuple(x) for x in tokenized_documents)]
-        tokenized_documents.sort()
+            is_grouped = self.scorer.classify_word_pair((u,v))
+            if is_grouped:
+                str_ += " " + v
+            else:
+                tokenized_document.append(str_)
+                str_ = v
+        tokenized_document.append(str_)
 
-        # Define scores for all n-grams > 1
-        for tokenized_document in tokenized_documents:
-            score = self.score_tokenized_document(tokenized_document)
-
-
-        # Sort tokenized documents in score order
-
-
-        return tokenized_documents
+        return tokenized_document
 
     def score_tokenized_document(self, tokenized_document, dataset=None):
         pass
@@ -189,16 +178,8 @@ class Tokenizer(object):
             distance += 1
         return tokenized_documents
 
-
-def test_tokenizer(document='', max_distance=3):
-    if len(document) < 1:
-        document = "Roy is behind you."
-
-    tokenizer = Tokenizer(max_distance=max_distance)
-    tokenized_documents = tokenizer.tokenize(document)
-    for td in tokenized_documents:
-        print td
-
+    def test_accuracy(self):
+        
 
 class Scorer(object):
     """Scores a corpus of data based on lemmata and/or parts-of-speech tags.
@@ -206,10 +187,17 @@ class Scorer(object):
     Parts of speech: https://sites.google.com/site/partofspeechhelp/home
     """
 
-    def __init__(self, corpus=None, load_data=False, save_data=True):
+    def __init__(self, corpus=None, load_data=True, save_data=True, nlp=None):
 
         self.data_dir = os.path.dirname(os.path.abspath(__file__)) + '/data/'
         self.filename = self.data_dir + 'score_data.npz'
+
+        if nlp is None:
+            logging.info("Loading SpaCy...")
+            self.nlp = spacy.en.English(parser=False)
+            logging.info("Parsing corpus...")
+        else:
+            self.nlp = nlp
 
         self.feature_type_values = OrderedDict({'lemmata': None,
                                                 'POS tags': None,
@@ -218,7 +206,7 @@ class Scorer(object):
         # Training parameters (overwritten on load)
         self.num_classes = 2
         self.weight_decay = 1e-3
-        self.max_iter = 2e6
+        self.max_iter = 1e6
         self.step_size = 1e-2
         self.min_step = 1e-5
         self.whiten = False
@@ -226,9 +214,6 @@ class Scorer(object):
         if load_data:
             self._load_data()
         else:
-            logging.info("Loading SpaCy...")
-            self.nlp = spacy.en.English(parser=False)
-            logging.info("Parsing corpus...")
             self._parse_corpus(corpus)
             self.learning_params = {'num classes': self.num_classes,
                                     'weight decay': self.weight_decay,
@@ -249,7 +234,6 @@ class Scorer(object):
             self._learn_weights()
             if save_data:
                 self._save_data()
-        self.test_accuracy()
 
     def view_truth_data(self):
         from matplotlib.widgets import RadioButtons
@@ -364,7 +348,6 @@ class Scorer(object):
             ax.set_title(name)
 
     def test_accuracy(self):
-        import pdb; pdb.set_trace()  # breakpoint db5486d6 //
 
         # Grab test feature vectors
         n = len(self.test_data_indices)
@@ -373,19 +356,49 @@ class Scorer(object):
         feature_vectors[np.isinf(feature_vectors)] = 0
 
         # Generate hypotheses
-        M = weights.T .dot (feature_vectors.T)
+        M = self.weights.T .dot (feature_vectors.T)
         b = np.nanmax(M)  # To deal with overflow
-        log_hyp = M - logsumexp(M,axis=0)
+        log_hyp = M - logsumexp(M, axis=0)
         hypothesis = np.exp(log_hyp)
+        hypothesis[np.isnan(hypothesis)] = 0.5  # <>TODO: remove cheap hack!
 
-        # Check accuracy 
-        predicted_labels = np.argmax(hypothesis, axis=0)
-        validation = [predicted_labels[i] == self.class_ids[i] for i in range(n)]
-        validation = np.array(validation, dtype=int)
-        accuracy = validation.sum() / validation.size
+        # Check accuracy
+        predictions = np.argmax(hypothesis, axis=0)
+        truth = self.class_ids[self.test_data_indices]
+        validation = np.equal(predictions, truth).astype(int)
+        accuracy = validation.sum() / n
+
+        # Check precision
+        correct_predicted_groups = np.array([i for i, v in enumerate(predictions)
+                                             if v and v==truth[i]])
+        all_predicted_groups = predictions[predictions==1]
+        precision = correct_predicted_groups.size / all_predicted_groups.size
+
+        # Check recall - the number of true grouped word over all grouped words
+        all_true_groups = truth[truth==1]
+        recall = correct_predicted_groups.size / all_true_groups.size
+
         logging.info('{:0.2f}% accuracy'.format(accuracy * 100))
+        logging.info('{:0.2f}% precision'.format(precision * 100))
+        logging.info('{:0.2f}% recall'.format(recall * 100))
 
         return accuracy
+
+    def classify_word_pair(self, word_pair):
+
+        score = self.score_words(word_pair)
+        score_vector = self.score_vector_from_scores(score)
+        feature_vector = np.hstack((1, score_vector))
+
+
+        # Generate Hypothesis
+        M = self.weights.T .dot (feature_vector.T)
+        log_hyp = M - logsumexp(M, axis=0)
+        hypothesis = np.exp(log_hyp)
+        hypothesis[np.isnan(hypothesis)] = 0.5  # <>TODO: remove cheap hack!
+
+        prediction = np.argmax(hypothesis)
+        return bool(prediction)
 
     def score_words(self, word_pair=None, visualize=False, feature_type=None):
         """
@@ -435,6 +448,7 @@ class Scorer(object):
             word_pair_features = [t.tag_ for t in doc]
 
         feature_list = self.feature_type_values[feature_type]
+        # print feature_list
         try:
             u = feature_list.index(word_pair_features[0])
         except ValueError:
@@ -617,7 +631,7 @@ class Scorer(object):
         else:
             freq_measures = [self.observed_freqs]
             O = self.get_word_pair_measure(word_pair, feature_type, freq_measures)
-            if O is None:
+            if O is None or O[0] is None:
                 O_11 = np.nan
             else:
                 O_11 = O[0]
@@ -632,6 +646,7 @@ class Scorer(object):
         save_data = {'class IDs': self.class_ids,
                      'expected frequencies': self.expected_freqs,
                      'feature vectors': self.feature_vectors,
+                     'feature type values': self.feature_type_values,
                      'labels': self.labels,
                      'learning params': self.learning_params,
                      'marginal frequencies': self.marginal_freqs,
@@ -658,6 +673,7 @@ class Scorer(object):
         self.class_ids = data['class IDs']
         self.expected_freqs = data['expected frequencies'].item()
         self.feature_vectors = data['feature vectors']
+        self.feature_type_values = data['feature type values'].item()
         self.labels = data['labels']
         self.learning_params = data['learning params']
         self.marginal_freqs = data['marginal frequencies'].item()
@@ -796,6 +812,7 @@ class Scorer(object):
         # Get sequential word pairs with group labels from corpus and tokens
         single_word_tokens = self.dh.get_single_word_tokens()
         num_word_pairs = len(single_word_tokens) - 1
+        data_size = num_word_pairs * num_datasets
         word_pair_groups = [None] * num_word_pairs * (len(true_tokens) - 1)
 
         # Classify each word pair in training set as grouped or not grouped
@@ -832,11 +849,11 @@ class Scorer(object):
                 index = i + d * num_word_pairs
                 word_pair_groups[index] = (u, v, is_grouped)
 
+
         # Figure out training data size and indices
-        self.training_data_size = int(round(num_word_pairs * num_datasets * split_pct))
-        self.training_data_indices = np.random.choice(num_word_pairs,
-                                                      self.training_data_size)
-        self.test_data_indices = np.array([i for i in np.arange(num_word_pairs)
+        self.training_data_size = int(round(data_size * split_pct))
+        self.training_data_indices = np.random.choice(data_size, self.training_data_size, replace=False)
+        self.test_data_indices = np.array([i for i in np.arange(data_size)
                                            if i not in self.training_data_indices])
 
         # Create one variable to hold all training and test data
@@ -908,7 +925,7 @@ class Scorer(object):
             grad[np.isnan(grad)] = 0
             # logging.info("{}, {}".format(iter_, np.linalg.norm(grad)))
             # if np.mod(iter_, STEP) == 0:
-            #     import pdb; pdb.set_trace()  # breakpoint 3006a4b7 //
+                # import pdb; pdb.set_trace()  # breakpoint 3006a4b7 //
         
             # Take one steps in gradient descent on feature space
             weights = weights - self.step_size * grad
@@ -935,8 +952,10 @@ def test_scorer():
     # scorer = Scorer("The red robot is near the chair.")
     # scorer = Scorer("Oh my gosh the oh my goshes are goshing")
     scorer = Scorer()
-    scorer.view_truth_data()
+    # scorer.view_truth_data()
     # scorer.score_words(visualize=True, feature_type=None)
+    scorer.test_accuracy()
+    # print scorer.classify_word_pair(("is", "moving"))
 
     # accuracies = []
     # for i in range(10):
@@ -956,6 +975,14 @@ def test_scorer():
 
 
 
+
+def test_tokenizer(document='', max_distance=3):
+    if len(document) < 1:
+        document = "Roy is behind you."
+
+    tokenizer = Tokenizer()
+    tokenized_document = tokenizer.tokenize(document)
+    print tokenized_document
 
 
 if __name__ == '__main__':
