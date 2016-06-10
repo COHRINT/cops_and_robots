@@ -1,4 +1,6 @@
-two	
-robots_are_near	
+Roy	
+is	
+not	
+near	
 the	
-counter	
+door	

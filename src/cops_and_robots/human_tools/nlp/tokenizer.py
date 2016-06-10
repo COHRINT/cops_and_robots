@@ -49,6 +49,7 @@ class Tokenizer(object):
 
     def __init__(self, max_distance=2, ngram_score_discount=0, nlp=None):
         self.delimiters = [',', ';', '.', '!', '?']
+        self.breaking_delimeters = ['.', '!', '?']
         self.max_distance = max_distance
         self.scorer = Scorer(load_data=True, nlp=nlp)
 
@@ -94,6 +95,10 @@ class Tokenizer(object):
             v = singly_tokenized_document[i + 1]
 
             is_grouped = self.scorer.classify_word_pair((u,v))
+
+            if u in self.breaking_delimeters or v in self.breaking_delimeters:
+                is_grouped = False
+
             if is_grouped:
                 str_ += " " + v
             else:
@@ -179,7 +184,47 @@ class Tokenizer(object):
         return tokenized_documents
 
     def test_accuracy(self):
-        
+        dh = DataHandler()
+        multi_word_tokens = dh.get_multi_word_tokens()
+
+        # Generate tokenization of entire document
+        document = dh.get_input_sentences()
+        tokenized_document = self.tokenize(document)
+
+        st = multi_word_tokens['sierra']
+        jt = multi_word_tokens['jeremy']
+        ht = tokenized_document
+
+        j_end, s_end = 0,0
+        validation = np.zeros(len(ht))
+        for i, token in enumerate(ht):
+            # Cycle individual sentences (once token is a breaking delim)
+            if i == 0 or token in self.breaking_delimeters:
+                if j_end < len(jt):
+                    j_start = j_end
+                j = j_start
+                while jt[j] not in self.breaking_delimeters and j < len(jt):
+                    j += 1
+                j_end = j + 1
+
+                if s_end < len(st):
+                    s_start = s_end
+                s = s_start
+                while st[s] not in self.breaking_delimeters and s < len(st):
+                    s += 1
+                s_end = s + 1
+
+            # Compare with all jeremy's tokens in range
+            for j in range(j_start, j_end):
+                if jt[j] == token:
+                    validation[i] = 1
+
+            # Compare with all sierra's tokens in range
+            for s in range(s_start, s_end):
+                if st[s] == token:
+                    validation[i] = 1
+        accuracy = validation.sum() / validation.size
+        logging.info("Tokenizer accuracy: {}%".format(accuracy * 100))
 
 class Scorer(object):
     """Scores a corpus of data based on lemmata and/or parts-of-speech tags.
@@ -953,7 +998,7 @@ def test_scorer():
     # scorer = Scorer("Oh my gosh the oh my goshes are goshing")
     scorer = Scorer()
     # scorer.view_truth_data()
-    # scorer.score_words(visualize=True, feature_type=None)
+    scorer.score_words(visualize=True, feature_type=None)
     scorer.test_accuracy()
     # print scorer.classify_word_pair(("is", "moving"))
 
@@ -981,8 +1026,9 @@ def test_tokenizer(document='', max_distance=3):
         document = "Roy is behind you."
 
     tokenizer = Tokenizer()
-    tokenized_document = tokenizer.tokenize(document)
-    print tokenized_document
+    # tokenized_document = tokenizer.tokenize(document)
+    # print tokenized_document
+    tokenizer.test_accuracy()
 
 
 if __name__ == '__main__':

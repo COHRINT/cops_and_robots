@@ -18,6 +18,7 @@ import os
 
 import spacy.en
 
+from cops_and_robots.human_tools.nlp.datahandler import DataHandler
 from cops_and_robots.human_tools.nlp.tagger import Tagger
 from cops_and_robots.human_tools.nlp.tokenizer import Tokenizer
 from cops_and_robots.human_tools.nlp.templater import TDC_Collection, TDC
@@ -93,6 +94,12 @@ class Chatter(object):
             for template in templates:
                 print("\t \"{}\".".format(template))
 
+    def test_accuracy(self):
+        dh = DataHandler()
+        true_statements = dh.get_selected_statements()
+
+        print len(dh.input_sentences), len(true_statements['jeremy']), len(true_statements['sierra'])
+
     def _clean_input_document(self, nl_input, uncontract=False, punctuate=False,
                              autocorrect=False, case_correct=False):
         """Performs NLP pre-processing tasks on raw natural language input.
@@ -153,4 +160,5 @@ if __name__ == '__main__':
 
 
     chatter = Chatter()
+    # chatter.test_accuracy()
     chatter.translate_from_console_input()
