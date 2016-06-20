@@ -109,7 +109,7 @@ class DataHandler(object):
             doc = nlp(unicode(item), tag = True, parse =True)
             for tok in doc:
                 combo = combo + str(tok.pos_) + " "
-                list_pos.append(combo)
+            list_pos.append(combo)
             combo = ""
         return list_pos
 
@@ -172,19 +172,17 @@ if __name__ == '__main__':
     # Two words
     full_data = dh.split_input_into_two_words()
     full_two_pos = dh.POS(full_data)
-    full_two_pos = dh.separate_two_words(full_two_pos)
     full_keys_2,full_values_2 = dh.count_em_up(full_two_pos)
     
     data_to_parse = dh.get_multi_word_tokens()
     two_words = dh.separate_two_words(data_to_parse)
     two_pos=dh.POS(two_words)
-    two_pos=dh.separate_two_words(two_pos)
     two_keys,two_values = dh.count_em_up(two_pos)
 
     new_value_list_2 = dh.compare(two_keys,two_values,full_keys_2,full_values_2)
     dh.graph(full_keys_2, full_values_2, new_value_list_2)
 
-    #three words
+    # #three words
     full_data = dh.split_input_into_three_words()
     full_three_pos = dh.POS(full_data)
     full_three_pos = dh.separate_three_words(full_three_pos)
@@ -192,11 +190,7 @@ if __name__ == '__main__':
     
     three_words = dh.separate_three_words(data_to_parse)
     three_pos=dh.POS(three_words)
-    three_pos=dh.separate_three_words(three_pos)
     three_keys,three_values = dh.count_em_up(three_pos)
 
     new_value_list_3 = dh.compare(three_keys,three_values,full_keys_3,full_values_3)
     dh.graph(full_keys_3, full_values_3, new_value_list_3)
-
-
-
