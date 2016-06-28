@@ -145,7 +145,7 @@ def main():
     invisible_elements = [area2, object1]
 
     bounds = [-5, -5, 5, 5]
-    sl = ShapeLayer(elements, bounds=bounds)
+    sl = ShapeLayer(elements, bounds=bounds, fig=fig, ax=ax)
     ax.set_xlim(bounds[0], bounds[2])
     ax.set_ylim(bounds[1], bounds[3])
     # sl = ShapeLayer(elements, invisible_elements=invisible_elements, bounds=[-5, -5, 5, 5])
