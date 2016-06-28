@@ -226,6 +226,7 @@ class Tokenizer(object):
         accuracy = validation.sum() / validation.size
         logging.info("Tokenizer accuracy: {}%".format(accuracy * 100))
 
+
 class Scorer(object):
     """Scores a corpus of data based on lemmata and/or parts-of-speech tags.
 

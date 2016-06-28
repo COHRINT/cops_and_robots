@@ -43,7 +43,7 @@ class Layer(object):
         The colormap string for the layer. Defaults to `'parula'`.
 
     """
-    def __init__(self, bounds=[-5, -5, 5, 5], visible=True, target='',
+    def __init__(self, bounds=[-10, -10, 10, 10], visible=True, target='',
                  fig=None, ax=None, alpha=0.8, cmap_str='parula'):
         self.fig = fig
         self.ax = ax

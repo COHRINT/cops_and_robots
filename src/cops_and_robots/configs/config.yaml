@@ -27,7 +27,7 @@ display:
 
 data_management:
   animation:  # Saves an output animation in animated gif form
-    save_animation: True
+    save_animation: False
     folder: 'animations/'
     filename: 'Non-truncated GMs'
   storage:

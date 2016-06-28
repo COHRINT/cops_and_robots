@@ -73,11 +73,14 @@ class Cop(Robot):
 
     """
     mission_planner_defaults = {}
-    goal_planner_defaults = {'type_': 'particle',
+    goal_planner_defaults = {'type_': 'greedy',
                              'use_target_as_goal': False}
     path_planner_defaults = {'type_': 'direct'}
     questioner_defaults = {}
-    fusion_engine_defaults = {}
+    fusion_engine_defaults = {'probability_type': 'gauss sum',
+                              'use_STM': False,
+                              'use_velocity': False,
+                              }
 
     def __init__(self,
                  name,
@@ -122,7 +125,11 @@ class Cop(Robot):
         # Tracking attributes
         self.other_robot_names = other_robot_names
         self.missing_robber_names = self.other_robot_names['robbers']
-        self.distracting_robot_names = self.other_robot_names['distractors']
+        try:
+            self.distracting_robot_names = self.other_robot_names['distractors']
+        except KeyError:
+            self.distracting_robot_names = []
+            logging.debug('No distractors.')
         self.found_robbers = {}
 
         # Create mission planner

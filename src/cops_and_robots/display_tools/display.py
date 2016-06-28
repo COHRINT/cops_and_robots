@@ -6,6 +6,7 @@ import os
 import logging
 import numpy as np
 import matplotlib
+matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 from cops_and_robots.fusion.gaussian_mixture import GaussianMixture
 from cops_and_robots.display_tools.human_interface import CodebookInterface, ChatInterface

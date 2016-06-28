@@ -1462,9 +1462,9 @@ if __name__ == '__main__':
     # new_fp = fp.copy()
     # new_fp.weights = np.ones(6)
     # print fp
-    # ellipses_test(2)
+    ellipses_test(2)
     # merge_test(120)
     # uniform_prior_test()
     # entropy_test()
-    update_speed_test()
+    # update_speed_test()
     # merge_gm_test(0.01)

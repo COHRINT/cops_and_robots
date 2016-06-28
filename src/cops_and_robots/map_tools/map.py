@@ -208,25 +208,12 @@ class Map(object):
         self.probability_layers[name].remove()
         del self.probability_layers[name]
 
-    def plot(self):
+    def plot(self, **kwargs):
+        # if not hasattr(self, 'fig'):
+        self.setup_plot(**kwargs)
         # <>TODO: Needs rework
-        fig = plt.figure(1, figsize=(12, 10))
-        ax = fig.add_subplot(111)
-        self.shape_layer.update_plot(update_static=True)
 
-        for area in self.areas.values():
-            ax.add_patch(area.get_patch())
-
-        ax.axis('scaled')
-        ax.set_xlim([self.bounds[0], self.bounds[2]])
-        ax.set_ylim([self.bounds[1], self.bounds[3]])
-        ax.set_title('Experimental environment with landmarks and areas')
-        ax.annotate('Kitchen', [-5, 2.5], weight='bold')
-        ax.annotate('Billiard Room', [1.5, 2], weight='bold')
-        ax.annotate('Library', [0.75, -2.25], weight='bold')
-        ax.annotate('Study', [-4.5, -2.25], weight='bold')
-        ax.annotate('Dining Room', [-8.75, -1.4], weight='bold')
-        ax.annotate('Hallway', [-3.5, 0], weight='bold')
+        self.update()
         plt.show()
 
     def setup_plot(self, fig=None, fusion_engine=None):

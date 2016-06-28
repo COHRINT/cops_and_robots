@@ -70,11 +70,11 @@ class StatementTemplate(object):
 
         # Define base template components
         self.components['certainty'] = ['know']
+        self.components['target'] = ['nothing', 'a robot']
         self.components['positivity'] = ['is not', 'is']  # <>TODO: Check if order matters
         self.components['spatial_relation'] = {'object': ['near'],
                                                 'area': ['inside'],
                                                }
-        self.components['target'] = ['nothing', 'a robot']
 
         # Define map-dependent components
         if map_ is None:

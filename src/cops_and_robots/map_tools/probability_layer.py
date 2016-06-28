@@ -81,18 +81,17 @@ class ProbabilityLayer(Layer):
         # <>not proper try/except format!
         try:
             X = probability.X
-        except:
+        except AttributeError:
             X = self.X
         try:
             Y = probability.Y
-        except:
+        except AttributeError:
             Y = self.Y
 
         try:
             probs = probability.prob
-        except:
+        except AttributeError:
             probs = probability.pdf(self.pos)
-
 
         # try:
         #     probs = probability.pdf(self.pos, dims=[0,1])  # if not yet discretized
@@ -155,8 +154,12 @@ class ProbabilityLayer(Layer):
 
 if __name__ == '__main__':
     d = GaussianMixture(1,[0, 0],[[1,0],[0,1]])
-    filter_ = type('test', (object,), {'probability': d})()
-    pl = ProbabilityLayer(d, z_levels=50, alpha=1)
+    # filter_ = type('test', (object,), {'probability': d})()
+    d._discretize()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    pl = ProbabilityLayer(d, z_levels=50, alpha=1, fig=fig, ax=ax)
 
     test_probability = []
     test_probability.append(GaussianMixture(1,[2, 0],[[1,0],[0,1]]))

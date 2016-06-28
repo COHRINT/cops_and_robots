@@ -18,7 +18,7 @@ from collections import OrderedDict
 import numpy as np
 import spacy.en
 
-from cops_and_robots.human_tools.statement_template import StatementTemplate
+from cops_and_robots.human_tools.statement_template import StatementTemplate, get_all_statements
 
 class Matcher(object):
     """short description of Matcher
@@ -44,6 +44,25 @@ class Matcher(object):
                                                     add_more_targets=True,
                                                     add_certainties=True,
                                                     )
+
+        self.template_slots = [['certainty'],
+                               ['target'],
+                               ['positivity'],
+                               ['action','spatial_relation:object','spatial_relation:area'],
+                               ['modifier','spatial_relation:movement','grounding:object','grounding:area'],
+                               ['grounding:object','grounding:area'],
+                              ]
+        self.template_parents = {'certainty': [''],
+                                 'target': ['certainty'],
+                                 'positivity': ['target'],
+                                 'action': ['positivity'],
+                                 'modifier': ['action'],
+                                 'spatial_relation:object': ['positivity'],
+                                 'spatial_relation:area': ['positivity'],
+                                 'spatial_relation:movement': ['action'],
+                                 'grounding:object': ['spatial_relation:movement', 'spatial_relation:object'],
+                                 'grounding:area': ['spatial_relation:movement', 'spatial_relation:object']
+                                 }
 
         # from cops_and_robots.human_tools.human import generate_human_language_template
         # self.templates = generate_human_language_template()._asdict()
@@ -112,6 +131,173 @@ class Matcher(object):
 
         return sorted_comparables
 
+
+    def get_slotted_templates(self):
+        """Fit templates into ordered 'slots' for comparison.
+        """
+        self.slotted_templates = []
+
+        # Expand components into slotted template structure
+        for labels in self.template_slots:
+            components = {}
+            for label in labels:
+                label_parts = label.split(':')
+                i = 0
+                comps = self.statement_template.components
+                while isinstance(comps, dict):
+                    comps = comps[label_parts[i]]
+                    i += 1
+                components[label] = comps
+            self.slotted_templates.append(components)
+
+
+        # for i, slot in enumerate(slotted_templates):
+        #     print "Level {} slots:".format(i)
+        #     print slot
+
+    def compare_statement_and_utterance(self, statement, labeled_utterance):
+
+        utterance_keys = labeled_utterance.keys()
+        slot_i = 0
+        # r = 'I '
+        prev_label = ''
+        probability = 1
+        for slot_level in self.template_slots:
+
+            # Get component from the statement
+            statement_token = ''
+            for slot_label in slot_level:
+                label = slot_label.split(':')[0]
+
+                add_component = (prev_label in self.template_parents[slot_label] and
+                                 hasattr(statement, label) and
+                                 len(getattr(statement, label)) > 1)
+
+                if add_component:
+                    statement_token = getattr(statement, label)
+                    prev_label = slot_label
+                    break
+
+            # Get component from the utterance
+            try:
+                utterance_token = labeled_utterance[slot_label]
+            except KeyError:
+                # print "NO utterance found for {}".format(slot_label)
+                utterance_token = ''
+
+            # Define uninformative transition probability
+            # P(d_i | d_{i-1})
+            
+            if utterance_token == '' and statement_token == '':
+                continue
+            elif utterance_token == '':
+                trans_prob = 0
+            else:
+                comparables = self.slotted_templates[slot_i][slot_label]
+                trans_prob = 1 / len(comparables)
+
+
+            # Define probability of utterance tok given utterance tok
+            obs_prob = self.compare_tokens(statement_token, utterance_token, comparables) # P(t_i | d_i)
+
+            # Custom rules
+            obs_prob = self.apply_custom_token_rules(statement_token, utterance_token, obs_prob)
+
+            # print utterance_token, statement_token
+            # print obs_prob, trans_prob
+
+            slot_i += 1
+            probability *= obs_prob * trans_prob
+        # print statement, probability
+        return probability
+
+    def apply_custom_token_rules(self, statement_token, utterance_token, obs_prob):
+        # Negations
+        if statement_token == 'is' and ("n't" in utterance_token or
+                                        "not" in utterance_token.split(' ')):
+            obs_prob = 0
+
+        if statement_token == 'is not' and ("n't" not in utterance_token and
+                                            "not" not in utterance_token.split(' ')):
+            obs_prob = 0
+
+        # Proper names
+        if 'Zhora' in statement_token and 'Zhora' in utterance_token:
+            obs_prob = 1
+        if 'Pris' in statement_token and 'Pris' in utterance_token:
+            obs_prob = 1
+        if 'Roy' in statement_token and 'Roy' in utterance_token:
+            obs_prob = 1
+        if 'Deckard' in statement_token and 'Deckard' in utterance_token:
+            obs_prob = 1
+
+        return obs_prob
+
+
+    def compare_tokens(self, statement_token, utterance_token, comparables):
+        if '' in [statement_token, utterance_token]:
+            return 0
+
+        statement_token = self.nlp(unicode(statement_token.replace('_',' ')))
+        utterance_token = self.nlp(unicode(utterance_token.replace('_',' ')))
+        s_true = statement_token.similarity(utterance_token)
+        s_true *= statement_token.vector_norm
+        s_true *= utterance_token.vector_norm
+
+        s = s_true
+        # print s, statement_token, utterance_token
+        # M = 0
+        # for comparable in comparables:
+        #     comparable_token = self.nlp(unicode(comparable.replace('_',' ')))
+        #     m = comparable_token.similarity(utterance_token)
+        #     m *= comparable_token.vector_norm
+        #     m *= utterance_token.vector_norm
+        #     M += m
+        # s = np.exp(s_true) / np.exp(M)
+        # print s
+
+        return s
+
+
+    def compare_slots(self, labeled_utterance, show_n=None):
+        self.get_slotted_templates()
+        statements = get_all_statements(flatten=True,
+                                        add_actions=True,
+                                        add_more_relations=True,
+                                        add_more_targets=True,
+                                        add_certainties=True,
+                                        )
+        probabilities = []
+        for statement in statements:
+            prob = self.compare_statement_and_utterance(statement, labeled_utterance)
+            probabilities.append(prob)
+        probabilities = np.array(probabilities)
+        probabilities /= probabilities.sum()
+
+
+        str_ = "I"
+        for _, token in labeled_utterance.iteritems():
+            str_ += " " + token
+        str_ += "."
+        logging.info("Input phrase: {}".format(str_))
+
+
+        s = []
+        for i, probability in enumerate(probabilities):
+            s.append((probability, statements[i]))
+
+        s = sorted(s, reverse=True)
+        logging.info(len(s))
+        if show_n is not None:
+            s = s[:show_n]
+
+        for t in s:
+            logging.info("{} ({:0.4f})".format(t[1], t[0]))
+
+        logging.info('\n')
+        return s[0][1]
+
+            # self.get_slotted_utterance_components(filled_template)
 
     # def _flatten_templates(self):
     #     flat_templates = {}
@@ -222,16 +408,127 @@ def template_to_string(template):
     return str_
 
 def test_matcher():
-    from cops_and_robots.human_tools.nlp.templater import test_TDC_collection
+    # from cops_and_robots.human_tools.nlp.templater import test_TDC_collection
 
-    filled_templates = test_TDC_collection()
+    # filled_templates = test_TDC_collection()
+    # filled_template = filled_templates[2]
+    labeled_utterances = []
+    labeled_utterance = OrderedDict([('certainty', 'know'),
+                                     ('target', 'a robot'),
+                                     ('positivity', 'is'),
+                                     ('spatial_relation:object', 'right of'),
+                                     ('grounding:object', 'the bookcase')]
+                                     )
+    labeled_utterances.append(labeled_utterance)
     
+    # labeled_utterance = OrderedDict([('certainty', 'know'),
+    #                                  ('target', 'a robot'),
+    #                                  ('positivity', 'is'),
+    #                                  ('spatial_relation:object', 'next to'),
+    #                                  ('grounding:object', 'the bookcase')]
+    #                                  )
+    # labeled_utterances.append(labeled_utterance)
+
+    # labeled_utterance = OrderedDict([('certainty', 'know'),
+    #                                  ('target', 'a robot'),
+    #                                  ('positivity', "isn't"),
+    #                                  ('spatial_relation:object', 'next to'),
+    #                                  ('grounding:object', 'the bookshelf')]
+    #                                  )
+    # labeled_utterances.append(labeled_utterance)
+
+    # labeled_utterance = OrderedDict([('certainty', 'am pretty sure'),
+    #                                  ('target', "one of those guys"),
+    #                                  ('positivity', "is"),
+    #                                  ('spatial_relation:object', 'somewhere close to'),
+    #                                  ('grounding:object', 'that pile of books')]
+    #                                  )
+    # labeled_utterances.append(labeled_utterance)
+
+
+
+    # # labeled_utterance = OrderedDict([('certainty', 'know'),
+    # #                                  ('target', 'a robot'),
+    # #                                  ('positivity', 'is'),
+    # #                                  ('spatial_relation:object', 'behind'),
+    # #                                  ('grounding:object', 'the checkers table')]
+    # #                                  )
+    # # labeled_utterances.append(labeled_utterance)
+    
+    # # labeled_utterance = OrderedDict([('certainty', 'know'),
+    # #                                  ('target', 'a robot'),
+    # #                                  ('positivity', 'is'),
+    # #                                  ('spatial_relation:area', 'at the end of'),
+    # #                                  ('grounding:area', 'the hallway')]
+    # #                                  )
+    # # labeled_utterances.append(labeled_utterance)
+
+    # # labeled_utterance = OrderedDict([('certainty', 'know'),
+    # #                                  ('target', 'the red one'),
+    # #                                  ('positivity', "is"),
+    # #                                  ('spatial_relation:object', 'behind'),
+    # #                                  ('grounding:object', 'the filing cabinet')]
+    # #                                  )
+    # # labeled_utterances.append(labeled_utterance)
+
+    # # labeled_utterance = OrderedDict([('certainty', 'there might be'),
+    # #                                  ('target', "someone"),
+    # #                                  ('positivity', "is"),
+    # #                                  ('spatial_relation:object', 'in the'),
+    # #                                  ('grounding:object', 'hallway')]
+    # #                                  )
+    # # labeled_utterances.append(labeled_utterance)
+
+
     matcher = Matcher()
-    matcher.find_nearest_statements(filled_templates)
+
+    # show_n = 5
+
+    from cops_and_robots.map_tools.map import Map, set_up_fleming
+    from cops_and_robots.fusion.gaussian_mixture import fleming_prior
+    from cops_and_robots.map_tools.probability_layer import ProbabilityLayer
+    from cops_and_robots.fusion.gauss_sum_filter import GaussSumFilter
+    from cops_and_robots.robo_tools.cop import Cop
+    from cops_and_robots.robo_tools.robber import Robber
+    from cops_and_robots.human_tools.human import Human
+    import matplotlib.pyplot as plt
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    roy = Robber('Roy', pose=[-0.3,-2,90])
+    deckard = Cop('Deckard', other_robot_names={'robbers':['Roy']})
+    map_ = Map()
+    map_.add_cop(deckard.map_obj)
+    map_.add_robber(roy.map_obj)
+    human_sensor = Human(map_=map_)
+
+    geometric_filter = GaussSumFilter(compression_method='geometric',
+                                      target_name='Roy',
+                                      fusion_method='sequential',
+                                      dynamic_model=False,
+                                      )
+    class FFE(object):
+        def __init__(self, filter_):
+            self.filters = {'Roy':filter_}
+    fake_fusion_engine = FFE(geometric_filter)
+    map_.plot(fusion_engine=fake_fusion_engine)
+
+    prior = fleming_prior()
+    # matcher.find_nearest_statements(filled_templates)
+    for labeled_utterance in labeled_utterances:
+        statement = matcher.compare_slots(labeled_utterance, show_n=5)
+        human_sensor.statement = statement
+        geometric_filter.probability = prior.copy()
+        geometric_filter.fusion(human_sensor)
+        map_.plot(fusion_engine=fake_fusion_engine)
 
     # for _, statement in statements.iteritems():
     #     for s in statement:
     #         print s
+
+
+
+
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)

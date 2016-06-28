@@ -366,11 +366,13 @@ def test_fusion(fusion_method='sequential', speed_test=True):
     geometric_filter = GaussSumFilter(compression_method='geometric', **kwargs)
 
     # Plot initial state
-    fig = plt.Figure()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
     probability_layer = ProbabilityLayer(geometric_filter, bounds=map_.bounds,
-                                         grid_size=0.1, fig=fig)
-    # probability_layer.plot()
-    # plt.show()
+                                         grid_size=0.1, fig=fig, ax=ax)
+    probability_layer.plot()
+    # print probability_layer.filter.probability.prob
+    plt.show()
 
     # Plot sensor updates
     human_utterances = ['I know Roy is inside the hallway.',
@@ -382,11 +384,11 @@ def test_fusion(fusion_method='sequential', speed_test=True):
         human_sensor.new_update = True
         geometric_filter.update(human_sensor=human_sensor)
 
-        fig = plt.Figure()
+        # fig = plt.Figure()
         probability_layer = ProbabilityLayer(geometric_filter, bounds=map_.bounds,
-                                             grid_size=0.1, fig=fig)
-        # probability_layer.plot()
-        # plt.show()
+                                             grid_size=0.1, fig=fig, ax=ax)
+        probability_layer.plot()
+        plt.show()
 
 
 if __name__ == '__main__':
